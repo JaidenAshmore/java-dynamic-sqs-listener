@@ -1,0 +1,4 @@
+steps:
+- name: 'gcr.io/cloud-builders/mvn'
+  args: ['verify']
+  timeout: 300s
