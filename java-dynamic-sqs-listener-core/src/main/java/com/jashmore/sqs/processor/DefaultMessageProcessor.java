@@ -15,6 +15,10 @@ import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 
+/**
+ * Default implementation of the {@link MessageProcessor} that will simply resolve arguments, process the message and delete the
+ * message from the queue if it was completed successfully.
+ */
 @ThreadSafe
 @AllArgsConstructor
 public class DefaultMessageProcessor implements MessageProcessor {

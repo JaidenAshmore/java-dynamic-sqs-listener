@@ -59,6 +59,9 @@ public class SingleThreadedMessageBroker extends AbstractMessageBroker {
     @Slf4j
     @RequiredArgsConstructor
     static class SingleThreadMessageController  implements AbstractMessageBroker.Controller {
+        /**
+         * The amount of time that the thread should be slept if there was an error retrieving messages for processing.
+         */
         private static final int BACKOFF_TIME_MS = 1000;
 
         private final MessageRetriever messageRetriever;

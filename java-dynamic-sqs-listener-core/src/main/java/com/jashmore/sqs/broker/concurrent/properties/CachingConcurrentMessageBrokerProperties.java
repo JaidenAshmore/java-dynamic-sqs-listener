@@ -22,7 +22,7 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     }
 
     @Override
-    public Integer getConcurrencyLevel() {
+    public @Min(0) Integer getConcurrencyLevel() {
         return cachedConcurrencyLevel.get();
     }
 

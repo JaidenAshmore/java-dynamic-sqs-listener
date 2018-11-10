@@ -6,6 +6,7 @@ public interface ConcurrentMessageBrokerProperties {
     /**
      * The level of concurrency for processing messages, e.g. the number of threads processing messages.
      */
+    @Min(0)
     Integer getConcurrencyLevel();
 
     /**

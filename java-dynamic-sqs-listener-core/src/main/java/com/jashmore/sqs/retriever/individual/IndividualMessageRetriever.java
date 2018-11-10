@@ -24,10 +24,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 /**
- * Message retriever that will obtain a new message from the server as requested and will not batch any messages for future use.
+ * Message retriever that will obtain a new message from the server as requested and will not prefetch any messages for future use.
  *
- * <p>This can be useful for when processing of messages can take a long time and it is undesirable to batch them as that could result in the batched messages
- * visual timeout expiring.
+ * <p>This can be useful for when processing of messages can take a long time and it is undesirable to prefetch them as that could result in the
+ * prefetched messages visibility timeout expiring.
  */
 @Slf4j
 @ThreadSafe

@@ -32,7 +32,7 @@ public interface MessageBroker {
      * Request all threads that are currently listening for messages returning the future that will be resolved when that is completed.
      *
      * <p>This returns a future that will be resolved once the broker has successfully stopped. Note that once this method returns the internal state of the
-     * message broker should be reset so that it can be started again
+     * message broker should be reset so that it can be started again.
      *
      * <p>If this broker has not been started or has already been stopped, any calls to this method will do no action and a future that has already been
      * completed will be returned.

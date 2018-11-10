@@ -24,6 +24,13 @@ public class RetryableMessageProcessor implements MessageProcessor {
         processMessageWithRetries(message, properties.getRetryAttempts() - 1);
     }
 
+    /**
+     * Process a message and if it fails try a number of times again for it to be successfully processed.
+     *
+     * @param message       the message to process
+     * @param retryAttempts the number of times to retry to process a message
+     * @throws MessageProcessingException exception thrown if the message was not able to be processed within the given retry amount
+     */
     private void processMessageWithRetries(final Message message, final int retryAttempts) throws MessageProcessingException {
         try {
             delegateMessageProcessor.processMessage(message);

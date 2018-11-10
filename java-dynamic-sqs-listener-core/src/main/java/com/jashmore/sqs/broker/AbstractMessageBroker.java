@@ -50,9 +50,24 @@ public abstract class AbstractMessageBroker implements MessageBroker {
         return futureToReturn;
     }
 
+    /**
+     * Create the {@link Controller} that will be running in the background for this {@link MessageBroker}.
+     *
+     * @param controllerFinishedFuture the future that will be resolved when the {@link Controller#run()} has finished
+     * @return the {@link Controller} that will be running in background
+     */
     protected abstract Controller createController(final CompletableFuture<Object> controllerFinishedFuture);
 
+    /**
+     * Class that will be doing all of the processing for the {@link MessageBroker} in a background thread.
+     */
     public interface Controller extends Runnable {
+        /**
+         * Indicate that the {@link MessageBroker} is being stopped and this is used to indicate when this controller is stopping whethere
+         * the threads processing the messages should be interrupted or not.
+         *
+         * @param shouldInterruptThreads whether message processing threads should be interrupted on shutdown
+         */
         void stopTriggered(boolean shouldInterruptThreads);
     }
 }

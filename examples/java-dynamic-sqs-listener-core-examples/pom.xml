@@ -14,6 +14,10 @@
     <name>Java Dynamic SQS Listener - Core - Examples</name>
     <description>Contains examples for using the core implementation of the listener with plan Java objects.</description>
 
+    <properties>
+        <elasticmq.version>0.13.9</elasticmq.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -34,7 +38,7 @@
         <dependency>
             <groupId>org.elasticmq</groupId>
             <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-            <version>0.13.9</version>
+            <version>${elasticmq.version}</version>
         </dependency>
 
         <dependency>

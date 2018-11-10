@@ -2,6 +2,10 @@ package com.jashmore.sqs.argument.heartbeat;
 
 import java.util.concurrent.Future;
 
+/**
+ * Heartbeat used to extend the visibility of a message that is being processed in the scenario that the processing of a message
+ * takes a long time.
+ */
 public interface Heartbeat {
     /**
      * The default amount of time that the message will be extended in visibility of {@link #beat()} is called.

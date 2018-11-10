@@ -13,7 +13,9 @@ public interface Acknowledge {
     /**
      * Acknowledge that the message was successfully completed.
      *
-     * <p>Multiple calls to this method in the message consumer will res
+     * <p>Multiple calls to this has indeterminate behaviour and should not be done.
+     *
+     * @return a future that is resolved when the message has been marked as acknowledged
      */
     Future<?> acknowledgeSuccessful();
 }

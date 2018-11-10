@@ -18,8 +18,8 @@ import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
 import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
@@ -141,22 +141,22 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
     }
 
     @Test
-    public void usingBatchingMessageRetrieverCanConsumeAllMessages() throws Exception {
+    public void usingPrefetchingMessageRetrieverCanConsumeAllMessages() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 300;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
         final AmazonSQSAsync amazonSqsAsync = localSqsRule.getAmazonSqsAsync();
-        final AsyncMessageRetriever messageRetriever = new BatchingMessageRetriever(
+        final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 amazonSqsAsync,
                 queueProperties,
-                BatchingProperties
+                PrefetchingProperties
                         .builder()
                         .visibilityTimeoutForMessagesInSeconds(1)
                         .maxNumberOfMessagesToObtainFromServer(10)
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(1)
-                        .desiredMinBatchedMessages(30)
-                        .maxBatchedMessages(40)
+                        .desiredMinPrefetchedMessages(30)
+                        .maxPrefetchedMessages(40)
                         .build(),
                 Executors.newCachedThreadPool()
         );

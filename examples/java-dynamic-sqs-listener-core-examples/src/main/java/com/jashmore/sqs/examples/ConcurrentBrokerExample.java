@@ -6,7 +6,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
+import com.amazonaws.services.sqs.model.SendMessageBatchRequestEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -21,8 +22,8 @@ import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProp
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +31,11 @@ import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.constraints.Min;
 
 @Slf4j
@@ -45,13 +44,15 @@ public class ConcurrentBrokerExample {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final String QUEUE_NAME = "my_queue";
-    private static final int NUMBER_OF_PRODUCERS = 1;
-    private static final BatchingProperties BATCHING_PROPERTIES = BatchingProperties
+    /**
+     * Contains the number of messages that will be published from the producer at once.
+     */
+    private static final int NUMBER_OF_MESSAGES_FOR_REDUCER = 10;
+    private static final PrefetchingProperties PREFETCHING_PROPERTIES = PrefetchingProperties
             .builder()
-            .desiredMinBatchedMessages(40)
-            .maxBatchedMessages(50)
+            .desiredMinPrefetchedMessages(40)
+            .maxPrefetchedMessages(50)
             .maxNumberOfMessagesToObtainFromServer(10)
-            // TODO: Figure out if this is a number like 30, no messages are consumed at all
             .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
             .build();
 
@@ -86,22 +87,25 @@ public class ConcurrentBrokerExample {
         final AmazonSQSAsync amazonSqsAsync = startElasticMqServer();
         amazonSqsAsync.createQueue(QUEUE_NAME);
         final String queueUrl = amazonSqsAsync.getQueueUrl(QUEUE_NAME).getQueueUrl();
-        final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
+        final QueueProperties queueProperties = QueueProperties
+                .builder()
+                .queueUrl(queueUrl)
+                .build();
 
         // Creates the class that will actually perform the logic for retrieving messages from the queue
-        final AsyncMessageRetriever messageRetriever = new BatchingMessageRetriever(
+        final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 amazonSqsAsync,
                 queueProperties,
-                BATCHING_PROPERTIES,
+                PREFETCHING_PROPERTIES,
                 EXECUTOR_SERVICE
         );
 
+        // As this retrieves messages asynchronously we need to start the background thread
         messageRetriever.start();
 
         // Creates the class that will deal with taking messages and getting them processed by the message consumer
         final MessageConsumer messageConsumer = new MessageConsumer();
-        final Method messageReceivedMethod = MessageConsumer.class.getMethod(
-                "method", Request.class, String.class);
+        final Method messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService(amazonSqsAsync),
                 queueProperties,
@@ -115,7 +119,8 @@ public class ConcurrentBrokerExample {
                 messageRetriever,
                 messageProcessor,
                 EXECUTOR_SERVICE,
-                new CachingConcurrentMessageBrokerProperties(2000, new ConcurrentMessageBrokerProperties() {
+                // Represents a concurrent implementation that will fluctuate between 0 and 10 threads all processing messages
+                new CachingConcurrentMessageBrokerProperties(10000, new ConcurrentMessageBrokerProperties() {
                     private final Random random = new Random(1);
 
                     @Override
@@ -125,7 +130,7 @@ public class ConcurrentBrokerExample {
 
                     @Override
                     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
-                        return 5;
+                        return 5000;
                     }
                 })
         );
@@ -134,12 +139,10 @@ public class ConcurrentBrokerExample {
         concurrentMessageBroker.start();
 
         // Create some producers of messages
-        final List<Future<?>> producerFutures = IntStream.range(0, NUMBER_OF_PRODUCERS)
-                .mapToObj(index -> EXECUTOR_SERVICE.submit(new Producer(amazonSqsAsync, queueUrl, OBJECT_MAPPER)))
-                .collect(Collectors.toList());
+        final Future<?> producerFuture = EXECUTOR_SERVICE.submit(new Producer(amazonSqsAsync, queueUrl, OBJECT_MAPPER));
 
         // Wait until the first producer is done, this should never resolve
-        producerFutures.get(0).get();
+        producerFuture.get();
     }
 
     /**
@@ -169,10 +172,16 @@ public class ConcurrentBrokerExample {
             boolean shouldStop = false;
             while (!shouldStop) {
                 try {
-                    final Request request = new Request("key_" + ++count);
-                    log.info("Putting message: {}", request);
-                    async.sendMessage(new SendMessageRequest(queueUrl, objectMapper.writeValueAsString(request)));
-                    Thread.sleep(100);
+                    final SendMessageBatchRequest sendMessageBatchRequest = new SendMessageBatchRequest(queueUrl);
+                    for (int i = 0; i < NUMBER_OF_MESSAGES_FOR_REDUCER; ++i) {
+                        final String messageId = "" + count;
+                        final Request request = new Request("key_" + count);
+                        sendMessageBatchRequest.withEntries(new SendMessageBatchRequestEntry(messageId, objectMapper.writeValueAsString(request)));
+                        ++count;
+                    }
+                    log.info("Put 10 messages onto queue");
+                    async.sendMessageBatch(sendMessageBatchRequest);
+                    Thread.sleep(2000);
                 } catch (final InterruptedException interruptedException) {
                     log.info("Producer Thread has been interrupted");
                     shouldStop = true;
@@ -193,11 +202,31 @@ public class ConcurrentBrokerExample {
     @SuppressWarnings("WeakerAccess")
     public static class MessageConsumer {
         /**
+         * Static variable that is used to show that the level of concurrency is being followed.
+         *
+         * <p>This is useful when the concurrency is dynamically changing we can see that we are in fact properly processing them with the correct
+         * concurrency level.
+         */
+        private static AtomicInteger concurrentMessagesBeingProcessed = new AtomicInteger(0);
+
+        /**
+         * Random number generator for calculating the random time that a message will take to be processed.
+         */
+        private final Random processingTimeRandom = new Random();
+
+        /**
          * Method that will consume the messages.
          */
-        public void method(@Payload final Request request,
-                           @MessageId final String messageId) {
-            log.info("Message({}) received with payload: {}", messageId, request);
+        public void method(@Payload final Request request, @MessageId final String messageId) throws InterruptedException {
+            try {
+                final int concurrentMessages = concurrentMessagesBeingProcessed.incrementAndGet();
+                int processingTimeInMs = processingTimeRandom.nextInt(3000);
+                log.trace("Payload: {}, messageId: {}", request, messageId);
+                log.info("Message processing in {}ms. {} currently being processed concurrently", processingTimeInMs, concurrentMessages);
+                Thread.sleep(processingTimeInMs);
+            } finally {
+                concurrentMessagesBeingProcessed.decrementAndGet();
+            }
         }
     }
 }

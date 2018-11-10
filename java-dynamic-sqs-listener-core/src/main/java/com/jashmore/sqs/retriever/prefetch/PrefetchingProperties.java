@@ -1,4 +1,4 @@
-package com.jashmore.sqs.retriever.batching;
+package com.jashmore.sqs.retriever.prefetch;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
 
 @Value
 @Builder(toBuilder = true)
-public class BatchingProperties {
+public class PrefetchingProperties {
     /**
      * The default time to wait for messages from SQS in seconds before giving up.
      *
@@ -40,19 +40,19 @@ public class BatchingProperties {
     /**
      * The minimum number of messages that should be queued before it will stop requesting more messages.
      *
-     * <p>For example if the desiredMinBatchedMessages = 5, maxBatchedMessages = 10 and the current batched messages is 6 it will not call out to AWS
-     * for more messages. However, once the current batched messages goes below 5 it will request more messages.
+     * <p>For example if the desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10 and the current prefetched messages is 6 it will not call out to AWS
+     * for more messages. However, once the current prefetched messages goes below 5 it will request more messages.
      *
      * <p>Constraints on this field include:
      * <ul>
      *     <li>This value must not be null</li>
      *     <li>This value must be greater than or equal to 0</li>
-     *     <li>This value must be less than {@link #maxBatchedMessages}</li>
+     *     <li>This value must be less than {@link #maxPrefetchedMessages}</li>
      * </ul>
      */
     @Min(0)
     @NotNull
-    private final Integer desiredMinBatchedMessages;
+    private final Integer desiredMinPrefetchedMessages;
 
     /**
      * The total number of messages that can be pulled from the server and not currently being processed.
@@ -61,18 +61,18 @@ public class BatchingProperties {
      * <ul>
      *     <li>This value must not be null</li>
      *     <li>This value must be greater than 0</li>
-     *     <li>This value must be greater than than {@link #desiredMinBatchedMessages}</li>
+     *     <li>This value must be greater than than {@link #desiredMinPrefetchedMessages}</li>
      * </ul>
      */
     @Min(1)
     @NotNull
-    private final Integer maxBatchedMessages;
+    private final Integer maxPrefetchedMessages;
 
     /**
      * The number of messages that can be pulled down from the queue in one request.
      *
      * <p>This may not be the actual number of messages that will be returned as it is limited by SQS, currently a maximum of 10 and the number of currently
-     * batched messages.
+     * prefetched messages.
      *
      * @see ReceiveMessageRequest#maxNumberOfMessages for where this is applied against
      */
@@ -84,6 +84,7 @@ public class BatchingProperties {
      *
      * @see ReceiveMessageRequest#waitTimeSeconds for where this is applied against
      */
+    @Size(max = MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
     private final Integer maxWaitTimeInSecondsToObtainMessagesFromServer;
 
     /**
@@ -105,14 +106,14 @@ public class BatchingProperties {
     /**
      * Constructor used to validate all of the fields, see each individual field documentation for constraints.
      */
-    public BatchingProperties(final Integer desiredMinBatchedMessages,
-                              final Integer maxBatchedMessages,
-                              final Integer maxNumberOfMessagesToObtainFromServer,
-                              final Integer maxWaitTimeInSecondsToObtainMessagesFromServer,
-                              final Integer visibilityTimeoutForMessagesInSeconds,
-                              final Integer errorBackoffTimeInMilliseconds) {
-        checkArgument(desiredMinBatchedMessages >= 0, "desiredMinBatchedMessages should be greater than equal to zero");
-        checkArgument(maxBatchedMessages > 0, "maxBatchedMessages should be greater than equal to zero");
+    public PrefetchingProperties(final Integer desiredMinPrefetchedMessages,
+                                 final Integer maxPrefetchedMessages,
+                                 final Integer maxNumberOfMessagesToObtainFromServer,
+                                 final Integer maxWaitTimeInSecondsToObtainMessagesFromServer,
+                                 final Integer visibilityTimeoutForMessagesInSeconds,
+                                 final Integer errorBackoffTimeInMilliseconds) {
+        checkArgument(desiredMinPrefetchedMessages >= 0, "desiredMinPrefetchedMessages should be greater than equal to zero");
+        checkArgument(maxPrefetchedMessages > 0, "maxPrefetchedMessages should be greater than equal to zero");
         checkArgument(maxNumberOfMessagesToObtainFromServer == null || maxNumberOfMessagesToObtainFromServer > 0,
                 "maxNumberOfMessagesToObtainFromServer should be greater than 0");
         checkArgument(errorBackoffTimeInMilliseconds == null || errorBackoffTimeInMilliseconds >= 0,
@@ -120,17 +121,17 @@ public class BatchingProperties {
         checkArgument(maxWaitTimeInSecondsToObtainMessagesFromServer == null || maxWaitTimeInSecondsToObtainMessagesFromServer >= 0,
                 "maxWaitTimeInSecondsToObtainMessagesFromServer should be greater than or equal to zero");
 
-        checkArgument(desiredMinBatchedMessages <= maxBatchedMessages,
-                "maxBatchedMessages(" + maxBatchedMessages + ") should be greater than or equal to "
-                        + "desiredMinBatchedMessages(" + desiredMinBatchedMessages + ")");
+        checkArgument(desiredMinPrefetchedMessages <= maxPrefetchedMessages,
+                "maxPrefetchedMessages(" + maxPrefetchedMessages + ") should be greater than or equal to "
+                        + "desiredMinPrefetchedMessages(" + desiredMinPrefetchedMessages + ")");
         checkArgument(maxNumberOfMessagesToObtainFromServer == null || maxNumberOfMessagesToObtainFromServer <= MAX_NUMBER_OF_MESSAGES_FROM_SQS,
                 "maxNumberOfMessagesToObtainFromServer should be less than the SQS limit of " + MAX_NUMBER_OF_MESSAGES_FROM_SQS);
         checkArgument(maxWaitTimeInSecondsToObtainMessagesFromServer == null
                         || maxWaitTimeInSecondsToObtainMessagesFromServer <= MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS,
                 "maxWaitTimeInSecondsToObtainMessagesFromServer should be less than the SQS limit of " + MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
 
-        this.desiredMinBatchedMessages = desiredMinBatchedMessages;
-        this.maxBatchedMessages = maxBatchedMessages;
+        this.desiredMinPrefetchedMessages = desiredMinPrefetchedMessages;
+        this.maxPrefetchedMessages = maxPrefetchedMessages;
         this.maxNumberOfMessagesToObtainFromServer = Optional.ofNullable(maxNumberOfMessagesToObtainFromServer)
                 .orElse(MAX_NUMBER_OF_MESSAGES_FROM_SQS);
         this.maxWaitTimeInSecondsToObtainMessagesFromServer = Optional.ofNullable(maxWaitTimeInSecondsToObtainMessagesFromServer)

@@ -24,8 +24,9 @@ public interface ArgumentResolverService {
     /**
      * Resolve the argument value for the given parameter of the method.
      *
-     * @param parameter the parameter to get the argument value for
-     * @param message   the message being processed by this queue
+     * @param queueProperties details about the queue that the message came from
+     * @param parameter       the parameter to get the argument value for
+     * @param message         the message being processed by this queue
      * @return the value of the argument
      * @throws ArgumentResolutionException when there was an error determine the parameter argument value
      */

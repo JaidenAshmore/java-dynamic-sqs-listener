@@ -1,4 +1,4 @@
-package com.jashmore.sqs.retriever.batching;
+package com.jashmore.sqs.retriever.prefetch;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -36,15 +36,15 @@ import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 
 @Slf4j
-public class BatchingMessageRetrieverTest {
+public class PrefetchingMessageRetrieverTest {
     private static final String QUEUE_URL = "queueUrl";
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
             .queueUrl(QUEUE_URL)
             .build();
 
-    private static final BatchingProperties DEFAULT_BATCHING_PROPERTIES = BatchingProperties.builder()
-            .desiredMinBatchedMessages(10)
-            .maxBatchedMessages(20)
+    private static final PrefetchingProperties DEFAULT_PREFETCHING_PROPERTIES = PrefetchingProperties.builder()
+            .desiredMinPrefetchedMessages(10)
+            .maxPrefetchedMessages(20)
             .maxNumberOfMessagesToObtainFromServer(10)
             .maxWaitTimeInSecondsToObtainMessagesFromServer(2)
             .visibilityTimeoutForMessagesInSeconds(10)
@@ -64,22 +64,22 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void whenNoMessagesPresentRetrieveMessageIsBlocked() throws InterruptedException {
         // arrange
-        final CountDownLatch messageBatchRequested = new CountDownLatch(1);
+        final CountDownLatch messagesRequested = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch);
         when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class)))
-                .then(waitUntilTestCompleted(messageBatchRequested, testCompletedLatch));
-        batchingMessageRetriever.start();
-        messageBatchRequested.await(1, SECONDS);
+                .then(waitUntilTestCompleted(messagesRequested, testCompletedLatch));
+        prefetchingMessageRetriever.start();
+        messagesRequested.await(1, SECONDS);
 
         try {
             // act
-            final Optional<Message> optionalMessage = batchingMessageRetriever.retrieveMessage(50, MILLISECONDS);
+            final Optional<Message> optionalMessage = prefetchingMessageRetriever.retrieveMessage(50, MILLISECONDS);
 
             // assert
             assertThat(optionalMessage).isEmpty();
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
@@ -88,22 +88,22 @@ public class BatchingMessageRetrieverTest {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch secondMessageRequestedLatched = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch);
         final Message messageFromSqs = new Message().withBody("test");
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult().withMessages(messageFromSqs)))
                 .thenAnswer(waitUntilTestCompleted(secondMessageRequestedLatched, testCompletedLatch));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         secondMessageRequestedLatched.await(1, SECONDS);
 
         // act
         try {
-            final Optional<Message> optionalFirstMessage = batchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
 
             // assert
             assertThat(optionalFirstMessage).contains(messageFromSqs);
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
@@ -112,24 +112,24 @@ public class BatchingMessageRetrieverTest {
         // arrange
         final CountDownLatch testFinishedCountDownLatch = new CountDownLatch(1);
         final CountDownLatch requestedSecondMessageLatch = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testFinishedCountDownLatch);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testFinishedCountDownLatch);
         final Message messageFromSqs = new Message().withBody("test");
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult().withMessages(messageFromSqs)))
                 .thenAnswer(waitUntilTestCompleted(requestedSecondMessageLatch, testFinishedCountDownLatch));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
 
         // act
-        final Optional<Message> optionalFirstMessage = batchingMessageRetriever.retrieveMessage(1, SECONDS);
+        final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
         requestedSecondMessageLatch.await(1, SECONDS);
         try {
-            final Optional<Message> secondMessageAttempted = batchingMessageRetriever.retrieveMessage(200, TimeUnit.MILLISECONDS);
+            final Optional<Message> secondMessageAttempted = prefetchingMessageRetriever.retrieveMessage(200, TimeUnit.MILLISECONDS);
 
             // assert
             assertThat(optionalFirstMessage).contains(messageFromSqs);
             assertThat(secondMessageAttempted).isEmpty();
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
@@ -137,26 +137,26 @@ public class BatchingMessageRetrieverTest {
     public void multipleMessagesCanBePulledFromSingleRequestAndObtainedInOrder() throws InterruptedException {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final CountDownLatch secondMessageBatchRequested = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch);
+        final CountDownLatch secondmessagesRequested = new CountDownLatch(1);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch);
         final Message firstMessage = new Message().withBody("test");
         final Message secondMessage = new Message().withBody("test");
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult().withMessages(firstMessage, secondMessage)))
-                .thenAnswer(waitUntilTestCompleted(secondMessageBatchRequested, testCompletedLatch));
-        batchingMessageRetriever.start();
-        secondMessageBatchRequested.await(1, SECONDS);
+                .thenAnswer(waitUntilTestCompleted(secondmessagesRequested, testCompletedLatch));
+        prefetchingMessageRetriever.start();
+        secondmessagesRequested.await(1, SECONDS);
 
         try {
             // act
-            final Optional<Message> optionalFirstMessage = batchingMessageRetriever.retrieveMessage(1, SECONDS);
-            final Optional<Message> optionalSecondMessage = batchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Optional<Message> optionalSecondMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
 
             // assert
             assertThat(optionalFirstMessage).contains(firstMessage);
             assertThat(optionalSecondMessage).contains(secondMessage);
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
@@ -166,7 +166,7 @@ public class BatchingMessageRetrieverTest {
         final CountDownLatch testCompleted = new CountDownLatch(1);
         final CountDownLatch messagesRetrievalLatch = new CountDownLatch(1);
         final CountDownLatch messageRequestedLatch = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_BATCHING_PROPERTIES, executorService) {
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES, executorService) {
             @Override
             public Optional<Message> retrieveMessage(final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
                 // Wait until we have sent the request to get some messages from AWS
@@ -190,27 +190,27 @@ public class BatchingMessageRetrieverTest {
                 });
 
         // act
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         try {
-            final Optional<Message> optionalMessageRetrieved = batchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Optional<Message> optionalMessageRetrieved = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
 
             // assert
             assertThat(optionalMessageRetrieved).contains(message);
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
     @Test
-    public void willGetMessagesAcrossMultipleBatchesIfMoreSpaceInMessageBatch() throws InterruptedException {
+    public void willGetMessagesAcrossMultiplePrefetchingRequestsIfMoreSpaceInInternalQueue() throws InterruptedException {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch twoMessagesRetrieved = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .maxBatchedMessages(4)
-                .desiredMinBatchedMessages(2)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .maxPrefetchedMessages(4)
+                .desiredMinPrefetchedMessages(2)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         final Message firstRequestMessage = new Message();
         final Message secondRequestMessage = new Message();
         final Message thirdMessage = new Message();
@@ -221,13 +221,13 @@ public class BatchingMessageRetrieverTest {
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(secondRequestMessage, thirdMessage));
                 })
                 .thenAnswer((invocationOnMock) -> {
-                    throw new IllegalStateException("This shouldn't get called cause we hit our batch limit");
+                    throw new IllegalStateException("This shouldn't get called cause we hit our prefetch limit");
                 });
 
         // act
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         twoMessagesRetrieved.await(200, MILLISECONDS);
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
 
         // assert
         final ArgumentCaptor<ReceiveMessageRequest> requestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
@@ -242,12 +242,12 @@ public class BatchingMessageRetrieverTest {
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch secondMessageRequestedLatch = new CountDownLatch(1);
         final CountDownLatch finalMessageRequestedLatch = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .desiredMinBatchedMessages(5)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .desiredMinPrefetchedMessages(5)
                 .maxNumberOfMessagesToObtainFromServer(10)
-                .maxBatchedMessages(5)
+                .maxPrefetchedMessages(5)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult()
                         .withMessages(new Message(), new Message(), new Message(), new Message(), new Message())))
@@ -256,7 +256,7 @@ public class BatchingMessageRetrieverTest {
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message()));
                 })
                 .thenAnswer(waitUntilTestCompleted(finalMessageRequestedLatch, testCompletedLatch));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
 
         // act
         Thread.sleep(500); // As the retriever's thread will be blocked we will wait to make sure it hasn't made a second request for messages
@@ -264,11 +264,11 @@ public class BatchingMessageRetrieverTest {
         assertThat(secondMessageRequestedLatch.getCount()).isEqualTo(1);
 
         try {
-            batchingMessageRetriever.retrieveMessage(1, SECONDS);
-            // Now that a message has been consumed the retriever should request for new messages to hit the maxBatchedMessages
+            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            // Now that a message has been consumed the retriever should request for new messages to hit the maxPrefetchedMessages
             secondMessageRequestedLatch.await(1, SECONDS);
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
 
         // assert
@@ -279,29 +279,29 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void willAttemptToGetAllBatchMessagesOnFirstCall() throws InterruptedException {
+    public void willAttemptToGetAllPrefetchMessagesOnFirstCall() throws InterruptedException {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch messagesReceivedLatch = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .desiredMinBatchedMessages(4)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .desiredMinPrefetchedMessages(4)
                 .maxNumberOfMessagesToObtainFromServer(10)
-                .maxBatchedMessages(5)
+                .maxPrefetchedMessages(5)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
                     messagesReceivedLatch.countDown();
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message(), new Message(), new Message(), new Message(), new Message()));
                 })
                 .thenAnswer((invocationOnMock) -> {
-                    throw new IllegalStateException("This shouldn't get called cause we hit our batch limit");
+                    throw new IllegalStateException("This shouldn't get called cause we hit our prefetch limit");
                 });
 
         // act
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         messagesReceivedLatch.await(1, SECONDS);
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
 
         // assert
         final ArgumentCaptor<ReceiveMessageRequest> requestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
@@ -314,41 +314,41 @@ public class BatchingMessageRetrieverTest {
      * in lots of requests for single messages. This will make sure that it will try and collect multiple messages from the queue.
      */
     @Test
-    public void willNotRequestMoreMessagesUntilFirstBatchPlacesAllMessagesOntoQueue() throws InterruptedException {
+    public void willNotRequestMoreMessagesUntilFirstPrefetchPlacesAllMessagesOntoQueue() throws InterruptedException {
         // arrange
-        final CountDownLatch firstMessageBatchRequested = new CountDownLatch(1);
-        final CountDownLatch secondMessageBatchRequested = new CountDownLatch(1);
-        final CountDownLatch thirdMessageBatchRequested = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .desiredMinBatchedMessages(2)
-                .maxBatchedMessages(4)
+        final CountDownLatch firstmessagesRequested = new CountDownLatch(1);
+        final CountDownLatch secondmessagesRequested = new CountDownLatch(1);
+        final CountDownLatch thirdmessagesRequested = new CountDownLatch(1);
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .desiredMinPrefetchedMessages(2)
+                .maxPrefetchedMessages(4)
                 .maxNumberOfMessagesToObtainFromServer(10)
                 .build();
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
-                    firstMessageBatchRequested.countDown();
+                    firstmessagesRequested.countDown();
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message(), new Message()));
                 })
                 .thenAnswer(invocation -> {
-                    secondMessageBatchRequested.countDown();
+                    secondmessagesRequested.countDown();
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message()));
                 })
                 .thenAnswer((invocationOnMock) -> {
-                    thirdMessageBatchRequested.countDown();
+                    thirdmessagesRequested.countDown();
                     return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message()));
                 });
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
-                batchingProperties, executorService);
-        batchingMessageRetriever.start();
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
+                prefetchingProperties, executorService);
+        prefetchingMessageRetriever.start();
 
         // act
-        firstMessageBatchRequested.await(1, SECONDS);
+        firstmessagesRequested.await(1, SECONDS);
         Thread.sleep(1000); // Make sure we haven't called the second message
-        assertThat(secondMessageBatchRequested.getCount()).isEqualTo(1L);
-        batchingMessageRetriever.retrieveMessage(1, SECONDS);
-        secondMessageBatchRequested.await(1, SECONDS);
-        batchingMessageRetriever.retrieveMessage(1, SECONDS);
-        thirdMessageBatchRequested.await(1, SECONDS);
+        assertThat(secondmessagesRequested.getCount()).isEqualTo(1L);
+        prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+        secondmessagesRequested.await(1, SECONDS);
+        prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+        thirdmessagesRequested.await(1, SECONDS);
 
         // assert
         final ArgumentCaptor<ReceiveMessageRequest> requestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
@@ -361,29 +361,29 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void noExceptionThrownForStoppingWhenAlreadyStopped() {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_BATCHING_PROPERTIES,
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES,
                 executorService);
 
         // act
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
     }
 
     @Test
     public void cannotStartWhenRetrieverHasAlreadyStarted() {
         // arrange
-        final CountDownLatch messagesRequestedBatch = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
-                DEFAULT_BATCHING_PROPERTIES, executorService);
+        final CountDownLatch messagesRequestedLatch = new CountDownLatch(1);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
+                DEFAULT_PREFETCHING_PROPERTIES, executorService);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class))).thenAnswer((invocation -> {
-            messagesRequestedBatch.await();
+            messagesRequestedLatch.await();
             return mockFutureWithGet(new ReceiveMessageResult());
         }));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         expectedException.expect(isA(IllegalStateException.class));
-        expectedException.expectMessage("BatchingMessageRetriever is already running");
+        expectedException.expectMessage("PrefetchingMessageRetriever is already running");
 
         // act
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
     }
 
     @Test
@@ -391,18 +391,18 @@ public class BatchingMessageRetrieverTest {
         // arrange
         final CountDownLatch stopRequestedLatch = new CountDownLatch(1);
         final CountDownLatch messagesRequestedLatch = new CountDownLatch(1);
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(stopRequestedLatch);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(stopRequestedLatch);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class))).thenAnswer((invocation -> {
             messagesRequestedLatch.countDown();
             stopRequestedLatch.await();
             return mockFutureWithGet(new ReceiveMessageResult());
         }));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
         messagesRequestedLatch.await(1, SECONDS);
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
 
         // act
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
     }
 
     /**
@@ -414,93 +414,93 @@ public class BatchingMessageRetrieverTest {
         // arrange
         final CountDownLatch messagesReceivedLatch = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .maxBatchedMessages(2)
-                .desiredMinBatchedMessages(2)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .maxPrefetchedMessages(2)
+                .desiredMinPrefetchedMessages(2)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class))).thenAnswer((invocation -> {
             messagesReceivedLatch.countDown();
             return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message(), new Message()));
         }));
-        batchingMessageRetriever.start();
+        prefetchingMessageRetriever.start();
 
         // act
         messagesReceivedLatch.await(1, TimeUnit.SECONDS);
-        batchingMessageRetriever.stop();
+        prefetchingMessageRetriever.stop();
 
         // assert
         verify(amazonSqsAsync, times(1)).receiveMessageAsync(any(ReceiveMessageRequest.class));
     }
 
     /**
-     * This makes sure that if {@link BatchingProperties#desiredMinBatchedMessages} is set to zero it will not attempt to call out for more messages
+     * This makes sure that if {@link PrefetchingProperties#desiredMinPrefetchedMessages} is set to zero it will not attempt to call out for more messages
      * until there are no messages left in the retriever.
      */
     @Test
-    public void batchWithDesiredMinimumBatchMessagesAsZeroWorksAsIntended() throws InterruptedException {
+    public void prefetchWithDesiredMinimumPrefetchedMessagesAsZeroWorksAsIntended() throws InterruptedException {
         // arrange
-        final CountDownLatch secondBatchRequested = new CountDownLatch(1);
+        final CountDownLatch secondPrefetchRequested = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .maxBatchedMessages(2)
-                .desiredMinBatchedMessages(0)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .maxPrefetchedMessages(2)
+                .desiredMinPrefetchedMessages(0)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult().withMessages(new Message(), new Message())))
-                .thenAnswer(waitUntilTestCompleted(secondBatchRequested, testCompletedLatch));
+                .thenAnswer(waitUntilTestCompleted(secondPrefetchRequested, testCompletedLatch));
 
         try {
             // act
-            batchingMessageRetriever.start();
+            prefetchingMessageRetriever.start();
 
             // assert
-            batchingMessageRetriever.retrieveMessage(1, SECONDS);
+            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
             verify(amazonSqsAsync, times(1)).receiveMessageAsync(any(ReceiveMessageRequest.class));
-            batchingMessageRetriever.retrieveMessage(1, SECONDS);
-            secondBatchRequested.await(1, SECONDS);
+            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            secondPrefetchRequested.await(1, SECONDS);
             verify(amazonSqsAsync, times(2)).receiveMessageAsync(any(ReceiveMessageRequest.class));
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
     @Test
     public void exceptionThrownRetrievingMessagesDoesNotStopBackgroundThread() throws InterruptedException {
         // arrange
-        final CountDownLatch secondBatchRequested = new CountDownLatch(1);
+        final CountDownLatch secondPrefetchRequested = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final BatchingProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .maxBatchedMessages(2)
-                .desiredMinBatchedMessages(0)
+        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .maxPrefetchedMessages(2)
+                .desiredMinPrefetchedMessages(0)
                 .errorBackoffTimeInMilliseconds(0)
                 .build();
-        final BatchingMessageRetriever batchingMessageRetriever = buildRetriever(testCompletedLatch, batchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
         final Message expectedMessage = new Message();
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureThatThrows(new RuntimeException("error")))
                 .thenAnswer(answerWithMockFutureWithGet(new ReceiveMessageResult().withMessages(expectedMessage)))
-                .thenAnswer(waitUntilTestCompleted(secondBatchRequested, testCompletedLatch));
+                .thenAnswer(waitUntilTestCompleted(secondPrefetchRequested, testCompletedLatch));
 
         try {
             // act
-            batchingMessageRetriever.start();
-            final Optional<Message> message = batchingMessageRetriever.retrieveMessage(1, SECONDS);
+            prefetchingMessageRetriever.start();
+            final Optional<Message> message = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
 
             // assert
             assertThat(message).contains(expectedMessage);
         } finally {
-            batchingMessageRetriever.stop();
+            prefetchingMessageRetriever.stop();
         }
     }
 
-    private BatchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch) {
-        return buildRetriever(testCompletedLatch, DEFAULT_BATCHING_PROPERTIES);
+    private PrefetchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch) {
+        return buildRetriever(testCompletedLatch, DEFAULT_PREFETCHING_PROPERTIES);
     }
 
-    private BatchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch, final BatchingProperties batchingProperties) {
-        return new BatchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, batchingProperties, executorService) {
+    private PrefetchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch, final PrefetchingProperties prefetchingProperties) {
+        return new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, prefetchingProperties, executorService) {
             @Override
             public synchronized Future<?> stop() {
                 try {

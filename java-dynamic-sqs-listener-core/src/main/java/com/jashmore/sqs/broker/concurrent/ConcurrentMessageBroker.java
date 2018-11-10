@@ -23,7 +23,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Handles the processing of messages across a number of threads.
+ * Handles the processing of messages across a number of threads that can dynamically change during processing.
  */
 @Slf4j
 public class ConcurrentMessageBroker extends AbstractMessageBroker {
