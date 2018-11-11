@@ -2,6 +2,7 @@ package com.jashmore.sqs.retriever.prefetch;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import com.amazonaws.AbortedException;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -16,7 +17,6 @@ import java.util.Optional;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -163,26 +163,27 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                                 internalMessageQueue.size() + result.getMessages().size()
                         );
                     } catch (final InterruptedException interruptedException) {
-                        log.warn("Thread interrupted. Exiting...");
+                        log.debug("Thread interrupted. Exiting...");
                         Thread.currentThread().interrupt();
                         continue;
                     }
 
                     for (final Message message : result.getMessages()) {
                         if (Thread.currentThread().isInterrupted()) {
-                            log.warn("While placing messages on the queue the retriever was stopped");
+                            log.debug("While placing messages on the queue the retriever was stopped");
                             break;
                         }
 
                         try {
                             internalMessageQueue.put(message);
                         } catch (InterruptedException exception) {
-                            log.warn("Thread interrupted. Exiting...");
+                            log.debug("Thread interrupted. Exiting...");
                             Thread.currentThread().interrupt();
                         }
                     }
                 } catch (final Throwable throwable) {
-                    log.error("Exception thrown when retrieving messages. Backing off", throwable);
+                    log.error("Exception thrown when retrieving messages", throwable);
+
                     try {
                         Thread.sleep(properties.getErrorBackoffTimeInMilliseconds());
                     } catch (final InterruptedException interruptedException) {
@@ -205,11 +206,11 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     .withWaitTimeSeconds(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
                     .withVisibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
                     .withMaxNumberOfMessages(numberOfMessagesToObtain);
-            final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(request);
             try {
-                return receiveMessageResultFuture.get();
-            } catch (final ExecutionException executionException) {
-                throw new RuntimeException(executionException.getCause());
+                return amazonSqsAsync.receiveMessage(request);
+            } catch (final AbortedException abortedException) {
+                log.debug("Thread interrupted while trying to retrieve messages");
+                throw new InterruptedException();
             }
         }
     }

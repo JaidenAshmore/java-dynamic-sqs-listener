@@ -16,6 +16,7 @@
         <module>examples</module>
         <module>java-dynamic-sqs-listener-api</module>
         <module>java-dynamic-sqs-listener-core</module>
+        <module>java-dynamic-sqs-listener-spring-starter</module>
     </modules>
 
     <properties>
