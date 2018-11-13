@@ -38,7 +38,7 @@ public class PrefetchingProperties {
     public static final int DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS = 2000;
 
     /**
-     * The minimum number of messages that should be queued before it will stop requesting more messages.
+     * The minimum number of messages that should be queued before it will stopWithChildrenThreadsInterrupted requesting more messages.
      *
      * <p>For example if the desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10 and the current prefetched messages is 6 it will not call out to AWS
      * for more messages. However, once the current prefetched messages goes below 5 it will request more messages.

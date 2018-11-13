@@ -1,6 +1,5 @@
 package com.jashmore.sqs.broker;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -9,18 +8,21 @@ import com.jashmore.sqs.broker.AbstractMessageBroker.Controller;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class AbstractMessageBrokerTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Mock
     private ExecutorService mockExecutorService;
@@ -53,25 +55,23 @@ public class AbstractMessageBrokerTest {
     }
 
     @Test
-    public void containerThatIsStartedTwiceDoesNotPerformStartupAgain() {
+    public void containerThatIsStartedTwiceThrowsIllegalStateExceptionSecondTime() {
         // arrange
         doReturn(mockFuture).when(mockExecutorService).submit(mockController);
+        messageBroker.start();
+        expectedException.expect(IllegalStateException.class);
 
         // act
-        messageBroker.start();
         messageBroker.start();
 
         // assert
         verify(mockExecutorService, times(1)).submit(mockController);
     }
 
-    @Test
-    public void stoppingContainerWhenHasNotStartedDoesNothing() throws InterruptedException, ExecutionException {
+    @Test(expected = IllegalStateException.class)
+    public void stoppingContainerWhenHasNotStartedDoesNothing() {
         // act
-        final Future<?> stopFuture = messageBroker.stop();
-
-        // assert
-        assertThat(stopFuture.get()).isEqualTo("Not running");
+        messageBroker.stop();
     }
 
     @Test
@@ -81,7 +81,7 @@ public class AbstractMessageBrokerTest {
 
         // act
         messageBroker.start();
-        messageBroker.stop(true);
+        messageBroker.stopWithChildrenThreadsInterrupted();
 
         // assert
         verify(mockFuture).cancel(true);
