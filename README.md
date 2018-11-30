@@ -5,7 +5,7 @@
 SQS Listener implementation that is designed from the ground up to allow for easier configuration and extensibility.
 
 ## Why Dynamic SQS Listener?
-Whilst the other implementations of SQS listeners were easy to set up and provided most use cases, they don't provide the extensibility and dynamic
+While the other implementations of SQS listeners were easy to set up and provided most use cases, they don't provide the extensibility and dynamic
 requirements that are needed by some services. Therefore, the following characteristics
 were crucial components in the design of this implementation:
 

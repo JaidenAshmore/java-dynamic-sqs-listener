@@ -18,38 +18,57 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public interface MessageBroker {
     /**
-     * Start the brokerage of messages from the queue to the processor.
+     * Start the brokerage of messages from the queue to the processor in a background thread.
      *
-     * <p>This must be non-blocking and start the process on a background thread.
+     * <p>Requirements for this method include:
      *
-     * <p>If this broker has already been started then any subsequent calls to this method will do no action until {@link #stop(boolean)} has been
-     * called. Once {@link #stop(boolean)} has been called, any calls to this method should spin up a new thread and it should not be dependent on the stop
-     * finally finishing.
+     * <ul>
+     *     <li>This method must be non-blocking and return once the background thread has started.</li>
+     *     <li>If this broker has already been started when this method is called again a {@link IllegalStateException} will be thrown until a subsequent
+     *         {@link #stop()} or {@link #stopWithChildrenThreadsInterrupted()} has been called.</li>
+     *     <li>If this broker is being stopped by calling {@link #stop()} or {@link #stopWithChildrenThreadsInterrupted()}, a call to this
+     *         method should not be blocked by the previous thread and should start a new thread.</li>
+     * </ul>
+     *
+     * @throws IllegalStateException if the broker has already been started
      */
     void start();
 
     /**
-     * Request all threads that are currently listening for messages returning the future that will be resolved when that is completed.
+     * Stop the brokerage of messages from the queue to the processor, returning the future that will be resolved when that shutdown is complete.
      *
-     * <p>This returns a future that will be resolved once the broker has successfully stopped. Note that once this method returns the internal state of the
-     * message broker should be reset so that it can be started again.
+     * <p>Requirements for this method include:
      *
-     * <p>If this broker has not been started or has already been stopped, any calls to this method will do no action and a future that has already been
-     * completed will be returned.
+     * <ul>
+     *     <li>The broker background thread and any threads created by this background thread must be completed before the {@link Future} returned
+     *         is resolved.</li>
+     *     <li>The children threads processing the messages will not be interrupted and therefore will fully process the message before the {@link Future}
+     *         is resolved.</li>
+     *     <li>If this broker has not been started or has already been stopped, any calls to this method will throw an {@link IllegalStateException}.</li>
+     *     <li>The returned {@link Future} does not have any requirements for the value resolved and therefore should not be relied upon.</li>
+     * </ul>
      *
-     * @param interruptThreads whether the current threads processing the messages should be interrupted
-     * @return a future that will resolve when the message broker and any child threads have been stopped
+     * @return a future that will resolve when the message broker background thread and all child threads have been stopped/completed
+     * @throws IllegalStateException if the broker has not been started or has already stopped
      */
-    Future<?> stop(boolean interruptThreads);
+    Future<?> stop();
 
     /**
-     * Stop the message broker from processing any future messages returning the future that will be resolved when that is completed.
+     * Stop the brokerage of messages from the queue to the processor, returning the future that will be resolved when that shutdown is complete.
      *
-     * <p>This will not interrupt any currently running threads.
+     * <p>Requirements for this method include:
+     *
+     * <ul>
+     *     <li>The broker background thread and any threads created by this background thread must be completed before the {@link Future} returned
+     *         is resolved.</li>
+     *     <li>The children threads processing the messages will be interrupted and therefore may not fully complete processing the messages before the
+     *         {@link Future} is resolved.</li>
+     *     <li>If this broker has not been started or has already been stopped, any calls to this method will throw an {@link IllegalStateException}.</li>
+     *     <li>The returned {@link Future} does not have any requirements for the value resolved and therefore should not be relied upon.</li>
+     * </ul>
      *
      * @return a future that will resolve when the message broker and any child threads have been stopped
+     * @throws IllegalStateException if the broker has not been started or has already stopped
      */
-    default Future<?> stop() {
-        return stop(false);
-    }
+    Future<?> stopWithChildrenThreadsInterrupted();
 }

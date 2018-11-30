@@ -21,28 +21,36 @@ public abstract class AbstractMessageBroker implements MessageBroker {
 
     @Override
     public synchronized void start() {
-        log.debug("Starting broker");
+        log.debug("Starting Broker");
         if (controller != null) {
-            log.warn("{} is already running", this.getClass().getSimpleName());
-            return;
+            throw new IllegalStateException("Broker is already running");
         }
+
         final CompletableFuture<Object> brokerFuture = new CompletableFuture<>();
         brokerStoppedFuture = brokerFuture;
-        log.debug("Started listening");
         controller = createController(brokerFuture);
         controllerFuture = executorService.submit(controller);
     }
 
     @Override
-    public synchronized Future<?> stop(final boolean interruptThreads) {
-        log.debug("Stopping broker");
+    public synchronized Future<?> stop() {
+        return stopBroker(false);
+    }
+
+    @Override
+    public synchronized Future<?> stopWithChildrenThreadsInterrupted() {
+        return stopBroker(true);
+    }
+
+    private Future<?> stopBroker(final boolean interruptThreads) {
+        log.debug("Stopping Broker", this.getClass().getSimpleName());
         if (controller == null) {
-            log.warn("ConcurrentMessageListenerContainer is not running");
-            return CompletableFuture.completedFuture("Not running");
+            throw new IllegalStateException("Broker is not currently running");
         }
 
         controller.stopTriggered(interruptThreads);
         controllerFuture.cancel(true);
+
         final Future<?> futureToReturn = brokerStoppedFuture;
         brokerStoppedFuture = null;
         controller = null;

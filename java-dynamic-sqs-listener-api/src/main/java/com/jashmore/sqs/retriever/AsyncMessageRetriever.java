@@ -16,9 +16,12 @@ public interface AsyncMessageRetriever extends MessageRetriever {
      *
      * <ul>
      *     <li>This method must be non-blocking and return once the background thread has started.</li>
-     *     <li>Subsequent calls to this method should do nothing as the background thread has already started</li>
-     *     <li>Calls to this method after a {@link #stop()} has been initiated should not be blocked by the previous thread being stopped</li>
+     *     <li>If this retriever has already been started, any calls to this method will throw an {@link IllegalStateException}.</li>
+     *     <li>If this broker is being stopped by calling {@link #stop()}, a call to this method should <b>not</b> be blocked by the previous thread and
+     *         should start a new thread.</li>
      * </ul>
+     *
+     * @throws IllegalStateException if the retriever has already been started
      */
     void start();
 
@@ -28,12 +31,13 @@ public interface AsyncMessageRetriever extends MessageRetriever {
      * <p>Requirements for this method include:
      *
      * <ul>
-     *     <li>This method must be non-blocking and return once the background thread has been triggered to be stopped</li>
-     *     <li>Calls to this method before {@link #start()} has been called should do nothing and return a resolved future</li>
-     *     <li>Subsequent calls to this method should do nothing as the background thread has already stopped. It should return a resolved future</li>
+     *     <li>This method must be non-blocking and return once the background thread has been triggered to stop.</li>
+     *     <li>If this retriever has not been started or has already been stopped, any calls to this method will throw an {@link IllegalStateException}.</li>
+     *     <li>The returned {@link Future} does not have any requirements for the value resolved and therefore should not be relied upon.</li>
      * </ul>
      *
-     * @return future that will resolve when the background message retriever thread has stopped.
+     * @return future that will resolve when the background message retriever thread has stopped
+     * @throws IllegalStateException if the retriever has not been started or has already stopped
      */
     Future<?> stop();
 }
