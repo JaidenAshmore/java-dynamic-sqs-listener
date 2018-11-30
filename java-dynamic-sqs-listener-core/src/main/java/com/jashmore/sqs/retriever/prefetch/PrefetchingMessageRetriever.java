@@ -2,6 +2,8 @@ package com.jashmore.sqs.retriever.prefetch;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import com.google.common.base.Preconditions;
+
 import com.amazonaws.AbortedException;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.Message;
@@ -9,7 +11,6 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
-import com.jashmore.sqs.util.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,10 +73,10 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                                        final QueueProperties queueProperties,
                                        final PrefetchingProperties properties,
                                        final ExecutorService executorService) {
-        Preconditions.checkArgumentNotNull(amazonSqsAsync, "amazonSqsAsync");
-        Preconditions.checkArgumentNotNull(queueProperties, "queueProperties");
-        Preconditions.checkArgumentNotNull(properties, "properties");
-        Preconditions.checkArgumentNotNull(executorService, "executor");
+        Preconditions.checkNotNull(amazonSqsAsync, "amazonSqsAsync");
+        Preconditions.checkNotNull(queueProperties, "queueProperties");
+        Preconditions.checkNotNull(properties, "properties");
+        Preconditions.checkNotNull(executorService, "executor");
 
         this.amazonSqsAsync = amazonSqsAsync;
         this.queueProperties = queueProperties;
@@ -134,7 +135,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
     @Override
     public Optional<Message> retrieveMessage(final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
-        Preconditions.checkArgumentNotNull(timeUnit, "timeUnit");
+        Preconditions.checkNotNull(timeUnit, "timeUnit");
         Preconditions.checkArgument(timeout >= 0, "timeout should be greater than or equal to zero");
 
         log.trace("Retrieving message");

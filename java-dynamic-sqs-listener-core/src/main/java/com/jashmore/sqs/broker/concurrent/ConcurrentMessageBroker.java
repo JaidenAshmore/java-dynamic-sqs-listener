@@ -4,6 +4,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.AbstractMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
@@ -11,7 +13,6 @@ import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.ResizableSemaphore;
-import com.jashmore.sqs.util.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +81,7 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
         private boolean interruptThreads;
 
         @Override
-        @SuppressFBWarnings({"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
+        @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
         public void run() {
             boolean shouldShutdown = false;
             while (!shouldShutdown) {

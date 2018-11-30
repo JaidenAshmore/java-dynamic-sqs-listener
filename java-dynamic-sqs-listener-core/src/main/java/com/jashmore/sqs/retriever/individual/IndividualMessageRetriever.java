@@ -5,6 +5,8 @@ import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.base.Preconditions;
+
 import com.amazonaws.annotation.ThreadSafe;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.Message;
@@ -12,7 +14,6 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.util.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,7 +61,7 @@ public class IndividualMessageRetriever implements MessageRetriever {
     @Override
     public Optional<Message> retrieveMessage(@Min(0) final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
         Preconditions.checkArgument(timeout >= 0, "timeout should be greater than or equal to zero");
-        Preconditions.checkArgumentNotNull(timeUnit, "timeUnit");
+        Preconditions.checkNotNull(timeUnit, "timeUnit");
 
         final int secondsToWait = toIntExact(timeUnit.toSeconds(timeout));
         return retrieveMessage(secondsToWait);

@@ -1,6 +1,6 @@
-package com.jashmore.sqs.argument.heartbeat;
+package com.jashmore.sqs.argument.visibility;
 
-import static com.jashmore.sqs.argument.heartbeat.Heartbeat.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS;
+import static com.jashmore.sqs.argument.visibility.VisibilityExtender.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +18,7 @@ import org.mockito.junit.MockitoRule;
 
 import java.util.concurrent.Future;
 
-public class DefaultHeartbeatTest {
+public class DefaultVisibilityExtenderTest {
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties
             .builder()
             .queueUrl("queueUrl")
@@ -37,55 +37,55 @@ public class DefaultHeartbeatTest {
     private final Message message = new Message()
             .withReceiptHandle(RECEIPT_HANDLE);
 
-    private DefaultHeartbeat defaultHeartbeat;
+    private DefaultVisibilityExtender defaultVisibilityExtender;
 
     @Before
     public void setUp() {
-        defaultHeartbeat = new DefaultHeartbeat(amazonSqsAsync, QUEUE_PROPERTIES, message);
+        defaultVisibilityExtender = new DefaultVisibilityExtender(amazonSqsAsync, QUEUE_PROPERTIES, message);
     }
 
     @Test
-    public void defaultHeartbeatShouldIncreaseVisibilityByDefaultAmount() {
+    public void defaultExtendShouldIncreaseVisibilityByDefaultAmount() {
         // act
-        defaultHeartbeat.beat();
+        defaultVisibilityExtender.extend();
 
         // assert
         verify(amazonSqsAsync).changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS);
     }
 
     @Test
-    public void heartbeatShouldIncreaseVisibilityByAmountSet() {
+    public void extendShouldIncreaseVisibilityByAmountSet() {
         // act
-        defaultHeartbeat.beat(10);
+        defaultVisibilityExtender.extend(10);
 
         // assert
         verify(amazonSqsAsync).changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, 10);
     }
 
     @Test
-    public void defaultBeatShouldReturnFutureFromAmazon() {
+    public void defaultExtendShouldReturnFutureFromAmazon() {
         // arrange
         when(amazonSqsAsync.changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS))
                 .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
-        final Future<?> beatFuture = defaultHeartbeat.beat();
+        final Future<?> extendFuture = defaultVisibilityExtender.extend();
 
         // assert
-        assertThat(beatFuture).isEqualTo(changeMessageVisibilityResultFuture);
+        assertThat(extendFuture).isEqualTo(changeMessageVisibilityResultFuture);
     }
 
 
     @Test
-    public void beatShouldReturnFutureFromAmazon() {
+    public void extendShouldReturnFutureFromAmazon() {
         // arrange
         when(amazonSqsAsync.changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, 10))
                 .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
-        final Future<?> beatFuture = defaultHeartbeat.beat(10);
+        final Future<?> extendFuture = defaultVisibilityExtender.extend(10);
 
         // assert
-        assertThat(beatFuture).isEqualTo(changeMessageVisibilityResultFuture);
+        assertThat(extendFuture).isEqualTo(changeMessageVisibilityResultFuture);
     }
 }

@@ -2,6 +2,8 @@ package com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.ImmutableMap;
+
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +12,6 @@ import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
-import com.jashmore.sqs.util.Immutables;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class DefaultArgumentResolverServiceTest {
     public void shouldBeAbleToResolveMethodArgumentsWithDefaultResolvers() throws Exception {
         // arrange
         final Method method = DefaultArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class);
-        final Map<String, String> payload = Immutables.immutableMap("key", "value");
+        final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = new Message()
                 .withBody(objectMapper.writeValueAsString(payload))
                 .withMessageId("messageId");
