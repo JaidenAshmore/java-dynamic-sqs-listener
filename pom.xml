@@ -52,6 +52,7 @@
                         <arg>-Xlint:all</arg>
                         <arg>-Werror</arg>
                         <arg>-Xlint:-processing</arg>
+                        <arg>-Xlint:-serial</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
@@ -120,6 +121,7 @@
                     <failOnError>true</failOnError>
                     <threshold>Low</threshold>
                     <effort>Max</effort>
+                    <excludeFilterFile>configuration/findbugs/bugsExcludeFilter.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
@@ -277,6 +279,12 @@
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
                 <version>${google.findbugs.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

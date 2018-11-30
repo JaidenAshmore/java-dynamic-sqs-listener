@@ -1,5 +1,11 @@
 package com.jashmore.sqs.argument.payload.mapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.core.Is.isA;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
+
 import com.amazonaws.services.sqs.model.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -11,12 +17,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.Is.isA;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
 
 public class JacksonPayloadMapperTest {
     @Rule
@@ -42,21 +42,21 @@ public class JacksonPayloadMapperTest {
         message.setBody("body");
 
         // act
-        final Object argument = payloadMapper.cast(message, String.class);
+        final Object argument = payloadMapper.map(message, String.class);
 
         // assert
         assertThat(argument).isEqualTo("body");
     }
 
     @Test
-    public void payloadContainerPojoCanBeCastToObject() throws IOException {
+    public void payloadContainerPojoCanBeMappedToObject() throws IOException {
         // arrange
         final Message message = new Message();
         final Pojo parsedObject = new Pojo("test");
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenReturn(parsedObject);
 
         // act
-        final Object argument = payloadMapper.cast(message, Pojo.class);
+        final Object argument = payloadMapper.map(message, Pojo.class);
 
         // assert
         assertThat(argument).isEqualTo(parsedObject);
@@ -71,7 +71,7 @@ public class JacksonPayloadMapperTest {
         expectedException.expectCause(isA(IOException.class));
 
         // act
-        payloadMapper.cast(message, Pojo.class);
+        payloadMapper.map(message, Pojo.class);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -82,6 +82,7 @@ public class JacksonPayloadMapperTest {
             this.field = field;
         }
 
+        @SuppressWarnings("unused")
         public String getField() {
             return field;
         }

@@ -1,0 +1,7 @@
+<FindBugsFilter>
+    <!-- Excludes error due to not including a serialVersionUID as these are being placed on classes like RuntimeExceptions and we are not ever
+         serializing this. -->
+    <Match>
+        <Bug pattern="SE_NO_SERIALVERSIONID" />
+    </Match>
+</FindBugsFilter>

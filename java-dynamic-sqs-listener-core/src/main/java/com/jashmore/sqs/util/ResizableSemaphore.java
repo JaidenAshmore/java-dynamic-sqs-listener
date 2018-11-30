@@ -9,8 +9,6 @@ import java.util.concurrent.Semaphore;
  */
 @Getter
 public class ResizableSemaphore extends Semaphore {
-    private static final long serialVersionUID = 1L;
-
     private int maximumPermits;
 
     public ResizableSemaphore(final int permits) {

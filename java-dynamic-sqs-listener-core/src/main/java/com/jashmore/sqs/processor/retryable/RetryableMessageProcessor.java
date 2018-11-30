@@ -1,9 +1,10 @@
 package com.jashmore.sqs.processor.retryable;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.util.annotations.VisibleForTesting;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +50,13 @@ public class RetryableMessageProcessor implements MessageProcessor {
         }
     }
 
+    /**
+     * Sleep the thread for a certain period of time so that this thread is not constantly spinning and throwing errors.
+     *
+     * <p>Visible for testing so the backoff/sleep can be used to test concurrency.
+     *
+     * @throws InterruptedException if the thread was interrupted while sleeping
+     */
     @VisibleForTesting
     void backoff() throws InterruptedException {
         Thread.sleep(properties.getRetryDelayInMs());

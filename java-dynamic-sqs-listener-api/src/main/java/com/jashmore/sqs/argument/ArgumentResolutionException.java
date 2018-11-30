@@ -7,8 +7,6 @@ package com.jashmore.sqs.argument;
  * you have a Java Bean being built from the message body but the message is not in the correct format.
  */
 public class ArgumentResolutionException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
-
     public ArgumentResolutionException(final String message) {
         super(message);
     }

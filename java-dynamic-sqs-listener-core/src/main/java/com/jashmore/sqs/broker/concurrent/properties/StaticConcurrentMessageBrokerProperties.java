@@ -1,6 +1,7 @@
 package com.jashmore.sqs.broker.concurrent.properties;
 
-import com.jashmore.sqs.util.Preconditions;
+import com.google.common.base.Preconditions;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

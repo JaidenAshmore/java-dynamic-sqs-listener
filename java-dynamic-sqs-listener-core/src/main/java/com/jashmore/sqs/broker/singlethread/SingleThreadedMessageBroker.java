@@ -1,12 +1,13 @@
 package com.jashmore.sqs.broker.singlethread;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.AbstractMessageBroker;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.util.annotations.VisibleForTesting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +59,7 @@ public class SingleThreadedMessageBroker extends AbstractMessageBroker {
      */
     @Slf4j
     @RequiredArgsConstructor
-    static class SingleThreadMessageController  implements AbstractMessageBroker.Controller {
+    static class SingleThreadMessageController implements AbstractMessageBroker.Controller {
         /**
          * The amount of time that the thread should be slept if there was an error retrieving messages for processing.
          */

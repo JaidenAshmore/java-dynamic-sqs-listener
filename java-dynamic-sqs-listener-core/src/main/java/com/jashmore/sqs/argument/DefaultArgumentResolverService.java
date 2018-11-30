@@ -1,12 +1,13 @@
 package com.jashmore.sqs.argument;
 
+import com.google.common.collect.ImmutableSet;
+
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.argument.acknowledge.AcknowledgeArgumentResolver;
-import com.jashmore.sqs.argument.heartbeat.HeartbeatArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
-import com.jashmore.sqs.util.Immutables;
+import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import lombok.experimental.Delegate;
 
 import java.util.Set;
@@ -23,11 +24,11 @@ public class DefaultArgumentResolverService implements ArgumentResolverService {
 
     public DefaultArgumentResolverService(final PayloadMapper payloadMapper,
                                           final AmazonSQSAsync amazonSqsAsync) {
-        final Set<ArgumentResolver> argumentResolvers = Immutables.immutableSet(
+        final Set<ArgumentResolver> argumentResolvers = ImmutableSet.of(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
                 new AcknowledgeArgumentResolver(amazonSqsAsync),
-                new HeartbeatArgumentResolver(amazonSqsAsync)
+                new VisibilityExtenderArgumentResolver(amazonSqsAsync)
         );
         this.delegatingArgumentResolverService = new DelegatingArgumentResolverService(argumentResolvers);
     }

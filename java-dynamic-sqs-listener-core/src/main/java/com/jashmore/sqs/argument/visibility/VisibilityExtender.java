@@ -1,14 +1,13 @@
-package com.jashmore.sqs.argument.heartbeat;
+package com.jashmore.sqs.argument.visibility;
 
 import java.util.concurrent.Future;
 
 /**
- * Heartbeat used to extend the visibility of a message that is being processed in the scenario that the processing of a message
- * takes a long time.
+ * Used to extend the visibility of a message that is being processed in the scenario that the processing of a message takes a long time.
  */
-public interface Heartbeat {
+public interface VisibilityExtender {
     /**
-     * The default amount of time that the message will be extended in visibility of {@link #beat()} is called.
+     * The default amount of time that the message will be extended in visibility of {@link #extend()} is called.
      */
     int DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS = 120;
 
@@ -21,7 +20,7 @@ public interface Heartbeat {
      *
      * @return a future for when the beat has been acknowledged
      */
-    Future<?> beat();
+    Future<?> extend();
 
     /**
      * Extend the visibility of a message that is being processed so that it will not go back for reprocessing by a given amount of time in seconds.
@@ -31,5 +30,5 @@ public interface Heartbeat {
      *
      * @return a future for when the beat has been acknowledged
      */
-    Future<?> beat(int visibilityExtensionInSeconds);
+    Future<?> extend(int visibilityExtensionInSeconds);
 }

@@ -1,8 +1,8 @@
 package com.jashmore.sqs.retriever.prefetch;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-import static com.jashmore.sqs.util.Preconditions.checkArgument;
 
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import lombok.Builder;

@@ -69,7 +69,7 @@ public class PayloadArgumentResolverTest {
         // arrange
         final Parameter stringParameter = getParameter(1);
         final Message message = new Message();
-        when(payloadMapper.cast(message, Pojo.class)).thenThrow(new PayloadMappingException("Error"));
+        when(payloadMapper.map(message, Pojo.class)).thenThrow(new PayloadMappingException("Error"));
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectCause(isA(PayloadMappingException.class));
 
@@ -82,7 +82,7 @@ public class PayloadArgumentResolverTest {
         final Parameter parameter = getParameter(1);
         final Message message = new Message();
         final Pojo parsedObject = new Pojo("test");
-        when(payloadMapper.cast(message, Pojo.class)).thenReturn(parsedObject);
+        when(payloadMapper.map(message, Pojo.class)).thenReturn(parsedObject);
 
         // act
         final Object argument = payloadArgumentResolver.resolveArgumentForParameter(queueProperties, parameter, message);

@@ -31,7 +31,7 @@ public class PayloadArgumentResolver implements ArgumentResolver {
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
         try {
-            return payloadMapper.cast(message, parameter.getType());
+            return payloadMapper.map(message, parameter.getType());
         } catch (final PayloadMappingException payloadMappingException) {
             throw new ArgumentResolutionException(payloadMappingException);
         }

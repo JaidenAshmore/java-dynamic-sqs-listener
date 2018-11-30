@@ -7,9 +7,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
+
 import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.util.Immutables;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -31,7 +32,7 @@ public class DelegatingArgumentResolverServiceTest {
         // arrange
         final ArgumentResolver resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(any(Parameter.class))).thenReturn(false);
-        final Set<ArgumentResolver> resolvers = Immutables.immutableSet(resolver);
+        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectMessage("No ArgumentResolver found that can process this parameter");
 
@@ -46,7 +47,7 @@ public class DelegatingArgumentResolverServiceTest {
         when(resolver.canResolveParameter(any(Parameter.class))).thenReturn(true);
         when(resolver.resolveArgumentForParameter(any(QueueProperties.class), any(Parameter.class), any(Message.class)))
                 .thenThrow(new RuntimeException("error"));
-        final Set<ArgumentResolver> resolvers = Immutables.immutableSet(resolver);
+        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectCause(isA(RuntimeException.class));
 
@@ -62,7 +63,7 @@ public class DelegatingArgumentResolverServiceTest {
         final ArgumentResolutionException exception = new ArgumentResolutionException("error");
         when(resolver.resolveArgumentForParameter(any(QueueProperties.class), any(Parameter.class), any(Message.class)))
                 .thenThrow(exception);
-        final Set<ArgumentResolver> resolvers = Immutables.immutableSet(resolver);
+        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expect(is(exception));
 
@@ -78,7 +79,7 @@ public class DelegatingArgumentResolverServiceTest {
         final Object argument = new Object();
         when(resolver.resolveArgumentForParameter(any(QueueProperties.class), any(Parameter.class), any(Message.class)))
                 .thenReturn(argument);
-        final Set<ArgumentResolver> resolvers = Immutables.immutableSet(resolver);
+        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
 
         // act
         final Object actualArgument = new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);

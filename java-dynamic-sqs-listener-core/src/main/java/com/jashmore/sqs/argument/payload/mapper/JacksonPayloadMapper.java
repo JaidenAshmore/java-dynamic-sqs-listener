@@ -14,7 +14,7 @@ public class JacksonPayloadMapper implements PayloadMapper {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Object cast(Message message, Class<?> clazz) throws PayloadMappingException {
+    public Object map(Message message, Class<?> clazz) throws PayloadMappingException {
         if (clazz.equals(String.class)) {
             return message.getBody();
         }
