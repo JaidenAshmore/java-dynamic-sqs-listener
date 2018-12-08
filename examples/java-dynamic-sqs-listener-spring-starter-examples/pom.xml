@@ -11,17 +11,25 @@
 
     <artifactId>java-dynamic-sqs-listener-spring-starter-examples</artifactId>
 
+
+    <name>Java Dynamic SQS Listener - Spring Starter - Examples</name>
+    <description>Contains examples for using the Spring Starter implementation of the framework.</description>
+
+    <properties>
+        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>1.5.2.RELEASE</version>
+            <version>${spring.boot.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>1.5.2.RELEASE</version>
+            <version>${spring.boot.version}</version>
         </dependency>
 
         <dependency>
@@ -41,14 +49,20 @@
             <artifactId>elasticmq-rest-sqs_2.11</artifactId>
             <version>0.13.9</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>local-amazon-sqs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.atlassian.micros.contrib</groupId>
-                <artifactId>micros-spring-boot-bom</artifactId>
-                <version>${micros.spring.boot.starter.version}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -80,7 +94,7 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <configuration>
-                        <mainClass>com.atlassian.cst.starters.amazon.sqs.example.Application</mainClass>
+                        <mainClass>com.jashmore.cst.starters.amazon.sqs.example.Application</mainClass>
                     </configuration>
                     <executions>
                         <execution>

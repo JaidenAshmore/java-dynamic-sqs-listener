@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>java-dynamic-sqs-listener-parent</artifactId>
+        <groupId>com.jashmore</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>java-dynamic-sqs-listener-spring-starter-api</artifactId>
+
+    <name>Java Dynamic SQS Listener - Spring Starter API</name>
+    <description>API for the Spring Starter that will allow for definitions and extension of the Spring Starter.</description>
+
+    <properties>
+        <findbugs.config.location>../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>

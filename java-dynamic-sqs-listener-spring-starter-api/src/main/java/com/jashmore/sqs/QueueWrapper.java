@@ -1,19 +1,21 @@
 package com.jashmore.sqs;
 
+import com.jashmore.sqs.container.MessageListenerContainer;
+
 import java.lang.reflect.Method;
 
 /**
  * Processor used to analyse methods in the Spring Boot app and determine if the method should be included in the
  * messaging framework.
  */
-public interface QueueAnnotationProcessor {
+public interface QueueWrapper {
     /**
      * Determine whether the method should be used to handle listening to queues.
      *
      * @param method the method to check against
      * @return whether this method should be wrapped in a queue listener
      */
-    boolean canHandleMethod(Method method);
+    boolean canWrapMethod(Method method);
 
     /**
      * Wrap a method with a {@link MessageListenerContainer} that will handle the messages being processed.
