@@ -168,26 +168,6 @@ public class IndividualMessageRetrieverTest {
     }
 
     @Test
-    public void retrievingMessageNowRequestsWithZeroWaitTime() throws ExecutionException, InterruptedException {
-        final Message message = new Message();
-        when(receiveMessageResultFuture.get()).thenReturn(new ReceiveMessageResult().withMessages(message));
-        when(amazonSqs.receiveMessageAsync(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResultFuture);
-        final IndividualMessageRetriever retriever = new IndividualMessageRetriever(
-                amazonSqs, QUEUE_PROPERTIES, IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build());
-
-        // act
-        final Optional<Message> optionalMessage = retriever.retrieveMessageNow();
-
-        // assert
-        assertThat(optionalMessage).contains(message);
-        verify(amazonSqs).receiveMessageAsync(new ReceiveMessageRequest(QUEUE_URL)
-                .withMaxNumberOfMessages(1)
-                .withWaitTimeSeconds(0)
-                .withVisibilityTimeout(5)
-        );
-    }
-
-    @Test
     public void retrievingMessageWithNoTimeoutKeepsCallingUntilRetrieved() throws ExecutionException, InterruptedException {
         final Message message = new Message();
         when(receiveMessageResultFuture.get())

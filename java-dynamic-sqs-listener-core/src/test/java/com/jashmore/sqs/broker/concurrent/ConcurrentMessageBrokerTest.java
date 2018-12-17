@@ -21,7 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -48,8 +47,8 @@ public class ConcurrentMessageBrokerTest {
     @Test
     public void shouldBeAbleToRunMultipleThreadsConcurrentlyForProcessingMessages() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
-        when(messageRetriever.retrieveMessage(any(Long.class), any(TimeUnit.class)))
-                .thenReturn(Optional.of(new Message()));
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(new Message());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -78,8 +77,8 @@ public class ConcurrentMessageBrokerTest {
     @Test
     public void noPermitsWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
-        when(messageRetriever.retrieveMessage(any(Long.class), any(TimeUnit.class)))
-                .thenReturn(Optional.of(new Message()));
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(new Message());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -102,8 +101,8 @@ public class ConcurrentMessageBrokerTest {
     @Test
     public void allPermitsAcquiredWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
-        when(messageRetriever.retrieveMessage(any(Long.class), any(TimeUnit.class)))
-                .thenReturn(Optional.of(new Message()));
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(new Message());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -121,41 +120,8 @@ public class ConcurrentMessageBrokerTest {
         Thread.sleep(100 * 3);
 
         // assert
-        verify(messageRetriever, times(1)).retrieveMessage(anyLong(), any(TimeUnit.class));
+        verify(messageRetriever, times(1)).retrieveMessage();
         verify(concurrentMessageBrokerProperties, times(4)).getConcurrencyLevel();
-
-        // cleanup
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
-        completableFuture.get(1, SECONDS);
-    }
-
-    @Test
-    public void noMessagesRetrievedWillStillAllowMoreMessagesToRetrieved() throws InterruptedException, ExecutionException, TimeoutException {
-        // arrange
-        final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
-                messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            messageProcessedLatch.countDown();
-            testFinishedLatch.await(1, SECONDS);
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage(anyLong(), any(TimeUnit.class)))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(new Message()));
-
-        // act
-        final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
-        messageProcessedLatch.await(1, SECONDS);
-
-        // assert
-        verify(messageRetriever, times(2)).retrieveMessage(anyLong(), any(TimeUnit.class));
 
         // cleanup
         controllerFuture.cancel(true);
@@ -179,16 +145,16 @@ public class ConcurrentMessageBrokerTest {
             testFinishedLatch.await(1, SECONDS);
             return null;
         }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage(anyLong(), any(TimeUnit.class)))
+        when(messageRetriever.retrieveMessage())
                 .thenThrow(new RuntimeException("error"))
-                .thenReturn(Optional.of(new Message()));
+                .thenReturn(new Message());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
         messageProcessedLatch.await(1, SECONDS);
 
         // assert
-        verify(messageRetriever, times(2)).retrieveMessage(anyLong(), any(TimeUnit.class));
+        verify(messageRetriever, times(2)).retrieveMessage();
 
         // cleanup
         controllerFuture.cancel(true);
@@ -219,16 +185,16 @@ public class ConcurrentMessageBrokerTest {
 
             return null;
         }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage(anyLong(), any(TimeUnit.class)))
-                .thenReturn(Optional.of(new Message()))
-                .thenReturn(Optional.of(new Message()));
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(new Message())
+                .thenReturn(new Message());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
         messageProcessedLatch.await(1, SECONDS);
 
         // assert
-        verify(messageRetriever, times(2)).retrieveMessage(anyLong(), any(TimeUnit.class));
+        verify(messageRetriever, times(2)).retrieveMessage();
 
         // cleanup
         controllerFuture.cancel(true);
@@ -255,8 +221,8 @@ public class ConcurrentMessageBrokerTest {
             messageProcessed.set(true);
             return null;
         }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage(anyLong(), any(TimeUnit.class)))
-                .thenReturn(Optional.of(new Message()));
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(new Message());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);

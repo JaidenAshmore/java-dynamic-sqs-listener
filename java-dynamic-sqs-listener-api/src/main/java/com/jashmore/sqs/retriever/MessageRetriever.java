@@ -22,16 +22,6 @@ import javax.validation.constraints.NotNull;
 @ThreadSafe
 public interface MessageRetriever {
     /**
-     * Retrieve a message from the queue now if there are any available.
-     *
-     * <p>This will not keep waiting until a message is placed onto the queue.
-     *
-     * @return the optional message obtained from the queue
-     * @throws InterruptedException if the thread was interrupted while waiting for a message
-     */
-    Optional<Message> retrieveMessageNow() throws InterruptedException;
-
-    /**
      * Retrieve a single message from the queue and if there are no messages currently in the queue it will keep polling until a message eventually is
      * retrieved.
      *

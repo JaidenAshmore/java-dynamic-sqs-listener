@@ -39,11 +39,6 @@ public class IndividualMessageRetriever implements MessageRetriever {
     private final IndividualMessageRetrieverProperties properties;
 
     @Override
-    public Optional<Message> retrieveMessageNow() throws InterruptedException {
-        return retrieveMessage(0, MILLISECONDS);
-    }
-
-    @Override
     public Message retrieveMessage() throws InterruptedException {
         Optional<Message> optionalMessage = Optional.empty();
         while (!optionalMessage.isPresent()) {
