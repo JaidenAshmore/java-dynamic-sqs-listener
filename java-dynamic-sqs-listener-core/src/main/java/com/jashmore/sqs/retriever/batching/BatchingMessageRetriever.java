@@ -10,20 +10,17 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 /**
  * This implementation of the {@link MessageRetriever} will group requests for messages into batches to reduce the number of times that messages are requested
@@ -41,7 +38,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private final BatchingMessageRetrieverProperties properties;
 
     private final AtomicInteger numberWaitingForMessages = new AtomicInteger();
-    private final BlockingQueue<Message> messagesDownloaded = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Message> messagesDownloaded = new SynchronousQueue<>();
     private final Object shouldObtainMessagesLock = new Object();
 
     private Future<?> backgroundThreadFuture;
@@ -72,37 +69,11 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
 
     @Override
     public Message retrieveMessage() throws InterruptedException {
-        log.trace("Retrieving message");
-        // Attempts to grab a message from the queue. This could happen if a call to retrieve a message timed out before it could take it from the queue
-        final Message messageAlreadyInQueue = messagesDownloaded.poll();
-        if (messageAlreadyInQueue != null) {
-            return messageAlreadyInQueue;
-        }
-
         try {
             incrementWaitingCountAndNotify();
 
-            log.trace("Waiting for messager");
+            log.trace("Waiting for message");
             return messagesDownloaded.take();
-        } finally {
-            numberWaitingForMessages.decrementAndGet();
-        }
-    }
-
-    @Override
-    public Optional<Message> retrieveMessage(@Min(0) final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
-        // Attempts to grab a message from the queue. This could happen if a call to retrieve a message timed out before it could take it from the queue
-        final Message messageAlreadyInQueue = messagesDownloaded.poll();
-        if (messageAlreadyInQueue != null) {
-            return Optional.of(messageAlreadyInQueue);
-        }
-
-        try {
-            log.info("Obtaining lock for incrementing number of messages");
-            incrementWaitingCountAndNotify();
-            log.info("Waiting for message to be obtained");
-
-            return Optional.ofNullable(messagesDownloaded.poll(timeout, timeUnit));
         } finally {
             numberWaitingForMessages.decrementAndGet();
         }
@@ -135,10 +106,20 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     class BackgroundBatchingMessageRetriever implements Runnable {
         private final CompletableFuture<Object> completedFuture;
 
+        /**
+         * UW_UNCOND_WAIT has been specifically ignored for this method as we are happy to wait another polling period to obtain messages. If it is deemed
+         * that this is not appropriate (the polling period is very large), we can take another look at this.
+         *
+         * <p>The reason that it isn't easy to put the check for the {@link #numberWaitingForMessages} is just because they have the message doesn't mean
+         * they have gone into the finally block to decrease this number so even though all consumers are fine it seems like we can run the retrieval code
+         * again.
+         */
+        @SuppressFBWarnings({"UW_UNCOND_WAIT"})
         @Override
         public void run() {
             log.debug("Started background thread");
             while (true) {
+                final int numberOfMessagesToObtain;
                 synchronized (shouldObtainMessagesLock) {
                     try {
                         shouldObtainMessagesLock.wait(properties.getMessageRetrievalPollingPeriodInMs());
@@ -146,25 +127,32 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                         log.debug("Thread interrupted while waiting for messages");
                         break;
                     }
-                    final int numberOfMessagesToObtain = Math.min(numberWaitingForMessages.get(), AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
+                    numberOfMessagesToObtain = Math.min(numberWaitingForMessages.get(), AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
                     log.info("Requesting {} messages", numberOfMessagesToObtain);
+                }
 
-                    if (numberOfMessagesToObtain == 0) {
-                        // We don't want to go request out if there are no messages to retrieve
-                        continue;
-                    }
+                if (numberOfMessagesToObtain == 0) {
+                    // We don't want to go request out if there are no messages to retrieve
+                    continue;
+                }
 
+                try {
+                    final ReceiveMessageResult receiveMessageResult = amazonSqsAsync.receiveMessage(
+                            new ReceiveMessageRequest(queueProperties.getQueueUrl())
+                                    .withVisibilityTimeout(properties.getVisibilityTimeoutInSeconds())
+                                    .withMaxNumberOfMessages(numberOfMessagesToObtain)
+                                    .withWaitTimeSeconds(0)
+                    );
                     try {
-                        final ReceiveMessageResult receiveMessageResult = amazonSqsAsync.receiveMessage(
-                                new ReceiveMessageRequest(queueProperties.getQueueUrl())
-                                        .withVisibilityTimeout(properties.getVisibilityTimeoutInSeconds())
-                                        .withMaxNumberOfMessages(numberOfMessagesToObtain)
-                                        .withWaitTimeSeconds(0)
-                        );
-                        messagesDownloaded.addAll(receiveMessageResult.getMessages());
-                    } catch (final Throwable throwable) {
-                        log.error("Error thrown trying to obtain messages", throwable);
+                        for (final Message message : receiveMessageResult.getMessages()) {
+                            messagesDownloaded.put(message);
+                        }
+                    } catch (InterruptedException interruptedException) {
+                        log.debug("Thread interrupted while placing messages on internal queue");
+                        break;
                     }
+                } catch (final Throwable throwable) {
+                    log.error("Error thrown trying to obtain messages", throwable);
                 }
             }
             completedFuture.complete("Stopped");

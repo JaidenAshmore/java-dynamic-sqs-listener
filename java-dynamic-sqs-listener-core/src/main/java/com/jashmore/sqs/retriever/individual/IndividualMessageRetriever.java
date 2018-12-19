@@ -40,64 +40,28 @@ public class IndividualMessageRetriever implements MessageRetriever {
 
     @Override
     public Message retrieveMessage() throws InterruptedException {
-        Optional<Message> optionalMessage = Optional.empty();
-        while (!optionalMessage.isPresent()) {
-            optionalMessage = retrieveMessage(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS, SECONDS);
-        }
+        final Message message;
+        while (true) {
+            final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(generateReceiveMessageRequest());
 
-        return optionalMessage.get();
-    }
-
-    /**
-     * As the {@link ReceiveMessageRequest#waitTimeSeconds} is to seconds the timeout for this method will be to the closest second and therefore milliseconds
-     * will be ignored. The timeout also doesn't take into account latency for the request so the actual wait time will not perfectly align with what is
-     * requested but will be close.
-     */
-    @Override
-    public Optional<Message> retrieveMessage(@Min(0) final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
-        Preconditions.checkArgument(timeout >= 0, "timeout should be greater than or equal to zero");
-        Preconditions.checkNotNull(timeUnit, "timeUnit");
-
-        final int secondsToWait = toIntExact(timeUnit.toSeconds(timeout));
-        return retrieveMessage(secondsToWait);
-    }
-
-    /**
-     * Wait the total provided seconds to receive a message from a queue.
-     *
-     * <p>As {@link ReceiveMessageRequest#waitTimeSeconds} has a maximum value multiple calls will be made be made until the total time has elapsed.
-     *
-     * @param totalSecondsToWait the total number of seconds to wait for the message
-     * @return the message if it was successfully received or an {@link Optional#empty()} if no message was received within the period
-     * @throws InterruptedException if the thread was interrupted while waiting for the message
-     */
-    private Optional<Message> retrieveMessage(final int totalSecondsToWait) throws InterruptedException {
-        final int waitTimeInSecondsForThisRequest = Math.min(totalSecondsToWait, MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
-
-        final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(
-                generateReceiveMessageRequest(waitTimeInSecondsForThisRequest)
-        );
-
-        try {
-            final ReceiveMessageResult receiveMessageResult = receiveMessageResultFuture.get();
-            if (!receiveMessageResult.getMessages().isEmpty()) {
-                return Optional.of(receiveMessageResult.getMessages().get(0));
+            try {
+                final ReceiveMessageResult receiveMessageResult = receiveMessageResultFuture.get();
+                if (!receiveMessageResult.getMessages().isEmpty()) {
+                    message = receiveMessageResult.getMessages().get(0);
+                    break;
+                }
+            } catch (final ExecutionException executionException) {
+                throw new RuntimeException("Exception retrieving message", executionException.getCause());
             }
-        } catch (final ExecutionException executionException) {
-            throw new RuntimeException("Exception retrieving message", executionException.getCause());
         }
 
-        final int newSecondsToWait = totalSecondsToWait - waitTimeInSecondsForThisRequest;
-        if (newSecondsToWait <= 0) {
-            return Optional.empty();
-        }
-        return retrieveMessage(newSecondsToWait);
+        return message;
     }
 
-    private ReceiveMessageRequest generateReceiveMessageRequest(final int waitTimeInSeconds) {
+    private ReceiveMessageRequest generateReceiveMessageRequest() {
         return new ReceiveMessageRequest(queueProperties.getQueueUrl())
                 .withMaxNumberOfMessages(1)
-                .withWaitTimeSeconds(waitTimeInSeconds)
+                .withWaitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .withVisibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds());
     }
 }

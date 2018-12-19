@@ -15,6 +15,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,9 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 public class BatchingMessageRetrieverTest {
     private static final String QUEUE_URL = "queueUrl";
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
@@ -209,7 +209,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void consumerThatTimesOutBeforeMessageCanBeGivenToConsumerWillBeOnQueueForInstantRetrievalFromRetrieveMessage() throws Exception {
+    public void consumerThatIsInterruptedWhileMessageIsBeingDownloadedWillPlaceMessageOnAQueueForInstantRetrievalNextTime() throws Exception {
         // arrange
         final BatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().build();
         final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
@@ -221,16 +221,18 @@ public class BatchingMessageRetrieverTest {
         when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
             receivedMessageLatch.countDown();
             consumerTimedOutLatch.await();
+            log.info("Can return messages");
             return new ReceiveMessageResult()
                     .withMessages(message);
         });
-        requestMessageWithTimeoutLatch(batchingMessageRetriever, consumerTimedOutLatch);
+        final Future<?> retrieveMessageFuture = obtainFutureOnBackgroundThreadWhenInterrupted(batchingMessageRetriever, consumerTimedOutLatch);
 
         // act
         receivedMessageLatch.await(POLLING_PERIOD_IN_MS * 2, TimeUnit.MILLISECONDS);
+        retrieveMessageFuture.cancel(true);
         consumerTimedOutLatch.await(1000, TimeUnit.MILLISECONDS);
-        Thread.sleep(POLLING_PERIOD_IN_MS);
         final Message messageRetrieved = batchingMessageRetriever.retrieveMessage();
+        log.info("Obtained message");
         batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
@@ -239,7 +241,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void consumerThatTimesOutBeforeMessageCanBeGivenToConsumerWillBeOnQueueForInstantRetrievalFromRetrieveMessageWithTimeout() throws Exception {
+    public void consumerThatIsInterruptedStillAllowsRetrieverToStopWhenWaitingForConsumersToTakeMessaeg() throws Exception {
         // arrange
         final BatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().build();
         final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
@@ -254,18 +256,17 @@ public class BatchingMessageRetrieverTest {
             return new ReceiveMessageResult()
                     .withMessages(message);
         });
-        requestMessageWithTimeoutLatch(batchingMessageRetriever, consumerTimedOutLatch);
+        final Future<?> retrieveMessageFuture = obtainFutureOnBackgroundThreadWhenInterrupted(batchingMessageRetriever, consumerTimedOutLatch);
 
         // act
         receivedMessageLatch.await(POLLING_PERIOD_IN_MS * 2, TimeUnit.MILLISECONDS);
+        retrieveMessageFuture.cancel(true);
         consumerTimedOutLatch.await(1000, TimeUnit.MILLISECONDS);
-        Thread.sleep(POLLING_PERIOD_IN_MS);
-        final Optional<Message> messageRetrieved = batchingMessageRetriever.retrieveMessage(POLLING_PERIOD_IN_MS * 2, TimeUnit.MILLISECONDS);
+        log.info("Obtained message");
         batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
         verify(amazonSqsAsync, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(messageRetrieved).contains(message);
     }
 
     @Test
@@ -273,6 +274,7 @@ public class BatchingMessageRetrieverTest {
         // arrange
         final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
                 Executors.newCachedThreadPool(), DEFAULT_PROPERTIES);
+        final long startTime = System.currentTimeMillis();
         batchingMessageRetriever.start();
         final Message message = new Message();
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
@@ -285,7 +287,6 @@ public class BatchingMessageRetrieverTest {
                 });
 
         // act
-        final long startTime = System.currentTimeMillis();
         final Message messageRetrieved = batchingMessageRetriever.retrieveMessage();
         final long actualTime = System.currentTimeMillis() - startTime;
         batchingMessageRetriever.stop().get(1, SECONDS);
@@ -335,14 +336,13 @@ public class BatchingMessageRetrieverTest {
         });
     }
 
-    private void requestMessageWithTimeoutLatch(final BatchingMessageRetriever batchingMessageRetriever,
-                                                final CountDownLatch consumerTimedOutLatch) {
-        CompletableFuture.runAsync(() -> {
+    private Future<?> obtainFutureOnBackgroundThreadWhenInterrupted(final BatchingMessageRetriever batchingMessageRetriever,
+                                                                    final CountDownLatch interruptedCountdownLatch) {
+        return Executors.newCachedThreadPool().submit(() -> {
             try {
-                batchingMessageRetriever.retrieveMessage(POLLING_PERIOD_IN_MS * 2, TimeUnit.MILLISECONDS);
-                consumerTimedOutLatch.countDown();
+                batchingMessageRetriever.retrieveMessage();
             } catch (InterruptedException interruptedException) {
-                throw new RuntimeException(interruptedException);
+                interruptedCountdownLatch.countDown();
             }
         });
     }

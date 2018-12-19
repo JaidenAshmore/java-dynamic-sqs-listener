@@ -31,21 +31,4 @@ public interface MessageRetriever {
      * @throws InterruptedException if the thread was interrupted while waiting for a message
      */
     Message retrieveMessage() throws InterruptedException;
-
-    /**
-     * Retrieve a single message from the queue within the given time period.
-     *
-     * <p>This is a blocking operation so it will wait until a message can be taken from the queue within the given period. Note that this operation may
-     * not perfectly align with the requested timeout due to implementation or other processing concerns, therefore the timeout should just be considered
-     * as a suggestion.  However, implementers of this method should always strive to being as close to the timeout as possible.
-     *
-     * <p>The timeout amount must always be greater than or equal to zero. If a negative number is submitted a {@link IllegalArgumentException} will be thrown.
-     *
-     * @param timeout  the number of time units to wait, e.g. 5 of "5 seconds"
-     * @param timeUnit the unit of time for the timeout, e.g. seconds of "5 seconds"
-     * @return the message to process if there is any or {@link Optional#empty()} if none was obtained in the time period
-     * @throws IllegalArgumentException if the arguments are in an incorrect format
-     * @throws InterruptedException if the thread was interrupted while waiting for a message
-     */
-    Optional<Message> retrieveMessage(@Min(0) long timeout, @NotNull TimeUnit timeUnit) throws InterruptedException;
 }
