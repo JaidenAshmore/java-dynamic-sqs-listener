@@ -2,7 +2,6 @@ package com.jashmore.sqs.broker.concurrent;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -17,10 +16,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -59,18 +59,29 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
         private final ConcurrentMessageBrokerProperties properties;
 
         /**
-         * Executor that is used to start threads from the thread pool.
+         * Executor that is used to start threads from the thread pool for retrieving messages from the queue to be processed.
+         *
+         * <p>No threads that should actually process the messages should be built in this executor and this is instead the responsibility of the
+         * {@link #messageProcessingThreadsExecutor}.
+         */
+        private final ExecutorService concurrentThreadsExecutor = Executors.newCachedThreadPool();
+
+        /**
+         * Executor that is used to start threads from the thread pool for processing messages that have been retrieved.
+         *
+         * <p>The reason for having this as a separate executor is so that when the broker is being shutdown we can interrupt the threads listening for messages
+         * whilst still allowing for the processing of messages to continue.
          *
          * <p>This is a specific {@link ThreadPoolExecutor} because when the controller is to be stopped we should wait for all of the currently running
          * threads to be stopped.
          */
-        private final ThreadPoolExecutor executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, SECONDS, new SynchronousQueue<>());
+        private final ExecutorService messageProcessingThreadsExecutor = Executors.newCachedThreadPool();
         /**
          * Semaphore used to control the number of threads that are available to be run.
          *
          * <p>This is set to zero but will be replaced by the value from the {@link #properties}.
          */
-        private final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(0);
+        private final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
         /**
          * Completable Future that should be resolved when this thread has fully finished processing.
          */
@@ -80,64 +91,65 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
          */
         private boolean interruptThreads;
 
+        /**
+         * RV_RETURN_VALUE_IGNORED_BAD_PRACTICE is ignored because we don't actually care about the return future for submitting a thread to process a message.
+         * Instead the {@link #concurrentMessagesBeingProcessedSemaphore} is used to control the number of concurrent threads and when we should down we
+         * wait for the whole {@link ExecutorService} to finish and therefore we don't care about an individual thread.
+         */
         @Override
-        @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
+        @SuppressFBWarnings({"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
         public void run() {
             boolean shouldShutdown = false;
             while (!shouldShutdown) {
                 updateConcurrencyLevelIfChanged();
 
                 final long numberOfMillisecondsToObtainPermit = properties.getPreferredConcurrencyPollingRateInMilliseconds();
-                final Optional<Message> optionalMessage;
-                boolean obtainedPermit = false;
                 try {
-                    // If the concurrency has changed to zero we will never be able to acquire a permit so we sleep before
-                    // before we go and check if the concurrency level has changed again.
-                    if (resizableSemaphore.getMaximumPermits() == 0) {
-                        Thread.sleep(numberOfMillisecondsToObtainPermit);
-                        continue;
-                    }
-
-                    final long timeStarting = System.currentTimeMillis();
-                    obtainedPermit = resizableSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
+                    final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
                     if (!obtainedPermit) {
                         continue;
                     }
-
-                    final long timePermitObtained = System.currentTimeMillis();
-
-                    // We dynamically change the time allowed for retrieving a message based on the time it took to obtain
-                    // a permit. This is so the polling rate for the concurrency level stays generally the correct amount
-                    final long millisecondsToRetrieveMessage = Math.max(0, numberOfMillisecondsToObtainPermit - (timePermitObtained - timeStarting));
-
-                    optionalMessage = messageRetriever.retrieveMessage(millisecondsToRetrieveMessage, MILLISECONDS);
                 } catch (final InterruptedException interruptedException) {
                     log.info("Interrupted exception caught while adding more listeners, shutting down!");
                     shouldShutdown = true;
                     continue;
-                } catch (final Throwable throwable) {
-                    // We make sure that we release the permit if an exception occurred so that we don't end up with no
-                    // available permits and no threads running
-                    if (obtainedPermit) {
-                        resizableSemaphore.release();
-                    }
-                    continue;
                 }
 
-                if (!optionalMessage.isPresent()) {
-                    log.trace("No message retrieved for processing, trying again.");
-                    resizableSemaphore.release();
-                    continue;
-                }
-
-                executor.submit(() -> {
+                concurrentThreadsExecutor.submit(() -> {
+                    final Future<?> messageProcessedFuture;
                     try {
-                        messageProcessor.processMessage(optionalMessage.get());
-                        log.trace("Message successfully processed removing from queue");
-                    } catch (final MessageProcessingException messageProcessingException) {
-                        log.error("Error processing message", messageProcessingException);
-                    } finally {
-                        resizableSemaphore.release();
+                        final Message message;
+                        try {
+                            message = messageRetriever.retrieveMessage();
+                        } catch (final InterruptedException exception) {
+                            log.trace("Thread interrupted waiting for a message");
+                            return;
+                        }
+
+                        messageProcessedFuture = concurrentThreadsExecutor.submit(() -> {
+                            try {
+                                messageProcessor.processMessage(message);
+                                log.trace("Message successfully processed removing from queue");
+                            } catch (final MessageProcessingException messageProcessingException) {
+                                log.error("Error processing message", messageProcessingException);
+                            } finally {
+                                concurrentMessagesBeingProcessedSemaphore.release();
+                            }
+                        });
+                    } catch (Throwable throwable) {
+                        // We need to make sure the semaphore is released if there was a problem processing the message
+                        log.error("Error thrown trying to retrieve a message for processing", throwable);
+                        concurrentMessagesBeingProcessedSemaphore.release();
+                        return;
+                    }
+
+                    try {
+                        messageProcessedFuture.get();
+                    } catch (InterruptedException exception) {
+                        log.trace("Thread interrupted waiting for the message to be processed");
+                        // do nothing, thread will exit
+                    } catch (ExecutionException exception) {
+                        log.error("Error processing message", exception);
                     }
                 });
             }
@@ -161,26 +173,28 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
         private void updateConcurrencyLevelIfChanged() {
             final int newConcurrencyLevel = properties.getConcurrencyLevel();
 
-            if (resizableSemaphore.getMaximumPermits() != newConcurrencyLevel) {
-                log.debug("Changing concurrency from {} to {}", resizableSemaphore.getMaximumPermits(), newConcurrencyLevel);
-                resizableSemaphore.changePermitSize(newConcurrencyLevel);
+            if (concurrentMessagesBeingProcessedSemaphore.getMaximumPermits() != newConcurrencyLevel) {
+                log.debug("Changing concurrency from {} to {}", concurrentMessagesBeingProcessedSemaphore.getMaximumPermits(), newConcurrencyLevel);
+                concurrentMessagesBeingProcessedSemaphore.changePermitSize(newConcurrencyLevel);
             }
         }
 
         /**
-         * Shutdown the {@link #executor} and wait for all the threads to finish. If {@link #interruptThreads} is true the threads will be interrupted
-         * during the shutdown.
+         * Shutdown the {@link #concurrentThreadsExecutor} and wait for all the threads to finish. If {@link #interruptThreads} is true the threads will
+         * be interrupted during the shutdown.
          */
         private void shutdownConcurrentThreads() {
+            concurrentThreadsExecutor.shutdownNow();
             if (interruptThreads) {
-                executor.shutdownNow();
+                messageProcessingThreadsExecutor.shutdownNow();
             } else {
-                executor.shutdown();
+                messageProcessingThreadsExecutor.shutdown();
             }
-            while (!executor.isTerminated()) {
+            while (!concurrentThreadsExecutor.isTerminated() && !messageProcessingThreadsExecutor.isTerminated()) {
                 log.debug("Waiting for all threads to finish...");
                 try {
-                    executor.awaitTermination(1, MINUTES);
+                    concurrentThreadsExecutor.awaitTermination(1, MINUTES);
+                    messageProcessingThreadsExecutor.awaitTermination(1, MINUTES);
                 } catch (final InterruptedException interruptedException) {
                     log.warn("Interrupted while waiting for all messages to shutdown!");
                 }
