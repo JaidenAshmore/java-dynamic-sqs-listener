@@ -3,6 +3,7 @@ package com.jashmore.sqs.retriever.batching;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -322,7 +323,7 @@ public class BatchingMessageRetrieverTest {
         allMessagesFutures.forEach(future -> future.cancel(true));
 
         // assert
-        verify(amazonSqsAsync).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        verify(amazonSqsAsync, atLeastOnce()).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
     }
 
