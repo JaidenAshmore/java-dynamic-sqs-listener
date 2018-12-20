@@ -10,7 +10,6 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,7 +37,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private final BatchingMessageRetrieverProperties properties;
 
     private final AtomicInteger numberWaitingForMessages = new AtomicInteger();
-    private final BlockingQueue<Message> messagesDownloaded = new SynchronousQueue<>();
+    private final BlockingQueue<Message> messagesDownloaded = new LinkedBlockingQueue<>();
     private final Object shouldObtainMessagesLock = new Object();
 
     private Future<?> backgroundThreadFuture;
@@ -114,20 +113,22 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
          * they have gone into the finally block to decrease this number so even though all consumers are fine it seems like we can run the retrieval code
          * again.
          */
-        @SuppressFBWarnings({"UW_UNCOND_WAIT"})
         @Override
         public void run() {
             log.debug("Started background thread");
             while (true) {
                 final int numberOfMessagesToObtain;
                 synchronized (shouldObtainMessagesLock) {
-                    try {
-                        shouldObtainMessagesLock.wait(properties.getMessageRetrievalPollingPeriodInMs());
-                    } catch (InterruptedException exception) {
-                        log.debug("Thread interrupted while waiting for messages");
-                        break;
+                    if ((numberWaitingForMessages.get() - messagesDownloaded.size()) < properties.getNumberOfThreadsWaitingTrigger()) {
+                        try {
+                            shouldObtainMessagesLock.wait(properties.getMessageRetrievalPollingPeriodInMs());
+                        } catch (InterruptedException exception) {
+                            log.debug("Thread interrupted while waiting for messages");
+                            break;
+                        }
                     }
-                    numberOfMessagesToObtain = Math.min(numberWaitingForMessages.get(), AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
+                    numberOfMessagesToObtain = Math.min(numberWaitingForMessages.get() - messagesDownloaded.size(),
+                            AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
                     log.info("Requesting {} messages", numberOfMessagesToObtain);
                 }
 
