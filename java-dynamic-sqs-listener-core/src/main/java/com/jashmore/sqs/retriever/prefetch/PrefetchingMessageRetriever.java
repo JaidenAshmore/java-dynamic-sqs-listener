@@ -132,7 +132,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         @Override
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
+            boolean shouldStop = false;
+            while (!shouldStop) {
                 try {
                     final ReceiveMessageResult result;
                     try {
@@ -144,21 +145,16 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         );
                     } catch (final InterruptedException interruptedException) {
                         log.warn("Thread interrupted. Exiting...");
-                        Thread.currentThread().interrupt();
+                        shouldStop = true;
                         continue;
                     }
 
                     for (final Message message : result.getMessages()) {
-                        if (Thread.currentThread().isInterrupted()) {
-                            log.warn("While placing messages on the queue the retriever was stopped");
-                            break;
-                        }
-
                         try {
                             internalMessageQueue.put(message);
                         } catch (InterruptedException exception) {
                             log.warn("Thread interrupted. Exiting...");
-                            Thread.currentThread().interrupt();
+                            shouldStop = true;
                         }
                     }
                 } catch (final Throwable throwable) {
@@ -167,7 +163,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         Thread.sleep(properties.getErrorBackoffTimeInMilliseconds());
                     } catch (final InterruptedException interruptedException) {
                         log.warn("Thread interrupted during error backoff. Exiting...");
-                        Thread.currentThread().interrupt();
+                        shouldStop = true;
                     }
                 }
             }
