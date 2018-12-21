@@ -45,7 +45,7 @@ public class DefaultMessageProcessor implements MessageProcessor {
         try {
             messageConsumerMethod.invoke(messageConsumerBean, arguments);
             // If there is no Acknowledge argument in the method we should resolve the message if it was completed without an exception
-            if (!hasAcknowledgeArgument(arguments)) {
+            if (!hasAcknowledgeArgument(parameters)) {
                 final Future<DeleteMessageResult> deleteMessageResultFuture = amazonSqs.deleteMessageAsync(
                         queueProperties.getQueueUrl(), message.getReceiptHandle());
 
@@ -58,8 +58,8 @@ public class DefaultMessageProcessor implements MessageProcessor {
         }
     }
 
-    private boolean hasAcknowledgeArgument(final Object... arguments) {
-        return Arrays.stream(arguments)
-                .anyMatch(argument -> Acknowledge.class.isAssignableFrom(argument.getClass()));
+    private boolean hasAcknowledgeArgument(final Parameter... parameters) {
+        return Arrays.stream(parameters)
+                .anyMatch(parameter -> Acknowledge.class.isAssignableFrom(parameter.getType()));
     }
 }

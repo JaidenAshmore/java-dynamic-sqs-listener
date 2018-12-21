@@ -1,4 +1,4 @@
-package it.com.jashmore.sqs.util;
+package com.jashmore.sqs.test;
 
 import static java.util.stream.Collectors.joining;
 
@@ -36,12 +36,7 @@ public class LocalSqsRule implements TestRule {
 
     @Override
     public Statement apply(final Statement base, final Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                base.evaluate();
-            }
-        };
+        return base;
     }
 
     public AmazonSQSAsync getAmazonSqsAsync() {

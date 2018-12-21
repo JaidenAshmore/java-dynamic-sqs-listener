@@ -54,7 +54,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     }
 
     @Override
-    public synchronized Future<?> stop() {
+    public synchronized Future<Object> stop() {
         if (backgroundThreadFuture == null) {
             return CompletableFuture.completedFuture("Not running");
         }

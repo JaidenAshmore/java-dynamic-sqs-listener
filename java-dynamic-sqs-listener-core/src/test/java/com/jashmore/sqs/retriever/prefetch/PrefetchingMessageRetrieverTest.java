@@ -46,7 +46,6 @@ public class PrefetchingMessageRetrieverTest {
     private static final PrefetchingProperties DEFAULT_PREFETCHING_PROPERTIES = PrefetchingProperties.builder()
             .desiredMinPrefetchedMessages(10)
             .maxPrefetchedMessages(20)
-            .maxNumberOfMessagesToObtainFromServer(10)
             .maxWaitTimeInSecondsToObtainMessagesFromServer(2)
             .visibilityTimeoutForMessagesInSeconds(10)
             .build();
@@ -244,7 +243,6 @@ public class PrefetchingMessageRetrieverTest {
         final CountDownLatch finalMessageRequestedLatch = new CountDownLatch(1);
         final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(5)
-                .maxNumberOfMessagesToObtainFromServer(10)
                 .maxPrefetchedMessages(5)
                 .build();
         final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
@@ -285,7 +283,6 @@ public class PrefetchingMessageRetrieverTest {
         final CountDownLatch messagesReceivedLatch = new CountDownLatch(1);
         final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(4)
-                .maxNumberOfMessagesToObtainFromServer(10)
                 .maxPrefetchedMessages(5)
                 .build();
         final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
@@ -323,7 +320,6 @@ public class PrefetchingMessageRetrieverTest {
         final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(2)
                 .maxPrefetchedMessages(4)
-                .maxNumberOfMessagesToObtainFromServer(10)
                 .build();
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
@@ -503,7 +499,7 @@ public class PrefetchingMessageRetrieverTest {
     private PrefetchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch, final PrefetchingProperties prefetchingProperties) {
         return new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, prefetchingProperties, executorService) {
             @Override
-            public synchronized Future<?> stop() {
+            public synchronized Future<Object> stop() {
                 try {
                     return super.stop();
                 } finally {

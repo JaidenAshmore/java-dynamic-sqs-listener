@@ -16,6 +16,7 @@
 
     <properties>
         <elasticmq.version>0.13.9</elasticmq.version>
+        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
     </properties>
 
     <dependencies>

@@ -7,6 +7,7 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +37,8 @@ import java.util.concurrent.SynchronousQueue;
  *     <li>To accommodate this the internal queue is only made to be of size 7, which is one less than the min number of prefetched messages.  This is
  *         important.</li>
  *     <li>The {@link #start()} method is called which starts the prefetching of messages from SQS process.</li>
- *     <li>A request is made out to retrieve 10 messages from SQS. This was defined by the
- *         {@link PrefetchingProperties#getMaxNumberOfMessagesToObtainFromServer()} value passed into the constructor.</li>
+ *     <li>A request is made out to retrieve 10 messages from SQS. This is the limit provided by AWS so this is the maximum messages that can be requested
+ *         in a single request</li>
  *     <li>SQS responds with 10 messages.</li>
  *     <li>7 messages are placed into {@link #internalMessageQueue} but no more able to be placed in due to the limit of the queue and therefore the
  *         {@link QueueMessageRetriever} thread is blocked until messages are consumed before placing the other 3 messages onto the queue.</li>
@@ -61,7 +62,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
     private QueueMessageRetriever queueMessageRetriever;
     private Future<?> fetchingMessagesFuture;
-    private CompletableFuture<String> fetchingMessagesCompletedFuture;
+    private CompletableFuture<Object> fetchingMessagesCompletedFuture;
 
 
     public PrefetchingMessageRetriever(final AmazonSQSAsync amazonSqsAsync,
@@ -100,7 +101,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     }
 
     @Override
-    public synchronized Future<?> stop() {
+    public synchronized Future<Object> stop() {
         if (fetchingMessagesFuture == null) {
             log.warn("This retriever isn't running so it cannot be stopped");
             return CompletableFuture.completedFuture("OK");
@@ -128,7 +129,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
      */
     @AllArgsConstructor
     private class QueueMessageRetriever implements Runnable {
-        private final CompletableFuture<String> completableFuture;
+        private final CompletableFuture<Object> completableFuture;
 
         @Override
         public void run() {
@@ -144,7 +145,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                                 internalMessageQueue.size() + result.getMessages().size()
                         );
                     } catch (final InterruptedException interruptedException) {
-                        log.warn("Thread interrupted. Exiting...");
+                        log.info("Thread interrupted. Exiting...");
                         shouldStop = true;
                         continue;
                     }
@@ -158,7 +159,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         }
                     }
                 } catch (final Throwable throwable) {
-                    log.error("Exception thrown when retrieving messages. Backing off", throwable);
+                    log.error("Exception thrown when retrieving messages", throwable);
+
                     try {
                         Thread.sleep(properties.getErrorBackoffTimeInMilliseconds());
                     } catch (final InterruptedException interruptedException) {
@@ -173,19 +175,18 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         private ReceiveMessageResult retrieveMoreMessages() throws InterruptedException {
             final int numberOfPrefetchSlotsLeft = properties.getMaxPrefetchedMessages() - internalMessageQueue.size();
-            final int numberOfMessagesToObtain = Math.min(properties.getMaxNumberOfMessagesToObtainFromServer(),
-                    numberOfPrefetchSlotsLeft);
+            final int numberOfMessagesToObtain = Math.min(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS, numberOfPrefetchSlotsLeft);
 
             log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
             final ReceiveMessageRequest request = new ReceiveMessageRequest(queueProperties.getQueueUrl())
                     .withWaitTimeSeconds(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
                     .withVisibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
                     .withMaxNumberOfMessages(numberOfMessagesToObtain);
-            final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(request);
             try {
+                final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(request);
                 return receiveMessageResultFuture.get();
             } catch (final ExecutionException executionException) {
-                throw new RuntimeException(executionException.getCause());
+                throw new RuntimeException("Failed to obtain messages", executionException.getCause());
             }
         }
     }

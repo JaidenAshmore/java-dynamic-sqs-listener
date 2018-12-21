@@ -39,5 +39,5 @@ public interface AsyncMessageRetriever extends MessageRetriever {
      * @return future that will resolve when the background message retriever thread has stopped
      * @throws IllegalStateException if the retriever has not been started or has already stopped
      */
-    Future<?> stop();
+    Future<Object> stop();
 }
