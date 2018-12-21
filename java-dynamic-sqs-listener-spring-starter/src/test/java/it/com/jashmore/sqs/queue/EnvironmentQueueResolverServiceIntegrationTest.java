@@ -3,8 +3,8 @@ package it.com.jashmore.sqs.queue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import com.jashmore.sqs.queue.QueueResolverService;
 import it.com.jashmore.example.Application;
-import com.jashmore.sqs.queue.QueueResolver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +18,9 @@ import org.springframework.test.context.junit4.SpringRunner;
         "property.with.queue.name=EnvironmentQueueResolverIntegrationTest"
 })
 @RunWith(SpringRunner.class)
-public class EnvironmentQueueResolverIntegrationTest {
+public class EnvironmentQueueResolverServiceIntegrationTest {
     @Autowired
-    private QueueResolver queueResolver;
+    private QueueResolverService queueResolver;
 
     @Test
     public void queueResolverResolvesVariablesFromEnvironmentProperties() {

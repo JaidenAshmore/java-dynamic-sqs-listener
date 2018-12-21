@@ -21,6 +21,7 @@ public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> imple
     public MessageListenerContainer wrapMethod(final Object bean, final Method method) {
         final T annotation = method.getAnnotation(getAnnotationClass());
         if (annotation == null) {
+            // This should not happen as canWrapMethod should be called before this
             throw new RuntimeException("Wrapping method with annotation but none exist");
         }
         return wrapMethodContainingAnnotation(bean, method, annotation);

@@ -39,12 +39,12 @@ public class QueueListenerConfiguration {
      * A {@link DefaultArgumentResolverService} is used if no other {@link ArgumentResolverService} has been supplied by the consumer which will
      * define how the basic parameters can be resolved for a message.
      *
-     * <p>If more types of parameters are needing to be able to be resolved or the {@link DefaultArgumentResolverService} does not work as required
+     * <p>If more types of parameters are needing to be able to be resolved or the {@link DefaultArgumentResolverService} does not work as required,
      * the application can supply their own resolver. An example of doing this is the following:
      *
      * <pre class="code">
      * &#064;Bean
-     * public ArgumentResolverService argumentResolverService() {
+     * public ArgumentResolverService myOwnArgumentResolverService() {
      *     return new DelegatingArgumentResolverService(
      *             ImmutableSet.of(new PayloadArgumentResolver(new JacksonPayloadMapper(new ObjectMapper())))
      *     );

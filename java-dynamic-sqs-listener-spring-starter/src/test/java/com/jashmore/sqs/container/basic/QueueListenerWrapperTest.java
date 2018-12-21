@@ -7,7 +7,7 @@ import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.queue.QueueResolver;
+import com.jashmore.sqs.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class QueueListenerWrapperTest {
     private AmazonSQSAsync amazonSqsAsync;
 
     @Mock
-    private QueueResolver queueResolver;
+    private QueueResolverService queueResolver;
 
     private QueueListenerWrapper queueListenerWrapper;
 
@@ -56,7 +56,7 @@ public class QueueListenerWrapperTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
+    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
         // arrange
         final Object bean = new QueueListenerWrapperTest();
         final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");

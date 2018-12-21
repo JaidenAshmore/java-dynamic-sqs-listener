@@ -5,7 +5,6 @@ package com.jashmore.sqs.container;
  * the consumption of queue messages.
  */
 public interface QueueContainerService {
-
     /**
      * Start all of the containers that have been built for the application.
      */
@@ -15,8 +14,6 @@ public interface QueueContainerService {
      * Start a container with the given identifier.
      *
      * @param queueIdentifier the identifier for the queue
-     * @throws IllegalStateException when the container service has not been correctly set up
-     * @throws IllegalStateException if there is multiple containers with the same identifier to be started
      * @throws IllegalArgumentException if there is not a container with the given identifier
      */
     void startContainer(String queueIdentifier);
@@ -30,8 +27,6 @@ public interface QueueContainerService {
      * Stop a container with the given identifier.
      *
      * @param queueIdentifier the identifier for the queue
-     * @throws IllegalStateException when the container service has not been correctly set up
-     * @throws IllegalStateException if there is multiple containers with the same identifier to be stopped
      * @throws IllegalArgumentException if there is not a container with the given identifier
      */
     void stopContainer(String queueIdentifier);

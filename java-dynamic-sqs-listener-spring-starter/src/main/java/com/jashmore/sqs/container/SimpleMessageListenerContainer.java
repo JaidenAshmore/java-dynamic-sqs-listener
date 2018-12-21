@@ -4,7 +4,6 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
@@ -12,11 +11,10 @@ import java.util.concurrent.Future;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * Simple container that will start and stop the retrieval of messages if it is an async implementation and also
- * start the broker to distribute these messages.
+ * Simple container that will start and stop the the retrieval of messages if it is an {@link AsyncMessageRetriever} as well as starting the
+ * {@link MessageBroker} to distribute these messages.
  */
 @Slf4j
-@RequiredArgsConstructor
 public class SimpleMessageListenerContainer implements MessageListenerContainer {
     /**
      * The identifier for this container.
@@ -32,10 +30,8 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
     /**
      * The {@link MessageRetriever} that will be used in this container to obtain messages to process.
      *
-     * <p>This is only included in the container because if it is an {@link AsyncMessageRetriever} the retrieval of
-     * messages can be started.
      */
-    private final MessageRetriever messageRetriever;
+    private final AsyncMessageRetriever asyncMessageRetriever;
 
     /**
      * The {@link MessageBroker} that will be used in this container.
@@ -53,6 +49,20 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
     @GuardedBy("this")
     private volatile boolean isRunning;
 
+    public SimpleMessageListenerContainer(final String identifier, final MessageBroker messageBroker) {
+        this.identifier = identifier;
+        this.asyncMessageRetriever = null;
+        this.messageBroker = messageBroker;
+    }
+
+    public SimpleMessageListenerContainer(final String identifier,
+                                          final AsyncMessageRetriever asyncMessageRetriever,
+                                          final MessageBroker messageBroker) {
+        this.identifier = identifier;
+        this.asyncMessageRetriever = asyncMessageRetriever;
+        this.messageBroker = messageBroker;
+    }
+
     @Override
     public String getIdentifier() {
         return identifier;
@@ -64,8 +74,8 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
             return;
         }
 
-        if (messageRetriever instanceof AsyncMessageRetriever) {
-            ((AsyncMessageRetriever) messageRetriever).start();
+        if (asyncMessageRetriever != null) {
+            asyncMessageRetriever.start();
         }
 
         messageBroker.start();
@@ -81,8 +91,8 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
 
         try {
             final Future<?> messageBrokerStoppedFuture = messageBroker.stop();
-            if (messageRetriever instanceof AsyncMessageRetriever) {
-                ((AsyncMessageRetriever) messageRetriever).stop().get();
+            if (asyncMessageRetriever != null) {
+                asyncMessageRetriever.stop().get();
             }
             messageBrokerStoppedFuture.get();
         } catch (final InterruptedException | ExecutionException exception) {

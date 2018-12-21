@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @AllArgsConstructor
-public class DefaultQueueResolver implements QueueResolver {
+public class DefaultQueueResolverService implements QueueResolverService {
     private final AmazonSQSAsync amazonSqsAsync;
     private final Environment environment;
 

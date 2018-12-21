@@ -19,8 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
@@ -36,11 +43,29 @@ import javax.annotation.concurrent.ThreadSafe;
 @RequiredArgsConstructor
 @ThreadSafe
 public class DefaultQueueContainerService implements QueueContainerService, ApplicationContextAware, SmartLifecycle {
+    /**
+     * Used to be able to start and stop containers concurrently.
+     */
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+
+    /**
+     * These {@link QueueWrapper}s should be injected by the spring application and therefore to add more wrappers into the system a corresponding bean
+     * with this interface must be included in the application.
+     */
     private final List<QueueWrapper> queueWrappers;
 
+    /**
+     * This contains all of the containers that have been created from wrapping the Spring Application's bean's methods.
+     *
+     * <p>This is only modified via the {@link #setApplicationContext(ApplicationContext)} method, which will only be called during the lifecycle of the spring
+     * application. This method protects from multiple calls to setting this application context so this will maintain its thread safety.
+     */
     @GuardedBy("this")
     private Map<String, MessageListenerContainer> containers = null;
 
+    /**
+     * Determines whether this container service is currently running in the Spring lifecycle.
+     */
     private AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
@@ -83,8 +108,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public synchronized void startAllContainers() {
-        containers.values().stream().parallel()
-                .forEach(MessageListenerContainer::start);
+        runForAllContainers(MessageListenerContainer::start);
     }
 
     @Override
@@ -94,13 +118,29 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public synchronized void stopAllContainers() {
-        containers.values().stream().parallel()
-                .forEach(MessageListenerContainer::stop);
+        runForAllContainers(MessageListenerContainer::stop);
     }
 
     @Override
     public synchronized void stopContainer(final String queueIdentifier) {
         runForQueue(queueIdentifier, MessageListenerContainer::stop);
+    }
+
+    private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
+        final ExecutorCompletionService<String> executorCompletionService = new ExecutorCompletionService<>(executorService);
+
+        containers.values().forEach(container -> executorCompletionService.submit(() -> containerConsumer.accept(container), null));
+
+        for (int i = 0; i < containers.size(); ++i) {
+            try {
+                executorCompletionService.take().get();
+            } catch (InterruptedException interruptedException) {
+                log.info("Thread interrupted while running command across all containers");
+                return;
+            } catch (ExecutionException executionException) {
+                log.error("Error running command on container", executionException);
+            }
+        }
     }
 
     private void runForQueue(final String queueIdentifier, Consumer<MessageListenerContainer> runnable) {

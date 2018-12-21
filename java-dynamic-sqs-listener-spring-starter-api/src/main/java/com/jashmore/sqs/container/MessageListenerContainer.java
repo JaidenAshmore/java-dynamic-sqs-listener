@@ -8,15 +8,17 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Container used to handle the entire lifecycle of a wrapped method in the spring context.
  *
- * <p>The responsibility of this container is being able to start and stop the processing of messages for the wrapped method.
+ * <p>The responsibility of this container is being able to start and stop the processing of messages for the wrapped method. This
+ * may only need to call down to the underlying {@link MessageBroker#start()} but there could be more complicated actions needing
+ * to be made, such as starting an {@link AsyncMessageRetriever}.
  *
  * <p>These containers must be thread safe as there could be multiple threads starting and stopping these containers using the
- * {@link QueueContainerService}.s
+ * {@link QueueContainerService}.
  */
 @ThreadSafe
 public interface MessageListenerContainer {
     /**
-     * The unique identifier for this container.
+     * The unique identifier for this container which should not be the same as any other container.
      *
      * <p>For the default implementations provided by the core Spring Starter the unique identifier is the URL for the queue
      * and therefore it isn't possible two different methods call the same queue.

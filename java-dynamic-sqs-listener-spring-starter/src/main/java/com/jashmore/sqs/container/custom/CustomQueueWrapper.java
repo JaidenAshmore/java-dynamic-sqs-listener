@@ -10,7 +10,8 @@ import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.container.basic.QueueListener;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.queue.QueueResolver;
+import com.jashmore.sqs.queue.QueueResolverService;
+import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import lombok.AllArgsConstructor;
@@ -52,7 +53,7 @@ import java.lang.reflect.Method;
 @AllArgsConstructor
 public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQueueListener> {
     private final BeanFactory beanFactory;
-    private final QueueResolver queueResolver;
+    private final QueueResolverService queueResolverService;
 
     @Override
     public Class<CustomQueueListener> getAnnotationClass() {
@@ -67,7 +68,7 @@ public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQue
 
         final QueueProperties queueProperties = QueueProperties
                 .builder()
-                .queueUrl(queueResolver.resolveQueueUrl(queueNameOrUrl))
+                .queueUrl(queueResolverService.resolveQueueUrl(queueNameOrUrl))
                 .build();
 
         final MessageRetrieverFactory messageRetrieverFactory = beanFactory.getBean(
@@ -92,6 +93,10 @@ public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQue
             identifier = annotation.identifier().trim();
         }
 
-        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker);
+        if (messageRetriever instanceof AsyncMessageRetriever) {
+            return new SimpleMessageListenerContainer(identifier, (AsyncMessageRetriever)messageRetriever, messageBroker);
+        } else {
+            return new SimpleMessageListenerContainer(identifier, messageBroker);
+        }
     }
 }

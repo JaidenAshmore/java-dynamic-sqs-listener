@@ -5,12 +5,14 @@ import com.jashmore.sqs.container.MessageListenerContainer;
 import java.lang.reflect.Method;
 
 /**
- * Processor used to analyse methods in the Spring Boot app and determine if the method should be included in the
- * messaging framework.
+ * Wrapper used to analyse methods in the application and determine if the method should be included in the messaging framework by wrapping that method in a
+ * queue listener so that each message received will run the method.
  */
 public interface QueueWrapper {
     /**
-     * Determine whether the method should be used to handle listening to queues.
+     * Determine whether the method can be used to handle listening to queues.
+     *
+     * <p>This could be checking that the method is in a certain format or has an annotation indicating that it can be wrapped.
      *
      * @param method the method to check against
      * @return whether this method should be wrapped in a queue listener

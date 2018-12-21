@@ -9,10 +9,10 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.queue.QueueResolver;
+import com.jashmore.sqs.queue.QueueResolverService;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,7 +32,7 @@ public class CustomQueueWrapperTest {
     private BeanFactory beanFactory;
 
     @Mock
-    private QueueResolver queueResolver;
+    private QueueResolverService queueResolver;
 
     @Mock
     private MessageRetrieverFactory messageRetrieverFactory;
@@ -84,7 +84,7 @@ public class CustomQueueWrapperTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
+    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
         // arrange
         final Object bean = new CustomQueueWrapperTest();
         final Method method = CustomQueueWrapperTest.class.getMethod("myMethod");

@@ -13,7 +13,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.springframework.core.env.Environment;
 
-public class DefaultQueueResolverTest {
+public class DefaultQueueResolverServiceTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -23,11 +23,11 @@ public class DefaultQueueResolverTest {
     @Mock
     private Environment environment;
 
-    private DefaultQueueResolver defaultQueueResolver;
+    private DefaultQueueResolverService defaultQueueResolverService;
 
     @Before
     public void setUp() {
-        defaultQueueResolver = new DefaultQueueResolver(amazonSqsAsync, environment);
+        defaultQueueResolverService = new DefaultQueueResolverService(amazonSqsAsync, environment);
     }
 
     @Test
@@ -36,7 +36,7 @@ public class DefaultQueueResolverTest {
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("http://url");
 
         // act
-        final String queueUrl = defaultQueueResolver.resolveQueueUrl("${variable}");
+        final String queueUrl = defaultQueueResolverService.resolveQueueUrl("${variable}");
 
         // assert
         assertThat(queueUrl).isEqualTo("http://url");
@@ -49,7 +49,7 @@ public class DefaultQueueResolverTest {
         when(amazonSqsAsync.getQueueUrl("someQueueName")).thenReturn(new GetQueueUrlResult().withQueueUrl("http://url"));
 
         // act
-        final String queueUrl = defaultQueueResolver.resolveQueueUrl("${variable}");
+        final String queueUrl = defaultQueueResolverService.resolveQueueUrl("${variable}");
 
         // assert
         assertThat(queueUrl).isEqualTo("http://url");

@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
-import com.jashmore.sqs.retriever.MessageRetriever;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,9 +24,6 @@ public class SimpleMessageListenerContainerTest {
 
     @Mock
     private AsyncMessageRetriever asyncMessageRetriever;
-
-    @Mock
-    private MessageRetriever messageRetriever;
 
     @Mock
     private MessageBroker messageBroker;
@@ -68,7 +64,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void onStartTheMessageBrokerIsStarted() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", messageRetriever, messageBroker);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", messageBroker);
 
         // act
         container.start();
@@ -119,7 +115,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillStopTheMessageBroker() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", messageRetriever, messageBroker);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", messageBroker);
         container.start();
 
         // act

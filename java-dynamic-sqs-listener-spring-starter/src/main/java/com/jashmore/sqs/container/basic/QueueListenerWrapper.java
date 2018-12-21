@@ -2,8 +2,6 @@ package com.jashmore.sqs.container.basic;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.QueueProperties;
@@ -15,11 +13,11 @@ import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.queue.QueueResolver;
+import com.jashmore.sqs.queue.QueueResolverService;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -33,21 +31,12 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final AmazonSQSAsync amazonSqsAsync;
-    private final QueueResolver queueResolver;
-    private final ExecutorService executor;
-
-    @Autowired
-    public QueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                final AmazonSQSAsync amazonSqsAsync,
-                                final QueueResolver queueResolver) {
-        this.argumentResolverService = argumentResolverService;
-        this.amazonSqsAsync = amazonSqsAsync;
-        this.queueResolver = queueResolver;
-        this.executor = Executors.newCachedThreadPool();
-    }
+    private final QueueResolverService queueResolverService;
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     @Override
     protected Class<QueueListener> getAnnotationClass() {
@@ -58,7 +47,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
     protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
         final QueueProperties queueProperties = QueueProperties
                 .builder()
-                .queueUrl(queueResolver.resolveQueueUrl(annotation.value()))
+                .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
         final PrefetchingProperties batchingProperties = PrefetchingProperties
