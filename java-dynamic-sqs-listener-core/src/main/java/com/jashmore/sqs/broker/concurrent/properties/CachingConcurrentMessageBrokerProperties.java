@@ -24,11 +24,11 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     public CachingConcurrentMessageBrokerProperties(final int cachingTimeoutInMs,
                                                     final ConcurrentMessageBrokerProperties delegateProperties) {
         this.cachedConcurrencyLevel = CacheBuilder.newBuilder()
-                .expireAfterAccess(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
                 .build(CacheLoader.from(delegateProperties::getConcurrencyLevel));
 
         this.cachedPreferredConcurrencyPollingRateInSeconds = CacheBuilder.newBuilder()
-                .expireAfterAccess(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
                 .build(CacheLoader.from(delegateProperties::getPreferredConcurrencyPollingRateInMilliseconds));
     }
 

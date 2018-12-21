@@ -3,6 +3,7 @@ package com.jashmore.sqs.util;
 import lombok.Getter;
 
 import java.util.concurrent.Semaphore;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Semaphore that is able to dynamically update the number of available permits.
@@ -19,6 +20,9 @@ public class ResizableSemaphore extends Semaphore {
 
     /**
      * Change the maximum number of permits available.
+     *
+     * <p>The changing of permit size is not thread safe and therefore this method should only be used by a single thread. E.g. only one thread has the
+     * responsibility of changing the permit size.
      *
      * @param permits new max size for permits
      */

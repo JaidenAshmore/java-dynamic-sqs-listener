@@ -1,7 +1,5 @@
 package com.jashmore.sqs.retriever.prefetch;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import com.google.common.base.Preconditions;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
@@ -14,7 +12,6 @@ import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -23,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.NotNull;
 
 /**
  * Message retriever that allows for the pre-fetching of messages for faster throughput by making sure that there are always messages in a queue locally to be
@@ -125,24 +120,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     }
 
     @Override
-    public Optional<Message> retrieveMessageNow() throws InterruptedException {
-        return retrieveMessage(0, MILLISECONDS);
-    }
-
-    @Override
     public Message retrieveMessage() throws InterruptedException {
         return internalMessageQueue.take();
-    }
-
-    @Override
-    public Optional<Message> retrieveMessage(final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
-        Preconditions.checkNotNull(timeUnit, "timeUnit");
-        Preconditions.checkArgument(timeout >= 0, "timeout should be greater than or equal to zero");
-
-        log.trace("Retrieving message");
-        final Message message = internalMessageQueue.poll(timeout, timeUnit);
-
-        return Optional.ofNullable(message);
     }
 
     /**
@@ -154,7 +133,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         @Override
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
+            boolean shouldStop = false;
+            while (!shouldStop) {
                 try {
                     final ReceiveMessageResult result;
                     try {
@@ -165,22 +145,17 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                                 internalMessageQueue.size() + result.getMessages().size()
                         );
                     } catch (final InterruptedException interruptedException) {
-                        log.debug("Thread interrupted. Exiting...");
-                        Thread.currentThread().interrupt();
+                        log.info("Thread interrupted. Exiting...");
+                        shouldStop = true;
                         continue;
                     }
 
                     for (final Message message : result.getMessages()) {
-                        if (Thread.currentThread().isInterrupted()) {
-                            log.debug("While placing messages on the queue the retriever was stopped");
-                            break;
-                        }
-
                         try {
                             internalMessageQueue.put(message);
                         } catch (InterruptedException exception) {
-                            log.debug("Thread interrupted. Exiting...");
-                            Thread.currentThread().interrupt();
+                            log.warn("Thread interrupted. Exiting...");
+                            shouldStop = true;
                         }
                     }
                 } catch (final Throwable throwable) {
@@ -190,7 +165,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         Thread.sleep(properties.getErrorBackoffTimeInMilliseconds());
                     } catch (final InterruptedException interruptedException) {
                         log.warn("Thread interrupted during error backoff. Exiting...");
-                        Thread.currentThread().interrupt();
+                        shouldStop = true;
                     }
                 }
             }

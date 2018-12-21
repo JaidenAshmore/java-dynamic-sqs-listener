@@ -3,6 +3,7 @@ package com.jashmore.sqs.retriever.prefetch;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.core.Is.isA;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -26,14 +27,14 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
-import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.NotNull;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public class PrefetchingMessageRetrieverTest {
@@ -61,28 +62,6 @@ public class PrefetchingMessageRetrieverTest {
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Test
-    public void whenNoMessagesPresentRetrieveMessageIsBlocked() throws InterruptedException {
-        // arrange
-        final CountDownLatch messagesRequested = new CountDownLatch(1);
-        final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class)))
-                .then(waitUntilTestCompleted(messagesRequested, testCompletedLatch));
-        prefetchingMessageRetriever.start();
-        messagesRequested.await(1, SECONDS);
-
-        try {
-            // act
-            final Optional<Message> optionalMessage = prefetchingMessageRetriever.retrieveMessage(50, MILLISECONDS);
-
-            // assert
-            assertThat(optionalMessage).isEmpty();
-        } finally {
-            prefetchingMessageRetriever.stop();
-        }
-    }
-
-    @Test
     public void messageObtainedFromServerCanBeObtained() throws InterruptedException {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
@@ -97,10 +76,10 @@ public class PrefetchingMessageRetrieverTest {
 
         // act
         try {
-            final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Message optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage();
 
             // assert
-            assertThat(optionalFirstMessage).contains(messageFromSqs);
+            assertThat(optionalFirstMessage).isEqualTo(messageFromSqs);
         } finally {
             prefetchingMessageRetriever.stop();
         }
@@ -119,14 +98,34 @@ public class PrefetchingMessageRetrieverTest {
         prefetchingMessageRetriever.start();
 
         // act
-        final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
-        requestedSecondMessageLatch.await(1, SECONDS);
+        final Message optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage();
+        assertThat(optionalFirstMessage).isEqualTo(messageFromSqs);
         try {
-            final Optional<Message> secondMessageAttempted = prefetchingMessageRetriever.retrieveMessage(200, TimeUnit.MILLISECONDS);
+            final Future<?> messageWaitingFuture = Executors.newCachedThreadPool().submit(() -> {
+                try {
+                    prefetchingMessageRetriever.retrieveMessage();
+                } catch (InterruptedException interruptedException) {
+                    // should be interrupted
+                }
+            });
 
             // assert
-            assertThat(optionalFirstMessage).contains(messageFromSqs);
-            assertThat(secondMessageAttempted).isEmpty();
+            try {
+                try {
+                    messageWaitingFuture.get(100, MILLISECONDS);
+                } catch (TimeoutException timeoutException) {
+                    messageWaitingFuture.cancel(true);
+                    try {
+                        messageWaitingFuture.get();
+                        fail("Should have cancelled the future");
+                    } catch (CancellationException cancellationException) {
+                        // expected
+                    }
+
+                }
+            } catch (ExecutionException executionException) {
+                throw new RuntimeException(executionException);
+            }
         } finally {
             prefetchingMessageRetriever.stop();
         }
@@ -148,12 +147,12 @@ public class PrefetchingMessageRetrieverTest {
 
         try {
             // act
-            final Optional<Message> optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
-            final Optional<Message> optionalSecondMessage = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Message optionalFirstMessage = prefetchingMessageRetriever.retrieveMessage();
+            final Message optionalSecondMessage = prefetchingMessageRetriever.retrieveMessage();
 
             // assert
-            assertThat(optionalFirstMessage).contains(firstMessage);
-            assertThat(optionalSecondMessage).contains(secondMessage);
+            assertThat(optionalFirstMessage).isEqualTo(firstMessage);
+            assertThat(optionalSecondMessage).isEqualTo(secondMessage);
         } finally {
             prefetchingMessageRetriever.stop();
         }
@@ -165,14 +164,15 @@ public class PrefetchingMessageRetrieverTest {
         final CountDownLatch testCompleted = new CountDownLatch(1);
         final CountDownLatch messagesRetrievalLatch = new CountDownLatch(1);
         final CountDownLatch messageRequestedLatch = new CountDownLatch(1);
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES, executorService) {
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
+                DEFAULT_PREFETCHING_PROPERTIES, executorService) {
             @Override
-            public Optional<Message> retrieveMessage(final long timeout, @NotNull final TimeUnit timeUnit) throws InterruptedException {
+            public Message retrieveMessage() throws InterruptedException {
                 // Wait until we have sent the request to get some messages from AWS
                 messagesRetrievalLatch.await();
                 // We have requested the message so we can now have AWS return the message
                 messageRequestedLatch.countDown();
-                return super.retrieveMessage(timeout, timeUnit);
+                return super.retrieveMessage();
             }
         };
         final Message message = new Message().withBody("test");
@@ -191,10 +191,10 @@ public class PrefetchingMessageRetrieverTest {
         // act
         prefetchingMessageRetriever.start();
         try {
-            final Optional<Message> optionalMessageRetrieved = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Message messageRetrieved = prefetchingMessageRetriever.retrieveMessage();
 
             // assert
-            assertThat(optionalMessageRetrieved).contains(message);
+            assertThat(messageRetrieved).isEqualTo(message);
         } finally {
             prefetchingMessageRetriever.stop();
         }
@@ -262,7 +262,7 @@ public class PrefetchingMessageRetrieverTest {
         assertThat(secondMessageRequestedLatch.getCount()).isEqualTo(1);
 
         try {
-            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            prefetchingMessageRetriever.retrieveMessage();
             // Now that a message has been consumed the retriever should request for new messages to hit the maxPrefetchedMessages
             secondMessageRequestedLatch.await(1, SECONDS);
         } finally {
@@ -289,7 +289,8 @@ public class PrefetchingMessageRetrieverTest {
         when(amazonSqsAsync.receiveMessageAsync(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
                     messagesReceivedLatch.countDown();
-                    return mockFutureWithGet(new ReceiveMessageResult().withMessages(new Message(), new Message(), new Message(), new Message(), new Message()));
+                    return mockFutureWithGet(new ReceiveMessageResult()
+                            .withMessages(new Message(), new Message(), new Message(), new Message(), new Message()));
                 })
                 .thenAnswer((invocationOnMock) -> {
                     throw new IllegalStateException("This shouldn't get called cause we hit our prefetch limit");
@@ -341,9 +342,9 @@ public class PrefetchingMessageRetrieverTest {
         firstmessagesRequested.await(1, SECONDS);
         Thread.sleep(1000); // Make sure we haven't called the second message
         assertThat(secondmessagesRequested.getCount()).isEqualTo(1L);
-        prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+        prefetchingMessageRetriever.retrieveMessage();
         secondmessagesRequested.await(1, SECONDS);
-        prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+        prefetchingMessageRetriever.retrieveMessage();
         thirdmessagesRequested.await(1, SECONDS);
 
         // assert
@@ -357,8 +358,8 @@ public class PrefetchingMessageRetrieverTest {
     @Test
     public void noExceptionThrownForStoppingWhenAlreadyStopped() {
         // arrange
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES,
-                executorService);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(amazonSqsAsync, QUEUE_PROPERTIES,
+                DEFAULT_PREFETCHING_PROPERTIES, executorService);
 
         // act
         prefetchingMessageRetriever.stop();
@@ -452,9 +453,9 @@ public class PrefetchingMessageRetrieverTest {
             prefetchingMessageRetriever.start();
 
             // assert
-            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            prefetchingMessageRetriever.retrieveMessage();
             verify(amazonSqsAsync, times(1)).receiveMessageAsync(any(ReceiveMessageRequest.class));
-            prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            prefetchingMessageRetriever.retrieveMessage();
             secondPrefetchRequested.await(1, SECONDS);
             verify(amazonSqsAsync, times(2)).receiveMessageAsync(any(ReceiveMessageRequest.class));
         } finally {
@@ -482,10 +483,10 @@ public class PrefetchingMessageRetrieverTest {
         try {
             // act
             prefetchingMessageRetriever.start();
-            final Optional<Message> message = prefetchingMessageRetriever.retrieveMessage(1, SECONDS);
+            final Message message = prefetchingMessageRetriever.retrieveMessage();
 
             // assert
-            assertThat(message).contains(expectedMessage);
+            assertThat(message).isEqualTo(expectedMessage);
         } finally {
             prefetchingMessageRetriever.stop();
         }
@@ -526,7 +527,7 @@ public class PrefetchingMessageRetrieverTest {
         final Future<T> future = mock(Future.class);
         try {
             when(future.get()).thenReturn(result);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException exception) {
             // ignore
         }
         return future;
