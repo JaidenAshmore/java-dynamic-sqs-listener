@@ -4,7 +4,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.Min;
 
@@ -17,7 +16,7 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     /**
      * Cache key as only a single value is being loaded into the cache.
      */
-    private static final Integer SINGLE_CACHE_VALUE_KEY = 0;
+    private static final int SINGLE_CACHE_VALUE_KEY = 0;
 
     private final LoadingCache<Integer, Integer> cachedConcurrencyLevel;
     private final LoadingCache<Integer, Integer> cachedPreferredConcurrencyPollingRateInSeconds;
@@ -35,19 +34,11 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
 
     @Override
     public @Min(0) Integer getConcurrencyLevel() {
-        try {
-            return cachedConcurrencyLevel.get(SINGLE_CACHE_VALUE_KEY);
-        } catch (ExecutionException executionException) {
-            throw new RuntimeException(executionException);
-        }
+        return cachedConcurrencyLevel.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 
     @Override
     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
-        try {
-            return cachedPreferredConcurrencyPollingRateInSeconds.get(SINGLE_CACHE_VALUE_KEY);
-        } catch (ExecutionException executionException) {
-            throw new RuntimeException(executionException);
-        }
+        return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 }

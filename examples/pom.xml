@@ -16,6 +16,10 @@
     <name>Java Dynamic SQS Listener - Examples</name>
     <description>Contains examples for all the different modules.</description>
 
+    <properties>
+        <findbugs.config.location>../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+    </properties>
+
     <modules>
         <module>java-dynamic-sqs-listener-core-examples</module>
     </modules>

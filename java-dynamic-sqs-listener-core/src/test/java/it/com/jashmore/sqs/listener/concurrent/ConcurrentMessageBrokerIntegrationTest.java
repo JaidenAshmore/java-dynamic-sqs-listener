@@ -22,8 +22,8 @@ import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
+import com.jashmore.sqs.test.LocalSqsRule;
 import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
-import it.com.jashmore.sqs.util.LocalSqsRule;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
@@ -153,7 +153,6 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
                 PrefetchingProperties
                         .builder()
                         .visibilityTimeoutForMessagesInSeconds(1)
-                        .maxNumberOfMessagesToObtainFromServer(10)
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(1)
                         .desiredMinPrefetchedMessages(30)
                         .maxPrefetchedMessages(40)

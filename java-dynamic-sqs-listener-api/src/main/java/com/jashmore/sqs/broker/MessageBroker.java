@@ -51,7 +51,7 @@ public interface MessageBroker {
      * @return a future that will resolve when the message broker background thread and all child threads have been stopped/completed
      * @throws IllegalStateException if the broker has not been started or has already stopped
      */
-    Future<?> stop();
+    Future<Object> stop();
 
     /**
      * Stop the brokerage of messages from the queue to the processor, returning the future that will be resolved when that shutdown is complete.
@@ -70,5 +70,5 @@ public interface MessageBroker {
      * @return a future that will resolve when the message broker and any child threads have been stopped
      * @throws IllegalStateException if the broker has not been started or has already stopped
      */
-    Future<?> stopWithChildrenThreadsInterrupted();
+    Future<Object> stopWithChildrenThreadsInterrupted();
 }

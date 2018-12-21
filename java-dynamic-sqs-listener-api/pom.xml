@@ -14,6 +14,10 @@
     <name>Java Dynamic SQS Listener - API</name>
     <description>This contains the api functionality for the SQS Listener. This can be used for consumer to implement themselves.</description>
 
+    <properties>
+        <findbugs.config.location>../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>

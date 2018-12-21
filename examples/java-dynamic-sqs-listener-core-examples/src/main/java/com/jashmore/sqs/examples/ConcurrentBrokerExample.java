@@ -52,7 +52,6 @@ public class ConcurrentBrokerExample {
             .builder()
             .desiredMinPrefetchedMessages(40)
             .maxPrefetchedMessages(50)
-            .maxNumberOfMessagesToObtainFromServer(10)
             .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
             .build();
 

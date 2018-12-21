@@ -33,16 +33,16 @@ public abstract class AbstractMessageBroker implements MessageBroker {
     }
 
     @Override
-    public synchronized Future<?> stop() {
+    public synchronized Future<Object> stop() {
         return stopBroker(false);
     }
 
     @Override
-    public synchronized Future<?> stopWithChildrenThreadsInterrupted() {
+    public synchronized Future<Object> stopWithChildrenThreadsInterrupted() {
         return stopBroker(true);
     }
 
-    private Future<?> stopBroker(final boolean interruptThreads) {
+    private Future<Object> stopBroker(final boolean interruptThreads) {
         log.debug("Stopping broker: {}", this.getClass().getSimpleName());
         if (controller == null) {
             throw new IllegalStateException("Broker is not currently running");
@@ -51,7 +51,7 @@ public abstract class AbstractMessageBroker implements MessageBroker {
         controller.stopTriggered(interruptThreads);
         controllerFuture.cancel(true);
 
-        final Future<?> futureToReturn = brokerStoppedFuture;
+        final Future<Object> futureToReturn = brokerStoppedFuture;
         brokerStoppedFuture = null;
         controller = null;
         controllerFuture = null;
