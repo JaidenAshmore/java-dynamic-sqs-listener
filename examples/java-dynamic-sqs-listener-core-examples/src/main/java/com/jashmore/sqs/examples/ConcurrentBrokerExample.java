@@ -56,29 +56,6 @@ public class ConcurrentBrokerExample {
             .build();
 
     /**
-     * Runs a local Elastic MQ server that will act like the SQS queue for local testing.
-     *
-     * <p>This is useful as it means the users of this example don't need to worry about setting up any queue system them self like
-     * localstack.
-     *
-     * @return amazon sqs client for connecting the local queue
-     */
-    private static AmazonSQSAsync startElasticMqServer() {
-        log.info("Starting Local ElasticMQ SQS Server");
-        final SQSRestServer sqsRestServer = SQSRestServerBuilder
-                .withInterface("localhost")
-                .withDynamicPort()
-                .start();
-
-        final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-
-        return AmazonSQSAsyncClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:" + serverBinding.localAddress().getPort(), "elasticmq"))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-                .build();
-    }
-
-    /**
      * Example that will continue to place messages on the message queue with a message listener consuming them.
      */
     public static void main(final String[] args) throws Exception {
@@ -142,6 +119,29 @@ public class ConcurrentBrokerExample {
 
         // Wait until the first producer is done, this should never resolve
         producerFuture.get();
+    }
+
+    /**
+     * Runs a local Elastic MQ server that will act like the SQS queue for local testing.
+     *
+     * <p>This is useful as it means the users of this example don't need to worry about setting up any queue system them self like
+     * localstack.
+     *
+     * @return amazon sqs client for connecting the local queue
+     */
+    private static AmazonSQSAsync startElasticMqServer() {
+        log.info("Starting Local ElasticMQ SQS Server");
+        final SQSRestServer sqsRestServer = SQSRestServerBuilder
+                .withInterface("localhost")
+                .withDynamicPort()
+                .start();
+
+        final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
+
+        return AmazonSQSAsyncClientBuilder.standard()
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:" + serverBinding.localAddress().getPort(), "elasticmq"))
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+                .build();
     }
 
     /**

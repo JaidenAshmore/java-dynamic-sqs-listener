@@ -54,10 +54,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .builder()
                 .desiredMinPrefetchedMessages(annotation.desiredMinPrefetchedMessages())
                 .maxPrefetchedMessages(annotation.maxPrefetchedMessages())
-                // I should test here with a visibility timeout already in the queue, does this require one in my retriever? Maybe this shouldn't be a required
-                // field as part of this properties
                 .visibilityTimeoutForMessagesInSeconds(annotation.messageVisibilityTimeoutInSeconds())
-                // Hard code this
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .build();
         final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(

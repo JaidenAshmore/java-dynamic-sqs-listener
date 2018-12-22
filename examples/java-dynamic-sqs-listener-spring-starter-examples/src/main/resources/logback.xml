@@ -6,11 +6,6 @@
         </encoder>
     </appender>
 
-    <!-- We turn off the DEBUG level logging for the ElastiMQ server to reduce unnecessary log messages-->
-    <logger name="akka" level="INFO" />
-    <logger name="org.elasticmq" level="INFO" />
-    <logger name="com.jashmore" level="DEBUG" />
-
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
