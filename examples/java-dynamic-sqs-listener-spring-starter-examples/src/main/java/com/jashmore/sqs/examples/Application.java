@@ -107,21 +107,26 @@ public class Application {
             // Here is how we can dynamically change the number of threads that are processing messages. Every time it needs to process another message it
             // will check this concurrency level to see if it needs to change. We have wrapped it with some internal caching so it only checks for an actual
             // new value every 1 second
-            final ConcurrentMessageBrokerProperties properties = new CachingConcurrentMessageBrokerProperties(1000,
-                    new ConcurrentMessageBrokerProperties() {
-                    private final Random random = new Random(1);
-
-                    @Override
-                    public Integer getConcurrencyLevel() {
-                        return random.nextInt(5);
-                    }
-
-                    @Override
-                    public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
-                        return 5000;
-                    }
-                });
+            final ConcurrentMessageBrokerProperties properties = new CachingConcurrentMessageBrokerProperties(
+                    1000, new RandomConcurrentMessageBrokerProperties());
             return new ConcurrentMessageBroker(messageRetriever, messageProcessor, Executors.newCachedThreadPool(), properties);
         };
+    }
+
+    /**
+     * Implementation that will randomly change the level of concurrency every 5 seconds.
+     */
+    private static class RandomConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
+        private final Random random = new Random(1);
+
+        @Override
+        public Integer getConcurrencyLevel() {
+            return random.nextInt(5);
+        }
+
+        @Override
+        public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
+            return 5000;
+        }
     }
 }
