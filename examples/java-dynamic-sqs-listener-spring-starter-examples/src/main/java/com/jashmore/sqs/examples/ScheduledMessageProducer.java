@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Helper scheduled task that will place 10 messages onto each queue for processing by the message listeners.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
