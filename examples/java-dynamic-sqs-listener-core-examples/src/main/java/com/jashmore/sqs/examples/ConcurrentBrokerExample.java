@@ -38,22 +38,25 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.constraints.Min;
 
+/**
+ * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
+ * {@link ConcurrentMessageBroker}. The rate of concurrency is randomly changed every {@link #CONCURRENCY_LEVEL_PERIOD_IN_MS} to a new value between 0
+ * and {@link #CONCURRENCY_LEVEL_LIMIT}.
+ *
+ * <p>This example will also show how the performance of the message processing can be improved by prefetching messages via the
+ * {@link PrefetchingMessageRetriever}.
+ *
+ * <p>While this is running you should see the messages being processed and the number of messages that are concurrently being processed. This will highlight
+ * how the concurrency can change during the running of the application.
+ */
 @Slf4j
 public class ConcurrentBrokerExample {
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
+    private static final int CONCURRENCY_LEVEL_PERIOD_IN_MS = 5000;
+    private static final int CONCURRENCY_LEVEL_LIMIT = 10;
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final String QUEUE_NAME = "my_queue";
-    /**
-     * Contains the number of messages that will be published from the producer at once.
-     */
-    private static final int NUMBER_OF_MESSAGES_FOR_REDUCER = 10;
-    private static final PrefetchingProperties PREFETCHING_PROPERTIES = PrefetchingProperties
-            .builder()
-            .desiredMinPrefetchedMessages(40)
-            .maxPrefetchedMessages(50)
-            .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
-            .build();
 
     /**
      * Example that will continue to place messages on the message queue with a message listener consuming them.
@@ -68,12 +71,19 @@ public class ConcurrentBrokerExample {
                 .queueUrl(queueUrl)
                 .build();
 
+        final ExecutorService executorService = Executors.newCachedThreadPool();
+
         // Creates the class that will actually perform the logic for retrieving messages from the queue
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 amazonSqsAsync,
                 queueProperties,
-                PREFETCHING_PROPERTIES,
-                EXECUTOR_SERVICE
+                PrefetchingProperties
+                        .builder()
+                        .desiredMinPrefetchedMessages(10)
+                        .maxPrefetchedMessages(20)
+                        .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
+                        .build(),
+                executorService
         );
 
         // As this retrieves messages asynchronously we need to start the background thread
@@ -94,19 +104,19 @@ public class ConcurrentBrokerExample {
         final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                EXECUTOR_SERVICE,
+                executorService,
                 // Represents a concurrent implementation that will fluctuate between 0 and 10 threads all processing messages
                 new CachingConcurrentMessageBrokerProperties(10000, new ConcurrentMessageBrokerProperties() {
                     private final Random random = new Random(1);
 
                     @Override
                     public Integer getConcurrencyLevel() {
-                        return random.nextInt(10);
+                        return random.nextInt(CONCURRENCY_LEVEL_LIMIT);
                     }
 
                     @Override
                     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
-                        return 5000;
+                        return CONCURRENCY_LEVEL_PERIOD_IN_MS;
                     }
                 })
         );
@@ -115,7 +125,7 @@ public class ConcurrentBrokerExample {
         concurrentMessageBroker.start();
 
         // Create some producers of messages
-        final Future<?> producerFuture = EXECUTOR_SERVICE.submit(new Producer(amazonSqsAsync, queueUrl, OBJECT_MAPPER));
+        final Future<?> producerFuture = executorService.submit(new Producer(amazonSqsAsync, queueUrl));
 
         // Wait until the first producer is done, this should never resolve
         producerFuture.get();
@@ -124,8 +134,7 @@ public class ConcurrentBrokerExample {
     /**
      * Runs a local Elastic MQ server that will act like the SQS queue for local testing.
      *
-     * <p>This is useful as it means the users of this example don't need to worry about setting up any queue system them self like
-     * localstack.
+     * <p>This is useful as it means the users of this example don't need to worry about setting up any queue system them self.
      *
      * @return amazon sqs client for connecting the local queue
      */
@@ -161,9 +170,13 @@ public class ConcurrentBrokerExample {
     @Slf4j
     @AllArgsConstructor
     private static class Producer implements Runnable {
+        /**
+         * Contains the number of messages that will be published from the producer at once.
+         */
+        private static final int NUMBER_OF_MESSAGES_FOR_PRODUCER = 10;
+
         private final AmazonSQSAsync async;
         private final String queueUrl;
-        private final ObjectMapper objectMapper;
 
         @Override
         public void run() {
@@ -172,10 +185,10 @@ public class ConcurrentBrokerExample {
             while (!shouldStop) {
                 try {
                     final SendMessageBatchRequest sendMessageBatchRequest = new SendMessageBatchRequest(queueUrl);
-                    for (int i = 0; i < NUMBER_OF_MESSAGES_FOR_REDUCER; ++i) {
+                    for (int i = 0; i < NUMBER_OF_MESSAGES_FOR_PRODUCER; ++i) {
                         final String messageId = "" + count;
                         final Request request = new Request("key_" + count);
-                        sendMessageBatchRequest.withEntries(new SendMessageBatchRequestEntry(messageId, objectMapper.writeValueAsString(request)));
+                        sendMessageBatchRequest.withEntries(new SendMessageBatchRequestEntry(messageId, OBJECT_MAPPER.writeValueAsString(request)));
                         ++count;
                     }
                     log.info("Put 10 messages onto queue");

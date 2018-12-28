@@ -7,6 +7,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.config.QueueListenerConfiguration;
 import com.jashmore.sqs.container.basic.QueueListener;
 import com.jashmore.sqs.container.custom.CustomQueueListener;
 import com.jashmore.sqs.container.custom.MessageBrokerFactory;
@@ -52,7 +53,8 @@ public class Application {
     }
 
     /**
-     * Connects to an internal ElasticMQ SQS Server.
+     * Connects to an internal ElasticMQ SQS Server, this will replace the {@link AmazonSQSAsync} provided by
+     * {@link QueueListenerConfiguration#amazonSqsAsync()}.
      */
     @Bean
     public AmazonSQSAsync amazonSqsAsync() {

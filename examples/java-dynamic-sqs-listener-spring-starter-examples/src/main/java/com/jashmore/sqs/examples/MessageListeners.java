@@ -6,11 +6,13 @@ import com.jashmore.sqs.container.custom.CustomQueueListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Random;
+
 @Component
 @SuppressWarnings("unused")
 @Slf4j
 public class MessageListeners {
-    @QueueListener(value = "test", concurrencyLevel = 2)
+    @QueueListener(value = "test")
     public void method(@Payload final String payload) {
         log.info("Message Received: {}", payload);
     }

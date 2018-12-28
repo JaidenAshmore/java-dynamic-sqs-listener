@@ -94,7 +94,7 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <configuration>
-                        <mainClass>com.jashmore.cst.starters.amazon.sqs.example.Application</mainClass>
+                        <mainClass>com.jashmore.sqs.examples.Application</mainClass>
                     </configuration>
                     <executions>
                         <execution>
