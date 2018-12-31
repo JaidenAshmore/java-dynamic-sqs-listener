@@ -83,13 +83,13 @@ mvn spring-boot:run
 See [examples](./examples) for all of the available examples, 
 
 ## Full Documentation
-To keep the README minimal and easy to digest the rest of the documentation is kept in the [wiki](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/wiki).
+To keep the README minimal and easy to digest the rest of the documentation is kept in the [doc](./doc/documentation.md) folder.
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use the [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).
 
 ## Contributing
-See [wiki/Contributing](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/wiki/Contributing) for more details.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
 
 ## License
 
