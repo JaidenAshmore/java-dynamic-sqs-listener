@@ -2,10 +2,6 @@ package com.jashmore.sqs.retriever.batching;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
@@ -13,6 +9,10 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private final QueueProperties queueProperties;
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final ExecutorService executorService;
     private final BatchingMessageRetrieverProperties properties;
 
@@ -138,14 +138,17 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 }
 
                 try {
-                    final ReceiveMessageResult receiveMessageResult = amazonSqsAsync.receiveMessage(
-                            new ReceiveMessageRequest(queueProperties.getQueueUrl())
-                                    .withVisibilityTimeout(properties.getVisibilityTimeoutInSeconds())
-                                    .withMaxNumberOfMessages(numberOfMessagesToObtain)
-                                    .withWaitTimeSeconds(0)
-                    );
+                    final ReceiveMessageRequest recieveMessageRequest = ReceiveMessageRequest
+                            .builder()
+                            .queueUrl(queueProperties.getQueueUrl())
+                            .visibilityTimeout(properties.getVisibilityTimeoutInSeconds())
+                            .maxNumberOfMessages(numberOfMessagesToObtain)
+                            .waitTimeSeconds(0)
+                            .build();
+                    final Future<ReceiveMessageResponse> receiveMessageResponseFuture = sqsAsyncClient.receiveMessage(recieveMessageRequest);
                     try {
-                        for (final Message message : receiveMessageResult.getMessages()) {
+                        final ReceiveMessageResponse response = receiveMessageResponseFuture.get();
+                        for (final Message message : response.messages()) {
                             messagesDownloaded.put(message);
                         }
                     } catch (InterruptedException interruptedException) {

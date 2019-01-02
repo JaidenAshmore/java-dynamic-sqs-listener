@@ -3,7 +3,6 @@ package it.com.jashmore.sqs.container.custom;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,10 +55,10 @@ public class CustomQueueWrapperIntegrationTest {
     private static final Map<Integer, Boolean> messagesProcessed = new ConcurrentHashMap<>();
 
     @Autowired
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Configuration
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @SuppressWarnings( {"SpringJavaInjectionPointsAutowiringInspection", "CheckStyle"})
     public static class TestConfig {
         @Bean
         public CustomQueueWrapperIntegrationTest.MessageListener messageListener() {
@@ -66,7 +66,7 @@ public class CustomQueueWrapperIntegrationTest {
         }
 
         @Bean
-        public MessageRetrieverFactory myMessageRetrieverFactory(final AmazonSQSAsync amazonSqsAsync) {
+        public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
             return (queueProperties) -> {
                 final PrefetchingProperties prefetchingProperties = PrefetchingProperties
                         .builder()
@@ -76,13 +76,13 @@ public class CustomQueueWrapperIntegrationTest {
                         .visibilityTimeoutForMessagesInSeconds(30)
                         .errorBackoffTimeInMilliseconds(10)
                         .build();
-                return new PrefetchingMessageRetriever(amazonSqsAsync, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
+                return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
             };
         }
 
         @Bean
         public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
-                                                                 final AmazonSQSAsync amazonSQSAsync) {
+                                                                 final SqsAsyncClient amazonSQSAsync) {
             return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSQSAsync, method, bean);
         }
 
@@ -100,20 +100,20 @@ public class CustomQueueWrapperIntegrationTest {
     }
 
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException {
+    public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
         // arrange
-        final String queueUrl = amazonSqsAsync.getQueueUrl("CustomQueueWrapperIntegrationTest").getQueueUrl();
+        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName("CustomQueueWrapperIntegrationTest")).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .parallel()
                 .mapToObj(i -> {
                     log.info("Sending message: " + i);
-                    return amazonSqsAsync.sendMessageAsync(queueUrl, "" + i);
+                    return sqsAsyncClient.sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
                 })
                 .forEach(future -> {
                     try {
                         future.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
+                    } catch (InterruptedException | ExecutionException exception) {
+                        throw new RuntimeException(exception);
                     }
                 });
 
@@ -127,13 +127,14 @@ public class CustomQueueWrapperIntegrationTest {
     }
 
     public static class MessageListener {
+        @SuppressWarnings("CheckStyle")
         @CustomQueueListener(queue = "CustomQueueWrapperIntegrationTest",
                 messageBrokerFactoryBeanName = "myMessageBrokerFactory",
                 messageProcessorFactoryBeanName = "myMessageProcessorFactory",
                 messageRetrieverFactoryBeanName = "myMessageRetrieverFactory")
         public void listenToMessage(@Payload final String payload) {
             log.info("Obtained message: {}", payload);
-            messagesProcessed.put(Integer.valueOf(payload), true);
+            messagesProcessed.put(Integer.valueOf(payload.replace("message: ","")), true);
             COUNT_DOWN_LATCH.countDown();
         }
     }

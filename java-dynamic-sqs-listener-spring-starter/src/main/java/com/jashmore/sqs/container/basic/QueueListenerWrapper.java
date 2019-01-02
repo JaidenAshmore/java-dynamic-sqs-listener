@@ -2,7 +2,6 @@ package com.jashmore.sqs.container.basic;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.QueueWrapper;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
     private final ArgumentResolverService argumentResolverService;
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -45,10 +45,16 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
 
     @Override
     protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
-        final QueueProperties queueProperties = QueueProperties
-                .builder()
-                .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
-                .build();
+        final QueueProperties queueProperties;
+        try {
+            queueProperties = QueueProperties
+                    .builder()
+                    .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
+                    .build();
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted while setting up container");
+        }
 
         final PrefetchingProperties batchingProperties = PrefetchingProperties
                 .builder()
@@ -58,10 +64,10 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .build();
         final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                amazonSqsAsync, queueProperties, batchingProperties, executor);
+                sqsAsyncClient, queueProperties, batchingProperties, executor);
 
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
-                amazonSqsAsync, method, bean);
+                sqsAsyncClient, method, bean);
 
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,

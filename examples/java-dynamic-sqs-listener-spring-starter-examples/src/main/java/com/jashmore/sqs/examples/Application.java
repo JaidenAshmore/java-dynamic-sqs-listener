@@ -1,7 +1,6 @@
 package com.jashmore.sqs.examples;
 
 import akka.http.scaladsl.Http;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.annotation.EnableQueueListeners;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
@@ -14,10 +13,9 @@ import com.jashmore.sqs.container.custom.MessageBrokerFactory;
 import com.jashmore.sqs.container.custom.MessageProcessorFactory;
 import com.jashmore.sqs.container.custom.MessageRetrieverFactory;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
-import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
-import com.jashmore.sqs.util.LocalAmazonSqsAsync;
+import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
@@ -27,6 +25,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -53,11 +52,11 @@ public class Application {
     }
 
     /**
-     * Connects to an internal ElasticMQ SQS Server, this will replace the {@link AmazonSQSAsync} provided by
-     * {@link QueueListenerConfiguration#amazonSqsAsync()}.
+     * Connects to an internal ElasticMQ SQS Server, this will replace the {@link SqsAsyncClient} provided by
+     * {@link QueueListenerConfiguration#sqsAsyncClient()}.
      */
     @Bean
-    public AmazonSQSAsync amazonSqsAsync() {
+    public SqsAsyncClient sqsAsyncClient() {
         log.info("Starting Local ElasticMQ SQS Server");
         final SQSRestServer sqsRestServer = SQSRestServerBuilder
                 .withInterface("localhost")
@@ -65,7 +64,7 @@ public class Application {
                 .start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        return new LocalAmazonSqsAsync(SqsQueuesConfig
+        return new LocalSqsAsyncClient(SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("test").build())
@@ -77,7 +76,7 @@ public class Application {
      * Example of a {@link MessageRetrieverFactory} being built that will be used by the {@link CustomQueueListener}.
      */
     @Bean
-    public MessageRetrieverFactory myMessageRetrieverFactory(final AmazonSQSAsync amazonSqsAsync) {
+    public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
         return (queueProperties) -> {
             final PrefetchingProperties prefetchingProperties = PrefetchingProperties
                     .builder()
@@ -87,7 +86,7 @@ public class Application {
                     .visibilityTimeoutForMessagesInSeconds(30)
                     .errorBackoffTimeInMilliseconds(10)
                     .build();
-            return new PrefetchingMessageRetriever(amazonSqsAsync, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
+            return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
         };
     }
 
@@ -96,8 +95,8 @@ public class Application {
      */
     @Bean
     public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
-                                                             final AmazonSQSAsync amazonSqsAsync) {
-        return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqsAsync, method, bean);
+                                                             final SqsAsyncClient sqsAsyncClient) {
+        return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
     }
 
     /**

@@ -6,7 +6,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,6 +14,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.io.IOException;
 
@@ -38,8 +38,7 @@ public class JacksonPayloadMapperTest {
     @Test
     public void stringPayloadParameterResolvesWithMessageBody() {
         // arrange
-        final Message message = new Message();
-        message.setBody("body");
+        final Message message = Message.builder().body("body").build();
 
         // act
         final Object argument = payloadMapper.map(message, String.class);
@@ -51,7 +50,7 @@ public class JacksonPayloadMapperTest {
     @Test
     public void payloadContainerPojoCanBeMappedToObject() throws IOException {
         // arrange
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         final Pojo parsedObject = new Pojo("test");
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenReturn(parsedObject);
 
@@ -65,7 +64,7 @@ public class JacksonPayloadMapperTest {
     @Test
     public void errorBuildingPayloadThrowsArgumentResolutionException() throws IOException {
         // arrange
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenThrow(new IOException());
         expectedException.expect(PayloadMappingException.class);
         expectedException.expectCause(isA(IOException.class));

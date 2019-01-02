@@ -1,28 +1,19 @@
 package com.jashmore.sqs.retriever.individual;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-import static java.lang.Math.toIntExact;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.google.common.base.Preconditions;
-
-import com.amazonaws.annotation.ThreadSafe;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Message retriever that will obtain a new message from the server as requested and will not prefetch any messages for future use.
@@ -34,7 +25,7 @@ import javax.validation.constraints.NotNull;
 @ThreadSafe
 @AllArgsConstructor
 public class IndividualMessageRetriever implements MessageRetriever {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final IndividualMessageRetrieverProperties properties;
 
@@ -42,12 +33,12 @@ public class IndividualMessageRetriever implements MessageRetriever {
     public Message retrieveMessage() throws InterruptedException {
         final Message message;
         while (true) {
-            final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(generateReceiveMessageRequest());
+            final Future<ReceiveMessageResponse> receiveMessageResultFuture = sqsAsyncClient.receiveMessage(generateReceiveMessageRequest());
 
             try {
-                final ReceiveMessageResult receiveMessageResult = receiveMessageResultFuture.get();
-                if (!receiveMessageResult.getMessages().isEmpty()) {
-                    message = receiveMessageResult.getMessages().get(0);
+                final ReceiveMessageResponse response = receiveMessageResultFuture.get();
+                if (!response.messages().isEmpty()) {
+                    message = response.messages().get(0);
                     break;
                 }
             } catch (final ExecutionException executionException) {
@@ -59,9 +50,12 @@ public class IndividualMessageRetriever implements MessageRetriever {
     }
 
     private ReceiveMessageRequest generateReceiveMessageRequest() {
-        return new ReceiveMessageRequest(queueProperties.getQueueUrl())
-                .withMaxNumberOfMessages(1)
-                .withWaitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-                .withVisibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds());
+        return ReceiveMessageRequest
+                .builder()
+                .queueUrl(queueProperties.getQueueUrl())
+                .maxNumberOfMessages(1)
+                .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .visibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
+                .build();
     }
 }

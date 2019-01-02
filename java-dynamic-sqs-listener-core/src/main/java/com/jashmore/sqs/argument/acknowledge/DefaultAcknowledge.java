@@ -1,9 +1,10 @@
 package com.jashmore.sqs.argument.acknowledge;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.Future;
 
@@ -12,12 +13,17 @@ import java.util.concurrent.Future;
  */
 @AllArgsConstructor
 public class DefaultAcknowledge implements Acknowledge {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final Message message;
 
     @Override
     public Future<?> acknowledgeSuccessful() {
-        return amazonSqsAsync.deleteMessageAsync(queueProperties.getQueueUrl(), message.getReceiptHandle());
+        final DeleteMessageRequest deleteRequest = DeleteMessageRequest
+                .builder()
+                .queueUrl(queueProperties.getQueueUrl())
+                .receiptHandle(message.receiptHandle())
+                .build();
+        return sqsAsyncClient.deleteMessage(deleteRequest);
     }
 }

@@ -9,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
@@ -18,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -88,7 +88,7 @@ public class SingleThreadedMessageBrokerTest {
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();
         final SingleThreadedMessageBroker.Controller controller = new SingleThreadedMessageBroker.SingleThreadMessageController(
                 messageRetriever, messageProcessor, executorService, threadCompletedFuture);
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(message)
                 .thenThrow(new InterruptedException());
@@ -112,8 +112,8 @@ public class SingleThreadedMessageBrokerTest {
                 // do not sleep thread
             }
         };
-        final Message firstMessage = new Message().withBody("test");
-        final Message secondMessage = new Message().withBody("other");
+        final Message firstMessage = Message.builder().body("test").build();
+        final Message secondMessage = Message.builder().body("other").build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage)
                 .thenReturn(secondMessage)
@@ -133,8 +133,8 @@ public class SingleThreadedMessageBrokerTest {
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();
         final SingleThreadedMessageBroker.Controller controller = new SingleThreadedMessageBroker.SingleThreadMessageController(
                 messageRetriever, messageProcessor, mockExecutorService, threadCompletedFuture);
-        final Message firstMessage = new Message().withBody("test");
-        final Message secondMessage = new Message().withBody("other");
+        final Message firstMessage = Message.builder().body("test").build();
+        final Message secondMessage = Message.builder().body("other").build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage)
                 .thenReturn(secondMessage)
@@ -157,8 +157,8 @@ public class SingleThreadedMessageBrokerTest {
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();
         final SingleThreadedMessageBroker.Controller controller = new SingleThreadedMessageBroker.SingleThreadMessageController(
                 messageRetriever, messageProcessor, mockExecutorService, threadCompletedFuture);
-        final Message firstMessage = new Message().withBody("test");
-        final Message secondMessage = new Message().withBody("other");
+        final Message firstMessage = Message.builder().body("test").build();
+        final Message secondMessage = Message.builder().body("other").build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage)
                 .thenReturn(secondMessage)
@@ -181,7 +181,7 @@ public class SingleThreadedMessageBrokerTest {
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();
         final SingleThreadedMessageBroker.Controller controller = new SingleThreadedMessageBroker.SingleThreadMessageController(
                 messageRetriever, messageProcessor, mockExecutorService, threadCompletedFuture);
-        final Message firstMessage = new Message().withBody("test");
+        final Message firstMessage = Message.builder().build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage);
         doReturn(mockFuture).when(mockExecutorService).submit(any(Runnable.class));
@@ -208,7 +208,7 @@ public class SingleThreadedMessageBrokerTest {
                 super.backoff();
             }
         };
-        final Message firstMessage = new Message().withBody("test");
+        final Message firstMessage = Message.builder().build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage);
         doReturn(mockFuture).when(mockExecutorService).submit(any(Runnable.class));
@@ -226,7 +226,7 @@ public class SingleThreadedMessageBrokerTest {
     @Test
     public void threadsRunningShouldBeCancelledIfInterruptIsPassedIn() throws InterruptedException, ExecutionException {
         // arrange
-        final Message firstMessage = new Message();
+        final Message firstMessage = Message.builder().build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage);
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();
@@ -246,7 +246,7 @@ public class SingleThreadedMessageBrokerTest {
     @Test
     public void threadsRunningShouldBeNotBeCancelledIfInterruptThreadsIsNotSet() throws InterruptedException, ExecutionException {
         // arrange
-        final Message firstMessage = new Message();
+        final Message firstMessage = Message.builder().build();
         when(messageRetriever.retrieveMessage())
                 .thenReturn(firstMessage);
         final CompletableFuture<Object> threadCompletedFuture = new CompletableFuture<>();

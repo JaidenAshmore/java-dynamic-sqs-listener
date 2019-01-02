@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.messageid.MessageId;
@@ -18,6 +16,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -31,13 +31,13 @@ public class DefaultArgumentResolverServiceTest {
     private PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     private DefaultArgumentResolverService service;
 
     @Before
     public void setUp() {
-        service = new DefaultArgumentResolverService(payloadMapper, amazonSqsAsync);
+        service = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
     }
 
     @Test
@@ -45,9 +45,10 @@ public class DefaultArgumentResolverServiceTest {
         // arrange
         final Method method = DefaultArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
-        final Message message = new Message()
-                .withBody(objectMapper.writeValueAsString(payload))
-                .withMessageId("messageId");
+        final Message message = Message.builder()
+                .body(objectMapper.writeValueAsString(payload))
+                .messageId("messageId")
+                .build();
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
 
         // act

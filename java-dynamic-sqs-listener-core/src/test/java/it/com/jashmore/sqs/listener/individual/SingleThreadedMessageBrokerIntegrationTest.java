@@ -4,7 +4,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -24,6 +23,7 @@ import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,20 +45,20 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
         // arrange
         final int numberOfMessages = 20;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final AmazonSQSAsync amazonSqsAsync = localSqsRule.getAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getAmazonSqsAsync();
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
-                amazonSqsAsync,
+                sqsAsyncClient,
                 queueProperties,
                 IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(1).build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, amazonSqsAsync);
+        final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                amazonSqsAsync,
+                sqsAsyncClient,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );

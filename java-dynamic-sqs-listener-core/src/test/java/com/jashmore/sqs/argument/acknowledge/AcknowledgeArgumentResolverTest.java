@@ -2,8 +2,6 @@ package com.jashmore.sqs.argument.acknowledge;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,6 +9,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -20,7 +20,7 @@ public class AcknowledgeArgumentResolverTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
     private QueueProperties queueProperties;
@@ -29,7 +29,7 @@ public class AcknowledgeArgumentResolverTest {
 
     @Before
     public void setUp() {
-        acknowledgeArgumentResolver = new AcknowledgeArgumentResolver(amazonSqsAsync);
+        acknowledgeArgumentResolver = new AcknowledgeArgumentResolver(sqsAsyncClient);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class AcknowledgeArgumentResolverTest {
     public void shouldResolveParameterWithAnAcknowledgeClass() {
         // arrange
         final Parameter parameter = getParameter(0);
-        final Message message = new Message();
+        final Message message = Message.builder().build();
 
         // act
         final Object resolvedArgument = acknowledgeArgumentResolver.resolveArgumentForParameter(queueProperties, parameter, message);

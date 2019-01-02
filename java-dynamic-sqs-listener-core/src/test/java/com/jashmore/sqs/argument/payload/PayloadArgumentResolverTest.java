@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.Is.isA;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -16,6 +15,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -68,7 +68,7 @@ public class PayloadArgumentResolverTest {
     public void payloadThatFailsToBeBuiltThrowsArgumentResolutionException() {
         // arrange
         final Parameter stringParameter = getParameter(1);
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         when(payloadMapper.map(message, Pojo.class)).thenThrow(new PayloadMappingException("Error"));
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectCause(isA(PayloadMappingException.class));
@@ -80,7 +80,7 @@ public class PayloadArgumentResolverTest {
     @Test
     public void payloadThatIsSuccessfullyBuiltIsReturnedInResolution() {
         final Parameter parameter = getParameter(1);
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         final Pojo parsedObject = new Pojo("test");
         when(payloadMapper.map(message, Pojo.class)).thenReturn(parsedObject);
 

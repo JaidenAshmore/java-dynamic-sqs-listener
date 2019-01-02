@@ -3,7 +3,6 @@ package com.jashmore.sqs.container.basic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
@@ -14,6 +13,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
 
@@ -29,7 +29,7 @@ public class QueueListenerWrapperTest {
     private ArgumentResolverService argumentResolverService;
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
     private QueueResolverService queueResolver;
@@ -38,7 +38,7 @@ public class QueueListenerWrapperTest {
 
     @Before
     public void setUp() {
-        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, amazonSqsAsync, queueResolver);
+        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolver);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class QueueListenerWrapperTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
+    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException, InterruptedException {
         // arrange
         final Object bean = new QueueListenerWrapperTest();
         final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");

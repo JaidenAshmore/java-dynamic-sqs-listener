@@ -9,10 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +19,14 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -54,7 +55,7 @@ public class BatchingMessageRetrieverTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
     private ExecutorService mockExecutorService;
@@ -68,7 +69,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void whenStartingRetrieverTheBackgroundThreadShouldBeStarted() {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 mockExecutorService, DEFAULT_PROPERTIES);
 
         // act
@@ -81,7 +82,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void whenStartingRetrieverTwiceNoSecondBackgroundThreadIsStarted() {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 mockExecutorService, DEFAULT_PROPERTIES);
 
         // act
@@ -95,7 +96,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void stoppingRetrieverThatHasNotStartedDoesNothing() throws ExecutionException, InterruptedException {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 mockExecutorService, DEFAULT_PROPERTIES);
 
         // act
@@ -108,7 +109,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void stoppingStartedRetrieverCancelsBackgroundThread() {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 mockExecutorService, DEFAULT_PROPERTIES);
         doReturn(mockFuture).when(mockExecutorService).submit(any(BatchingMessageRetriever.BackgroundBatchingMessageRetriever.class));
         batchingMessageRetriever.start();
@@ -128,7 +129,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void futureReturnedWhenStoppingMessageRetrieverIsNotBackgroundThreadFuture() {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 mockExecutorService, DEFAULT_PROPERTIES);
         doReturn(mockFuture).when(mockExecutorService).submit(any(BatchingMessageRetriever.BackgroundBatchingMessageRetriever.class));
         batchingMessageRetriever.start();
@@ -143,7 +144,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void backgroundThreadWillNotAttemptToGetMessagesIfNoThreadsRequestingIt() throws InterruptedException {
         // arrange
-        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync,
+        final BatchingMessageRetriever batchingMessageRetriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
                 Executors.newCachedThreadPool(), DEFAULT_PROPERTIES);
         batchingMessageRetriever.start();
 
@@ -151,7 +152,7 @@ public class BatchingMessageRetrieverTest {
         Thread.sleep(2 * POLLING_PERIOD_IN_MS);
 
         // assert
-        verify(amazonSqsAsync, never()).receiveMessage(any(ReceiveMessageRequest.class));
+        verify(sqsAsyncClient, never()).receiveMessage(any(ReceiveMessageRequest.class));
     }
 
     @Test
@@ -161,10 +162,9 @@ public class BatchingMessageRetrieverTest {
         final BatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().messageRetrievalPollingPeriodInMs(pollingPeriodInMs).build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
             receivedMessageLatch.countDown();
-            return new ReceiveMessageResult()
-                    .withMessages();
+            return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build());
         });
         final long startTime = System.currentTimeMillis();
         batchingMessageRetriever.start();
@@ -177,9 +177,9 @@ public class BatchingMessageRetrieverTest {
         messageRetrievingFuture.cancel(true);
 
         // assert
-        verify(amazonSqsAsync, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        verify(sqsAsyncClient, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(timeTaken).isGreaterThanOrEqualTo(pollingPeriodInMs);
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(1);
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(1);
     }
 
     @Test
@@ -193,10 +193,9 @@ public class BatchingMessageRetrieverTest {
                 .build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
             receivedMessageLatch.countDown();
-            return new ReceiveMessageResult()
-                    .withMessages(new Message());
+            return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().messages(Message.builder().build()).build());
         });
         batchingMessageRetriever.start();
 
@@ -215,14 +214,13 @@ public class BatchingMessageRetrieverTest {
     public void errorObtainingMessagesWillTryAgainAfterPollingPeriodExpiresAgainWhenWaitingLimitIsNotReached() throws Exception {
         // arrange
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever();
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class)))
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenThrow(new RuntimeException("error"))
                 .thenAnswer(invocation -> {
                     receivedMessageLatch.countDown();
-                    return new ReceiveMessageResult()
-                            .withMessages(message);
+                    return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().messages(message).build());
                 });
         final long startTime = System.currentTimeMillis();
         batchingMessageRetriever.start();
@@ -233,7 +231,7 @@ public class BatchingMessageRetrieverTest {
         batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
-        verify(amazonSqsAsync, times(2)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        verify(sqsAsyncClient, times(2)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(messageRetrieved).isEqualTo(message);
         assertThat(actualTime).isGreaterThanOrEqualTo(POLLING_PERIOD_IN_MS * 2);
     }
@@ -244,11 +242,13 @@ public class BatchingMessageRetrieverTest {
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().numberOfThreadsWaitingTrigger(10).build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class)))
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
                     receivedMessageLatch.countDown();
-                    return new ReceiveMessageResult()
-                            .withMessages(new Message(), new Message(), new Message(), new Message(), new Message());
+                    return CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
+                            .messages(Message.builder().build(), Message.builder().build(), Message.builder().build(),
+                                    Message.builder().build(), Message.builder().build())
+                            .build());
                 });
         batchingMessageRetriever.start();
 
@@ -260,8 +260,8 @@ public class BatchingMessageRetrieverTest {
         batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
-        verify(amazonSqsAsync, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
+        verify(sqsAsyncClient, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
 
         // cleanup
         allMessagesFutures.forEach(future -> future.cancel(true));
@@ -271,14 +271,13 @@ public class BatchingMessageRetrieverTest {
     public void consumerThatIsInterruptedWhileMessageIsBeingDownloadedWillPlaceMessageOnAQueueForInstantRetrievalNextTime() throws Exception {
         // arrange
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever();
-        final Message message = new Message();
+        final Message message = Message.builder().build();
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
         final CountDownLatch consumerTimedOutLatch = new CountDownLatch(1);
-        when(amazonSqsAsync.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
             receivedMessageLatch.countDown();
             consumerTimedOutLatch.await();
-            return new ReceiveMessageResult()
-                    .withMessages(message);
+            return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().messages(message).build());
         });
         batchingMessageRetriever.start();
         final Future<?> retrieveMessageFuture = obtainFutureOnBackgroundThreadWhenInterrupted(batchingMessageRetriever, consumerTimedOutLatch);
@@ -291,7 +290,7 @@ public class BatchingMessageRetrieverTest {
         batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
-        verify(amazonSqsAsync, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        verify(sqsAsyncClient, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(messageRetrieved).isEqualTo(message);
     }
 
@@ -323,6 +322,6 @@ public class BatchingMessageRetrieverTest {
     }
 
     private BatchingMessageRetriever batchingMessageRetriever(final BatchingMessageRetrieverProperties properties) {
-        return new BatchingMessageRetriever(QUEUE_PROPERTIES, amazonSqsAsync, Executors.newCachedThreadPool(), properties);
+        return new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, Executors.newCachedThreadPool(), properties);
     }
 }

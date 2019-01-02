@@ -2,15 +2,15 @@ package com.jashmore.sqs.retriever.prefetch;
 
 import com.google.common.base.Preconditions;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
@@ -54,7 +54,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 @Slf4j
 public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final ExecutorService executorService;
     private final PrefetchingProperties properties;
@@ -65,16 +65,16 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     private CompletableFuture<Object> fetchingMessagesCompletedFuture;
 
 
-    public PrefetchingMessageRetriever(final AmazonSQSAsync amazonSqsAsync,
+    public PrefetchingMessageRetriever(final SqsAsyncClient sqsAsyncClient,
                                        final QueueProperties queueProperties,
                                        final PrefetchingProperties properties,
                                        final ExecutorService executorService) {
-        Preconditions.checkNotNull(amazonSqsAsync, "amazonSqsAsync");
+        Preconditions.checkNotNull(sqsAsyncClient, "sqsAsyncClient");
         Preconditions.checkNotNull(queueProperties, "queueProperties");
         Preconditions.checkNotNull(properties, "properties");
         Preconditions.checkNotNull(executorService, "executor");
 
-        this.amazonSqsAsync = amazonSqsAsync;
+        this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
         this.executorService = executorService;
         this.properties = properties;
@@ -136,13 +136,13 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
             boolean shouldStop = false;
             while (!shouldStop) {
                 try {
-                    final ReceiveMessageResult result;
+                    final ReceiveMessageResponse result;
                     try {
                         result = retrieveMoreMessages();
                         log.debug("Retrieved {} new messages for {} existing messages. Total: {}",
-                                result.getMessages().size(),
+                                result.messages().size(),
                                 internalMessageQueue.size(),
-                                internalMessageQueue.size() + result.getMessages().size()
+                                internalMessageQueue.size() + result.messages().size()
                         );
                     } catch (final InterruptedException interruptedException) {
                         log.info("Thread interrupted. Exiting...");
@@ -150,7 +150,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         continue;
                     }
 
-                    for (final Message message : result.getMessages()) {
+                    for (final Message message : result.messages()) {
                         try {
                             internalMessageQueue.put(message);
                         } catch (InterruptedException exception) {
@@ -173,17 +173,20 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
             completableFuture.complete("DONE");
         }
 
-        private ReceiveMessageResult retrieveMoreMessages() throws InterruptedException {
+        private ReceiveMessageResponse retrieveMoreMessages() throws InterruptedException {
             final int numberOfPrefetchSlotsLeft = properties.getMaxPrefetchedMessages() - internalMessageQueue.size();
             final int numberOfMessagesToObtain = Math.min(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS, numberOfPrefetchSlotsLeft);
 
             log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
-            final ReceiveMessageRequest request = new ReceiveMessageRequest(queueProperties.getQueueUrl())
-                    .withWaitTimeSeconds(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
-                    .withVisibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
-                    .withMaxNumberOfMessages(numberOfMessagesToObtain);
+            final ReceiveMessageRequest request = ReceiveMessageRequest
+                    .builder()
+                    .queueUrl(queueProperties.getQueueUrl())
+                    .waitTimeSeconds(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
+                    .visibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
+                    .maxNumberOfMessages(numberOfMessagesToObtain)
+                    .build();
             try {
-                final Future<ReceiveMessageResult> receiveMessageResultFuture = amazonSqsAsync.receiveMessageAsync(request);
+                final Future<ReceiveMessageResponse> receiveMessageResultFuture = sqsAsyncClient.receiveMessage(request);
                 return receiveMessageResultFuture.get();
             } catch (final ExecutionException executionException) {
                 throw new RuntimeException("Failed to obtain messages", executionException.getCause());

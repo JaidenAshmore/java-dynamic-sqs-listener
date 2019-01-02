@@ -5,7 +5,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.AbstractMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.MessageProcessingException;
@@ -15,6 +14,7 @@ import com.jashmore.sqs.util.ResizableSemaphore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

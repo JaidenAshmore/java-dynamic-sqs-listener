@@ -1,6 +1,6 @@
 package com.jashmore.sqs.argument.payload.mapper;
 
-import com.amazonaws.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Mapper that is able to map the message body to an object of a certain type.
@@ -17,5 +17,5 @@ public interface PayloadMapper {
      * @return the message body as an object of the given class type
      * @throws PayloadMappingException exception thrown if there was a failure to map the message body to the defined type
      */
-    Object map(final Message message, final Class<?> clazz) throws PayloadMappingException;
+    Object map(Message message, Class<?> clazz) throws PayloadMappingException;
 }

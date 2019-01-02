@@ -1,11 +1,11 @@
 package com.jashmore.sqs.argument.visibility;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.payload.Payload;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 
@@ -18,10 +18,10 @@ import java.lang.reflect.Parameter;
  * with the {@link Payload} annotation.
  */
 public class VisibilityExtenderArgumentResolver implements ArgumentResolver {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
 
-    public VisibilityExtenderArgumentResolver(final AmazonSQSAsync amazonSqsAsync) {
-        this.amazonSqsAsync = amazonSqsAsync;
+    public VisibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
+        this.sqsAsyncClient = sqsAsyncClient;
     }
 
     @Override
@@ -33,6 +33,6 @@ public class VisibilityExtenderArgumentResolver implements ArgumentResolver {
     public Object resolveArgumentForParameter(final QueueProperties queueProperties,
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
-        return new DefaultVisibilityExtender(amazonSqsAsync, queueProperties, message);
+        return new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
     }
 }

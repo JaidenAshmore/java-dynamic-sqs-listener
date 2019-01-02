@@ -1,9 +1,9 @@
 package com.jashmore.sqs.retriever.individual;
 
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 @Value
 @Builder

@@ -22,5 +22,5 @@ public interface QueueResolverService {
      * @param queueNameOrUrl queueName or queueUrl that may have parameterised placeholders in it.
      * @return the resolved url of the queue if it exists
      */
-    String resolveQueueUrl(String queueNameOrUrl);
+    String resolveQueueUrl(String queueNameOrUrl) throws InterruptedException;
 }

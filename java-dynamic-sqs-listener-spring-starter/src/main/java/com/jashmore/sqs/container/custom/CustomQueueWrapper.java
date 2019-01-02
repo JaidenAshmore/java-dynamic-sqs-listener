@@ -32,7 +32,7 @@ import java.lang.reflect.Method;
  * <p>An example usage for this could be:
  * <pre class="code">
  * &#064;Bean
- * public MessageRetrieverFactory myMessageRetrieverFactory(final AmazonSQSAsync amazonSQSAsync) {
+ * public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient amazonSQSAsync) {
  *     return (queueProperties) -> {
  *         final PrefetchingProperties prefetchingProperties = PrefetchingProperties
  *                 .builder()
@@ -66,10 +66,16 @@ public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQue
                                                                    final CustomQueueListener annotation) {
         final String queueNameOrUrl = annotation.queue();
 
-        final QueueProperties queueProperties = QueueProperties
-                .builder()
-                .queueUrl(queueResolverService.resolveQueueUrl(queueNameOrUrl))
-                .build();
+        final QueueProperties queueProperties;
+        try {
+            queueProperties = QueueProperties
+                    .builder()
+                    .queueUrl(queueResolverService.resolveQueueUrl(queueNameOrUrl))
+                    .build();
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted while setting up container");
+        }
 
         final MessageRetrieverFactory messageRetrieverFactory = beanFactory.getBean(
                 annotation.messageRetrieverFactoryBeanName(), MessageRetrieverFactory.class);
@@ -94,7 +100,7 @@ public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQue
         }
 
         if (messageRetriever instanceof AsyncMessageRetriever) {
-            return new SimpleMessageListenerContainer(identifier, (AsyncMessageRetriever)messageRetriever, messageBroker);
+            return new SimpleMessageListenerContainer(identifier, (AsyncMessageRetriever) messageRetriever, messageBroker);
         } else {
             return new SimpleMessageListenerContainer(identifier, messageBroker);
         }

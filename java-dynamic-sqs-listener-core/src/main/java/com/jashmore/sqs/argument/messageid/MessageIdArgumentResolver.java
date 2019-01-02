@@ -1,9 +1,9 @@
 package com.jashmore.sqs.argument.messageid;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 
@@ -20,6 +20,6 @@ public class MessageIdArgumentResolver implements ArgumentResolver {
     public Object resolveArgumentForParameter(final QueueProperties queueProperties,
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
-        return message.getMessageId();
+        return message.messageId();
     }
 }

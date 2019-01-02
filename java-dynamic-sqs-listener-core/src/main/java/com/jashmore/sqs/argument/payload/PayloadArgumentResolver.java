@@ -1,12 +1,12 @@
 package com.jashmore.sqs.argument.payload;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMappingException;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 

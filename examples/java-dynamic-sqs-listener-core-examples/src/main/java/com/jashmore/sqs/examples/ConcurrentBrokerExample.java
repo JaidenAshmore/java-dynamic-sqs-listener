@@ -1,13 +1,9 @@
 package com.jashmore.sqs.examples;
 
+import static java.util.stream.Collectors.toSet;
+
 import akka.http.scaladsl.Http;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequestEntry;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -29,13 +25,22 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import javax.validation.constraints.Min;
 
 /**
@@ -63,9 +68,8 @@ public class ConcurrentBrokerExample {
      */
     public static void main(final String[] args) throws Exception {
         // Sets up the SQS that will be used
-        final AmazonSQSAsync amazonSqsAsync = startElasticMqServer();
-        amazonSqsAsync.createQueue(QUEUE_NAME);
-        final String queueUrl = amazonSqsAsync.getQueueUrl(QUEUE_NAME).getQueueUrl();
+        final SqsAsyncClient sqsAsyncClient = startElasticMqServer();
+        final String queueUrl = sqsAsyncClient.createQueue((request) -> request.queueName(QUEUE_NAME).build()).get().queueUrl();
         final QueueProperties queueProperties = QueueProperties
                 .builder()
                 .queueUrl(queueUrl)
@@ -75,7 +79,7 @@ public class ConcurrentBrokerExample {
 
         // Creates the class that will actually perform the logic for retrieving messages from the queue
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                amazonSqsAsync,
+                sqsAsyncClient,
                 queueProperties,
                 PrefetchingProperties
                         .builder()
@@ -93,9 +97,9 @@ public class ConcurrentBrokerExample {
         final MessageConsumer messageConsumer = new MessageConsumer();
         final Method messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
-                argumentResolverService(amazonSqsAsync),
+                argumentResolverService(sqsAsyncClient),
                 queueProperties,
-                amazonSqsAsync,
+                sqsAsyncClient,
                 messageReceivedMethod,
                 messageConsumer
         );
@@ -125,7 +129,7 @@ public class ConcurrentBrokerExample {
         concurrentMessageBroker.start();
 
         // Create some producers of messages
-        final Future<?> producerFuture = executorService.submit(new Producer(amazonSqsAsync, queueUrl));
+        final Future<?> producerFuture = executorService.submit(new Producer(sqsAsyncClient, queueUrl));
 
         // Wait until the first producer is done, this should never resolve
         producerFuture.get();
@@ -138,7 +142,7 @@ public class ConcurrentBrokerExample {
      *
      * @return amazon sqs client for connecting the local queue
      */
-    private static AmazonSQSAsync startElasticMqServer() {
+    private static SqsAsyncClient startElasticMqServer() throws URISyntaxException {
         log.info("Starting Local ElasticMQ SQS Server");
         final SQSRestServer sqsRestServer = SQSRestServerBuilder
                 .withInterface("localhost")
@@ -147,21 +151,22 @@ public class ConcurrentBrokerExample {
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
 
-        return AmazonSQSAsyncClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:" + serverBinding.localAddress().getPort(), "elasticmq"))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+        return SqsAsyncClient.builder()
+                .region(Region.of("elasticmq"))
+                .endpointOverride(new URI("http://localhost:" + serverBinding.localAddress().getPort()))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("accessKeyId", "secretAccessKey")))
                 .build();
     }
 
     /**
      * Builds the {@link ArgumentResolverService} that will be used to parse the messages into arguments for the {@link MessageConsumer}.
      *
-     * @param amazonSqsAsync the client to communicate with the SQS queue
+     * @param sqsAsyncClient the client to communicate with the SQS queue
      * @return the service to resolve arguments for the message consumer
      */
-    private static ArgumentResolverService argumentResolverService(final AmazonSQSAsync amazonSqsAsync) {
+    private static ArgumentResolverService argumentResolverService(final SqsAsyncClient sqsAsyncClient) {
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        return new DefaultArgumentResolverService(payloadMapper, amazonSqsAsync);
+        return new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
     }
 
     /**
@@ -175,24 +180,29 @@ public class ConcurrentBrokerExample {
          */
         private static final int NUMBER_OF_MESSAGES_FOR_PRODUCER = 10;
 
-        private final AmazonSQSAsync async;
+        private final SqsAsyncClient async;
         private final String queueUrl;
 
         @Override
         public void run() {
-            int count = 0;
+            final AtomicInteger count = new AtomicInteger(0);
             boolean shouldStop = false;
             while (!shouldStop) {
                 try {
-                    final SendMessageBatchRequest sendMessageBatchRequest = new SendMessageBatchRequest(queueUrl);
-                    for (int i = 0; i < NUMBER_OF_MESSAGES_FOR_PRODUCER; ++i) {
-                        final String messageId = "" + count;
-                        final Request request = new Request("key_" + count);
-                        sendMessageBatchRequest.withEntries(new SendMessageBatchRequestEntry(messageId, OBJECT_MAPPER.writeValueAsString(request)));
-                        ++count;
-                    }
+                    final SendMessageBatchRequest.Builder batchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
+                    batchRequestBuilder.entries(IntStream.range(0, NUMBER_OF_MESSAGES_FOR_PRODUCER)
+                            .mapToObj(index -> {
+                                final String messageId = "" + index;
+                                final Request request = new Request("key_" + count.getAndIncrement());
+                                try {
+                                    return SendMessageBatchRequestEntry.builder().id(messageId).messageBody(OBJECT_MAPPER.writeValueAsString(request)).build();
+                                } catch (JsonProcessingException exception) {
+                                    throw new RuntimeException(exception);
+                                }
+                            })
+                            .collect(toSet()));
                     log.info("Put 10 messages onto queue");
-                    async.sendMessageBatch(sendMessageBatchRequest);
+                    async.sendMessageBatch(batchRequestBuilder.build());
                     Thread.sleep(2000);
                 } catch (final InterruptedException interruptedException) {
                     log.info("Producer Thread has been interrupted");

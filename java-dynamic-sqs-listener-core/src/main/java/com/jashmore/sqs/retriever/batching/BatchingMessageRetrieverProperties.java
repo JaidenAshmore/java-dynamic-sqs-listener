@@ -1,6 +1,6 @@
 package com.jashmore.sqs.retriever.batching;
 
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 /**
  * The properties used to configure the {@link BatchingMessageRetriever}.
