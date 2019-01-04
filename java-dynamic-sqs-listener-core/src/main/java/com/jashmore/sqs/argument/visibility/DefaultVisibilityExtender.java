@@ -1,21 +1,21 @@
 package com.jashmore.sqs.argument.visibility;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.Future;
 
 /**
  * Default implementation of the {@link VisibilityExtender} that increases the visibility of the message by sending a change message visibility request.
  *
- * @see AmazonSQSAsync#changeMessageVisibility(ChangeMessageVisibilityRequest)
+ * @see SqsAsyncClient#changeMessageVisibility(ChangeMessageVisibilityRequest)
  */
 @AllArgsConstructor
 public class DefaultVisibilityExtender implements VisibilityExtender {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final Message message;
 
@@ -26,10 +26,12 @@ public class DefaultVisibilityExtender implements VisibilityExtender {
 
     @Override
     public Future<?> extend(final int visibilityExtensionInSeconds) {
-        return amazonSqsAsync.changeMessageVisibilityAsync(
-                queueProperties.getQueueUrl(),
-                message.getReceiptHandle(),
-                visibilityExtensionInSeconds
-        );
+        final ChangeMessageVisibilityRequest changeMessageVisibilityRequest = ChangeMessageVisibilityRequest
+                .builder()
+                .queueUrl(queueProperties.getQueueUrl())
+                .receiptHandle(message.receiptHandle())
+                .visibilityTimeout(visibilityExtensionInSeconds)
+                .build();
+        return sqsAsyncClient.changeMessageVisibility(changeMessageVisibilityRequest);
     }
 }

@@ -3,7 +3,6 @@ package com.jashmore.sqs.util;
 import lombok.Getter;
 
 import java.util.concurrent.Semaphore;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Semaphore that is able to dynamically update the number of available permits.

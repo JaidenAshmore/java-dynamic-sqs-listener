@@ -51,7 +51,7 @@ public class CustomQueueWrapperTest {
     }
 
     @Test
-    public void factoriesAreCalledToBuildBeans() throws NoSuchMethodException {
+    public void factoriesAreCalledToBuildBeans() throws NoSuchMethodException, InterruptedException {
         // arrange
         when(beanFactory.getBean("retriever", MessageRetrieverFactory.class)).thenReturn(messageRetrieverFactory);
         when(beanFactory.getBean("processor", MessageProcessorFactory.class)).thenReturn(messageProcessorFactory);
@@ -107,6 +107,7 @@ public class CustomQueueWrapperTest {
         verify(messageBrokerFactory).createMessageBroker(messageRetriever, messageProcessor);
     }
 
+    @SuppressWarnings("WeakerAccess")
     @CustomQueueListener(
             queue = "test",
             messageRetrieverFactoryBeanName = "retriever",

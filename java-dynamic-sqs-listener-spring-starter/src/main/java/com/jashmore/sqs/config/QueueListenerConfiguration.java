@@ -1,9 +1,5 @@
 package com.jashmore.sqs.config;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClient;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-import com.amazonaws.services.sqs.buffered.AmazonSQSBufferedAsyncClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.annotation.EnableQueueListeners;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -14,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * Configuration that will be enabled if the {@link EnableQueueListeners @EnableQueueListeners} annotation has been applied to the application.
@@ -25,18 +22,19 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan("com.jashmore.sqs")
 public class QueueListenerConfiguration {
     /**
-     * The default {@link AmazonSQSAsync} that will be used if the application does not provide their own.
+     * The default {@link SqsAsyncClient} that will be used if the application does not provide their own.
      *
-     * <p>This will set up the default client which will be configured using the {@link com.amazonaws.auth.DefaultAWSCredentialsProviderChain} and
-     * {@link com.amazonaws.regions.DefaultAwsRegionProviderChain} chain which finds configuration properties for the client from environment variables, etc.
+     * <p>This will set up the default client which will be configured using the {@link software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider} and
+     * {@link software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain} chain which finds configuration properties for the client from
+     * system variables, etc.
      *
-     * @return a default {@link AmazonSQSAsync} that should be used if none were provided
-     * @see AmazonSQSAsyncClientBuilder#defaultClient() for more details about how to use this default client
+     * @return a default {@link SqsAsyncClient} that should be used if none were provided
+     * @see SqsAsyncClient#create() for more details about how to use this default client
      */
-    @Bean(destroyMethod = "shutdown")
-    @ConditionalOnMissingBean(AmazonSQSAsync.class)
-    public AmazonSQSAsync amazonSqsAsync() {
-        return new AmazonSQSBufferedAsyncClient(AmazonSQSAsyncClientBuilder.defaultClient());
+    @Bean(destroyMethod = "close")
+    @ConditionalOnMissingBean(SqsAsyncClient.class)
+    public SqsAsyncClient sqsAsyncClient() {
+        return SqsAsyncClient.create();
     }
 
     /**
@@ -70,13 +68,13 @@ public class QueueListenerConfiguration {
      * </pre>
      *
      * @param payloadMapper  the mapper used to map the message body to a payload in th method
-     * @param amazonSqsAsync the sqs client to communicate with the SQS queue
+     * @param sqsAsyncClient the sqs client to communicate with the SQS queue
      * @return an {@link ArgumentResolverService} that will be able to resolve method parameters for message processing
      */
     @Bean
     @ConditionalOnMissingBean(ArgumentResolverService.class)
     public ArgumentResolverService argumentResolverService(final PayloadMapper payloadMapper,
-                                                           final AmazonSQSAsync amazonSqsAsync) {
-        return new DefaultArgumentResolverService(payloadMapper, amazonSqsAsync);
+                                                           final SqsAsyncClient sqsAsyncClient) {
+        return new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
     }
 }

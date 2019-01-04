@@ -2,7 +2,6 @@ package com.jashmore.sqs.broker.singlethread;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.AbstractMessageBroker;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
@@ -10,6 +9,7 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

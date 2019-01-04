@@ -1,19 +1,20 @@
 package com.jashmore.sqs.processor;
 
-import com.amazonaws.annotation.ThreadSafe;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.DeleteMessageResult;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.acknowledge.Acknowledge;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.concurrent.Future;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Default implementation of the {@link MessageProcessor} that will simply resolve arguments, process the message and delete the
@@ -24,7 +25,7 @@ import java.util.concurrent.Future;
 public class DefaultMessageProcessor implements MessageProcessor {
     private final ArgumentResolverService argumentResolverService;
     private final QueueProperties queueProperties;
-    private final AmazonSQSAsync amazonSqs;
+    private final SqsAsyncClient sqsAsyncClient;
     private final Method messageConsumerMethod;
     private final Object messageConsumerBean;
 
@@ -46,8 +47,12 @@ public class DefaultMessageProcessor implements MessageProcessor {
             messageConsumerMethod.invoke(messageConsumerBean, arguments);
             // If there is no Acknowledge argument in the method we should resolve the message if it was completed without an exception
             if (!hasAcknowledgeArgument(parameters)) {
-                final Future<DeleteMessageResult> deleteMessageResultFuture = amazonSqs.deleteMessageAsync(
-                        queueProperties.getQueueUrl(), message.getReceiptHandle());
+                final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest
+                        .builder()
+                        .queueUrl(queueProperties.getQueueUrl())
+                        .receiptHandle(message.receiptHandle())
+                        .build();
+                final Future<DeleteMessageResponse> deleteMessageResultFuture = sqsAsyncClient.deleteMessage(deleteMessageRequest);
 
                 deleteMessageResultFuture.get();
             }

@@ -5,9 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityResult;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,7 +12,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityResponse;
+import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class DefaultVisibilityExtenderTest {
@@ -29,19 +31,18 @@ public class DefaultVisibilityExtenderTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
-    private Future<ChangeMessageVisibilityResult> changeMessageVisibilityResultFuture;
+    private CompletableFuture<ChangeMessageVisibilityResponse> changeMessageVisibilityResultFuture;
 
-    private final Message message = new Message()
-            .withReceiptHandle(RECEIPT_HANDLE);
+    private final Message message = Message.builder().receiptHandle(RECEIPT_HANDLE).build();
 
     private DefaultVisibilityExtender defaultVisibilityExtender;
 
     @Before
     public void setUp() {
-        defaultVisibilityExtender = new DefaultVisibilityExtender(amazonSqsAsync, QUEUE_PROPERTIES, message);
+        defaultVisibilityExtender = new DefaultVisibilityExtender(sqsAsyncClient, QUEUE_PROPERTIES, message);
     }
 
     @Test
@@ -50,7 +51,12 @@ public class DefaultVisibilityExtenderTest {
         defaultVisibilityExtender.extend();
 
         // assert
-        verify(amazonSqsAsync).changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS);
+        verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest
+                .builder()
+                .queueUrl("queueUrl")
+                .receiptHandle(RECEIPT_HANDLE)
+                .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                .build());
     }
 
     @Test
@@ -59,13 +65,23 @@ public class DefaultVisibilityExtenderTest {
         defaultVisibilityExtender.extend(10);
 
         // assert
-        verify(amazonSqsAsync).changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, 10);
+        verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest
+                .builder()
+                .queueUrl("queueUrl")
+                .receiptHandle(RECEIPT_HANDLE)
+                .visibilityTimeout(10)
+                .build());
     }
 
     @Test
     public void defaultExtendShouldReturnFutureFromAmazon() {
         // arrange
-        when(amazonSqsAsync.changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS))
+        when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
+                .builder()
+                .queueUrl("queueUrl")
+                .receiptHandle(RECEIPT_HANDLE)
+                .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                .build()))
                 .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
@@ -79,7 +95,12 @@ public class DefaultVisibilityExtenderTest {
     @Test
     public void extendShouldReturnFutureFromAmazon() {
         // arrange
-        when(amazonSqsAsync.changeMessageVisibilityAsync("queueUrl", RECEIPT_HANDLE, 10))
+        when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
+                .builder()
+                .queueUrl("queueUrl")
+                .receiptHandle(RECEIPT_HANDLE)
+                .visibilityTimeout(10)
+                .build()))
                 .thenReturn(changeMessageVisibilityResultFuture);
 
         // act

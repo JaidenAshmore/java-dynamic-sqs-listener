@@ -2,10 +2,10 @@ package com.jashmore.sqs.annotation;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.config.QueueListenerConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <p>Note that the minimum requirement for this framework is that a {@link AmazonSQSAsync} bean has been supplied into the spring context
+ * <p>Note that the minimum requirement for this framework is that a {@link SqsAsyncClient} bean has been supplied into the spring context
  * for injection.
  */
 @Retention(value = RUNTIME)

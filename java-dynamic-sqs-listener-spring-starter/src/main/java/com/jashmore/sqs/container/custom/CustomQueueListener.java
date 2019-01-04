@@ -65,7 +65,7 @@ public @interface CustomQueueListener {
      *
      * <pre class="code">
      * &#064;Bean
-     * public MessageRetrieverFactory myMessageRetrieverFactory(final AmazonSQSAsync amazonSQSAsync) {
+     * public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient amazonSQSAsync) {
      *     return (queueProperties) -> {
      *         final PrefetchingProperties prefetchingProperties = PrefetchingProperties
      *                 .builder()
@@ -93,7 +93,7 @@ public @interface CustomQueueListener {
      * <pre class="code">
      * &#064;Bean
      * public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
-     *                                                          final AmazonSQSAsync amazonSQSAsync) {
+     *                                                          final SqsAsyncClient amazonSQSAsync) {
      *     return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSQSAsync, method, bean);
      * }
      * </pre>

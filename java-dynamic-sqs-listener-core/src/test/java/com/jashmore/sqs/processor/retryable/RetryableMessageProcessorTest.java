@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import org.junit.Rule;
@@ -15,6 +14,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 public class RetryableMessageProcessorTest {
     @Rule
@@ -37,7 +37,7 @@ public class RetryableMessageProcessorTest {
 
         try {
             // act
-            retryableMessageProcessor.processMessage(new Message());
+            retryableMessageProcessor.processMessage(Message.builder().build());
             fail("Expected an exception to be thrown");
         } catch (final MessageProcessingException messageProcessingException) {
             // assert
@@ -57,7 +57,7 @@ public class RetryableMessageProcessorTest {
         final MessageProcessor retryableMessageProcessor = new RetryableMessageProcessor(delegateMessageProcessor, properties);
 
         // act
-        retryableMessageProcessor.processMessage(new Message());
+        retryableMessageProcessor.processMessage(Message.builder().build());
 
         // assert
         verify(delegateMessageProcessor).processMessage(any(Message.class));
@@ -79,7 +79,7 @@ public class RetryableMessageProcessorTest {
 
         try {
             // act
-            retryableMessageProcessor.processMessage(new Message());
+            retryableMessageProcessor.processMessage(Message.builder().build());
             fail("Expected an exception to be thrown");
         } catch (final MessageProcessingException messageProcessingException) {
             // assert
@@ -107,7 +107,7 @@ public class RetryableMessageProcessorTest {
 
         // act
         try {
-            retryableMessageProcessor.processMessage(new Message());
+            retryableMessageProcessor.processMessage(Message.builder().build());
             fail("Should have failed processing message");
         } catch (final MessageProcessingException exception) {
             // assert

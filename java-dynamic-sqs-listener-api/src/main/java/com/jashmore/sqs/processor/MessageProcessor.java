@@ -1,8 +1,8 @@
 package com.jashmore.sqs.processor;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.MessageBroker;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import javax.annotation.concurrent.ThreadSafe;
 

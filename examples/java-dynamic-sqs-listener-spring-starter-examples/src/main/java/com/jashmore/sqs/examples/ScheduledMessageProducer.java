@@ -1,14 +1,17 @@
 package com.jashmore.sqs.examples;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequestEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Helper scheduled task that will place 10 messages onto each queue for processing by the message listeners.
@@ -17,14 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @RequiredArgsConstructor
 public class ScheduledMessageProducer {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
     private final AtomicInteger count = new AtomicInteger();
 
     /**
      * Scheduled job that sends messages to the queue for testing the listener.
      */
     @Scheduled(initialDelay = 1000, fixedDelay = 1000)
-    public void addMessages() {
+    public void addMessages() throws ExecutionException, InterruptedException {
         log.info("Putting 10 messages onto each queue");
         final int currentValue = count.incrementAndGet();
 
@@ -33,16 +36,18 @@ public class ScheduledMessageProducer {
     }
 
     private void sendMessagesToQueue(final String queueName,
-                                     final int currentValue) {
-        final String queueUrl = amazonSqsAsync.getQueueUrl(queueName).getQueueUrl();
+                                     final int currentValue) throws ExecutionException, InterruptedException {
+        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName(queueName)).get().queueUrl();
 
-        final SendMessageBatchRequest sendMessageBatchRequest = new SendMessageBatchRequest(queueUrl);
-        for (int i = 0; i < 10; ++i) {
-            final String messageId = "" + currentValue + "-" + i;
-            final String messeageContent = "Message, loop: " + currentValue + " id: " + i;
-            sendMessageBatchRequest.withEntries(new SendMessageBatchRequestEntry(messageId, messeageContent));
-        }
+        final SendMessageBatchRequest.Builder batchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
+        batchRequestBuilder.entries(IntStream.range(0, 10)
+                .mapToObj(i -> {
+                    final String messageId = "" + currentValue + "-" + i;
+                    final String messageContent = "Message, loop: " + currentValue + " id: " + i;
+                    return SendMessageBatchRequestEntry.builder().id(messageId).messageBody(messageContent).build();
+                })
+                .collect(Collectors.toSet()));
 
-        amazonSqsAsync.sendMessageBatch(sendMessageBatchRequest);
+        sqsAsyncClient.sendMessageBatch(batchRequestBuilder.build());
     }
 }

@@ -2,11 +2,11 @@ package com.jashmore.sqs.processor.retryable;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Message processor that will attempt multiple times to process a message if it fails the first time.

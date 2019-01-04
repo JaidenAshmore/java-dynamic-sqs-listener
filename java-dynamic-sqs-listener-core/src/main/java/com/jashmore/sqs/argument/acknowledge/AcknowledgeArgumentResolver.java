@@ -1,11 +1,11 @@
 package com.jashmore.sqs.argument.acknowledge;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 
@@ -15,7 +15,7 @@ import java.lang.reflect.Parameter;
  */
 @AllArgsConstructor
 public class AcknowledgeArgumentResolver implements ArgumentResolver {
-    private final AmazonSQSAsync amazonSqsAsync;
+    private final SqsAsyncClient sqsAsyncClient;
 
     @Override
     public boolean canResolveParameter(final Parameter parameter) {
@@ -26,6 +26,6 @@ public class AcknowledgeArgumentResolver implements ArgumentResolver {
     public Object resolveArgumentForParameter(final QueueProperties queueProperties,
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
-        return new DefaultAcknowledge(amazonSqsAsync, queueProperties, message);
+        return new DefaultAcknowledge(sqsAsyncClient, queueProperties, message);
     }
 }

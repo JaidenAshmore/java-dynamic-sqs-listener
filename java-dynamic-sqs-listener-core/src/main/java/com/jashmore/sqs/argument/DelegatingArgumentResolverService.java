@@ -1,8 +1,8 @@
 package com.jashmore.sqs.argument;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 import java.util.Set;

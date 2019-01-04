@@ -9,13 +9,13 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 import java.util.Set;

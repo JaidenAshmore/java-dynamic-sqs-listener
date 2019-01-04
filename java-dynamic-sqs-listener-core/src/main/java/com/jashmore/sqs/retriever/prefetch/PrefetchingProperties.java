@@ -3,9 +3,9 @@ package com.jashmore.sqs.retriever.prefetch;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import lombok.Builder;
 import lombok.Value;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.Optional;
 import javax.validation.constraints.Min;

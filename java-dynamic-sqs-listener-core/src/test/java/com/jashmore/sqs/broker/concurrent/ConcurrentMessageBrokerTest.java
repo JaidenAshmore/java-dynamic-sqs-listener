@@ -9,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -19,6 +18,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +46,7 @@ public class ConcurrentMessageBrokerTest {
     public void shouldBeAbleToRunMultipleThreadsConcurrentlyForProcessingMessages() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
         when(messageRetriever.retrieveMessage())
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -76,7 +76,7 @@ public class ConcurrentMessageBrokerTest {
     public void noPermitsWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
         when(messageRetriever.retrieveMessage())
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -100,7 +100,7 @@ public class ConcurrentMessageBrokerTest {
     public void allPermitsAcquiredWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
         when(messageRetriever.retrieveMessage())
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build());
         final CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         final ConcurrentMessageBroker.Controller controller = new ConcurrentMessageBroker.ConcurrentThreadController(
                 messageRetriever, messageProcessor, concurrentMessageBrokerProperties, completableFuture);
@@ -145,7 +145,7 @@ public class ConcurrentMessageBrokerTest {
         }).when(messageProcessor).processMessage(any(Message.class));
         when(messageRetriever.retrieveMessage())
                 .thenThrow(new RuntimeException("error"))
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
@@ -184,8 +184,8 @@ public class ConcurrentMessageBrokerTest {
             return null;
         }).when(messageProcessor).processMessage(any(Message.class));
         when(messageRetriever.retrieveMessage())
-                .thenReturn(new Message())
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build())
+                .thenReturn(Message.builder().build());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
@@ -220,7 +220,7 @@ public class ConcurrentMessageBrokerTest {
             return null;
         }).when(messageProcessor).processMessage(any(Message.class));
         when(messageRetriever.retrieveMessage())
-                .thenReturn(new Message());
+                .thenReturn(Message.builder().build());
 
         // act
         final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);

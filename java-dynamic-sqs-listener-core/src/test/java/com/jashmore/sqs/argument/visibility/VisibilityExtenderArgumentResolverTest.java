@@ -2,8 +2,6 @@ package com.jashmore.sqs.argument.visibility;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,6 +9,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -20,19 +20,18 @@ public class VisibilityExtenderArgumentResolverTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
     private QueueProperties queueProperties;
 
-    @Mock
-    private Message message;
+    private final Message message = Message.builder().build();
 
     private VisibilityExtenderArgumentResolver visibilityExtenderArgumentResolver;
 
     @Before
     public void setUp() {
-        visibilityExtenderArgumentResolver = new VisibilityExtenderArgumentResolver(amazonSqsAsync);
+        visibilityExtenderArgumentResolver = new VisibilityExtenderArgumentResolver(sqsAsyncClient);
     }
 
     @Test
@@ -72,7 +71,7 @@ public class VisibilityExtenderArgumentResolverTest {
     }
 
     @SuppressWarnings( {"WeakerAccess", "unused"})
-    public void method(final VisibilityExtender VisibilityExtender, final String string) {
+    public void method(final VisibilityExtender visibilityExtender, final String string) {
 
     }
 

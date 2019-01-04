@@ -3,7 +3,6 @@ package it.com.jashmore.sqs.container.basic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.container.basic.QueueListener;
 import it.com.jashmore.example.Application;
@@ -16,10 +15,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -34,7 +35,7 @@ public class QueueListenerWrapperIntegrationTest {
     private static final Map<String, Boolean> messagesProcessed = new ConcurrentHashMap<>();
 
     @Autowired
-    private AmazonSQSAsync amazonSqsAsync;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Configuration
     public static class TestConfig {
@@ -45,13 +46,13 @@ public class QueueListenerWrapperIntegrationTest {
     }
 
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException {
+    public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
         // arrange
-        final String queueUrl = amazonSqsAsync.getQueueUrl("QueueListenerWrapperIntegrationTest").getQueueUrl();
+        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName("QueueListenerWrapperIntegrationTest")).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> {
                     log.info("Sending message: " + i);
-                    amazonSqsAsync.sendMessageAsync(queueUrl, "message: " + i);
+                    sqsAsyncClient.sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
                 });
 
         // act

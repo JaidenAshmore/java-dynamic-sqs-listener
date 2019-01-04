@@ -341,12 +341,14 @@ public class DefaultQueueContainerServiceTest {
         assertThat(defaultQueueContainerService.getPhase()).isEqualTo(Integer.MAX_VALUE);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class Bean {
         public void method() {
 
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class BeanWithTwoMethods {
         public void methodOne() {
 

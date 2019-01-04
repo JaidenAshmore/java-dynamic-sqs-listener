@@ -1,14 +1,10 @@
 package com.jashmore.sqs.retriever;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
+import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 /**
  * Class used for retrieving messages to execute from the queue.
