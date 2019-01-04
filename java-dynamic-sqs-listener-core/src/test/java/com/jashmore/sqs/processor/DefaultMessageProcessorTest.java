@@ -41,7 +41,7 @@ public class DefaultMessageProcessorTest {
     private ArgumentResolverService argumentResolverService;
 
     @Mock
-    private SqsAsyncClient amazonSqs;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Test
     public void forEachParameterInMethodTheArgumentIsResolved() {
@@ -52,7 +52,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn(mock(DefaultAcknowledge.class))
                 .thenReturn("payload");
@@ -73,7 +73,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenThrow(new ArgumentResolutionException("Error resolving"));
 
@@ -97,7 +97,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, mockProcessor);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, mockProcessor);
         final DefaultAcknowledge acknowledgeArgument = mock(DefaultAcknowledge.class);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn(acknowledgeArgument)
@@ -119,7 +119,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
         final DefaultAcknowledge acknowledgeArgument = mock(DefaultAcknowledge.class);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn(acknowledgeArgument)
@@ -129,7 +129,7 @@ public class DefaultMessageProcessorTest {
         processor.processMessage(message);
 
         // assert
-        verify(amazonSqs, never()).deleteMessage(any(DeleteMessageRequest.class));
+        verify(sqsAsyncClient, never()).deleteMessage(any(DeleteMessageRequest.class));
     }
 
     @Test
@@ -141,18 +141,18 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn("payload");
         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder().queueUrl(QUEUE_URL).receiptHandle("handle").build();
-        when(amazonSqs.deleteMessage(deleteMessageRequest))
+        when(sqsAsyncClient.deleteMessage(deleteMessageRequest))
                 .thenReturn(CompletableFuture.completedFuture(DeleteMessageResponse.builder().build()));
 
         // act
         processor.processMessage(message);
 
         // assert
-        verify(amazonSqs).deleteMessage(deleteMessageRequest);
+        verify(sqsAsyncClient).deleteMessage(deleteMessageRequest);
     }
 
 
@@ -165,7 +165,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSqs, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn("payload");
 
@@ -175,7 +175,7 @@ public class DefaultMessageProcessorTest {
             fail("Should have thrown exception");
         } catch (final MessageProcessingException exception) {
             // assert
-            verify(amazonSqs, never()).deleteMessage(DeleteMessageRequest.builder().queueUrl(QUEUE_URL).receiptHandle("handle").build());
+            verify(sqsAsyncClient, never()).deleteMessage(DeleteMessageRequest.builder().queueUrl(QUEUE_URL).receiptHandle("handle").build());
         }
     }
 

@@ -32,7 +32,7 @@ public class IndividualMessageRetrieverTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private SqsAsyncClient amazonSqs;
+    private SqsAsyncClient sqsAsyncClient;
 
     @Mock
     private CompletableFuture<ReceiveMessageResponse> receiveMessageResultFuture;
@@ -46,16 +46,16 @@ public class IndividualMessageRetrieverTest {
                 .thenReturn(ReceiveMessageResponse.builder().build())
                 .thenReturn(ReceiveMessageResponse.builder().build())
                 .thenReturn(ReceiveMessageResponse.builder().messages(message).build());
-        when(amazonSqs.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResultFuture);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResultFuture);
         final IndividualMessageRetriever retriever = new IndividualMessageRetriever(
-                amazonSqs, QUEUE_PROPERTIES, IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build());
+                sqsAsyncClient, QUEUE_PROPERTIES, IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build());
 
         // act
         final Message messageRetrieved = retriever.retrieveMessage();
 
         // assert
         assertThat(messageRetrieved).isEqualTo(message);
-        verify(amazonSqs, times(5)).receiveMessage(ReceiveMessageRequest.builder()
+        verify(sqsAsyncClient, times(5)).receiveMessage(ReceiveMessageRequest.builder()
                 .queueUrl(QUEUE_URL)
                 .maxNumberOfMessages(1)
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
@@ -70,9 +70,9 @@ public class IndividualMessageRetrieverTest {
         when(receiveMessageResultFuture.get())
                 .thenReturn(ReceiveMessageResponse.builder().build())
                 .thenThrow(new ExecutionException("error", cause));
-        when(amazonSqs.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResultFuture);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResultFuture);
         final IndividualMessageRetriever retriever = new IndividualMessageRetriever(
-                amazonSqs, QUEUE_PROPERTIES, IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build());
+                sqsAsyncClient, QUEUE_PROPERTIES, IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build());
 
         // act
         try {

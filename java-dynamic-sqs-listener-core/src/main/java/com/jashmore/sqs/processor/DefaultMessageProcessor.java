@@ -25,7 +25,7 @@ import javax.annotation.concurrent.ThreadSafe;
 public class DefaultMessageProcessor implements MessageProcessor {
     private final ArgumentResolverService argumentResolverService;
     private final QueueProperties queueProperties;
-    private final SqsAsyncClient amazonSqs;
+    private final SqsAsyncClient sqsAsyncClient;
     private final Method messageConsumerMethod;
     private final Object messageConsumerBean;
 
@@ -52,7 +52,7 @@ public class DefaultMessageProcessor implements MessageProcessor {
                         .queueUrl(queueProperties.getQueueUrl())
                         .receiptHandle(message.receiptHandle())
                         .build();
-                final Future<DeleteMessageResponse> deleteMessageResultFuture = amazonSqs.deleteMessage(deleteMessageRequest);
+                final Future<DeleteMessageResponse> deleteMessageResultFuture = sqsAsyncClient.deleteMessage(deleteMessageRequest);
 
                 deleteMessageResultFuture.get();
             }
