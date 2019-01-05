@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -13,6 +12,7 @@ import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
+import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.container.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@SuppressWarnings("unchecked")
 public class QueueListenerAutoConfigurationTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -117,7 +118,6 @@ public class QueueListenerAutoConfigurationTest {
                             = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
                     final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
                     argumentResolversField.setAccessible(true);
-                    //noinspection unchecked
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
                 });
@@ -128,7 +128,7 @@ public class QueueListenerAutoConfigurationTest {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    final Collection<Class> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values().stream()
+                    final Collection<Class<? extends ArgumentResolver>> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values().stream()
                             .map(ArgumentResolver::getClass)
                             .collect(toSet());
 
@@ -149,7 +149,6 @@ public class QueueListenerAutoConfigurationTest {
                             = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
                     final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
                     argumentResolversField.setAccessible(true);
-                    //noinspection unchecked
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
                     assertThat(argumentResolvers).hasSize(5);
@@ -171,7 +170,7 @@ public class QueueListenerAutoConfigurationTest {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    final Collection<Class> queueWrapperClasses = context.getBeansOfType(QueueWrapper.class).values().stream()
+                    final Collection<Class<? extends QueueWrapper>> queueWrapperClasses = context.getBeansOfType(QueueWrapper.class).values().stream()
                             .map(QueueWrapper::getClass)
                             .collect(toSet());
 
@@ -185,10 +184,9 @@ public class QueueListenerAutoConfigurationTest {
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
                     final Collection<QueueWrapper> queueWrappers = context.getBeansOfType(QueueWrapper.class).values();
-                    final DefaultQueueContainerService service = (DefaultQueueContainerService)context.getBean(QueueContainerService.class);
+                    final DefaultQueueContainerService service = (DefaultQueueContainerService) context.getBean(QueueContainerService.class);
                     final Field argumentResolversField = DefaultQueueContainerService.class.getDeclaredField("queueWrappers");
                     argumentResolversField.setAccessible(true);
-                    //noinspection unchecked
                     assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(queueWrappers);
                 });
@@ -200,10 +198,9 @@ public class QueueListenerAutoConfigurationTest {
                 .withUserConfiguration(UserConfigurationWithCustomQueueWrapper.class)
                 .run((context) -> {
                     final Collection<QueueWrapper> queueWrappers = context.getBeansOfType(QueueWrapper.class).values();
-                    final DefaultQueueContainerService service = (DefaultQueueContainerService)context.getBean(QueueContainerService.class);
+                    final DefaultQueueContainerService service = (DefaultQueueContainerService) context.getBean(QueueContainerService.class);
                     final Field argumentResolversField = DefaultQueueContainerService.class.getDeclaredField("queueWrappers");
                     argumentResolversField.setAccessible(true);
-                    //noinspection unchecked
                     assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(queueWrappers);
                     assertThat(queueWrappers).hasSize(3);

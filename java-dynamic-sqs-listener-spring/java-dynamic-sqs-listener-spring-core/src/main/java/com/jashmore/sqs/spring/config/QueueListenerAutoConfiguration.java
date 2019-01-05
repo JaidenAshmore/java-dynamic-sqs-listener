@@ -1,7 +1,6 @@
 package com.jashmore.sqs.spring.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -11,6 +10,7 @@ import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
+import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.QueueContainerService;

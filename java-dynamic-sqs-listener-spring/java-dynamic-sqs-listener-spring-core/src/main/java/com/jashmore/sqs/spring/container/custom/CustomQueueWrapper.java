@@ -1,8 +1,6 @@
 package com.jashmore.sqs.spring.container.custom;
 
-import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
@@ -10,6 +8,8 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
+import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
