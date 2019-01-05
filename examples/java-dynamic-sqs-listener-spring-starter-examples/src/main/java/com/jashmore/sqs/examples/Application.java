@@ -1,20 +1,19 @@
 package com.jashmore.sqs.examples;
 
 import akka.http.scaladsl.Http;
-import com.jashmore.sqs.annotation.EnableQueueListeners;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.config.QueueListenerConfiguration;
-import com.jashmore.sqs.container.basic.QueueListener;
-import com.jashmore.sqs.container.custom.CustomQueueListener;
-import com.jashmore.sqs.container.custom.MessageBrokerFactory;
-import com.jashmore.sqs.container.custom.MessageProcessorFactory;
-import com.jashmore.sqs.container.custom.MessageRetrieverFactory;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.spring.config.QueueListenerAutoConfiguration;
+import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
+import com.jashmore.sqs.spring.container.custom.MessageBrokerFactory;
+import com.jashmore.sqs.spring.container.custom.MessageProcessorFactory;
+import com.jashmore.sqs.spring.container.custom.MessageRetrieverFactory;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +39,6 @@ import javax.validation.constraints.Min;
  *         number of threads processing the messages</li>
  * </ul>
  */
-@EnableQueueListeners
 @SpringBootApplication
 @ComponentScan("com.jashmore.sqs.examples")
 @EnableScheduling
@@ -53,7 +51,7 @@ public class Application {
 
     /**
      * Connects to an internal ElasticMQ SQS Server, this will replace the {@link SqsAsyncClient} provided by
-     * {@link QueueListenerConfiguration#sqsAsyncClient()}.
+     * {@link QueueListenerAutoConfiguration#sqsAsyncClient()}.
      */
     @Bean
     public SqsAsyncClient sqsAsyncClient() {

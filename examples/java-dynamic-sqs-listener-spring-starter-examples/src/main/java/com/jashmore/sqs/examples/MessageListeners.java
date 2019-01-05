@@ -1,12 +1,10 @@
 package com.jashmore.sqs.examples;
 
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.container.basic.QueueListener;
-import com.jashmore.sqs.container.custom.CustomQueueListener;
+import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Random;
 
 @Component
 @SuppressWarnings("unused")
