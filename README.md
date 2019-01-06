@@ -1,6 +1,8 @@
 # Java Dynamic SQS Listener
 [![Build Status](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener.png)](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener)
 [![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=master)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=master)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/alerts/)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/context:java)
 
 This SQS Listener implementation that is designed from the ground up to allow for easier configuration and extensibility.  While the other implementations of SQS
 listeners were easy to set up and provided most use cases, they don't provide the extensibility and dynamic requirements that are needed by some services.
