@@ -28,7 +28,7 @@ public class DefaultQueueResolverService implements QueueResolverService {
         try {
             return sqsAsyncClient.getQueueUrl((builder) -> builder.queueName(resolvedQueueNameOrUrl)).get().queueUrl();
         } catch (ExecutionException executionException) {
-            throw new RuntimeException("Error trying to resolve queue URL", executionException);
+            throw new QueueResolutionException(executionException.getCause());
         }
     }
 }

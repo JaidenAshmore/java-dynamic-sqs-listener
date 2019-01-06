@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -41,6 +42,12 @@ public class ConcurrentMessageBrokerTest {
 
     @Mock
     private ConcurrentMessageBrokerProperties concurrentMessageBrokerProperties;
+
+    @Test
+    public void concurrentBrokerCanBeBuiltCorrectly() {
+        // act
+        new ConcurrentMessageBroker(messageRetriever, messageProcessor, Executors.newCachedThreadPool(), concurrentMessageBrokerProperties);
+    }
 
     @Test
     public void shouldBeAbleToRunMultipleThreadsConcurrentlyForProcessingMessages() throws InterruptedException, ExecutionException, TimeoutException {
