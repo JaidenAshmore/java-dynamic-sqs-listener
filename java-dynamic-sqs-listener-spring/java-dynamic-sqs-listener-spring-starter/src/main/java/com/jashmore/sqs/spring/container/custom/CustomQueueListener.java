@@ -66,7 +66,7 @@ public @interface CustomQueueListener {
      * <pre class="code">
      * &#064;Bean
      * public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient amazonSQSAsync) {
-     *     return (queueProperties) -> {
+     *     return (queueProperties) -&gt; {
      *         final PrefetchingProperties prefetchingProperties = PrefetchingProperties
      *                 .builder()
      *                 .maxPrefetchedMessages(10)
@@ -94,7 +94,7 @@ public @interface CustomQueueListener {
      * &#064;Bean
      * public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
      *                                                          final SqsAsyncClient amazonSQSAsync) {
-     *     return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSQSAsync, method, bean);
+     *     return (queueProperties, bean, method) -&gt; new DefaultMessageProcessor(argumentResolverService, queueProperties, amazonSQSAsync, method, bean);
      * }
      * </pre>
      *
@@ -112,7 +112,7 @@ public @interface CustomQueueListener {
      * <pre class="code">
      * &#064;Bean
      * public MessageBrokerFactory myMessageBrokerFactory() {
-     *     return (messageRetriever, messageProcessor) -> {
+     *     return (messageRetriever, messageProcessor) -&gt; {
      *             final ConcurrentMessageBrokerProperties properties = StaticConcurrentMessageBrokerProperties
      *                       .builder()
      *                       .concurrencyLevel(2)

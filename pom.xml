@@ -11,6 +11,36 @@
 
     <name>Java Dynamic SQS Listener</name>
     <description>Sets up a SQS Listener that can be dynamically configured while it is executing.</description>
+    <url>https://github.com/JaidenAshmore/java-dynamic-sqs-listener</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Jaiden Ashmore</name>
+            <email>jaidenkyleashmore@gmail.com</email>
+            <organization>jashmore</organization>
+            <organizationUrl>https://github.com/jaidenashmore</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/jaidenashmore/java-dynamic-sqs-listener.git</connection>
+        <developerConnection>scm:git:ssh://github.com:simpligility/java-dynamic-sqs-listener.git</developerConnection>
+        <url>http://github.com/jaidenashmore/java-dynamic-sqs-listener</url>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>examples</module>
@@ -58,6 +88,30 @@
                         <arg>-Xlint:-serial</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

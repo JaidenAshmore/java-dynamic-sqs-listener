@@ -32,7 +32,7 @@ import java.lang.reflect.Method;
  * <pre class="code">
  * &#064;Bean
  * public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient amazonSQSAsync) {
- *     return (queueProperties) -> {
+ *     return (queueProperties) -&gt; {
  *         final PrefetchingProperties prefetchingProperties = PrefetchingProperties
  *                 .builder()
  *                 .maxPrefetchedMessages(10)
