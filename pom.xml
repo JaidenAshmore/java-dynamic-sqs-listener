@@ -67,6 +67,7 @@
         <junit.version>4.12</junit.version>
         <logback.version>1.2.3</logback.version>
         <lombok.version>1.16.18</lombok.version>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
         <mockito.version>1.10.19</mockito.version>
         <slf4j.version>1.7.25</slf4j.version>
         <guava.version>21.0</guava.version>
@@ -178,6 +179,14 @@
                     <threshold>Low</threshold>
                     <effort>Max</effort>
                     <excludeFilterFile>${findbugs.config.location}</excludeFilterFile>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>4.1.0</version>
+                <configuration>
+                    <timestampFormat>${maven.build.timestamp.format}</timestampFormat>
                 </configuration>
             </plugin>
             <plugin>
