@@ -8,7 +8,7 @@ import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProp
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
-import com.jashmore.sqs.spring.config.QueueListenerAutoConfiguration;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
 import com.jashmore.sqs.spring.container.custom.MessageBrokerFactory;
@@ -51,7 +51,7 @@ public class Application {
 
     /**
      * Connects to an internal ElasticMQ SQS Server, this will replace the {@link SqsAsyncClient} provided by
-     * {@link QueueListenerAutoConfiguration#sqsAsyncClient()}.
+     * {@link QueueListenerConfiguration#sqsAsyncClient()}.
      */
     @Bean
     public SqsAsyncClient sqsAsyncClient() {

@@ -17,7 +17,7 @@ This guide will give a quick guide to getting started for Spring Boot using the 
 this is pretty much the same steps as the leading SQS Listener implementation and for details about the other functionality see the
 [wiki](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/wiki).
 
-Include the maven dependency in your Spring Boot Application:
+Include the maven dependency in your Spring Boot com.jashmore.examples.spring.aws.Application:
 ```xml
 <dependency>
     <groupId>com.jashmore</groupId>
@@ -57,7 +57,7 @@ When you run the application, any messages that arrive on the queue will be pass
 
 ## Testing locally with an example
 The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
-SQS Server so you don't need to do any setting up of queues to get it working. For example to run a sample Spring Application you can use the
+SQS Server so you don't need to do any setting up of queues to get it working. For example to run a sample Spring com.jashmore.examples.spring.aws.Application you can use the
 [Spring Starter Example](examples/java-dynamic-sqs-listener-spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
 
 1. Clone this repository
