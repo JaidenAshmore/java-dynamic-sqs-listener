@@ -18,7 +18,6 @@
 
     <modules>
         <module>java-dynamic-sqs-listener-spring-api</module>
-        <module>java-dynamic-sqs-listener-spring-core</module>
         <module>java-dynamic-sqs-listener-spring-starter</module>
     </modules>
 </project>
