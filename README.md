@@ -30,7 +30,7 @@ In one of your `Configuration` classes, enable the framework using the `@EnableQ
 
 ```java
 // package and other imports
-import com.jashmore.sqs.annotation.EnableQueueListeners;
+import com.jashmore.sqs.spring.annotation.EnableQueueListeners;
 
 @EnableQueueListeners
 @Configuration

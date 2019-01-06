@@ -1,5 +1,7 @@
 package com.jashmore.sqs.argument;
 
+import com.google.common.collect.ImmutableSet;
+
 import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
