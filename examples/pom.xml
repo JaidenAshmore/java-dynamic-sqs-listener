@@ -24,6 +24,7 @@
         <module>java-dynamic-sqs-listener-core-examples</module>
         <module>java-dynamic-sqs-listener-spring-starter-examples</module>
         <module>java-dynamic-sqs-listener-spring-aws-example</module>
+        <module>java-dynamic-sqs-listener-spring-integration-test-example</module>
     </modules>
 
     <dependencies>

@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -58,7 +58,7 @@ public class DefaultQueueResolverServiceTest {
     public void resolvedValueThatIsNotAUrlCallsOutToAmazonForUrl() throws InterruptedException {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
-        when(sqsAsyncClient.getQueueUrl(Matchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
+        when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
                 .thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://url").build()));
 
         // act
@@ -73,7 +73,7 @@ public class DefaultQueueResolverServiceTest {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final RuntimeException exceptionCause = new RuntimeException("error");
-        when(sqsAsyncClient.getQueueUrl(Matchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
+        when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
                 .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
                     @Override
                     public GetQueueUrlResponse get() throws ExecutionException {

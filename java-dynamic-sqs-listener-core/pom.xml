@@ -66,47 +66,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.23.0</version>
-                <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <id>localstack</id>
-                        <goals>
-                            <goal>start</goal>
-                            <goal>stop</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <useColor>true</useColor>
-                            <verbose>true</verbose>
-                            <autoPull>always</autoPull>
-                            <images>
-                                <image>
-                                    <name>localstack/localstack:0.8.6</name>
-                                    <run>
-                                        <env>
-                                            <SERVICES>sqs</SERVICES>
-                                        </env>
-                                        <ports>
-                                            <port>4576:4576</port>
-                                        </ports>
-                                        <wait>
-                                            <log>^Ready.*$</log>
-                                            <time>20000</time>
-                                        </wait>
-                                    </run>
-                                </image>
-                            </images>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

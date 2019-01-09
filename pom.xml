@@ -68,7 +68,7 @@
         <logback.version>1.2.3</logback.version>
         <lombok.version>1.16.18</lombok.version>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
-        <mockito.version>1.10.19</mockito.version>
+        <mockito.version>2.13.0</mockito.version>
         <slf4j.version>1.7.25</slf4j.version>
         <guava.version>21.0</guava.version>
         <spring.version>5.0.8.RELEASE</spring.version>
@@ -93,6 +93,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -105,6 +106,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>

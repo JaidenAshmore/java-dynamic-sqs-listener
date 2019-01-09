@@ -54,7 +54,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         // arrange
         final int concurrencyLevel = 5;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
@@ -79,7 +79,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        sendNumberOfMessages(concurrencyLevel, localSqsRule.getAmazonSqsAsync(), queueUrl);
+        sendNumberOfMessages(concurrencyLevel, sqsAsyncClient, queueUrl);
 
         // act
         messageBroker.start();
@@ -92,7 +92,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final Future<?> containerStoppedFuture = messageBroker.stop();
         testCompletedLatch.countDown();
         containerStoppedFuture.get(4, SECONDS);
-        assertNoMessagesInQueue(localSqsRule.getAmazonSqsAsync(), queueUrl);
+        assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final int concurrencyLevel = 10;
         final int numberOfMessages = 300;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
@@ -126,7 +126,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        sendNumberOfMessages(numberOfMessages, localSqsRule.getAmazonSqsAsync(), queueUrl);
+        sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
         messageBroker.start();
@@ -137,7 +137,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
 
         // cleanup
         messageBroker.stop().get(4, SECONDS);
-        assertNoMessagesInQueue(localSqsRule.getAmazonSqsAsync(), queueUrl);
+        assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     @Test
@@ -146,7 +146,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final int concurrencyLevel = 10;
         final int numberOfMessages = 300;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
@@ -178,7 +178,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        sendNumberOfMessages(numberOfMessages, localSqsRule.getAmazonSqsAsync(), queueUrl);
+        sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
         messageRetriever.start();
 
         // act
@@ -192,7 +192,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         messageRetriever.stop().get(5, SECONDS);
         log.debug("Stopped message retriever");
         messageBroker.stop().get(10, SECONDS);
-        assertNoMessagesInQueue(localSqsRule.getAmazonSqsAsync(), queueUrl);
+        assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     public static class MessageConsumer {

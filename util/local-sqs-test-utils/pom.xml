@@ -26,6 +26,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
         </dependency>
@@ -34,6 +39,12 @@
             <groupId>com.jashmore</groupId>
             <artifactId>local-amazon-sqs</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticmq</groupId>
+            <artifactId>elasticmq-rest-sqs_2.11</artifactId>
+            <version>0.13.9</version>
         </dependency>
     </dependencies>
 </project>

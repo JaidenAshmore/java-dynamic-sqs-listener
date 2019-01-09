@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.PostConstruct;
 
 /**
  * Helper implementation of the {@link SqsAsyncClient} that can be used to connect to a locally running SQS server.
@@ -27,10 +28,12 @@ import java.util.concurrent.ExecutionException;
  */
 @Slf4j
 public class LocalSqsAsyncClient implements SqsAsyncClient {
+    private final SqsQueuesConfig sqsQueuesConfig;
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
 
     public LocalSqsAsyncClient(final SqsQueuesConfig sqsQueuesConfig) {
+        this.sqsQueuesConfig = sqsQueuesConfig;
         final String sqsServerUrl = Optional.ofNullable(sqsQueuesConfig.getSqsServerUrl())
                 .orElse(DEFAULT_SQS_SERVER_URL);
         log.info("Connecting to local SQS service at {}", sqsServerUrl);
@@ -44,21 +47,62 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
         } catch (URISyntaxException uriSyntaxException) {
             throw new RuntimeException("Error building local SQS Client", uriSyntaxException);
         }
+    }
 
+    /**
+     * Build all of the queues that are required for this local client once the bean has been created.
+     */
+    @PostConstruct
+    private void buildQueues() {
         for (final SqsQueuesConfig.QueueConfig queueConfig : sqsQueuesConfig.getQueues()) {
+
             log.debug("Creating local queue: {}", queueConfig.getQueueName());
             final CreateQueueRequest.Builder createQueueRequestBuilder = CreateQueueRequest
                     .builder()
                     .queueName(queueConfig.getQueueName());
+            ImmutableMap.Builder<QueueAttributeName, String> attributesBuilder = ImmutableMap.builder();
             if (queueConfig.getVisibilityTimeout() != null) {
-                createQueueRequestBuilder
-                        .attributes(ImmutableMap.of(QueueAttributeName.VISIBILITY_TIMEOUT, String.valueOf(queueConfig.getVisibilityTimeout())));
+                attributesBuilder.put(QueueAttributeName.VISIBILITY_TIMEOUT, String.valueOf(queueConfig.getVisibilityTimeout()));
             }
+
+            if (queueConfig.getMaxReceiveCount() != null) {
+                final String deadLetterQueueArn = createDeadLetterQueue(queueConfig.getQueueName());
+                attributesBuilder.put(
+                        QueueAttributeName.REDRIVE_POLICY,
+                        String.format("{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}", deadLetterQueueArn, queueConfig.getMaxReceiveCount())
+                );
+            }
+
+            createQueueRequestBuilder.attributes(attributesBuilder.build());
+
             try {
                 delegate.createQueue(createQueueRequestBuilder.build()).get();
             } catch (InterruptedException | ExecutionException exception) {
                 throw new RuntimeException("Error creating queues", exception);
             }
+        }
+    }
+
+    /**
+     * Create a Dead Letter Queue that should be used for the queue with the provided name.
+     *
+     * <p>This will create a queue with "-dlq" appended to the original queue's name.
+     *
+     * @param queueName the name of the queue that this dead letter queue is for
+     * @return the queue ARN of the dead letter queue created
+     */
+    private String createDeadLetterQueue(final String queueName) {
+        try {
+            log.debug("Creating local queue: {}-dlq", queueName);
+            return delegate.createQueue((builder -> builder.queueName(queueName + "-dlq")))
+                    .thenCompose(createQueueResponse -> delegate.getQueueAttributes(builder -> builder
+                            .queueUrl(createQueueResponse.queueUrl())
+                            .attributeNames(QueueAttributeName.QUEUE_ARN))
+                    )
+                    .thenApply(queueAttributes -> queueAttributes.attributes().get(QueueAttributeName.QUEUE_ARN))
+                    .get();
+        } catch (InterruptedException | ExecutionException exception) {
+            throw new RuntimeException(exception);
         }
     }
 

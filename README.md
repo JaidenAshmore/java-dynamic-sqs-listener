@@ -17,7 +17,7 @@ when processing messages concurrently, the rate of concurrency can be dynamicall
 ## Quick start guide using a Spring Starter
 This guide will give a quick guide to getting started for Spring Boot using the spring starter but this framework is not tied to Spring in anyway. Note that
 this is pretty much the same steps as the leading SQS Listener implementation and for details about the other functionality see the
-[wiki](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/wiki).
+[documentation](./doc/documentation.md).
 
 Include the maven dependency in your Spring Boot com.jashmore.examples.spring.aws.Application:
 ```xml
