@@ -1,0 +1,5 @@
+sqs:
+  queues:
+    # We provide the queue URL via an environment variable and this would be used in a production instance where we may want different deployments having
+    # different queues included here
+    integrationTestingQueue: ${SQS_QUEUE_URL}

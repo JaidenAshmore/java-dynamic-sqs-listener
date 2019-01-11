@@ -2,8 +2,8 @@ package com.jashmore.sqs.argument.payload.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.Is.isA;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,7 +50,7 @@ public class JacksonPayloadMapperTest {
     @Test
     public void payloadContainerPojoCanBeMappedToObject() throws IOException {
         // arrange
-        final Message message = Message.builder().build();
+        final Message message = Message.builder().body("body").build();
         final Pojo parsedObject = new Pojo("test");
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenReturn(parsedObject);
 
@@ -64,7 +64,7 @@ public class JacksonPayloadMapperTest {
     @Test
     public void errorBuildingPayloadThrowsArgumentResolutionException() throws IOException {
         // arrange
-        final Message message = Message.builder().build();
+        final Message message = Message.builder().body("test").build();
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenThrow(new IOException());
         expectedException.expect(PayloadMappingException.class);
         expectedException.expectCause(isA(IOException.class));

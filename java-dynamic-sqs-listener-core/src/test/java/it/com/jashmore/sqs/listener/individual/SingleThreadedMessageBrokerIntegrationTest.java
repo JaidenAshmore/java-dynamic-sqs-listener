@@ -45,7 +45,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
         // arrange
         final int numberOfMessages = 20;
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
@@ -63,7 +63,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
                 messageConsumer
         );
         final MessageBroker container = new SingleThreadedMessageBroker(messageRetriever, messageProcessor);
-        sendNumberOfMessages(numberOfMessages, localSqsRule.getAmazonSqsAsync(), queueUrl);
+        sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
         container.start();
@@ -74,7 +74,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
 
         // cleanup
         container.stop().get(10, SECONDS);
-        assertNoMessagesInQueue(localSqsRule.getAmazonSqsAsync(), queueUrl);
+        assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     public static class MessageConsumer {

@@ -3,26 +3,32 @@ package it.com.jashmore.sqs.container.custom;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import com.google.common.collect.ImmutableList;
+
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
 import com.jashmore.sqs.spring.container.custom.MessageBrokerFactory;
 import com.jashmore.sqs.spring.container.custom.MessageProcessorFactory;
 import com.jashmore.sqs.spring.container.custom.MessageRetrieverFactory;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.test.LocalSqsRule;
+import com.jashmore.sqs.test.PurgeQueuesRule;
+import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import com.jashmore.sqs.util.SqsQueuesConfig;
 import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,15 +60,38 @@ public class CustomQueueWrapperIntegrationTest {
 
     private static final Map<Integer, Boolean> messagesProcessed = new ConcurrentHashMap<>();
 
-    @Autowired
-    private SqsAsyncClient sqsAsyncClient;
+    @ClassRule
+    public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
+            SqsQueuesConfig.QueueConfig.builder().queueName("CustomQueueWrapperIntegrationTest").build()
+    ));
+
+    @Rule
+    public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
 
     @Configuration
     @SuppressWarnings( {"SpringJavaInjectionPointsAutowiringInspection", "CheckStyle"})
     public static class TestConfig {
+        public static class MessageListener {
+            @SuppressWarnings("CheckStyle")
+            @CustomQueueListener(queue = "CustomQueueWrapperIntegrationTest",
+                    messageBrokerFactoryBeanName = "myMessageBrokerFactory",
+                    messageProcessorFactoryBeanName = "myMessageProcessorFactory",
+                    messageRetrieverFactoryBeanName = "myMessageRetrieverFactory")
+            public void listenToMessage(@Payload final String payload) {
+                log.info("Obtained message: {}", payload);
+                messagesProcessed.put(Integer.valueOf(payload.replace("message: ", "")), true);
+                COUNT_DOWN_LATCH.countDown();
+            }
+        }
+
         @Bean
-        public CustomQueueWrapperIntegrationTest.MessageListener messageListener() {
-            return new CustomQueueWrapperIntegrationTest.MessageListener();
+        public LocalSqsAsyncClient localSqsAsyncClient() {
+            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
+        }
+
+        @Bean
+        public MessageListener messageListener() {
+            return new MessageListener();
         }
 
         @Bean
@@ -102,12 +131,13 @@ public class CustomQueueWrapperIntegrationTest {
     @Test
     public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
         // arrange
-        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName("CustomQueueWrapperIntegrationTest")).get().queueUrl();
+        final String queueUrl = LOCAL_SQS_RULE.getLocalAmazonSqsAsync()
+                .getQueueUrl((request) -> request.queueName("CustomQueueWrapperIntegrationTest")).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .parallel()
                 .mapToObj(i -> {
                     log.info("Sending message: " + i);
-                    return sqsAsyncClient.sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
+                    return LOCAL_SQS_RULE.getLocalAmazonSqsAsync().sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
                 })
                 .forEach(future -> {
                     try {
@@ -124,18 +154,5 @@ public class CustomQueueWrapperIntegrationTest {
         final List<Integer> processed = new ArrayList<>(messagesProcessed.keySet());
         Collections.sort(processed);
         assertThat(processed).hasSize(100);
-    }
-
-    public static class MessageListener {
-        @SuppressWarnings("CheckStyle")
-        @CustomQueueListener(queue = "CustomQueueWrapperIntegrationTest",
-                messageBrokerFactoryBeanName = "myMessageBrokerFactory",
-                messageProcessorFactoryBeanName = "myMessageProcessorFactory",
-                messageRetrieverFactoryBeanName = "myMessageRetrieverFactory")
-        public void listenToMessage(@Payload final String payload) {
-            log.info("Obtained message: {}", payload);
-            messagesProcessed.put(Integer.valueOf(payload.replace("message: ","")), true);
-            COUNT_DOWN_LATCH.countDown();
-        }
     }
 }
