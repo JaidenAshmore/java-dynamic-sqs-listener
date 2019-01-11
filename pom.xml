@@ -211,6 +211,7 @@
                         <goals><goal>check</goal></goals>
                         <configuration>
                             <excludes>
+                                <exclude>com/jashmore/sqs/examples/**/*</exclude>
                                 <exclude>com/jashmore/sqs/aws/*</exclude>
                             </excludes>
                             <rules>
