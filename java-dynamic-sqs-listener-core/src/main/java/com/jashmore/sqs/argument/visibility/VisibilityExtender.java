@@ -28,6 +28,7 @@ public interface VisibilityExtender {
      * <p>This is useful if you are doing a task that can take a considerable amount of time to process. You can use this to extend the visibility
      * of the message until you have finished processing the message.
      *
+     * @param visibilityExtensionInSeconds the amount of time in seconds the message should not be visible from the queue
      * @return a future for when the beat has been acknowledged
      */
     Future<?> extend(int visibilityExtensionInSeconds);

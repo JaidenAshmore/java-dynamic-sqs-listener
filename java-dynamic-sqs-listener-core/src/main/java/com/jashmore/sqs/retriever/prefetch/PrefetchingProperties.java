@@ -91,8 +91,15 @@ public class PrefetchingProperties {
      */
     private final Integer errorBackoffTimeInMilliseconds;
 
+
     /**
      * Constructor used to validate all of the fields, see each individual field documentation for constraints.
+     *
+     * @param desiredMinPrefetchedMessages                   the minimum desired messages to be prefetched
+     * @param maxPrefetchedMessages                          the maximum number of messages to be prefetched
+     * @param maxWaitTimeInSecondsToObtainMessagesFromServer the maximum wait time for waiting for messages from the server
+     * @param visibilityTimeoutForMessagesInSeconds          the visibility timeout for each message obtained from the server
+     * @param errorBackoffTimeInMilliseconds                 the amount of time to backoff if an error occurred on fetching messages
      */
     public PrefetchingProperties(final Integer desiredMinPrefetchedMessages,
                                  final Integer maxPrefetchedMessages,

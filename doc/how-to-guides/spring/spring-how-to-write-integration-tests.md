@@ -1,13 +1,13 @@
 # Spring - How to write Integration Tests
 This guide provides details on how to write a simple integration test for a spring boot application. Note that writing integration tests through the SQS queue
-can be flaky and therefore you should prefer to call your message listener directly in your integration test.
+can be flaky and therefore you should prefer to call your message listener directly in your integration test if possible.
 
-For this How to guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/java-dynamic-sqs-listener-spring-integration-test-example)
-module will be used. This is very simple application that has a single queue listener that calls out to a service when a message is retrieved. The tests written
-includes test on:
+For this guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/java-dynamic-sqs-listener-spring-integration-test-example)
+module will be used, which is a very simple application that has a single queue listener that calls out to a service when a message is retrieved. The
+tests written includes test on:
  - A message was received and able to be successfully processed
  - A message was received, was not able to be processed and through the re-drive policy succeeded the next time
- - A message was receieved, was not able to be processed after the number of times defined by the re-drive policy where it ended up in the Dead Letter Queue
+ - A message was received, was not able to be processed after the number of times defined by the re-drive policy where it ended up in the Dead Letter Queue
 
 #### Tools
 The tools that will be used to help this are provided by the `local-sqs-test-utils`:
@@ -40,8 +40,9 @@ module would be good examples.
             SqsQueuesConfig.QueueConfig.builder().queueName("testQueue").build()
     ));
     ```
-1. You should probably also add the [PurgeQueuesRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/PurgeQueuesRule.java) as a `Rule`
-to the integration test so the queues are all purged between tests. This should decrease the amount of flaky tests.
+1. Add the [PurgeQueuesRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/PurgeQueuesRule.java) as a `Rule`
+to the integration test so the queues are all purged between tests. This should decrease the amount of flaky tests due to messages staying in the queues
+unintentionally.
     ```java
     @Rule
     public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
@@ -60,5 +61,6 @@ to the integration test so the queues are all purged between tests. This should 
     ```java
     @SpringBootTest(classes = {Application.class, IntegrationTest.TestConfiguration.class })
     ```
-1. Now you should be able to use this `LocalSqsAsyncClient` to test the queues by manually sending messages onto the queue an asserting that they were procesed.
+1. Now you should be able to use this `LocalSqsAsyncClient` to test the queues by manually sending messages onto the queue an asserting that they
+were proccesed.
 

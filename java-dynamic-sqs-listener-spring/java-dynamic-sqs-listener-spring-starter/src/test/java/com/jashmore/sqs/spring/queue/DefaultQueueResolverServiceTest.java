@@ -43,7 +43,7 @@ public class DefaultQueueResolverServiceTest {
     }
 
     @Test
-    public void resolvedValueThatIsAUrlIsReturned() throws InterruptedException {
+    public void resolvedValueThatIsAUrlIsReturned() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("http://url");
 
@@ -55,7 +55,7 @@ public class DefaultQueueResolverServiceTest {
     }
 
     @Test
-    public void resolvedValueThatIsNotAUrlCallsOutToAmazonForUrl() throws InterruptedException {
+    public void resolvedValueThatIsNotAUrlCallsOutToAmazonForUrl() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
@@ -69,7 +69,7 @@ public class DefaultQueueResolverServiceTest {
     }
 
     @Test
-    public void exceptionThrownWhileGettingQueueUrlBubblesException() throws InterruptedException {
+    public void exceptionThrownWhileGettingQueueUrlBubblesException() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final RuntimeException exceptionCause = new RuntimeException("error");
@@ -85,5 +85,46 @@ public class DefaultQueueResolverServiceTest {
 
         // act
         defaultQueueResolverService.resolveQueueUrl("${variable}");
+    }
+
+    @Test
+    public void interruptedThreadWhileGettingQueueUrlThrowsQueueResolutionException() {
+        // arrange
+        when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
+        final InterruptedException exceptionCause = new InterruptedException();
+        when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
+                .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
+                    @Override
+                    public GetQueueUrlResponse get() throws ExecutionException {
+                        throw new ExecutionException(exceptionCause);
+                    }
+                });
+        expectedException.expect(instanceOf(QueueResolutionException.class));
+        expectedException.expectCause(equalTo(exceptionCause));
+
+        // act
+        defaultQueueResolverService.resolveQueueUrl("${variable}");
+    }
+
+    @Test
+    public void interruptedThreadWhileGettingQueueUrlShouldMaintainThreadInterruptedBoolean() {
+        // arrange
+        when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
+        final InterruptedException interruptedException = new InterruptedException();
+        when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
+                .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
+                    @Override
+                    public GetQueueUrlResponse get() throws InterruptedException {
+                        throw interruptedException;
+                    }
+                });
+
+        // act
+        try {
+            defaultQueueResolverService.resolveQueueUrl("${variable}");
+        } catch (final QueueResolutionException exception) {
+            // assert
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
     }
 }

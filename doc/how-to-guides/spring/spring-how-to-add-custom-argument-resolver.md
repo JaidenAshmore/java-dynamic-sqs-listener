@@ -1,42 +1,32 @@
 # Spring - How to add a custom ArgumentResolver
-The core [ArgumentResolvers](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the application
+The core [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s provided in the application
 may not cover all the use cases for argument resolution that is desired and the framework has been built to allow for the consumers to provide their own
-resolver easily.
+resolver easily. See [core-how-to-implement-custom-argument-resolver.md](../core/core-how-to-implement-a-custom-argument-resolver.md) for more details about how
+to build an [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 
 ## Prerequisites
-1. This relies on no [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
-being provided by the consumer of this framework and therefore the default will be used. See
-[QueueListenerAutoConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/config/QueueListenerAutoConfiguration.java)
+- This relies on no custom [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
+being provided therefore the default will be used. See
+[QueueListenerConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
 for more information about how the [ArgumentResolvers](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 are collected.
 
 ## Steps
-1. Create a new implementation of the [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
-interface.
-    ```java
-    public class MyArgumentResolver implements ArgumentResolver {
-       @Override
-       public boolean canResolveParameter(Parameter parameter) {
-           // implement this 
-       }
-    
-       @Override
-       public Object resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
-           // implement this
-       }
-    }
-    ```
+1. Build your [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) by following
+the guide provided by [core-how-to-implement-custom-argument-resolver.md](../core/core-how-to-implement-a-custom-argument-resolver.md).
 1. Add this bean in the Spring Context by annotating it with a `@Component` (or other equivalent annotation) or by providing it as a bean in a `@Configuration`
 class.
      ```java
      @Configuration
      public class MyConfiguration {
         @Bean
-        public ArgumentResolver customArgumentResolver() {
-            return new MyArgumentResolver(); 
+        public ArgumentResolver userGroupArgumentResolver() {
+            return new UserGroupArgumentResolver(); 
         }   
      }
      ```
 
 At this point the default [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
-should contain this custom argument resolver and it should be applied during execution of the framework.
+should contain this custom argument resolver and it should be applied during execution of the framework. This is because all 
+[ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) beans are including
+in the underlying service.

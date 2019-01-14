@@ -5,6 +5,8 @@ import javax.validation.constraints.Min;
 public interface ConcurrentMessageBrokerProperties {
     /**
      * The level of concurrency for processing messages, e.g. the number of threads processing messages.
+     *
+     * @return the the level of concurrency for processing messages
      */
     @Min(0)
     Integer getConcurrencyLevel();

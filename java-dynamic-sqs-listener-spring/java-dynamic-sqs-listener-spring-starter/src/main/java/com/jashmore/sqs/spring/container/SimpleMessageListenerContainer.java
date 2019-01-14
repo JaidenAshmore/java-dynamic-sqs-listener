@@ -49,12 +49,29 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
     @GuardedBy("this")
     private volatile boolean isRunning;
 
+    /**
+     * Container that can be built when there is no {@link AsyncMessageRetriever} that is need to be started to be in the lifecyle of listening to this
+     * container.
+     *
+     * <p>The identifier for this container must be unique across all other containers in the system so that they can be enabled/disabled via this identifier.
+     *
+     * @param identifier    the unique identifier for this container
+     * @param messageBroker the message broker that handles the processing of messages
+     */
     public SimpleMessageListenerContainer(final String identifier, final MessageBroker messageBroker) {
         this.identifier = identifier;
-        this.asyncMessageRetriever = null;
         this.messageBroker = messageBroker;
+        this.asyncMessageRetriever = null;
     }
 
+    /**
+     * Container that can be built when the {@link MessageBroker} is using an {@link AsyncMessageRetriever}. This takes the {@link AsyncMessageRetriever} so
+     * that during the lifecycle of the spring container, it can be enabled and disabled at the same time that the {@link MessageBroker} is.
+     *
+     * @param identifier            the unique identifier for this container
+     * @param asyncMessageRetriever the message retriever for this listener
+     * @param messageBroker         the message broker that handles the processing of messages
+     */
     public SimpleMessageListenerContainer(final String identifier,
                                           final AsyncMessageRetriever asyncMessageRetriever,
                                           final MessageBroker messageBroker) {

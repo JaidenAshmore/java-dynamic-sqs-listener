@@ -15,11 +15,11 @@ used for this guide.
 1. Create a new SQS Queue in a region near you, e.g. us-east-2 (Ohio). You will need the region and Queue URL.
 1. Create a new IAM user that has full permission to this SQS queue. You will need the Access Key ID and Secret Access Key.
 1. Change directory to the AWS Spring example.
-    ```java
+    ```bash
     cd examples/java-dynamic-sqs-listener-spring-aws-example
     ```
 1. Run the Spring Boot application with the AWS details recorded above. For example:
-    ```
+    ```bash
     AWS_ACCESS_KEY_ID={KEY_RECORDED_ABOVE} \
     AWS_REGION={REGION_QUEUE_CREATED_IN_ABOVE} \
     AWS_SECRET_ACCESS_KEY={SECRET_KEY_RECORDED_ABOVE} \
