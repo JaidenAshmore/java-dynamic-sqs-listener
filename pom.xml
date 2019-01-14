@@ -115,6 +115,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <failOnWarnings>true</failOnWarnings>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

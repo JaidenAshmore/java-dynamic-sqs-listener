@@ -43,6 +43,7 @@ public interface BatchingMessageRetrieverProperties {
      *
      * <p>E.g. the number of seconds that a message can be kept before it is assumed that it wasn't completed and will be put back onto the queue
      *
+     * @return the visibility timeout for the message
      * @see ReceiveMessageRequest#visibilityTimeout for where this is applied against
      */
     int getVisibilityTimeoutInSeconds();

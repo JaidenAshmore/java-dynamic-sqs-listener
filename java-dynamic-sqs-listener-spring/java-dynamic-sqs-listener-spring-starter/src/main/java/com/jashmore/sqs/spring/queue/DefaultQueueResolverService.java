@@ -18,7 +18,7 @@ public class DefaultQueueResolverService implements QueueResolverService {
     private final Environment environment;
 
     @Override
-    public String resolveQueueUrl(final String queueNameOrUrl) throws InterruptedException {
+    public String resolveQueueUrl(final String queueNameOrUrl) {
         final String resolvedQueueNameOrUrl = environment.resolveRequiredPlaceholders(queueNameOrUrl);
 
         if (resolvedQueueNameOrUrl.startsWith("http")) {
@@ -29,6 +29,9 @@ public class DefaultQueueResolverService implements QueueResolverService {
             return sqsAsyncClient.getQueueUrl((builder) -> builder.queueName(resolvedQueueNameOrUrl)).get().queueUrl();
         } catch (ExecutionException executionException) {
             throw new QueueResolutionException(executionException.getCause());
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new QueueResolutionException(interruptedException);
         }
     }
 }

@@ -44,7 +44,7 @@ public class EnvironmentQueueResolverServiceIntegrationTest {
     }
 
     @Test
-    public void queueResolverResolvesVariablesFromEnvironmentProperties() throws InterruptedException {
+    public void queueResolverResolvesVariablesFromEnvironmentProperties() {
         // act
         final String queueUrl = queueResolver.resolveQueueUrl("${property.with.queue.url}");
 
@@ -53,7 +53,7 @@ public class EnvironmentQueueResolverServiceIntegrationTest {
     }
 
     @Test
-    public void queueResolverForQueueNameObtainsQueueUrlFromSqs() throws InterruptedException {
+    public void queueResolverForQueueNameObtainsQueueUrlFromSqs() {
         // act
         final String queueUrl = queueResolver.resolveQueueUrl("${property.with.queue.name}");
 

@@ -43,16 +43,10 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
 
     @Override
     protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
-        final QueueProperties queueProperties;
-        try {
-            queueProperties = QueueProperties
+        final QueueProperties queueProperties = QueueProperties
                     .builder()
                     .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                     .build();
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted while setting up container");
-        }
 
         final PrefetchingProperties batchingProperties = PrefetchingProperties
                 .builder()

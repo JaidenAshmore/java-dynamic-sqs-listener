@@ -105,14 +105,6 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     class BackgroundBatchingMessageRetriever implements Runnable {
         private final CompletableFuture<Object> completedFuture;
 
-        /**
-         * UW_UNCOND_WAIT has been specifically ignored for this method as we are happy to wait another polling period to obtain messages. If it is deemed
-         * that this is not appropriate (the polling period is very large), we can take another look at this.
-         *
-         * <p>The reason that it isn't easy to put the check for the {@link #numberWaitingForMessages} is just because they have the message doesn't mean
-         * they have gone into the finally block to decrease this number so even though all consumers are fine it seems like we can run the retrieval code
-         * again.
-         */
         @Override
         public void run() {
             log.debug("Started background thread");

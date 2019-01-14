@@ -56,7 +56,7 @@ public class QueueListenerWrapperTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException, InterruptedException {
+    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
         // arrange
         final Object bean = new QueueListenerWrapperTest();
         final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");

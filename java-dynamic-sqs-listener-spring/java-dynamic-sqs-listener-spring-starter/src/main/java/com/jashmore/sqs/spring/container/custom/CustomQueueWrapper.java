@@ -64,16 +64,10 @@ public class CustomQueueWrapper extends AbstractQueueAnnotationWrapper<CustomQue
                                                                    final CustomQueueListener annotation) {
         final String queueNameOrUrl = annotation.queue();
 
-        final QueueProperties queueProperties;
-        try {
-            queueProperties = QueueProperties
+        final QueueProperties queueProperties = QueueProperties
                     .builder()
                     .queueUrl(queueResolverService.resolveQueueUrl(queueNameOrUrl))
                     .build();
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted while setting up container");
-        }
 
         final MessageRetrieverFactory messageRetrieverFactory = beanFactory.getBean(
                 annotation.messageRetrieverFactoryBeanName(), MessageRetrieverFactory.class);
