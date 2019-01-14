@@ -94,7 +94,7 @@ is the simplest (and currently only) implementation of this and is the most like
      @Configuration
      public class MyConfiguration {
         @Bean
-        public QueueWrapper MySleepingQueueWrapper(final ArgumentResolverService argumentResolverService) {
+        public QueueWrapper mySleepingQueueWrapper(final ArgumentResolverService argumentResolverService) {
             return new MySleepingQueueWrapper(argumentResolverService); 
         }
      }
