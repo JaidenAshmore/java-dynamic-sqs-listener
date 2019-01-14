@@ -145,6 +145,7 @@ public class DefaultQueueContainerServiceTest {
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);
+        assertThat(defaultQueueContainerService.getContainers()).hasSize(1);
 
         // act
         defaultQueueContainerService.startAllContainers();
