@@ -1,5 +1,7 @@
 package com.jashmore.sqs.spring.container;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -19,9 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
@@ -35,13 +37,12 @@ import javax.annotation.concurrent.ThreadSafe;
  * synchronization method should be fine for now.
  */
 @Slf4j
-@RequiredArgsConstructor
 @ThreadSafe
 public class DefaultQueueContainerService implements QueueContainerService, ApplicationContextAware, SmartLifecycle {
     /**
      * Used to be able to start and stop containers concurrently.
      */
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService;
 
     /**
      * These {@link QueueWrapper}s should be injected by the spring application and therefore to add more wrappers into the system a corresponding bean
@@ -62,6 +63,17 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
      * Determines whether this container service is currently running in the Spring lifecycle.
      */
     private AtomicBoolean isRunning = new AtomicBoolean(false);
+
+    public DefaultQueueContainerService(final List<QueueWrapper> queueWrappers) {
+        this.executorService = Executors.newCachedThreadPool();
+        this.queueWrappers = queueWrappers;
+    }
+
+    @VisibleForTesting
+    DefaultQueueContainerService(final ExecutorService executorService, final List<QueueWrapper> queueWrappers) {
+        this.executorService = executorService;
+        this.queueWrappers = queueWrappers;
+    }
 
     /**
      * Initialise all of the containers for this application by finding all bean methods that need to be wrapped.
@@ -122,15 +134,15 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
     }
 
     private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
-        final ExecutorCompletionService<String> executorCompletionService = new ExecutorCompletionService<>(executorService);
+        final List<? extends Future<?>> taskFutures = containers.values().stream()
+                .map(container -> executorService.submit(() -> containerConsumer.accept(container)))
+                .collect(toList());
 
-        containers.values().forEach(container -> executorCompletionService.submit(() -> containerConsumer.accept(container), null));
-
-        for (int i = 0; i < containers.size(); ++i) {
+        for (final Future<?> future : taskFutures) {
             try {
-                executorCompletionService.take().get();
+                future.get();
             } catch (InterruptedException interruptedException) {
-                log.info("Thread interrupted while running command across all containers");
+                log.warn("Thread interrupted while running command across all containers");
                 return;
             } catch (ExecutionException executionException) {
                 log.error("Error running command on container", executionException);

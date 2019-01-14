@@ -44,7 +44,7 @@ public class BatchingMessageRetrieverTest {
             .build();
 
     private static final int POLLING_PERIOD_IN_MS = 100;
-    private static final StaticBatchingMessageRetrieverProperties DEFAULT_PROPERTIES = StaticBatchingMessageRetrieverProperties
+    private static final StaticBatchingProperties DEFAULT_PROPERTIES = StaticBatchingProperties
             .builder()
             .visibilityTimeoutInSeconds(10)
             .numberOfThreadsWaitingTrigger(2)
@@ -159,7 +159,7 @@ public class BatchingMessageRetrieverTest {
     public void whenThePollingPeriodIsHitTheBackgroundThreadWillRequestAsManyMessagesAsThoseWaiting() throws Exception {
         // arrange
         final int pollingPeriodInMs = 500;
-        final BatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().messageRetrievalPollingPeriodInMs(pollingPeriodInMs).build();
+        final BatchingProperties properties = DEFAULT_PROPERTIES.toBuilder().messageRetrievalPollingPeriodInMs(pollingPeriodInMs).build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
@@ -186,7 +186,7 @@ public class BatchingMessageRetrieverTest {
     public void backgroundThreadWillRequestMessagesWhenLimitReached() throws Exception {
         // arrange
         final int pollingPeriodInMs = 10000;
-        final BatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES
+        final BatchingProperties properties = DEFAULT_PROPERTIES
                 .toBuilder()
                 .numberOfThreadsWaitingTrigger(1)
                 .messageRetrievalPollingPeriodInMs(pollingPeriodInMs)
@@ -239,7 +239,7 @@ public class BatchingMessageRetrieverTest {
     @Test
     public void willNotExceedAwsMaxMessagesForRetrievalWhenRequestingMessages() throws Exception {
         // arrange
-        final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().numberOfThreadsWaitingTrigger(10).build();
+        final StaticBatchingProperties properties = DEFAULT_PROPERTIES.toBuilder().numberOfThreadsWaitingTrigger(10).build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
@@ -306,6 +306,36 @@ public class BatchingMessageRetrieverTest {
         assertThat(messageRetrieved).isEqualTo(message);
     }
 
+    @Test
+    public void maximumWaitTimeIsUsedForMessageRetrievalRequests() throws Exception {
+        final int pollingPeriodInMs = 10000;
+        final BatchingProperties properties = DEFAULT_PROPERTIES
+                .toBuilder()
+                .numberOfThreadsWaitingTrigger(1)
+                .messageRetrievalPollingPeriodInMs(pollingPeriodInMs)
+                .build();
+        final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
+        final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer(invocation -> {
+            receivedMessageLatch.countDown();
+            return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().messages(Message.builder().build()).build());
+        });
+        batchingMessageRetriever.start();
+
+        // act
+        requestMessageOnNewThread(batchingMessageRetriever);
+        waitForLatch(receivedMessageLatch, pollingPeriodInMs / 4);
+
+        // assert
+        verify(sqsAsyncClient).receiveMessage(ReceiveMessageRequest
+                .builder()
+                .visibilityTimeout(properties.getVisibilityTimeoutInSeconds())
+                .waitTimeSeconds(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .maxNumberOfMessages(1)
+                .queueUrl(QUEUE_URL)
+                .build());
+    }
+
     private Future<?> requestMessageOnNewThread(final BatchingMessageRetriever batchingMessageRetriever) {
         return obtainFutureOnBackgroundThreadWhenInterrupted(batchingMessageRetriever, null);
     }
@@ -333,7 +363,7 @@ public class BatchingMessageRetrieverTest {
         return batchingMessageRetriever(DEFAULT_PROPERTIES);
     }
 
-    private BatchingMessageRetriever batchingMessageRetriever(final BatchingMessageRetrieverProperties properties) {
+    private BatchingMessageRetriever batchingMessageRetriever(final BatchingProperties properties) {
         return new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, Executors.newCachedThreadPool(), properties);
     }
 }

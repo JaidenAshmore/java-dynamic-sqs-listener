@@ -1,4 +1,6 @@
-package com.jashmore.sqs.spring.container.basic;
+package com.jashmore.sqs.spring.container.prefetch;
+
+import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -6,9 +8,8 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
-import com.jashmore.sqs.retriever.batching.StaticBatchingProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
@@ -24,36 +25,38 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * {@link QueueWrapper} that will wrap methods annotated with {@link QueueListener @QueueListener} with some predefined
+ * {@link QueueWrapper} that will wrap methods annotated with {@link PrefetchingQueueListener @PrefetchingQueueListener} with some predefined
  * implementations of the framework.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
+public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper<PrefetchingQueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     @Override
-    protected Class<QueueListener> getAnnotationClass() {
-        return QueueListener.class;
+    protected Class<PrefetchingQueueListener> getAnnotationClass() {
+        return PrefetchingQueueListener.class;
     }
 
     @Override
-    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
+    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final PrefetchingQueueListener annotation) {
         final QueueProperties queueProperties = QueueProperties
                 .builder()
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final BatchingProperties batchingProperties = StaticBatchingProperties
+        final PrefetchingProperties batchingProperties = PrefetchingProperties
                 .builder()
-                .visibilityTimeoutInSeconds(annotation.messageVisibilityTimeoutInSeconds())
-                .messageRetrievalPollingPeriodInMs(annotation.maxPeriodBetweenBatchesInMs())
-                .numberOfThreadsWaitingTrigger(annotation.concurrencyLevel())
+                .desiredMinPrefetchedMessages(annotation.desiredMinPrefetchedMessages())
+                .maxPrefetchedMessages(annotation.maxPrefetchedMessages())
+                .visibilityTimeoutForMessagesInSeconds(annotation.messageVisibilityTimeoutInSeconds())
+                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .build();
-        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(queueProperties, sqsAsyncClient, executor, batchingProperties);
+        final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
+                sqsAsyncClient, queueProperties, batchingProperties, executor);
 
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
                 sqsAsyncClient, method, bean);

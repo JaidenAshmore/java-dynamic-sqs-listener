@@ -1,4 +1,4 @@
-package it.com.jashmore.sqs.container.basic;
+package it.com.jashmore.sqs.container.prefetch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -6,7 +6,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.test.PurgeQueuesRule;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
@@ -33,9 +33,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, QueueListenerWrapperIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, PrefetchingQueueListenerWrapperIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
-public class QueueListenerWrapperIntegrationTest {
+public class PrefetchingQueueListenerWrapperIntegrationTest {
+    private static final String QUEUE_NAME = "PrefetchingQueueListenerWrapperIntegrationTest";
+
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(NUMBER_OF_MESSAGES_TO_SEND);
 
@@ -43,7 +45,7 @@ public class QueueListenerWrapperIntegrationTest {
 
     @ClassRule
     public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName("QueueListenerWrapperIntegrationTest").build()
+            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME).build()
     ));
 
     @Rule
@@ -56,7 +58,7 @@ public class QueueListenerWrapperIntegrationTest {
     public static class TestConfig {
         @Service
         public static class MessageListener {
-            @QueueListener(value = "QueueListenerWrapperIntegrationTest")
+            @PrefetchingQueueListener(value = QUEUE_NAME)
             public void listenToMessage(@Payload final String payload) {
                 log.info("Obtained message: {}", payload);
                 messagesProcessed.put(payload, true);
@@ -73,7 +75,7 @@ public class QueueListenerWrapperIntegrationTest {
     @Test
     public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
         // arrange
-        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName("QueueListenerWrapperIntegrationTest")).get().queueUrl();
+        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName(QUEUE_NAME)).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> {
                     log.info("Sending message: " + i);

@@ -5,11 +5,11 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 /**
  * The properties used to configure the {@link BatchingMessageRetriever}.
  *
- * <p>Note that while only a {@link StaticBatchingMessageRetrieverProperties} is provided by the core implementation, the implementors of this may be dynamic
+ * <p>Note that while only a {@link StaticBatchingProperties} is provided by the core implementation, the implementors of this may be dynamic
  * in how they provide these values. Note that there may be a delay between when this value changes in the source system compared to when the
  * {@link BatchingMessageRetriever} starts to use it based on the internal implementation of the {@link BatchingMessageRetriever}.
  */
-public interface BatchingMessageRetrieverProperties {
+public interface BatchingProperties {
     /**
      * The period of time between attempts to get messages from the SQS queue.
      *

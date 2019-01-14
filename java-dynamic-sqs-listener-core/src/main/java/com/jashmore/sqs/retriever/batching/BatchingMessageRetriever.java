@@ -34,7 +34,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private final QueueProperties queueProperties;
     private final SqsAsyncClient sqsAsyncClient;
     private final ExecutorService executorService;
-    private final BatchingMessageRetrieverProperties properties;
+    private final BatchingProperties properties;
 
     private final AtomicInteger numberWaitingForMessages = new AtomicInteger();
     private final BlockingQueue<Message> messagesDownloaded = new LinkedBlockingQueue<>();
@@ -96,8 +96,8 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
 
     /**
      * This is the background thread that will be obtaining the messages on a given cycle of
-     * {@link BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs()} or until
-     * {@link BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger()} is reached, whichever is first. It will attempt to get those number of
+     * {@link BatchingProperties#getMessageRetrievalPollingPeriodInMs()} or until
+     * {@link BatchingProperties#getNumberOfThreadsWaitingTrigger()} is reached, whichever is first. It will attempt to get those number of
      * messages that are waiting for retrieval in one call to SQS.
      */
     @AllArgsConstructor
@@ -131,14 +131,14 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 log.info("Requesting {} messages", numberOfMessagesToObtain);
 
                 try {
-                    final ReceiveMessageRequest recieveMessageRequest = ReceiveMessageRequest
+                    final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest
                             .builder()
                             .queueUrl(queueProperties.getQueueUrl())
                             .visibilityTimeout(properties.getVisibilityTimeoutInSeconds())
                             .maxNumberOfMessages(numberOfMessagesToObtain)
-                            .waitTimeSeconds(0)
+                            .waitTimeSeconds(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                             .build();
-                    final Future<ReceiveMessageResponse> receiveMessageResponseFuture = sqsAsyncClient.receiveMessage(recieveMessageRequest);
+                    final Future<ReceiveMessageResponse> receiveMessageResponseFuture = sqsAsyncClient.receiveMessage(receiveMessageRequest);
                     try {
                         final ReceiveMessageResponse response = receiveMessageResponseFuture.get();
                         for (final Message message : response.messages()) {
