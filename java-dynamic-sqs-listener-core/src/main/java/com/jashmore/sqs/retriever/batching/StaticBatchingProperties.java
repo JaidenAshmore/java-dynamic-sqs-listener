@@ -6,7 +6,7 @@ import lombok.Builder;
  * Static implementation of the properties that will never change during the processing of the messages.
  */
 @Builder(toBuilder = true)
-public class StaticBatchingMessageRetrieverProperties implements BatchingMessageRetrieverProperties {
+public class StaticBatchingProperties implements BatchingProperties {
     private final int numberOfThreadsWaitingTrigger;
     private final int messageRetrievalPollingPeriodInMs;
     private final int visibilityTimeoutInSeconds;

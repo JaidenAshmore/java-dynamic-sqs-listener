@@ -16,6 +16,7 @@ import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolverService;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.springframework.beans.factory.BeanFactory;
@@ -186,6 +187,13 @@ public class QueueListenerConfiguration {
             @Bean
             public QueueWrapper coreProvidedCustomQueueWrapper(final BeanFactory beanFactory, final QueueResolverService queueResolverService) {
                 return new CustomQueueWrapper(beanFactory, queueResolverService);
+            }
+
+            @Bean
+            public QueueWrapper coreProvidedPrefetchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
+                                                                            final SqsAsyncClient sqsAsyncClient,
+                                                                            final QueueResolverService queueResolverService) {
+                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
             }
         }
     }

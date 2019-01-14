@@ -2,6 +2,7 @@ package com.jashmore.sqs.spring.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -12,6 +13,9 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.spring.QueueWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -22,6 +26,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
 
+@Slf4j
 public class DefaultQueueContainerServiceTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -31,6 +36,11 @@ public class DefaultQueueContainerServiceTest {
 
     @Mock
     private ApplicationContext applicationContext;
+
+    @After
+    public void tearDown() {
+        Thread.interrupted();
+    }
 
     @Test
     public void whenNoQueueWrappersPresentBeansAreNotProcessed() {
@@ -145,6 +155,7 @@ public class DefaultQueueContainerServiceTest {
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);
+        assertThat(defaultQueueContainerService.getContainers()).hasSize(1);
 
         // act
         defaultQueueContainerService.startAllContainers();
@@ -156,6 +167,7 @@ public class DefaultQueueContainerServiceTest {
     @Test
     public void stoppingAllContainersWillStopAllMessageListenerContainersBuilt() throws NoSuchMethodException {
         // arrange
+        log.debug("Starting stoppingAllContainersWillStopAllMessageListenerContainersBuilt");
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
         final QueueWrapper queueWrapper = mock(QueueWrapper.class);
@@ -165,12 +177,18 @@ public class DefaultQueueContainerServiceTest {
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
         when(container.getIdentifier()).thenReturn("identifier");
         when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        doAnswer((invocationOnMock) -> {
+            log.info("Stopping container");
+            return null;
+        }).when(container).stop();
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);
+        assertThat(defaultQueueContainerService.getContainers()).hasSize(1);
 
         // act
         defaultQueueContainerService.stopAllContainers();
+        log.info("Should have stopped all containers");
 
         // assert
         verify(container).stop();

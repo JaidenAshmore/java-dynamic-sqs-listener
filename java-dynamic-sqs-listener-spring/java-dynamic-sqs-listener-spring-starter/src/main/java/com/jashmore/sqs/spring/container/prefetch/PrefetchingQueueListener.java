@@ -1,6 +1,6 @@
-package com.jashmore.sqs.spring.container.basic;
+package com.jashmore.sqs.spring.container.prefetch;
 
-
+import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -8,9 +8,10 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
+import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import org.springframework.core.env.Environment;
 
 import java.lang.annotation.Retention;
@@ -19,14 +20,14 @@ import java.lang.annotation.Target;
 /**
  * Wrap a method with a {@link MessageListenerContainer} that will execute the method whenever a message is received on the provided queue.
  *
- * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link BatchingMessageRetriever} and {@link DefaultMessageProcessor}
+ * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link DefaultMessageProcessor}
  * for the implementations of the framework. Not all of the properties for each implementation are available to simplify this usage.
  *
  * @see QueueListenerWrapper for what processes this annotation
  */
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface QueueListener {
+public @interface PrefetchingQueueListener {
     /**
      * The queue name or url for the queue to listen to messages on, this may contain placeholders that can be resolved from the Spring Environment.
      *
@@ -66,22 +67,26 @@ public @interface QueueListener {
     int concurrencyLevel() default 5;
 
     /**
-     * The maximum period of time that the {@link BatchingMessageRetriever} will wait for all threads to be ready before retrieving messages.
+     * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
      *
-     * <p>This tries to reduce the number of times that requests for messages are made to SQS by waiting for all of the threads to be requiring messages
-     * before requesting for messages from SQS. If one or more of the threads processing messages does not start requesting messages by this period's
-     * timeout the current threads waiting for messages will have messages requested for them
-     *
-     * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingProperties#getMessageRetrievalPollingPeriodInMs() for more details
+     * @return the minimum number of prefetched messages
+     * @see PrefetchingProperties#desiredMinPrefetchedMessages for more details and constraints
      */
-    int maxPeriodBetweenBatchesInMs() default 2000;
+    int desiredMinPrefetchedMessages() default 0;
+
+    /**
+     * The total number of messages that can be prefetched from the server and stored in memory for execution.
+     *
+     * @return the max number of prefetched issues
+     * @see PrefetchingProperties#maxPrefetchedMessages for more details and constraints
+     */
+    int maxPrefetchedMessages() default MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 
     /**
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     * @see PrefetchingProperties#visibilityTimeoutForMessagesInSeconds for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 }
