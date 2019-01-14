@@ -242,14 +242,24 @@ public class BatchingMessageRetrieverTest {
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder().numberOfThreadsWaitingTrigger(10).build();
         final BatchingMessageRetriever batchingMessageRetriever = batchingMessageRetriever(properties);
         final CountDownLatch receivedMessageLatch = new CountDownLatch(1);
+        final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenAnswer(invocation -> {
+                .thenAnswer(invocation -> CompletableFuture.supplyAsync(() -> {
+                    if (receivedMessageLatch.getCount() == 0) {
+                        try {
+                            testCompletedLatch.await();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return ReceiveMessageResponse.builder().build();
+                        }
+                    }
                     receivedMessageLatch.countDown();
-                    return CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
+
+                    return ReceiveMessageResponse.builder()
                             .messages(Message.builder().build(), Message.builder().build(), Message.builder().build(),
                                     Message.builder().build(), Message.builder().build())
-                            .build());
-                });
+                            .build();
+                }));
         batchingMessageRetriever.start();
 
         // act
@@ -257,14 +267,16 @@ public class BatchingMessageRetrieverTest {
                 .mapToObj(i -> requestMessageOnNewThread(batchingMessageRetriever))
                 .collect(Collectors.toSet());
         waitForLatch(receivedMessageLatch, 1000);
-        batchingMessageRetriever.stop().get(1, SECONDS);
 
         // assert
         verify(sqsAsyncClient, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
 
         // cleanup
+        final Future<Object> stoppingFuture = batchingMessageRetriever.stop();
+        testCompletedLatch.countDown();
         allMessagesFutures.forEach(future -> future.cancel(true));
+        stoppingFuture.get(1, SECONDS);
     }
 
     @Test

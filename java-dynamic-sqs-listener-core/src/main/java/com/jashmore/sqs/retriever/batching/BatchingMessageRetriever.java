@@ -121,13 +121,14 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     }
                     numberOfMessagesToObtain = Math.min(numberWaitingForMessages.get() - messagesDownloaded.size(),
                             AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
-                    log.info("Requesting {} messages", numberOfMessagesToObtain);
                 }
 
-                if (numberOfMessagesToObtain == 0) {
+                if (numberOfMessagesToObtain <= 0) {
+                    log.info("Requesting 0 messages");
                     // We don't want to go request out if there are no messages to retrieve
                     continue;
                 }
+                log.info("Requesting {} messages", numberOfMessagesToObtain);
 
                 try {
                     final ReceiveMessageRequest recieveMessageRequest = ReceiveMessageRequest
