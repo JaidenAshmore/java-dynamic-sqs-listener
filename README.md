@@ -14,10 +14,15 @@ be easily replaced without impacting other parts of the framework.
 - **Runtime dynamic control**: The implementation should allow for different properties of the framework to change while the application is running. For example,
 when processing messages concurrently, the rate of concurrency can be dynamically changed.
 
-## Quick start guide using a Spring Starter
-This guide will give a quick guide to getting started for Spring Boot using the spring starter but this framework is not tied to Spring in anyway. Note that
-this is pretty much the same steps as the leading SQS Listener implementation and for details about the other functionality see the
-[documentation](./doc/documentation.md).
+## Full Documentation
+To keep the README minimal and easy to digest the rest of the documentation is kept in the [doc](./doc/documentation.md) folder.
+
+## Spring Guide
+The following provides some examples using the Spring Framework but note that this is not a Spring specific library and the main components of the codebase
+are maintained in the [core module](./java-dynamic-sqs-listener-core) with [spring module](./java-dynamic-sqs-listener-spring) using the core implementations. 
+
+### Quick start guide using a Spring Starter
+This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
 
 Include the maven dependency in your Spring Boot com.jashmore.examples.spring.aws.Application:
 ```xml
@@ -28,36 +33,63 @@ Include the maven dependency in your Spring Boot com.jashmore.examples.spring.aw
 </dependency>
 ```
 
-In one of your `Configuration` classes, enable the framework using the `@EnableQueueListeners` annotation:
-
-```java
-// package and other imports
-import com.jashmore.sqs.spring.annotation.EnableQueueListeners;
-
-@EnableQueueListeners
-@Configuration
-public class MyConfig {
-
-    // Note that you can define a AmazonSQSAsync here for example to point to a locally running queue otherwise a default is used. See
-    // QueueListenerConfiguration for the default client used 
-}
-```
-
 In one of your beans attach a `@QueueListener` annotations to a method that can process messages.
 
 ```java
 @Service
 public class MyService {
-    @QueueListener("http://localhost:4572/q/myQueue") // The queue here can point to your SQS server, e.g. a local SQS server 
+    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS 
     public void messageListener(@Payload final String payload) {
         // process the message payload here
     }
 }
 ```
 
-When you run the application, any messages that arrive on the queue will be passed into this method.
+This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
+is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
+[How to connect to AWS SQS Queues](doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue.
 
-## Testing locally with an example
+### Setting up a queue listener that batches requests for messages
+The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
+a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
+finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
+[@QueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+provides the same basic functionality but it also provides a timeout where if there are threads waiting for messages they can retrieve them. The usage is
+something like this:
+
+```java
+@Service
+public class MyService {
+    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000) 
+    public void messageListener(@Payload final String payload) {
+        // process the message payload here
+    }
+}
+```
+
+In this example above we have set it to process 10 messages at once and if not all are completed within 2 seconds just grab messages for the threads that are
+available.
+
+### Setting up a queue listener that prefetches messages
+The amount of messages for a service may be extremely high that prefetching messages may be a way to optimise the throughput of the application. The
+[@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+annotation can be used to set messages to be prefetched in a background thread.
+
+```java
+@Service
+public class MyService {
+    @PrefetchingQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10) 
+    public void messageListener(@Payload final String payload) {
+        // process the message payload here
+    }
+}
+```
+
+In this example, if the amount of prefetched messages is below 10 it will try and get as many messages as possible to hit the max of 20. If the amount of
+prefetched messages if above 10 it will not try and prefetch anymore until it goes below 10. Note: because of the limit of the number of messages that
+can be obtained from SQS at once (10), having the maxPrefetchedMessages more than 10 above the desiredMinPrefetchedMessages will not provide much value.
+
+### Testing locally with an example
 The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
 SQS Server so you don't need to do any setting up of queues to get it working. For example to run a sample Spring com.jashmore.examples.spring.aws.Application you can use the
 [Spring Starter Example](examples/java-dynamic-sqs-listener-spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
@@ -83,9 +115,6 @@ mvn spring-boot:run
 ``` 
 
 See [examples](./examples) for all of the available examples, 
-
-## Full Documentation
-To keep the README minimal and easy to digest the rest of the documentation is kept in the [doc](./doc/documentation.md) folder.
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use the [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).
