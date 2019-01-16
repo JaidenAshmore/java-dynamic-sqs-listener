@@ -1,8 +1,7 @@
 # Core - How to implement custom message retrieval logic
-As can be seen in the [Core Framework Architecture](../../core_framework_architecture.md) one of the components is the 
-[MessageRetriever](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) which handles the logic for how to
-get messages from the SQS Queue.  This is the most commonly updated part of the framework as this is where the most performance improvements
-could be utilised/
+The [MessageRetriever](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) handles the logic for how to
+get messages from the SQS Queue.  This is the most commonly updated part of the library as this is where the most performance improvements
+could be utilised.
 
 ## Example Use Case
 An application is listening on a queue that has as very slow rate of messages (1 per day) and the time allowed for the message to be processed
