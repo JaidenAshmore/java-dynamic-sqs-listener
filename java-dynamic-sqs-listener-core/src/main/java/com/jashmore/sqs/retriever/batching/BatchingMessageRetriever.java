@@ -86,7 +86,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
         synchronized (shouldObtainMessagesLock) {
             final int currentThreads = numberWaitingForMessages.incrementAndGet();
             if (currentThreads >= properties.getNumberOfThreadsWaitingTrigger()) {
-                log.info("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
+                log.debug("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
                         properties.getNumberOfThreadsWaitingTrigger());
                 // notify that we should grab a message
                 shouldObtainMessagesLock.notifyAll();
@@ -124,11 +124,11 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 }
 
                 if (numberOfMessagesToObtain <= 0) {
-                    log.info("Requesting 0 messages");
+                    log.debug("Requesting 0 messages");
                     // We don't want to go request out if there are no messages to retrieve
                     continue;
                 }
-                log.info("Requesting {} messages", numberOfMessagesToObtain);
+                log.debug("Requesting {} messages", numberOfMessagesToObtain);
 
                 try {
                     final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest

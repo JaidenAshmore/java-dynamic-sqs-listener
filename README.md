@@ -74,14 +74,15 @@ is provided that will look for AWS credentials/region from multiple areas, like 
 The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
 a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
 finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
-[@QueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+[@BatchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/batching/BatchingQueueListener.java)
 provides the same basic functionality but it also provides a timeout where eventually it will request for more messages even for the threads that are
-ready for another message. The usage is something like this:
+ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot messages
+ on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
 
 ```java
 @Service
 public class MyMessageListener {
-    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000) 
+    @BatchingQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000) 
     public void processMessage(@Payload final String payload) {
         // process the message payload here
     }
@@ -125,22 +126,27 @@ implementations of the factory is appropriate too. See that each factory will bu
     ```java
     @Configuration
     public class MyConfig {
-           @Bean
-           public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
-               return (queueProperties) -> new MyCustomMessageRetriever(queueProperties);
-           }
+        @Bean
+        public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
+            return (queueProperties) -> new MyCustomMessageRetriever(queueProperties);
+        }
 
-           @Bean
-           public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
-                                                                    final SqsAsyncClient sqsAsyncClient) {
-                // In this scenario we return a core implementation
-                return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);    
-           }
+        @Bean
+        public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
+                                                                 final SqsAsyncClient sqsAsyncClient) {
+            // In this scenario we return a core implementation
+            return (queueProperties, bean, method) -> {   
+                // This will remove the messages straight away after being successfully processed. To batch messages deletions
+                // use the BatchingMessageResolver instead
+                final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);    
+                return new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);    
+            };   
+        }
         
-           @Bean
-           public MessageBrokerFactory myMessageBrokerFactory() {
-                return (messageRetriever, messageProcessor) -> new MyMessageBroker(messageRetriever, messageProcessor);   
-           }
+        @Bean
+        public MessageBrokerFactory myMessageBrokerFactory() {
+            return (messageRetriever, messageProcessor) -> new MyMessageBroker(messageRetriever, messageProcessor);   
+        }
     }
     ```
 1. Wrap a method with the

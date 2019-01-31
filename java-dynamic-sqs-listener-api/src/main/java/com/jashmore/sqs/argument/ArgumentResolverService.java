@@ -1,6 +1,8 @@
 package com.jashmore.sqs.argument;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.processor.MessageProcessor;
+import com.jashmore.sqs.processor.argument.Acknowledge;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
@@ -23,6 +25,8 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface ArgumentResolverService {
     /**
      * Resolve the argument value for the given parameter of the method.
+     *
+     * <p>Note that this does not need to be able to resolve the {@link Acknowledge} argument as that is provided by the {@link MessageProcessor}.
      *
      * @param queueProperties details about the queue that the message came from
      * @param parameter       the parameter to get the argument value for

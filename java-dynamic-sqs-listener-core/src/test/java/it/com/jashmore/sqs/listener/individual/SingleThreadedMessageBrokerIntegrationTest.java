@@ -15,6 +15,7 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.singlethread.SingleThreadedMessageBroker;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
+import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
@@ -23,24 +24,15 @@ import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RunWith(Parameterized.class)
 public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     @Rule
     public final LocalSqsRule localSqsRule = new LocalSqsRule();
-
-
-    @Parameterized.Parameters
-    public static Object[][] data() {
-        return new Object[10][0];
-    }
 
     private String queueUrl;
 
@@ -60,6 +52,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
                 queueProperties,
                 IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(1).build()
         );
+        final IndividualMessageResolver individualMessageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
         final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
@@ -67,7 +60,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                sqsAsyncClient,
+                individualMessageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );

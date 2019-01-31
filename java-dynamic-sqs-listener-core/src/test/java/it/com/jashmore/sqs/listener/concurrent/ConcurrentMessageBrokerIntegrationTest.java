@@ -15,6 +15,8 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
@@ -64,10 +66,11 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(PAYLOAD_MAPPER, sqsAsyncClient);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, testCompletedLatch);
+        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                sqsAsyncClient,
+                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
@@ -111,10 +114,11 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
         final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
+        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                sqsAsyncClient,
+                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
@@ -163,10 +167,11 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
         final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
+        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                sqsAsyncClient,
+                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );

@@ -1,5 +1,6 @@
 package com.jashmore.sqs.examples;
 
+import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
 import static java.util.stream.Collectors.toSet;
 
 import akka.http.scaladsl.Http;
@@ -17,6 +18,9 @@ import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBro
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
+import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
@@ -96,10 +100,14 @@ public class ConcurrentBrokerExample {
         // Creates the class that will deal with taking messages and getting them processed by the message consumer
         final MessageConsumer messageConsumer = new MessageConsumer();
         final Method messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient, StaticBatchingMessageResolverProperties.builder()
+                .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
+                .bufferingTimeInMs(5000)
+                .build());
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService(sqsAsyncClient),
                 queueProperties,
-                sqsAsyncClient,
+                messageResolver,
                 messageReceivedMethod,
                 messageConsumer
         );

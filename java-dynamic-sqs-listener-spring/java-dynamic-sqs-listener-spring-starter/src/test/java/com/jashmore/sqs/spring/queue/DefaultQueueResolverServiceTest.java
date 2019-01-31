@@ -5,6 +5,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.mockito.Mockito.when;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +41,13 @@ public class DefaultQueueResolverServiceTest {
     @Before
     public void setUp() {
         defaultQueueResolverService = new DefaultQueueResolverService(sqsAsyncClient, environment);
+    }
+
+    @After
+    public void tearDown() {
+        // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
+        // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
+        Thread.interrupted();
     }
 
     @Test

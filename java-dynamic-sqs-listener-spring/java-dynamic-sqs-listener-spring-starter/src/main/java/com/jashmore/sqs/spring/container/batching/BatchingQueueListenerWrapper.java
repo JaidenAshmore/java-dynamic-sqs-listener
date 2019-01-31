@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container.basic;
+package com.jashmore.sqs.spring.container.batching;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -7,7 +7,8 @@ import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrok
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.resolver.MessageResolver;
-import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
+import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingProperties;
@@ -15,6 +16,7 @@ import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,18 +33,18 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
+public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper<BatchingQueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
 
     @Override
-    protected Class<QueueListener> getAnnotationClass() {
-        return QueueListener.class;
+    protected Class<BatchingQueueListener> getAnnotationClass() {
+        return BatchingQueueListener.class;
     }
 
     @Override
-    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
+    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final BatchingQueueListener annotation) {
         final ExecutorService executor = Executors.newCachedThreadPool();
         final QueueProperties queueProperties = QueueProperties
                 .builder()
@@ -57,7 +59,11 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .build();
         final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(queueProperties, sqsAsyncClient, executor, batchingProperties);
 
-        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
+        final StaticBatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
+                .bufferingSizeLimit(annotation.concurrencyLevel())
+                .bufferingTimeInMs(annotation.maxPeriodBetweenBatchesInMs())
+                .build();
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
 
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
                 messageResolver, method, bean);

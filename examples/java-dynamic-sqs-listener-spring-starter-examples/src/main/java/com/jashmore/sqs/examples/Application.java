@@ -6,6 +6,8 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
@@ -94,7 +96,10 @@ public class Application {
     @Bean
     public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
                                                              final SqsAsyncClient sqsAsyncClient) {
-        return (queueProperties, bean, method) -> new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
+        return (queueProperties, bean, method) -> {
+            final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
+            return new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);
+        };
     }
 
     /**
