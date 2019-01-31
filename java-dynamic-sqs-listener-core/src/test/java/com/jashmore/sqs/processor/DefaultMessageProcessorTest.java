@@ -13,22 +13,19 @@ import static org.mockito.Mockito.when;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.argument.acknowledge.Acknowledge;
-import com.jashmore.sqs.argument.acknowledge.DefaultAcknowledge;
 import com.jashmore.sqs.argument.payload.Payload;
+import com.jashmore.sqs.processor.argument.Acknowledge;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.concurrent.CompletableFuture;
 
 public class DefaultMessageProcessorTest {
     private static final String QUEUE_URL = "queueUrl";
@@ -41,7 +38,7 @@ public class DefaultMessageProcessorTest {
     private ArgumentResolverService argumentResolverService;
 
     @Mock
-    private SqsAsyncClient sqsAsyncClient;
+    private MessageResolver messageResolver;
 
     @Test
     public void forEachParameterInMethodTheArgumentIsResolved() {
@@ -52,10 +49,10 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
-                .thenReturn(mock(DefaultAcknowledge.class))
-                .thenReturn("payload");
+                .thenReturn("payload")
+                .thenReturn("payload2");
 
         // act
         processor.processMessage(message);
@@ -73,7 +70,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenThrow(new ArgumentResolutionException("Error resolving"));
 
@@ -97,21 +94,20 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, mockProcessor);
-        final DefaultAcknowledge acknowledgeArgument = mock(DefaultAcknowledge.class);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, mockProcessor);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
-                .thenReturn(acknowledgeArgument)
-                .thenReturn("payload");
+                .thenReturn("payload")
+                .thenReturn("payload2");
 
         // act
         processor.processMessage(message);
 
         // assert
-        verify(mockProcessor).methodWithAcknowledge(acknowledgeArgument, "payload");
+        verify(mockProcessor).methodWithAcknowledge(ArgumentMatchers.isA(Acknowledge.class), eq("payload"), eq("payload2"));
     }
 
     @Test
-    public void methodWithAcknowledgeParameterWillNotDeleteMessage() {
+    public void methodWithAcknowledgeParameterWillNotDeleteMessageOnSuccess() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final QueueProperties queueProperties = QueueProperties
@@ -119,17 +115,15 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
-        final DefaultAcknowledge acknowledgeArgument = mock(DefaultAcknowledge.class);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
-                .thenReturn(acknowledgeArgument)
                 .thenReturn("payload");
 
         // act
         processor.processMessage(message);
 
         // assert
-        verify(sqsAsyncClient, never()).deleteMessage(any(DeleteMessageRequest.class));
+        verify(messageResolver, never()).resolveMessage(message);
     }
 
     @Test
@@ -141,18 +135,15 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn("payload");
-        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder().queueUrl(QUEUE_URL).receiptHandle("handle").build();
-        when(sqsAsyncClient.deleteMessage(deleteMessageRequest))
-                .thenReturn(CompletableFuture.completedFuture(DeleteMessageResponse.builder().build()));
 
         // act
         processor.processMessage(message);
 
         // assert
-        verify(sqsAsyncClient).deleteMessage(deleteMessageRequest);
+        verify(messageResolver).resolveMessage(message);
     }
 
 
@@ -165,7 +156,7 @@ public class DefaultMessageProcessorTest {
                 .queueUrl(QUEUE_URL)
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
         when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
                 .thenReturn("payload");
 
@@ -175,17 +166,17 @@ public class DefaultMessageProcessorTest {
             fail("Should have thrown exception");
         } catch (final MessageProcessingException exception) {
             // assert
-            verify(sqsAsyncClient, never()).deleteMessage(DeleteMessageRequest.builder().queueUrl(QUEUE_URL).receiptHandle("handle").build());
+            verify(messageResolver, never()).resolveMessage(message);
         }
     }
 
     @SuppressWarnings("unused")
-    public void methodWithNoAcknowledge(@Payload String payload) {
+    public void methodWithNoAcknowledge(@Payload String payload, @Payload String payloadTwo) {
 
     }
 
     @SuppressWarnings( {"unused", "WeakerAccess"})
-    public void methodWithAcknowledge(Acknowledge acknowledge, @Payload String payload) {
+    public void methodWithAcknowledge(Acknowledge acknowledge, @Payload String payload, @Payload String payloadTwo) {
 
     }
 
@@ -195,11 +186,11 @@ public class DefaultMessageProcessorTest {
     }
 
     private static Method getMethodWithNoAcknowledge() {
-        return getTestingMethod("methodWithNoAcknowledge", String.class);
+        return getTestingMethod("methodWithNoAcknowledge", String.class, String.class);
     }
 
     private static Method getMethodWithAcknowledge() {
-        return getTestingMethod("methodWithAcknowledge", Acknowledge.class, String.class);
+        return getTestingMethod("methodWithAcknowledge", Acknowledge.class, String.class, String.class);
     }
 
     private static Method getMethodThatThrowsException() {

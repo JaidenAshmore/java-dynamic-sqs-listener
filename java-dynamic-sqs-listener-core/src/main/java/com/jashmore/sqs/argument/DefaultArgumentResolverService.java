@@ -2,7 +2,6 @@ package com.jashmore.sqs.argument;
 
 import com.google.common.collect.ImmutableSet;
 
-import com.jashmore.sqs.argument.acknowledge.AcknowledgeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -27,7 +26,6 @@ public class DefaultArgumentResolverService implements ArgumentResolverService {
         final Set<ArgumentResolver> argumentResolvers = ImmutableSet.of(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
-                new AcknowledgeArgumentResolver(sqsAsyncClient),
                 new VisibilityExtenderArgumentResolver(sqsAsyncClient)
         );
         this.delegatingArgumentResolverService = new DelegatingArgumentResolverService(argumentResolvers);

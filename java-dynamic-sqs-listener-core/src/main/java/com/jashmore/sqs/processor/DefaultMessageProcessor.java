@@ -3,17 +3,15 @@ package com.jashmore.sqs.processor;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.argument.acknowledge.Acknowledge;
+import com.jashmore.sqs.processor.argument.Acknowledge;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
 import lombok.AllArgsConstructor;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -25,7 +23,7 @@ import javax.annotation.concurrent.ThreadSafe;
 public class DefaultMessageProcessor implements MessageProcessor {
     private final ArgumentResolverService argumentResolverService;
     private final QueueProperties queueProperties;
-    private final SqsAsyncClient sqsAsyncClient;
+    private final MessageResolver messageResolver;
     private final Method messageConsumerMethod;
     private final Object messageConsumerBean;
 
@@ -33,8 +31,15 @@ public class DefaultMessageProcessor implements MessageProcessor {
     public void processMessage(final Message message) throws MessageProcessingException {
         final Parameter[] parameters = messageConsumerMethod.getParameters();
 
+        final AtomicBoolean hasAcknowledgeField = new AtomicBoolean();
+        final Acknowledge acknowledge = () -> messageResolver.resolveMessage(message);
         final Object[] arguments = Arrays.stream(parameters)
                 .map(parameter -> {
+                    if (Acknowledge.class.isAssignableFrom(parameter.getType())) {
+                        hasAcknowledgeField.set(true);
+                        return acknowledge;
+                    }
+
                     try {
                         return argumentResolverService.resolveArgument(queueProperties, parameter, message);
                     } catch (final ArgumentResolutionException argumentResolutionException) {
@@ -45,26 +50,13 @@ public class DefaultMessageProcessor implements MessageProcessor {
 
         try {
             messageConsumerMethod.invoke(messageConsumerBean, arguments);
-            // If there is no Acknowledge argument in the method we should resolve the message if it was completed without an exception
-            if (!hasAcknowledgeArgument(parameters)) {
-                final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest
-                        .builder()
-                        .queueUrl(queueProperties.getQueueUrl())
-                        .receiptHandle(message.receiptHandle())
-                        .build();
-                final Future<DeleteMessageResponse> deleteMessageResultFuture = sqsAsyncClient.deleteMessage(deleteMessageRequest);
-
-                deleteMessageResultFuture.get();
-            }
-        } catch (final InterruptedException interruptedException) {
-            throw new MessageProcessingException("Thread was interrupted while trying to delete message");
         } catch (final Throwable throwable) {
             throw new MessageProcessingException("Error processing message", throwable);
         }
-    }
 
-    private boolean hasAcknowledgeArgument(final Parameter... parameters) {
-        return Arrays.stream(parameters)
-                .anyMatch(parameter -> Acknowledge.class.isAssignableFrom(parameter.getType()));
+        // If the method doesn't consume the Acknowledge field, it will acknowledge the method here on success
+        if (!hasAcknowledgeField.get()) {
+            acknowledge.acknowledgeSuccessful();
+        }
     }
 }

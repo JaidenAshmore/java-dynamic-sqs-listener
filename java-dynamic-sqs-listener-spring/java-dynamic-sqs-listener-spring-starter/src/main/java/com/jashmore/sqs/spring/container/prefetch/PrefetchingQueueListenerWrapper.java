@@ -8,6 +8,8 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
+import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
@@ -58,8 +60,10 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
         final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient, queueProperties, batchingProperties, executor);
 
+        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
+
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
-                sqsAsyncClient, method, bean);
+                messageResolver, method, bean);
 
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,

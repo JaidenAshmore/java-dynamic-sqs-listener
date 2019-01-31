@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
-import com.jashmore.sqs.argument.acknowledge.AcknowledgeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -16,6 +15,7 @@ import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.container.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
+import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import org.junit.Rule;
@@ -134,8 +134,7 @@ public class QueueListenerConfigurationTest {
                             .collect(toSet());
 
                     assertThat(argumentResolvers).containsExactlyInAnyOrder(
-                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class,
-                            AcknowledgeArgumentResolver.class, VisibilityExtenderArgumentResolver.class
+                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class, VisibilityExtenderArgumentResolver.class
                     );
                 });
     }
@@ -152,7 +151,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
-                    assertThat(argumentResolvers).hasSize(5);
+                    assertThat(argumentResolvers).hasSize(4);
                 });
     }
 
@@ -176,7 +175,7 @@ public class QueueListenerConfigurationTest {
                             .collect(toSet());
 
                     assertThat(queueWrapperClasses).containsExactlyInAnyOrder(
-                            QueueListenerWrapper.class, CustomQueueWrapper.class, PrefetchingQueueListenerWrapper.class
+                            QueueListenerWrapper.class, CustomQueueWrapper.class, PrefetchingQueueListenerWrapper.class, BatchingQueueListenerWrapper.class
                     );
                 });
     }
@@ -206,7 +205,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(queueWrappers);
-                    assertThat(queueWrappers).hasSize(4);
+                    assertThat(queueWrappers).hasSize(5);
                 });
     }
 

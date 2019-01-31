@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
-import com.jashmore.sqs.argument.acknowledge.AcknowledgeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -15,6 +14,7 @@ import com.jashmore.sqs.spring.container.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
+import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolverService;
@@ -121,11 +121,6 @@ public class QueueListenerConfiguration {
             }
 
             @Bean
-            public ArgumentResolver acknowledgeArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
-                return new AcknowledgeArgumentResolver(sqsAsyncClient);
-            }
-
-            @Bean
             public ArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
                 return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
             }
@@ -194,6 +189,13 @@ public class QueueListenerConfiguration {
                                                                             final SqsAsyncClient sqsAsyncClient,
                                                                             final QueueResolverService queueResolverService) {
                 return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
+            }
+
+            @Bean
+            public QueueWrapper coreProvidedBatchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
+                                                                            final SqsAsyncClient sqsAsyncClient,
+                                                                            final QueueResolverService queueResolverService) {
+                return new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
             }
         }
     }
