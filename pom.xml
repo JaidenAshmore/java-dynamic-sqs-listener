@@ -24,14 +24,14 @@
         <developer>
             <name>Jaiden Ashmore</name>
             <email>jaidenkyleashmore@gmail.com</email>
-            <organization>jashmore</organization>
+            <organization>jaidenashmore</organization>
             <organizationUrl>https://github.com/jaidenashmore</organizationUrl>
         </developer>
     </developers>
 
     <scm>
         <connection>scm:git:git://github.com/jaidenashmore/java-dynamic-sqs-listener.git</connection>
-        <developerConnection>scm:git:ssh://github.com:simpligility/java-dynamic-sqs-listener.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com:jaidenashmore/java-dynamic-sqs-listener.git</developerConnection>
         <url>http://github.com/jaidenashmore/java-dynamic-sqs-listener</url>
     </scm>
 
