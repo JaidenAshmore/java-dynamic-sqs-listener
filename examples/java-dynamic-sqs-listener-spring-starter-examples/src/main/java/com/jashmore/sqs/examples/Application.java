@@ -2,12 +2,15 @@ package com.jashmore.sqs.examples;
 
 import akka.http.scaladsl.Http;
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
@@ -54,6 +57,8 @@ public class Application {
     /**
      * Connects to an internal ElasticMQ SQS Server, this will replace the {@link SqsAsyncClient} provided by
      * {@link QueueListenerConfiguration#sqsAsyncClient()}.
+     *
+     * @return client used for communicating a local in-memory SQS
      */
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
@@ -74,6 +79,9 @@ public class Application {
 
     /**
      * Example of a {@link MessageRetrieverFactory} being built that will be used by the {@link CustomQueueListener}.
+     *
+     * @param sqsAsyncClient used to connect to the SQS Queue
+     * @return factory to build a {@link MessageRetriever}
      */
     @Bean
     public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
@@ -92,6 +100,10 @@ public class Application {
 
     /**
      * Example of a {@link MessageProcessorFactory} being built that will be used by the {@link CustomQueueListener}.
+     *
+     * @param argumentResolverService service to resolve arguments
+     * @param sqsAsyncClient used to connect to the SQS Queue
+     * @return factory to build a {@link MessageProcessor}
      */
     @Bean
     public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
@@ -104,6 +116,8 @@ public class Application {
 
     /**
      * Example of a {@link MessageBrokerFactory} being built that will be used by the {@link CustomQueueListener}.
+     *
+     * @return factory for build building a {@link MessageBroker}
      */
     @Bean
     public MessageBrokerFactory myMessageBrokerFactory() {

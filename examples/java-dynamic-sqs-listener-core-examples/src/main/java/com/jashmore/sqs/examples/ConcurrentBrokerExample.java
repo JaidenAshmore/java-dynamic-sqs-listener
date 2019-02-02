@@ -1,5 +1,8 @@
 package com.jashmore.sqs.examples;
 
+import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
+import static java.util.stream.Collectors.toSet;
+
 import akka.http.scaladsl.Http;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +36,6 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
-import javax.validation.constraints.Min;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,9 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
-import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
-import static java.util.stream.Collectors.toSet;
+import javax.validation.constraints.Min;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -250,7 +250,7 @@ public class ConcurrentBrokerExample {
         /**
          * Method that will consume the messages.
          *
-         * @param request the payload of the message
+         * @param request   the payload of the message
          * @param messageId the SQS message ID of this message
          * @throws InterruptedException if the thread was interrupted while sleeping
          */
