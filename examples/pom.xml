@@ -56,6 +56,18 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+
+            <!-- TODO: Try to include this in all sub-modules or add https://stackoverflow.com/questions/25305850/how-to-disable-nexus-staging-maven-plugin-in-sub-modules -->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <skipStaging>true</skipStaging>
+                    <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
