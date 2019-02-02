@@ -1,8 +1,5 @@
 package com.jashmore.sqs.examples;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
-import static java.util.stream.Collectors.toSet;
-
 import akka.http.scaladsl.Http;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +33,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
+import javax.validation.constraints.Min;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,7 +43,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import javax.validation.constraints.Min;
+
+import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -69,6 +69,9 @@ public class ConcurrentBrokerExample {
 
     /**
      * Example that will continue to place messages on the message queue with a message listener consuming them.
+     *
+     * @param args unused args
+     * @throws Exception if there was a problem running the program
      */
     public static void main(final String[] args) throws Exception {
         // Sets up the SQS that will be used
@@ -246,6 +249,10 @@ public class ConcurrentBrokerExample {
 
         /**
          * Method that will consume the messages.
+         *
+         * @param request the payload of the message
+         * @param messageId the SQS message ID of this message
+         * @throws InterruptedException if the thread was interrupted while sleeping
          */
         public void method(@Payload final Request request, @MessageId final String messageId) throws InterruptedException {
             try {

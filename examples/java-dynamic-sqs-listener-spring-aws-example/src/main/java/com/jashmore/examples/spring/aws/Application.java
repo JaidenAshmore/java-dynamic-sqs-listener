@@ -13,6 +13,11 @@ public class Application {
         SpringApplication.run(Application.class);
     }
 
+    /**
+     * Process the message.
+     *
+     * @param payload the payload of the message
+     */
     @QueueListener("${sqs.queues.queueUrl}")
     public void messageListener(@Payload final String payload) {
         log.info("Payload: {}", payload);

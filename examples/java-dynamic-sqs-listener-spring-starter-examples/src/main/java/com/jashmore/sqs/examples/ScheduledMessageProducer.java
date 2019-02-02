@@ -25,9 +25,11 @@ public class ScheduledMessageProducer {
 
     /**
      * Scheduled job that sends messages to the queue for testing the listener.
+     *
+     * @throws Exception if there was an error placing messages on the queue
      */
     @Scheduled(initialDelay = 1000, fixedDelay = 1000)
-    public void addMessages() throws ExecutionException, InterruptedException {
+    public void addMessages() throws Exception {
         log.info("Putting 10 messages onto each queue");
         final int currentValue = count.incrementAndGet();
 

@@ -19,6 +19,11 @@ public class IntegrationTestExampleApplication {
 
     @Service
     public static class SomeService {
+        /**
+         * Process a message payload, no-op.
+         *
+         * @param payload the payload of the message
+         */
         public void run(@SuppressWarnings("unused") final String payload) {
             // do nothing
         }
@@ -29,7 +34,13 @@ public class IntegrationTestExampleApplication {
     public static class MessageListener {
         private final SomeService someService;
 
-        // We specifically override the visibility timeout here from the default of 30 to decrease the time for the tests
+        /**
+         * We specifically override the visibility timeout here from the default of 30 to decrease the time
+         * for the tests to run.
+         *
+         * @param message the payload of the message
+         */
+
         @QueueListener(value = "${sqs.queues.integrationTestingQueue}", messageVisibilityTimeoutInSeconds = 2)
         public void messageListener(@Payload final String message) {
             someService.run(message);
