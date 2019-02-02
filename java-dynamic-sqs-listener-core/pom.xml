@@ -5,12 +5,12 @@
     <parent>
         <groupId>com.jashmore</groupId>
         <artifactId>java-dynamic-sqs-listener-parent</artifactId>
-        <version>0.0.3-SNAPSHOT</version>
+        <version>0.0.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>java-dynamic-sqs-listener-core</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
 
     <name>Java Dynamic SQS Listener - Core</name>
     <description>This contains the core functionality for the SQS </description>
