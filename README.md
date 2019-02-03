@@ -38,8 +38,8 @@ are to be processed and the rate of concurrency for processing messages.
 See [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
 
 ## Spring Quick Guide
-The following provides some examples using the Spring Starter for this library but this library is not Spring specific as the main implementations are
-kept in the [core module](./java-dynamic-sqs-listener-core) which is framework agnostic.
+The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
+kept in the [core module](./java-dynamic-sqs-listener-core) which is framework agnostic.*
 
 ### Using the Spring Starter
 This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
