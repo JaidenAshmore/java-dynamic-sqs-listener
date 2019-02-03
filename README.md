@@ -200,7 +200,7 @@ mvn spring-boot:run
 See [examples](./examples) for all of the other available examples. 
 
 ## Bugs and Feedback
-For bugs, questions and discussions please use the [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).
+For bugs, questions and discussions please use [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).
 
 ## Contributing
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
