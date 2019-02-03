@@ -19,4 +19,9 @@ more in depth understanding take a look at the JavaDoc for the API.
         1. [How to write Spring Integration Tests](how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
         writing right?
     1. [How to Connect to an AWS SQS Queue](how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
-
+1. Local Development:
+    1. [Setting up IntelliJ](local-development/setting-up-intellij.md): steps for setting IntelliJ up for development,
+    e.g. configuring checkstyle, Lombok, etc
+    1. [Releasing Artifacts](local-development/release-artifact.md): reminder steps for the project owner on how to
+    release a version of this library
+   

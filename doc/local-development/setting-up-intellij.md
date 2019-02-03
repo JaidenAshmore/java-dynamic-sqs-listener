@@ -1,4 +1,4 @@
-# Local Development Guide
+# Local Development Guide - Setting up IntelliJ
 This guide contains some steps for setting up your local environment to work with this library. Note that this will
 assume that you are using IntelliJ for your IDE.
 
@@ -17,7 +17,7 @@ assume that you are using IntelliJ for your IDE.
     ```IntelliJ IDEA -> Preferences -> Other Settings -> Checkstyle```
     1. Update the Checkstyle version to `6.19`
     1. Load the Checkstyle in this project by clicking the `+` and choosing
-    [configuration/checkstyle/google_6_18_checkstyle.xml](../configuration/checkstyle/google_6_18_checkstyle.xml)
+    [configuration/checkstyle/google_6_18_checkstyle.xml](../../configuration/checkstyle/google_6_18_checkstyle.xml)
     1. Update the code style for Java to use this checkstyle file as well:
     ```IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> Code next to Schema -> Import Schema -> Checkstyle configuration```
 1. Disable JavaDoc formatting. I could never get it working correctly with the checkstyle above.
