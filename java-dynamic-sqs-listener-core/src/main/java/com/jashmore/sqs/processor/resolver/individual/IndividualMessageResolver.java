@@ -27,7 +27,7 @@ public class IndividualMessageResolver implements MessageResolver {
         sqsAsyncClient.deleteMessage(deleteMessageRequest)
                 .whenComplete((response, exception) -> {
                     if (exception != null) {
-                        log.error("Error deleting message", exception);
+                        log.error("Error deleting message: " + message.messageId(), exception);
                         return;
                     }
 

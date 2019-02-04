@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -13,7 +14,7 @@
     <version>0.0.6-SNAPSHOT</version>
 
     <name>Java Dynamic SQS Listener - Core</name>
-    <description>This contains the core functionality for the SQS </description>
+    <description>This contains the core functionality for the SQS</description>
 
     <properties>
         <findbugs.config.location>../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
@@ -61,6 +62,13 @@
             <groupId>com.jashmore</groupId>
             <artifactId>local-sqs-test-utils</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>uk.org.lidalia</groupId>
+            <artifactId>slf4j-test</artifactId>
+            <version>1.2.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
