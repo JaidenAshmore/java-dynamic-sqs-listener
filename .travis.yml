@@ -1,2 +1,2 @@
 language: java
-script: mvn clean install eu.stamp-project:pitmp-maven-plugin:run coveralls:report
+script: mvn clean install org.pitest:pitest-maven:mutationCoverage coveralls:report
