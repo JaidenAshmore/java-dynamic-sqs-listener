@@ -1,5 +1,6 @@
 package com.jashmore.sqs.broker;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -86,5 +87,31 @@ public class AbstractMessageBrokerTest {
         // assert
         verify(mockFuture).cancel(true);
         verify(mockController).stopTriggered(true);
+    }
+
+    @Test
+    public void stoppingContainerWithInterruptedChildrenShouldReturnNonNullFuture() {
+        // arrange
+        doReturn(mockFuture).when(mockExecutorService).submit(mockController);
+
+        // act
+        messageBroker.start();
+        final Future<Object> stopFuture = messageBroker.stopWithChildrenThreadsInterrupted();
+
+        // assert
+        assertThat(stopFuture).isNotNull();
+    }
+
+    @Test
+    public void stoppingContainerShouldReturnNonNullFuture() {
+        // arrange
+        doReturn(mockFuture).when(mockExecutorService).submit(mockController);
+
+        // act
+        messageBroker.start();
+        final Future<Object> stopFuture = messageBroker.stop();
+
+        // assert
+        assertThat(stopFuture).isNotNull();
     }
 }
