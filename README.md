@@ -115,62 +115,61 @@ maximum.
 10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefeteched messages it will
 not prefetch anymore.*
 
-### Using custom library components in queue listener annotation
-The [CustomQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/custom/CustomQueueListener.java)
-is provided to allow for consumers to create queue listeners with their own implementations of the library components via factory beans. This is not
-the most intuitive way to set up a queue listener as building all of these factories are a bit of pain and it would probably be easier to just define
-your own annotation, see [Building a new queue listener annotation](#building-a-new-queue-listener-annotation) below for how to do this.  Regardless, the
-steps to easily set up a custom Queue Listener is:
+### Adding a custom argument resolver
+There are some core [ArgumentResolvers](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
+application but if they don't provide the ease required for the application you can define your own. For simplicity, I will show how we can resolve an
+argument for the method where the payload of the message has been converted to uppercase. 
 
-1. Define factories that can construct all of the components of the library needed for this queue listener. The easiest way is to use lambdas but actual
-implementations of the factory is appropriate too. See that each factory will build the main components of the library.
+1. We will use an annotation on the field to indicate how the message should be resolved.
     ```java
-    @Configuration
-    public class MyConfig {
-        @Bean
-        public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
-            return (queueProperties) -> new MyCustomMessageRetriever(queueProperties);
-        }
-
-        @Bean
-        public MessageProcessorFactory myMessageProcessorFactory(final ArgumentResolverService argumentResolverService,
-                                                                 final SqsAsyncClient sqsAsyncClient) {
-            // In this scenario we return a core implementation
-            return (queueProperties, bean, method) -> {   
-                // This will remove the messages straight away after being successfully processed. To batch messages deletions
-                // use the BatchingMessageResolver instead
-                final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);    
-                return new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);    
-            };   
-        }
-        
-        @Bean
-        public MessageBrokerFactory myMessageBrokerFactory() {
-            return (messageRetriever, messageProcessor) -> new MyMessageBroker(messageRetriever, messageProcessor);   
-        }
+    @Retention(value = RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface UppercasePayload {
     }
     ```
-1. Wrap a method with the
-[CustomQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/custom/CustomQueueListener.java)
-containing the bean names of the factories that you made above, e.g. `myMessageRetrieverFactory`.
+1. Implement the [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) interface where it will
+do the logic for converting the message payload to uppercase.
     ```java
-    @Service
-    public class MyService {
-        @CustomQueueListener(value = "${insert.queue.url.here}",  
-               messageBrokerFactoryBeanName = "myMessageBrokerFactory",
-               messageProcessorFactoryBeanName = "myMessageProcessorFactory",
-               messageRetrieverFactoryBeanName = "myMessageRetrieverFactory"
-        ) 
-        public void messageListener(@Payload final String payload) {
-            // process the message payload here
+        public class UppercasePayloadArgumentResolver implements ArgumentResolver<String> {        
+           @Override
+           public boolean canResolveParameter(Parameter parameter) {   
+               // make sure only String parameters with the @UppercasePayload annotations are considered eligible for resolution
+               return parameter.getAnnotation(UppercasePayload.class) != null && parameter.getType().isAssignableFrom(String.class);
+           }
+        
+           @Override
+           public String resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
+               return message.body().toUppercase();
+           }
         }
+    ```
+1. Include the custom [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
+context for automatic inclusion into the
+[ArgumentResolverService](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
+     ```java
+     @Configuration
+     public class MyCustomConfiguration {
+        @Bean
+        public UppercasePayloadArgumentResolver uppercasePayloadArgumentResolver() {
+            return new UppercasePayloadArgumentResolver(); 
+        }   
+     }
+     ```
+1. Use the new annotation in your message listener
+    ```java
+    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS 
+    public void processMessage(@UppercasePayload final String uppercasePayload) {
+        // process the message payload here
     }
     ```
     
-### Building a new queue listener annotation
+For a more extensive guide for doing this, take a look at
+[Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
+
+### Building a custom queue listener annotation
 The [CustomQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/custom/CustomQueueListener.java)
 is a bit verbose so it would most likely be more useful to provide your own annotation that will build the components needed for this use case. See
-[Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-custom-queue-wrapper.md) for a guide to doing this.
+[Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
 
 ### Testing locally with an example
 The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)

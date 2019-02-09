@@ -1,7 +1,5 @@
 package com.jashmore.sqs.argument;
 
-import com.google.common.collect.ImmutableSet;
-
 import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -17,26 +15,24 @@ import java.util.Set;
  */
 @AllArgsConstructor
 public class DelegatingArgumentResolverService implements ArgumentResolverService {
-    private final Set<ArgumentResolver> argumentResolvers;
+    private final Set<ArgumentResolver<?>> argumentResolvers;
 
     @Override
     public Object resolveArgument(final QueueProperties queueProperties, final Parameter parameter, final Message message) {
-        for (final ArgumentResolver resolver : argumentResolvers) {
-            if (!resolver.canResolveParameter(parameter)) {
-                continue;
-            }
+        return argumentResolvers.stream()
+                .filter(resolver -> resolver.canResolveParameter(parameter))
+                .map(resolver -> {
+                    try {
+                        return resolver.resolveArgumentForParameter(queueProperties, parameter, message);
+                    } catch (final Throwable throwable) {
+                        if (ArgumentResolutionException.class.isAssignableFrom(throwable.getClass())) {
+                            throw throwable;
+                        }
 
-            try {
-                return resolver.resolveArgumentForParameter(queueProperties, parameter, message);
-            } catch (final Throwable throwable) {
-                if (ArgumentResolutionException.class.isAssignableFrom(throwable.getClass())) {
-                    throw throwable;
-                }
-
-                throw new ArgumentResolutionException("Error obtaining an argument value for parameter", throwable);
-            }
-        }
-
-        throw new ArgumentResolutionException("No ArgumentResolver found that can process this parameter");
+                        throw new ArgumentResolutionException("Error obtaining an argument value for parameter", throwable);
+                    }
+                })
+                .findFirst()
+                .orElseThrow(() -> new ArgumentResolutionException("No ArgumentResolver found that can process this parameter"));
     }
 }

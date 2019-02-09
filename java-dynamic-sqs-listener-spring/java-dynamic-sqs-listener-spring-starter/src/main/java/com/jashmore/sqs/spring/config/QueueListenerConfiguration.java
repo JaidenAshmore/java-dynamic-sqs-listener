@@ -87,7 +87,7 @@ public class QueueListenerConfiguration {
          * @return an {@link ArgumentResolverService} that will be able to resolve method parameters for message processing
          */
         @Bean
-        public ArgumentResolverService defaultArgumentResolverService(final Set<ArgumentResolver> argumentResolvers) {
+        public ArgumentResolverService defaultArgumentResolverService(final Set<ArgumentResolver<?>> argumentResolvers) {
             return new DelegatingArgumentResolverService(argumentResolvers);
         }
 
@@ -111,17 +111,17 @@ public class QueueListenerConfiguration {
             }
 
             @Bean
-            public ArgumentResolver payloadArgumentResolver(final PayloadMapper payloadMapper) {
+            public PayloadArgumentResolver payloadArgumentResolver(final PayloadMapper payloadMapper) {
                 return new PayloadArgumentResolver(payloadMapper);
             }
 
             @Bean
-            public ArgumentResolver messageIdArgumentResolver() {
+            public MessageIdArgumentResolver messageIdArgumentResolver() {
                 return new MessageIdArgumentResolver();
             }
 
             @Bean
-            public ArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
+            public VisibilityExtenderArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
                 return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
             }
         }

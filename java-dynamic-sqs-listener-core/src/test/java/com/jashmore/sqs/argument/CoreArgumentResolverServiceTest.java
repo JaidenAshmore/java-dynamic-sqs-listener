@@ -22,7 +22,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class DefaultArgumentResolverServiceTest {
+public class CoreArgumentResolverServiceTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -33,17 +33,17 @@ public class DefaultArgumentResolverServiceTest {
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
-    private DefaultArgumentResolverService service;
+    private CoreArgumentResolverService service;
 
     @Before
     public void setUp() {
-        service = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
+        service = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
     }
 
     @Test
     public void shouldBeAbleToResolveMethodArgumentsWithDefaultResolvers() throws Exception {
         // arrange
-        final Method method = DefaultArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))

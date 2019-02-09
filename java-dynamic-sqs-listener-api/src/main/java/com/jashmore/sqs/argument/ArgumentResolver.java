@@ -17,9 +17,11 @@ import javax.annotation.concurrent.ThreadSafe;
  *
  * <p>As there could be multiple messages all being processed at once, and therefore resolving many arguments concurrently,
  * the implementations of this class must be thread safe.
+ *
+ * @param <T> the type of object that is returned when an argument is resolved
  */
 @ThreadSafe
-public interface ArgumentResolver {
+public interface ArgumentResolver<T> {
     /**
      * Determine whether the provided parameter is able to be resolved by this resolver.
      *
@@ -37,5 +39,5 @@ public interface ArgumentResolver {
      * @return the value of the argument
      * @throws ArgumentResolutionException when there was an error determine the parameter argument value
      */
-    Object resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException;
+    T resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException;
 }

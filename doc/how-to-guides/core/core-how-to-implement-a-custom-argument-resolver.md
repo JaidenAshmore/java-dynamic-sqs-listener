@@ -43,9 +43,9 @@ public @interface UserGroup {
 1. Create a new implementation of the [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 interface that will be able to resolve these arguments with those annotations.
     ```java
-    public class UserGroupArgumentResolver implements ArgumentResolver {
+    public class UserGroupArgumentResolver implements ArgumentResolver<String> {
        private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    
+     
        @Override
        public boolean canResolveParameter(Parameter parameter) {   
            // make sure only String parameters with the @UserGroup annotations are resolved using this

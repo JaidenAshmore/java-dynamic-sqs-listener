@@ -17,7 +17,7 @@ import java.lang.reflect.Parameter;
  * {@link ArgumentResolver} from attempting to resolve the parameter. For example you should not have a method of type {@link VisibilityExtender} and also
  * with the {@link Payload} annotation.
  */
-public class VisibilityExtenderArgumentResolver implements ArgumentResolver {
+public class VisibilityExtenderArgumentResolver implements ArgumentResolver<VisibilityExtender> {
     private final SqsAsyncClient sqsAsyncClient;
 
     public VisibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
@@ -30,7 +30,7 @@ public class VisibilityExtenderArgumentResolver implements ArgumentResolver {
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
+    public VisibilityExtender resolveArgumentForParameter(final QueueProperties queueProperties,
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
         return new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);

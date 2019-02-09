@@ -17,13 +17,13 @@ import java.util.Set;
  *
  * <p>If you desire more/different resolves use the {@link DelegatingArgumentResolverService} to consume these.
  */
-public class DefaultArgumentResolverService implements ArgumentResolverService {
+public class CoreArgumentResolverService implements ArgumentResolverService {
     @Delegate
     private final DelegatingArgumentResolverService delegatingArgumentResolverService;
 
-    public DefaultArgumentResolverService(final PayloadMapper payloadMapper,
-                                          final SqsAsyncClient sqsAsyncClient) {
-        final Set<ArgumentResolver> argumentResolvers = ImmutableSet.of(
+    public CoreArgumentResolverService(final PayloadMapper payloadMapper,
+                                       final SqsAsyncClient sqsAsyncClient) {
+        final Set<ArgumentResolver<?>> argumentResolvers = ImmutableSet.of(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
                 new VisibilityExtenderArgumentResolver(sqsAsyncClient)

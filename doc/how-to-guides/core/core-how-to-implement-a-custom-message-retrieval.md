@@ -76,4 +76,4 @@ for examples on how to integrate the retriever.
 
 ### Integrating the new message retriever into the spring app
 If you are using the Spring Starter for this, you can take a look at
-[Spring - How to add custom queue wrapper](../spring/spring-how-to-add-custom-queue-wrapper.md) for details on integrating this into the spring application.
+[Spring - How to add custom queue wrapper](../spring/spring-how-to-add-own-queue-listener.md) for details on integrating this into the spring application.
