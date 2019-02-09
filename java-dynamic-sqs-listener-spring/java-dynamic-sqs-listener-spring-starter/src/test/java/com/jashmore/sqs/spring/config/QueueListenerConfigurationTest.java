@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class QueueListenerConfigurationTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -257,7 +257,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithCustomArgumentResolver {
         @Bean
-        public ArgumentResolver customArgumentResolver() {
+        public ArgumentResolver<?> customArgumentResolver() {
             return mock(ArgumentResolver.class);
         }
     }

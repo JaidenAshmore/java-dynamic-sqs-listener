@@ -18,7 +18,7 @@ import java.lang.reflect.Parameter;
  * @see Message#body for the payload that will be consumed
  */
 @AllArgsConstructor
-public class PayloadArgumentResolver implements ArgumentResolver {
+public class PayloadArgumentResolver implements ArgumentResolver<Object> {
     private final PayloadMapper payloadMapper;
 
     @Override

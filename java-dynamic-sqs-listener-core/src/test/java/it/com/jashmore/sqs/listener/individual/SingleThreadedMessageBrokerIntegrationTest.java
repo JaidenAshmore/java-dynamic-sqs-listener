@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.argument.DefaultArgumentResolverService;
+import com.jashmore.sqs.argument.CoreArgumentResolverService;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -55,7 +55,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
         final IndividualMessageResolver individualMessageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        final ArgumentResolverService argumentResolverService = new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
+        final ArgumentResolverService argumentResolverService = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,

@@ -10,13 +10,12 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
 
-import com.jashmore.sqs.QueueProperties;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Parameter;
 import java.util.Set;
@@ -28,12 +27,15 @@ public class DelegatingArgumentResolverServiceTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @Mock
+    private ArgumentResolver<Object> mockObjectArgumentResolver;
+
     @Test
     public void whenNoResolversCanMatchParameterExceptionIsThrown() {
         // arrange
-        final ArgumentResolver resolver = mock(ArgumentResolver.class);
+        final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(any(Parameter.class))).thenReturn(false);
-        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectMessage("No ArgumentResolver found that can process this parameter");
 
@@ -44,11 +46,11 @@ public class DelegatingArgumentResolverServiceTest {
     @Test
     public void whenResolvingArgumentThrowsExceptionArgumentResolutionExceptionWrapsIt() {
         // arrange
-        final ArgumentResolver resolver = mock(ArgumentResolver.class);
+        final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(isNull())).thenReturn(true);
         when(resolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
                 .thenThrow(new RuntimeException("error"));
-        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectCause(isA(RuntimeException.class));
 
@@ -59,12 +61,12 @@ public class DelegatingArgumentResolverServiceTest {
     @Test
     public void whenResolvingArgumentThrowsArgumentResolutionExceptionItIsBubbled() {
         // arrange
-        final ArgumentResolver resolver = mock(ArgumentResolver.class);
+        final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(isNull())).thenReturn(true);
         final ArgumentResolutionException exception = new ArgumentResolutionException("error");
         when(resolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
                 .thenThrow(exception);
-        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expect(is(exception));
 
@@ -74,13 +76,12 @@ public class DelegatingArgumentResolverServiceTest {
 
     @Test
     public void whenArgumentIsSuccessfullyResolvedTheValueIsReturned() {
-        // arrange
-        final ArgumentResolver resolver = mock(ArgumentResolver.class);
-        when(resolver.canResolveParameter(isNull())).thenReturn(true);
+        // arrange=
+        when(mockObjectArgumentResolver.canResolveParameter(isNull())).thenReturn(true);
         final Object argument = new Object();
-        when(resolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
+        when(mockObjectArgumentResolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
                 .thenReturn(argument);
-        final Set<ArgumentResolver> resolvers = ImmutableSet.of(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(mockObjectArgumentResolver);
 
         // act
         final Object actualArgument = new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);

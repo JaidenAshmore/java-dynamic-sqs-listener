@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.argument.DefaultArgumentResolverService;
+import com.jashmore.sqs.argument.CoreArgumentResolverService;
 import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -177,7 +177,7 @@ public class ConcurrentBrokerExample {
      */
     private static ArgumentResolverService argumentResolverService(final SqsAsyncClient sqsAsyncClient) {
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        return new DefaultArgumentResolverService(payloadMapper, sqsAsyncClient);
+        return new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
     }
 
     /**

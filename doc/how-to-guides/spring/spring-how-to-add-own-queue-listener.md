@@ -1,4 +1,4 @@
-# Spring - How to add a custom QueueWrapper
+# Spring - How to add your own Queue Listener
 The [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java) is
 used to process bean methods to determine whether they should be used to process SQS messages. The most common way to define whether a method should be wrapped
 is via an annotation, for example the following method indicates that it should be wrapped in a basic queue listener:

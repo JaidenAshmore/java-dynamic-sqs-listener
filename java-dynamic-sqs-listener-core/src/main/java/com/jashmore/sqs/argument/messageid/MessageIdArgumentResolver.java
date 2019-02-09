@@ -10,14 +10,14 @@ import java.lang.reflect.Parameter;
 /**
  * Argument resolver for parameters annotated with the {@link MessageId} annotation.
  */
-public class MessageIdArgumentResolver implements ArgumentResolver {
+public class MessageIdArgumentResolver implements ArgumentResolver<String> {
     @Override
     public boolean canResolveParameter(final Parameter parameter) {
         return parameter.getAnnotation(MessageId.class) != null && parameter.getType().isAssignableFrom(String.class);
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
+    public String resolveArgumentForParameter(final QueueProperties queueProperties,
                                               final Parameter parameter,
                                               final Message message) throws ArgumentResolutionException {
         return message.messageId();
