@@ -4,6 +4,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import net.jcip.annotations.ThreadSafe;
+
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.Min;
 
@@ -11,7 +13,10 @@ import javax.validation.constraints.Min;
  * Implementation that will cache the values as the methods to retrieve the values may be costly.
  *
  * <p>For example, an outbound call is needed to get this value and it is costly to do this every time a message has been processed.
+ *
+ * <p>This implementation is thread safe even though it is not required to be due to the thread safety of the {@link LoadingCache}.
  */
+@ThreadSafe
 public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
     /**
      * Cache key as only a single value is being loaded into the cache.
@@ -21,6 +26,12 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     private final LoadingCache<Integer, Integer> cachedConcurrencyLevel;
     private final LoadingCache<Integer, Integer> cachedPreferredConcurrencyPollingRateInSeconds;
 
+    /**
+     * Constructor.
+     *
+     * @param cachingTimeoutInMs the amount of time in milliseconds that the values for each property should be cached internally
+     * @param delegateProperties the delegate properties object that should be called when the cache has not been populated yet or has expired
+     */
     public CachingConcurrentMessageBrokerProperties(final int cachingTimeoutInMs,
                                                     final ConcurrentMessageBrokerProperties delegateProperties) {
         this.cachedConcurrencyLevel = CacheBuilder.newBuilder()
