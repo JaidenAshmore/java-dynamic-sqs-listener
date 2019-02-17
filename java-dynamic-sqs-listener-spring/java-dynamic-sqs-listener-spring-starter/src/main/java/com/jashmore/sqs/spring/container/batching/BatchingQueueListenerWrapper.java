@@ -10,8 +10,8 @@ import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
-import com.jashmore.sqs.retriever.batching.StaticBatchingProperties;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
@@ -51,13 +51,13 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final BatchingProperties batchingProperties = StaticBatchingProperties
+        final BatchingMessageRetrieverProperties batchingMessageRetrieverProperties = StaticBatchingMessageRetrieverProperties
                 .builder()
                 .visibilityTimeoutInSeconds(annotation.messageVisibilityTimeoutInSeconds())
                 .messageRetrievalPollingPeriodInMs(annotation.maxPeriodBetweenBatchesInMs())
                 .numberOfThreadsWaitingTrigger(annotation.concurrencyLevel())
                 .build();
-        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(queueProperties, sqsAsyncClient, executor, batchingProperties);
+        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(queueProperties, sqsAsyncClient, executor, batchingMessageRetrieverProperties);
 
         final StaticBatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
                 .bufferingSizeLimit(annotation.concurrencyLevel())
