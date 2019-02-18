@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
@@ -36,10 +38,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@RunWith(Parameterized.class)
 @Slf4j
 public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
+
+    @Parameterized.Parameters
+    public static Object[][] data() {
+        return new Object[10][0];
+    }
 
     @Rule
     public LocalSqsRule localSqsRule = new LocalSqsRule();
@@ -49,6 +57,10 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
     @Before
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
+
+        // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
+        // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
+        Thread.interrupted();
     }
 
     @Test

@@ -39,6 +39,10 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
     @Before
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
+
+        // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
+        // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
+        Thread.interrupted();
     }
 
     @Test
