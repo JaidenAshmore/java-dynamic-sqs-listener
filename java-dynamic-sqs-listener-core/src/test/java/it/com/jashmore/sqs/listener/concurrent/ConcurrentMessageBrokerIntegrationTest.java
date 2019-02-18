@@ -29,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
@@ -38,16 +36,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RunWith(Parameterized.class)
 @Slf4j
 public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
-
-    @Parameterized.Parameters
-    public static Object[][] data() {
-        return new Object[10][0];
-    }
 
     @Rule
     public LocalSqsRule localSqsRule = new LocalSqsRule();
