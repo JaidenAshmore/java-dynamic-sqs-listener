@@ -9,7 +9,7 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingProperties;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import org.springframework.core.env.Environment;
 
@@ -73,7 +73,7 @@ public @interface QueueListener {
      * timeout the current threads waiting for messages will have messages requested for them
      *
      * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingProperties#getMessageRetrievalPollingPeriodInMs() for more details
+     * @see BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs() for more details
      */
     int maxPeriodBetweenBatchesInMs() default 2000;
 
@@ -81,7 +81,7 @@ public @interface QueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 }

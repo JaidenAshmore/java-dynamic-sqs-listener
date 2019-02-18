@@ -76,6 +76,7 @@
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
         <mockito.version>2.13.0</mockito.version>
         <slf4j.version>1.7.25</slf4j.version>
+        <slf4j.test.version>1.2.0</slf4j.test.version>
         <guava.version>21.0</guava.version>
         <pitest.version>1.4.5</pitest.version>
         <spring.version>5.0.8.RELEASE</spring.version>
@@ -132,7 +133,17 @@
                 <version>${pitest.version}</version>
                 <configuration>
                     <mutationThreshold>80</mutationThreshold>
+                    <jvmArgs>
+                        <value>-Dslf4jtest.print.level=ERROR</value>
+                    </jvmArgs>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>mutation-testing</id>
+                        <goals><goal>mutationCoverage</goal></goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -307,6 +318,19 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Set up the default logging for tests -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

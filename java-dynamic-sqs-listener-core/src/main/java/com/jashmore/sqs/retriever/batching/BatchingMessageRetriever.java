@@ -14,12 +14,14 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.validation.constraints.Positive;
 
 /**
  * This implementation of the {@link MessageRetriever} will group requests for messages into batches to reduce the number of times that messages are requested
@@ -34,7 +36,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private final QueueProperties queueProperties;
     private final SqsAsyncClient sqsAsyncClient;
     private final ExecutorService executorService;
-    private final BatchingProperties properties;
+    private final BatchingMessageRetrieverProperties properties;
 
     private final AtomicInteger numberWaitingForMessages = new AtomicInteger();
     private final BlockingQueue<Message> messagesDownloaded = new LinkedBlockingQueue<>();
@@ -96,8 +98,8 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
 
     /**
      * This is the background thread that will be obtaining the messages on a given cycle of
-     * {@link BatchingProperties#getMessageRetrievalPollingPeriodInMs()} or until
-     * {@link BatchingProperties#getNumberOfThreadsWaitingTrigger()} is reached, whichever is first. It will attempt to get those number of
+     * {@link BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs()} or until
+     * {@link BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger()} is reached, whichever is first. It will attempt to get those number of
      * messages that are waiting for retrieval in one call to SQS.
      */
     @AllArgsConstructor
@@ -111,9 +113,10 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             while (true) {
                 final int numberOfMessagesToObtain;
                 synchronized (shouldObtainMessagesLock) {
-                    if ((numberWaitingForMessages.get() - messagesDownloaded.size()) < properties.getNumberOfThreadsWaitingTrigger()) {
+                    final int triggerValue = properties.getNumberOfThreadsWaitingTrigger();
+                    if ((numberWaitingForMessages.get() - messagesDownloaded.size()) < triggerValue) {
                         try {
-                            shouldObtainMessagesLock.wait(properties.getMessageRetrievalPollingPeriodInMs());
+                            shouldObtainMessagesLock.wait(getPollingPeriodInMs(triggerValue));
                         } catch (InterruptedException exception) {
                             log.debug("Thread interrupted while waiting for messages");
                             break;
@@ -123,12 +126,12 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                             AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
                 }
 
+                log.debug("Requesting {} messages", numberOfMessagesToObtain);
+
                 if (numberOfMessagesToObtain <= 0) {
-                    log.debug("Requesting 0 messages");
                     // We don't want to go request out if there are no messages to retrieve
                     continue;
                 }
-                log.debug("Requesting {} messages", numberOfMessagesToObtain);
 
                 try {
                     final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest
@@ -136,7 +139,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                             .queueUrl(queueProperties.getQueueUrl())
                             .visibilityTimeout(properties.getVisibilityTimeoutInSeconds())
                             .maxNumberOfMessages(numberOfMessagesToObtain)
-                            .waitTimeSeconds(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                            .waitTimeSeconds(getWaitTimeInSeconds())
                             .build();
                     final Future<ReceiveMessageResponse> receiveMessageResponseFuture = sqsAsyncClient.receiveMessage(receiveMessageRequest);
                     try {
@@ -154,5 +157,32 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             }
             completedFuture.complete("Stopped");
         }
+    }
+
+    /**
+     * Gets the wait time in seconds, defaulting to {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} if it is not present.
+     *
+     * @return the amount of time to wait for messages from SQS
+     */
+    private int getWaitTimeInSeconds() {
+        return Optional.ofNullable(properties.getMessageWaitTimeInSeconds())
+                .orElse(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+    }
+
+    /**
+     * Safely get the polling period in milliseconds, default to zero if no value is defined and logging a warning indicating that not setting a value
+     * could cause this retriever to block forever if the number of threads never reaches
+     * {@link BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger()}.
+     *
+     * @param triggerValue the number of threads that would trigger the batch retrieval of messages
+     * @return the polling period in ms
+     */
+    private int getPollingPeriodInMs(final int triggerValue) {
+        return Optional.ofNullable(properties.getMessageRetrievalPollingPeriodInMs())
+                .orElseGet(() -> {
+                    log.warn("No polling period specifically set, defaulting to zero which will have the thread blocked until {} threads request messages",
+                            triggerValue);
+                    return 0;
+                });
     }
 }
