@@ -23,12 +23,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit4.SpringRunner;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -52,7 +50,7 @@ public class PrefetchingQueueListenerWrapperIntegrationTest {
     public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
 
     @Autowired
-    private SqsAsyncClient sqsAsyncClient;
+    private LocalSqsAsyncClient localSqsAsyncClient;
 
     @Configuration
     public static class TestConfig {
@@ -73,13 +71,12 @@ public class PrefetchingQueueListenerWrapperIntegrationTest {
     }
 
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
+    public void allMessagesAreProcessedByListeners() throws InterruptedException {
         // arrange
-        final String queueUrl = sqsAsyncClient.getQueueUrl((request) -> request.queueName(QUEUE_NAME)).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> {
                     log.info("Sending message: " + i);
-                    sqsAsyncClient.sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
+                    localSqsAsyncClient.sendMessageToLocalQueue("PrefetchingQueueListenerWrapperIntegrationTest", "message: " + i);
                 });
 
         // act

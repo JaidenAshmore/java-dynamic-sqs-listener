@@ -3,6 +3,7 @@ package com.jashmore.sqs.util;
 import static com.jashmore.sqs.util.SqsQueuesConfig.DEFAULT_SQS_SERVER_URL;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
@@ -11,13 +12,19 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
+import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 
 /**
@@ -26,11 +33,15 @@ import javax.annotation.PostConstruct;
  * <p>The implementation is kept to an absolute minimum and it will only connect to the server and set up any queues that should be set up on initial
  * connection. For any further configuration options look at creating your own implementation.
  */
+@SuppressWarnings("unused")
 @Slf4j
 public class LocalSqsAsyncClient implements SqsAsyncClient {
     private final SqsQueuesConfig sqsQueuesConfig;
+
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
+
+    private Map<String, String> queueUrlMap;
 
     public LocalSqsAsyncClient(final SqsQueuesConfig sqsQueuesConfig) {
         this.sqsQueuesConfig = sqsQueuesConfig;
@@ -50,10 +61,60 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
     }
 
     /**
+     * Send the message content to a local queue with the given name.
+     *
+     * @param queueName   name of the queue to send the message to
+     * @param messageBody the contents of the message
+     * @return the response for sending the messages as a {@link CompletableFuture}
+     */
+    public CompletableFuture<SendMessageResponse> sendMessageToLocalQueue(final String queueName, final String messageBody) {
+        return sendMessageToLocalQueue(queueName, builder -> builder.messageBody(messageBody));
+    }
+
+    /**
+     * Send the following message request object to the local queue with the given name.
+     *
+     * @param queueName          name of the queue to send the message to
+     * @param sendMessageRequest the request to send to the local queue
+     * @return the response for sending the messages as a {@link CompletableFuture}
+     */
+    public CompletableFuture<SendMessageResponse> sendMessageToLocalQueue(final String queueName, final SendMessageRequest sendMessageRequest) {
+        return sendMessage(sendMessageRequest.toBuilder()
+                .queueUrl(queueUrlMap.get(queueName))
+                .build());
+    }
+
+    /**
+     * Send a message to a local queue with the given name.
+     *
+     * @param queueName                         name of the queue to send the message to
+     * @param sendMessageRequestBuilderConsumer a consumer of the request builder that can be used to generate the request
+     * @return the response for sending the messages as a {@link CompletableFuture}
+     */
+    public CompletableFuture<SendMessageResponse> sendMessageToLocalQueue(final String queueName,
+                                                                          final Consumer<SendMessageRequest.Builder> sendMessageRequestBuilderConsumer) {
+        return sendMessage(builder -> {
+            sendMessageRequestBuilderConsumer.accept(builder);
+            builder.queueUrl(queueUrlMap.get(queueName));
+        });
+    }
+
+    /**
+     * Get the queue URL of one of the local queues with the given name.
+     *
+     * @param queueName the name of the queue to get the URL for
+     * @return the URL of the queue with the provided name, if it exists
+     */
+    public String getQueueUrl(final String queueName) {
+        return queueUrlMap.get(queueName);
+    }
+
+    /**
      * Build all of the queues that are required for this local client once the bean has been created.
      */
     @PostConstruct
     private void buildQueues() {
+        queueUrlMap = Maps.newHashMap();
         for (final SqsQueuesConfig.QueueConfig queueConfig : sqsQueuesConfig.getQueues()) {
 
             log.debug("Creating local queue: {}", queueConfig.getQueueName());
@@ -76,7 +137,8 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
             createQueueRequestBuilder.attributes(attributesBuilder.build());
 
             try {
-                delegate.createQueue(createQueueRequestBuilder.build()).get();
+                final CreateQueueResponse createQueueResponse = delegate.createQueue(createQueueRequestBuilder.build()).get();
+                queueUrlMap.put(queueConfig.getQueueName(), createQueueResponse.queueUrl());
             } catch (InterruptedException | ExecutionException exception) {
                 throw new RuntimeException("Error creating queues", exception);
             }

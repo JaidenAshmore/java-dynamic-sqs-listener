@@ -37,19 +37,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -77,7 +73,7 @@ public class CustomQueueWrapperIntegrationTest {
     @SuppressWarnings( {"SpringJavaInjectionPointsAutowiringInspection", "CheckStyle"})
     public static class TestConfig {
         public static class MessageListener {
-            @SuppressWarnings("CheckStyle")
+            @SuppressWarnings( {"CheckStyle", "unused"})
             @CustomQueueListener(queue = "CustomQueueWrapperIntegrationTest",
                     messageBrokerFactoryBeanName = "myMessageBrokerFactory",
                     messageProcessorFactoryBeanName = "myMessageProcessorFactory",
@@ -137,14 +133,12 @@ public class CustomQueueWrapperIntegrationTest {
     }
 
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
+    public void allMessagesAreProcessedByListeners() throws InterruptedException {
         // arrange
-        final String queueUrl = LOCAL_SQS_RULE.getLocalAmazonSqsAsync()
-                .getQueueUrl((request) -> request.queueName("CustomQueueWrapperIntegrationTest")).get().queueUrl();
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> {
                     log.info("Sending message: " + i);
-                    LOCAL_SQS_RULE.getLocalAmazonSqsAsync().sendMessage((request) -> request.queueUrl(queueUrl).messageBody("message: " + i));
+                    LOCAL_SQS_RULE.getLocalAmazonSqsAsync().sendMessageToLocalQueue("CustomQueueWrapperIntegrationTest", "message: " + i);
                 });
 
         // act
