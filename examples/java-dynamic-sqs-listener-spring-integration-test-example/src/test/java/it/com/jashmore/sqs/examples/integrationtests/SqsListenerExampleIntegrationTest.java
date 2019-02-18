@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
@@ -61,7 +60,7 @@ public class SqsListenerExampleIntegrationTest {
     }
 
     @Autowired
-    private SqsAsyncClient sqsAsyncClient;
+    private LocalSqsAsyncClient localSqsAsyncClient;
 
     @MockBean
     private IntegrationTestExampleApplication.SomeService mockSomeService;
@@ -70,14 +69,13 @@ public class SqsListenerExampleIntegrationTest {
     public void messagesPlacedOntoQueueArePickedUpMessageListener() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
-        final String queueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("testQueue")).get().queueUrl();
         doAnswer(invocationOnMock -> {
             messageReceivedCountDownLatch.countDown();
             return null;
         }).when(mockSomeService).run(anyString());
 
         // act
-        sqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrl).messageBody("my message"));
+        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
         messageReceivedCountDownLatch.await(5, TimeUnit.SECONDS);
 
         // assert
@@ -88,7 +86,6 @@ public class SqsListenerExampleIntegrationTest {
     public void messageFailingToProcessWillBeProcessedAgain() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
-        final String queueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("testQueue")).get().queueUrl();
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
         doAnswer(invocationOnMock -> {
             if (!processedMessageOnce.getAndSet(true)) {
@@ -99,7 +96,7 @@ public class SqsListenerExampleIntegrationTest {
         }).when(mockSomeService).run(anyString());
 
         // act
-        sqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrl).messageBody("my message"));
+        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
         messageReceivedCountDownLatch.await(10, TimeUnit.SECONDS);
 
         // assert
@@ -110,19 +107,19 @@ public class SqsListenerExampleIntegrationTest {
     public void messageThatContinuesToFailWillBePlacedIntoDlq() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(QUEUE_MAX_RECEIVE_COUNT);
-        final String queueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("testQueue")).get().queueUrl();
+        final String queueUrl = localSqsAsyncClient.getQueueUrl(QUEUE_NAME);
         doAnswer(invocationOnMock -> {
             messageReceivedCountDownLatch.countDown();
             throw new RuntimeException("error");
         }).when(mockSomeService).run(anyString());
 
         // act
-        sqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrl).messageBody("my message"));
+        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
         messageReceivedCountDownLatch.await(20, TimeUnit.SECONDS);
         waitForMessageVisibilityToExpire();
 
         // assert
-        final GetQueueAttributesResponse queueAttributesResponse = sqsAsyncClient.getQueueAttributes(builder -> builder
+        final GetQueueAttributesResponse queueAttributesResponse = localSqsAsyncClient.getQueueAttributes(builder -> builder
                 .queueUrl(queueUrl + "-dlq")
                 .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES)
         ).get();

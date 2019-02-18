@@ -61,6 +61,28 @@ unintentionally.
     ```java
     @SpringBootTest(classes = {Application.class, IntegrationTest.TestConfiguration.class })
     ```
-1. Now you should be able to use this `LocalSqsAsyncClient` to test the queues by manually sending messages onto the queue an asserting that they
-were proccesed.
+1. Write a test that uses the [LocalSqsAsyncClient](../../../util/local-amazon-sqs/src/main/java/com/jashmore/sqs/util/LocalSqsAsyncClient.java) to send
+messages on the queue and assert that they are consumed.
+    ```java
+    public class MyService() {
+
+        // Configuration defined above...
+    
+        @Autowired
+        private LocalSqsAsyncClient localSqsAsyncClient;
+
+        @Test
+        public void myTest() { 
+            // arrange
+            // your setup code
+         
+            // act
+            localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
+         
+             // assert
+             // assertions here that the message was processed correctly
+        }
+ 
+    }
+    ```
 
