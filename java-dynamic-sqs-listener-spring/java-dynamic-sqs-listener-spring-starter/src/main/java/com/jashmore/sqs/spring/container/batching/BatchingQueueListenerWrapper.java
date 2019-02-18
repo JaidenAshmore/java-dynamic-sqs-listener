@@ -57,7 +57,8 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
                 .messageRetrievalPollingPeriodInMs(annotation.maxPeriodBetweenBatchesInMs())
                 .numberOfThreadsWaitingTrigger(annotation.concurrencyLevel())
                 .build();
-        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(queueProperties, sqsAsyncClient, executor, batchingMessageRetrieverProperties);
+        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(
+                queueProperties, sqsAsyncClient, executor, batchingMessageRetrieverProperties);
 
         final StaticBatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
                 .bufferingSizeLimit(annotation.concurrencyLevel())

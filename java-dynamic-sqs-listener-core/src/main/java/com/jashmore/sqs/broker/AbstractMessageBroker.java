@@ -43,7 +43,7 @@ public abstract class AbstractMessageBroker implements MessageBroker {
     }
 
     private Future<Object> stopBroker(final boolean interruptThreads) {
-        log.debug("Stopping broker: {}", this.getClass().getSimpleName());
+        log.debug("Stopping broker");
         if (controller == null) {
             throw new IllegalStateException("Broker is not currently running");
         }

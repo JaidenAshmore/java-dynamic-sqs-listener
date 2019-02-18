@@ -1,25 +1,28 @@
 package com.jashmore.sqs.processor.resolver.individual;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.org.lidalia.slf4jtest.LoggingEvent.debug;
-import static uk.org.lidalia.slf4jtest.LoggingEvent.error;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
-import uk.org.lidalia.slf4jtest.TestLogger;
-import uk.org.lidalia.slf4jtest.TestLoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -34,11 +37,17 @@ public class IndividualMessageResolverTest {
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
+    @Mock
+    private Appender<ILoggingEvent> mockLoggingAppender;
+
     private IndividualMessageResolver individualMessageResolver;
 
     @Before
     public void setUp() {
         individualMessageResolver = new IndividualMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient);
+
+        when(mockLoggingAppender.getName()).thenReturn("MOCK");
+        ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).addAppender(mockLoggingAppender);
     }
 
     @Test
@@ -82,7 +91,6 @@ public class IndividualMessageResolverTest {
     @Test
     public void successfulResolvingOfMessageWillLogDebugMessage() {
         // arrange
-        final TestLogger logger = TestLoggerFactory.getTestLogger(IndividualMessageResolver.class);
         when(sqsAsyncClient.deleteMessage(any(DeleteMessageRequest.class)))
                 .thenReturn(CompletableFuture.completedFuture(DeleteMessageResponse.builder().build()));
 
@@ -90,13 +98,13 @@ public class IndividualMessageResolverTest {
         individualMessageResolver.resolveMessage(Message.builder().messageId("id").body("test").receiptHandle("receipt").build());
 
         // assert
-        assertThat(logger.getAllLoggingEvents()).contains(debug("Message successfully deleted: {}", "id"));
+        verify(mockLoggingAppender).doAppend(argThat(((ArgumentMatcher<LoggingEvent>) argument -> argument.getLevel().equals(Level.DEBUG)
+                && argument.getFormattedMessage().contains("Message successfully deleted: id"))));
     }
 
     @Test
     public void failureToResolveMessagesResultsInErrorMessage() {
         // arrange
-        final TestLogger logger = TestLoggerFactory.getTestLogger(IndividualMessageResolver.class);
         final RuntimeException exception = new RuntimeException("exception");
         when(sqsAsyncClient.deleteMessage(any(DeleteMessageRequest.class)))
                 .thenAnswer(invocation -> {
@@ -109,6 +117,7 @@ public class IndividualMessageResolverTest {
         individualMessageResolver.resolveMessage(Message.builder().messageId("id").body("test").receiptHandle("receipt").build());
 
         // assert
-        assertThat(logger.getAllLoggingEvents()).contains(error(exception, "Error deleting message: id"));
+        verify(mockLoggingAppender).doAppend(argThat(((ArgumentMatcher<LoggingEvent>) argument -> argument.getLevel().equals(Level.ERROR)
+                && argument.getFormattedMessage().contains("Error deleting message: id"))));
     }
 }

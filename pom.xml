@@ -133,6 +133,9 @@
                 <version>${pitest.version}</version>
                 <configuration>
                     <mutationThreshold>80</mutationThreshold>
+                    <jvmArgs>
+                        <value>-Dslf4jtest.print.level=ERROR</value>
+                    </jvmArgs>
                 </configuration>
                 <executions>
                     <execution>
@@ -317,6 +320,19 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Set up the default logging for tests -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -388,12 +404,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>uk.org.lidalia</groupId>
-                <artifactId>slf4j-test</artifactId>
-                <version>${slf4j.test.version}</version>
             </dependency>
 
             <dependency>
