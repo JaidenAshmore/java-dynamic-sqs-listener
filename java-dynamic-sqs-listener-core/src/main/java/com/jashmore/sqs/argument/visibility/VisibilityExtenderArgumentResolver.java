@@ -8,8 +8,6 @@ import com.jashmore.sqs.argument.payload.Payload;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.lang.reflect.Parameter;
-
 /**
  * Resolves message consumer's with a parameter of type {@link VisibilityExtender} to an implementation that can be used
  * for the consumer to request the increase of visibility of the message.
@@ -32,8 +30,8 @@ public class VisibilityExtenderArgumentResolver implements ArgumentResolver<Visi
 
     @Override
     public VisibilityExtender resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
+                                                          final MethodParameter methodParameter,
+                                                          final Message message) throws ArgumentResolutionException {
         return new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
     }
 }

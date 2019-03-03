@@ -5,7 +5,6 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.lang.reflect.Parameter;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**

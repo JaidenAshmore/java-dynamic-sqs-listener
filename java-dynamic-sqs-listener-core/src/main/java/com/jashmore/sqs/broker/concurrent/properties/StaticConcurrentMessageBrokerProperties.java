@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import lombok.Value;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Optional;

@@ -7,8 +7,6 @@ import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.lang.reflect.Parameter;
-
 /**
  * Argument resolver for parameters annotated with the {@link MessageId} annotation.
  */

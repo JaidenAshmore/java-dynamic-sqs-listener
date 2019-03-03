@@ -1,6 +1,5 @@
 package com.jashmore.sqs.argument.payload.mapper;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;

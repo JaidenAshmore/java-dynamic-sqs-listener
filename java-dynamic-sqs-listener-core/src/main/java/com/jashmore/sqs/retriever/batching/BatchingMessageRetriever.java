@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.validation.constraints.Positive;
 
 /**
  * This implementation of the {@link MessageRetriever} will group requests for messages into batches to reduce the number of times that messages are requested

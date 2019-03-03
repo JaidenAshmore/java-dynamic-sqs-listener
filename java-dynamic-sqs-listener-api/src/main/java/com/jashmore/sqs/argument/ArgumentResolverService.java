@@ -5,7 +5,6 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.lang.reflect.Parameter;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
