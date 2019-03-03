@@ -135,6 +135,7 @@
                     <jvmArgs>
                         <value>-Dslf4jtest.print.level=ERROR</value>
                     </jvmArgs>
+                    <skip>${skipTests}</skip>
                 </configuration>
                 <executions>
                     <execution>

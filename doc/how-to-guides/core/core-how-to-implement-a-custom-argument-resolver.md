@@ -44,27 +44,30 @@ public @interface UserGroup {
 interface that will be able to resolve these arguments with those annotations.
     ```java
     public class UserGroupArgumentResolver implements ArgumentResolver<String> {
-       private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+        private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
      
-       @Override
-       public boolean canResolveParameter(Parameter parameter) {   
-           // make sure only String parameters with the @UserGroup annotations are resolved using this
-           return parameter.getAnnotation(UserGroup.class) != null
-               && parameter.getType() == String.class;
-       }
+        @Override
+        public boolean canResolveParameter(MethodParameter methodParameter) {
+            // make sure only String parameters with the @UserGroup annotations are resolved using this
+            return methodParameter.getParameter().getType().isAssignableFrom(String.class)
+                && AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class);
+        }
     
-       @Override
-       public Object resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
-           // not the nicest solution, you should probably create a POJO instead of this TypeReference and Maps
-           try {
-               return Optional.ofNullable(objectMapper.readValue(message.body(), new TypeReference<Map<String, Map<String, Map<String, String>>>>(){}))
-                   .map(message -> message.get("payload"))
-                   .map(message -> message.get("user"))
-                   .map(message -> message.get("group"));
-           } catch (IOException e) {
-               throw new ArgumentResolutionException("Error parsing payload", e);
-           }   
-       }
+        @Override
+        public Object resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
+            try {
+                // You could build an actual POJO instead of using this JsonNode
+                final JsonNode node = objectMapper.readTree(message.body());
+                final JsonNode userGroupNode = node.at("/payload/user/group");
+                if (userGroupNode.isMissingNode()) {
+                    return null;
+                } else {
+                    return userGroupNode.textValue();
+                }
+            } catch (IOException e) {
+                throw new ArgumentResolutionException("Error parsing payload", e);
+            }   
+        }
     }
     ```
 1. Create a method that will use this argument, for example something like:

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@SpringBootTest(classes =  { Application.class, EnvironmentQueueResolverServiceIntegrationTest.TestConfig.class }, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, EnvironmentQueueResolverServiceIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {
         "property.with.queue.url=http://sqs.some.url",
         "property.with.queue.name=EnvironmentQueueResolverIntegrationTest"

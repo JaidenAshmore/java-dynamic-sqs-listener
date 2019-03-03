@@ -50,10 +50,20 @@ public class CoreArgumentResolverServiceTest {
                 .messageId("messageId")
                 .build();
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
+        final MethodParameter mapFirstParameter = DefaultMethodParameter.builder()
+                .method(method)
+                .parameter(method.getParameters()[0])
+                .parameterIndex(0)
+                .build();
+        final MethodParameter stringSecondParameter = DefaultMethodParameter.builder()
+                .method(method)
+                .parameter(method.getParameters()[1])
+                .parameterIndex(1)
+                .build();
 
         // act
-        final Object payloadArgument = service.resolveArgument(queueProperties, method.getParameters()[0], message);
-        final Object messageIdArgument = service.resolveArgument(queueProperties, method.getParameters()[1], message);
+        final Object payloadArgument = service.resolveArgument(queueProperties, mapFirstParameter, message);
+        final Object messageIdArgument = service.resolveArgument(queueProperties, stringSecondParameter, message);
 
         // assert
         assertThat(payloadArgument).isEqualTo(payload);

@@ -5,7 +5,6 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.lang.reflect.Parameter;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -23,21 +22,21 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public interface ArgumentResolver<T> {
     /**
-     * Determine whether the provided parameter is able to be resolved by this resolver.
+     * Determine whether the provided {@link MethodParameter} is able to be resolved by this resolver.
      *
-     * @param parameter the parameter of the listener
+     * @param methodParameter details about a parameter for the method
      * @return whether this parameter value can be obtained from this resolver
      */
-    boolean canResolveParameter(Parameter parameter);
+    boolean canResolveParameter(MethodParameter methodParameter);
 
     /**
-     * Resolve the argument for the given parameter.
+     * Resolve the argument for the given {@link MethodParameter}.
      *
      * @param queueProperties details about the queue that the arguments will be resolved for
-     * @param parameter       the parameter to get the argument value for
+     * @param methodParameter details about a parameter for the method
      * @param message         the message being processed by this queue
      * @return the value of the argument
      * @throws ArgumentResolutionException when there was an error determine the parameter argument value
      */
-    T resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException;
+    T resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message) throws ArgumentResolutionException;
 }

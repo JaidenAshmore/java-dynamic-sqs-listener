@@ -9,10 +9,10 @@ import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
+import com.jashmore.sqs.spring.DefaultQueueContainerService;
+import com.jashmore.sqs.spring.QueueContainerService;
 import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.container.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.container.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
@@ -193,8 +193,8 @@ public class QueueListenerConfiguration {
 
             @Bean
             public QueueWrapper coreProvidedBatchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                            final SqsAsyncClient sqsAsyncClient,
-                                                                            final QueueResolverService queueResolverService) {
+                                                                         final SqsAsyncClient sqsAsyncClient,
+                                                                         final QueueResolverService queueResolverService) {
                 return new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
             }
         }

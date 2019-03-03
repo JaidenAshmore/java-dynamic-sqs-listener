@@ -3,6 +3,8 @@ package com.jashmore.sqs.argument.visibility;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.argument.DefaultMethodParameter;
+import com.jashmore.sqs.argument.MethodParameter;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +39,7 @@ public class VisibilityExtenderArgumentResolverTest {
     @Test
     public void canResolveParametersWithVisibilityExtenderType() {
         // arrange
-        final Parameter parameter = getParameter(0);
+        final MethodParameter parameter = getParameter(0);
 
         // act
         final boolean canResolveParameter = visibilityExtenderArgumentResolver.canResolveParameter(parameter);
@@ -49,7 +51,7 @@ public class VisibilityExtenderArgumentResolverTest {
     @Test
     public void canNotResolveParametersThatIsNotAVisibilityExtenderType() {
         // arrange
-        final Parameter parameter = getParameter(1);
+        final MethodParameter parameter = getParameter(1);
 
         // act
         final boolean canResolveParameter = visibilityExtenderArgumentResolver.canResolveParameter(parameter);
@@ -61,7 +63,7 @@ public class VisibilityExtenderArgumentResolverTest {
     @Test
     public void resolvingParameterReturnsVisibilityExtenderObject() {
         // arrange
-        final Parameter parameter = getParameter(0);
+        final MethodParameter parameter = getParameter(0);
 
         // act
         final Object resolvedArgument = visibilityExtenderArgumentResolver.resolveArgumentForParameter(queueProperties, parameter, message);
@@ -75,13 +77,16 @@ public class VisibilityExtenderArgumentResolverTest {
 
     }
 
-    private Parameter getParameter(final int index) {
-        final Method method;
+    private MethodParameter getParameter(final int index) {
         try {
-            method = VisibilityExtenderArgumentResolverTest.class.getMethod("method", VisibilityExtender.class, String.class);
+            final Method method = VisibilityExtenderArgumentResolverTest.class.getMethod("method", VisibilityExtender.class, String.class);
+            return DefaultMethodParameter.builder()
+                    .method(method)
+                    .parameter(method.getParameters()[index])
+                    .parameterIndex(index)
+                    .build();
         } catch (final NoSuchMethodException exception) {
             throw new RuntimeException("Unable to find method for testing against", exception);
         }
-        return method.getParameters()[index];
     }
 }

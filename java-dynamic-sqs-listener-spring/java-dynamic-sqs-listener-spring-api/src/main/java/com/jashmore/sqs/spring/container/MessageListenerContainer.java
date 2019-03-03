@@ -2,6 +2,7 @@ package com.jashmore.sqs.spring.container;
 
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
+import com.jashmore.sqs.spring.QueueContainerService;
 
 import javax.annotation.concurrent.ThreadSafe;
 

@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container;
+package com.jashmore.sqs.spring;
 
 /**
  * Service that can be injected into the Spring Application to start and stop the containers that are controlling

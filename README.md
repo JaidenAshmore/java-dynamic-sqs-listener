@@ -117,7 +117,7 @@ not prefetch anymore.*
 
 ### Adding a custom argument resolver
 There are some core [ArgumentResolvers](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
-application but if they don't provide the ease required for the application you can define your own. For simplicity, I will show how we can resolve an
+application but if they don't provide the ease required for the application you can define your own. As an example, the following is how we can resolve an
 argument for the method where the payload of the message has been converted to uppercase. 
 
 1. We will use an annotation on the field to indicate how the message should be resolved.
@@ -131,10 +131,10 @@ argument for the method where the payload of the message has been converted to u
 do the logic for converting the message payload to uppercase.
     ```java
         public class UppercasePayloadArgumentResolver implements ArgumentResolver<String> {        
-           @Override
-           public boolean canResolveParameter(Parameter parameter) {   
-               // make sure only String parameters with the @UppercasePayload annotations are considered eligible for resolution
-               return parameter.getAnnotation(UppercasePayload.class) != null && parameter.getType().isAssignableFrom(String.class);
+            @Override
+            public boolean canResolveParameter(MethodParameter methodParameter) {
+                return methodParameter.getParameter().getType().isAssignableFrom(String.class)
+                    && AnnotationUtils.findParameterAnnotation(methodParameter, UppercasePayload.class);
            }
         
            @Override
@@ -143,6 +143,13 @@ do the logic for converting the message payload to uppercase.
            }
         }
     ```
+    You may be curious why a custom `AnnotationUtils.findParameterAnnotation` function is used instead of getting the annotation directly from the parameter.
+    The reason for this is due to proxying of object, such as by applying Aspects around your code via CGLIB, which result in a proxy class being used
+    instead of the base class you expect. To find the annotation the code needs to traverse the class hierarchy to eventually find the class that you are
+    looking for. For more information about this, take a look at
+    [AnnotationUtils](./java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
+    this problem being tested in
+    [PayloadArgumentResolver_ProxyClassTest.java](./java-dynamic-sqs-listener-core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
 1. Include the custom [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
 context for automatic inclusion into the
 [ArgumentResolverService](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).

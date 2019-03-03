@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;

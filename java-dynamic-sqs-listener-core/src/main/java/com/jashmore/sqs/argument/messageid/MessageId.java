@@ -1,10 +1,10 @@
 package com.jashmore.sqs.argument.messageid;
 
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.jashmore.sqs.argument.ArgumentResolver;
 
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * <p>Parameters marked with this annotation must be of type {@link String} and should not be annotated with any other annotations or types
  * that would be resolved by an {@link ArgumentResolver}.
  */
-@Retention(value = RUNTIME)
-@Target(ElementType.PARAMETER)
+@Retention(RUNTIME)
+@Target(PARAMETER)
 public @interface MessageId {
 }

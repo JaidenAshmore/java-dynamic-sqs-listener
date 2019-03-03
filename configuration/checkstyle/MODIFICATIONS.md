@@ -5,3 +5,4 @@ have made are:
 - Line length increased from 100 to 160
 - Tab width doubled from 2 spaces to 4 spaces
 - Removed the requirement for constructor JavaDoc by adding JavadocMethod.tokens without CTOR_DEF
+- Made unused imports a checkstyle error
