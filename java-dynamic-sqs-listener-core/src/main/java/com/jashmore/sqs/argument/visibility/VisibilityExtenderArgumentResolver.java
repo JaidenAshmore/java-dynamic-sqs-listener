@@ -3,6 +3,7 @@ package com.jashmore.sqs.argument.visibility;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
+import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.payload.Payload;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -25,13 +26,13 @@ public class VisibilityExtenderArgumentResolver implements ArgumentResolver<Visi
     }
 
     @Override
-    public boolean canResolveParameter(final Parameter parameter) {
-        return parameter.getType() == VisibilityExtender.class;
+    public boolean canResolveParameter(final MethodParameter methodParameter) {
+        return methodParameter.getParameter().getType() == VisibilityExtender.class;
     }
 
     @Override
     public VisibilityExtender resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final Parameter parameter,
+                                              final MethodParameter methodParameter,
                                               final Message message) throws ArgumentResolutionException {
         return new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
     }

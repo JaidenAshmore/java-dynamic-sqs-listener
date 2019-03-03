@@ -1,6 +1,7 @@
 package com.jashmore.sqs.spring;
 
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
+import com.jashmore.sqs.util.annotation.AnnotationUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -14,16 +15,15 @@ import java.lang.reflect.Method;
 public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> implements QueueWrapper {
     @Override
     public boolean canWrapMethod(final Method method) {
-        return method.isAnnotationPresent(getAnnotationClass());
+        return AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
+                .isPresent();
     }
 
     @Override
     public MessageListenerContainer wrapMethod(final Object bean, final Method method) {
-        final T annotation = method.getAnnotation(getAnnotationClass());
-        if (annotation == null) {
-            // This should not happen as canWrapMethod should be called before this
-            throw new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName());
-        }
+        final T annotation = AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
+                .orElseThrow(() -> new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName()));
+
         return wrapMethodContainingAnnotation(bean, method, annotation);
     }
 

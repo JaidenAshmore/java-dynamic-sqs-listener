@@ -34,7 +34,7 @@ public class DelegatingArgumentResolverServiceTest {
     public void whenNoResolversCanMatchParameterExceptionIsThrown() {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
-        when(resolver.canResolveParameter(any(Parameter.class))).thenReturn(false);
+        when(resolver.canResolveParameter(any(MethodParameter.class))).thenReturn(false);
         final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
         expectedException.expect(ArgumentResolutionException.class);
         expectedException.expectMessage("No ArgumentResolver found that can process this parameter");

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.resolver.MessageResolver;
@@ -50,7 +51,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenReturn("payload")
                 .thenReturn("payload2");
 
@@ -58,7 +59,7 @@ public class DefaultMessageProcessorTest {
         processor.processMessage(message);
 
         // assert
-        verify(argumentResolverService, times(2)).resolveArgument(eq(queueProperties), any(Parameter.class), eq(message));
+        verify(argumentResolverService, times(2)).resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message));
     }
 
     @Test
@@ -71,7 +72,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenThrow(new ArgumentResolutionException("Error resolving"));
 
         // act
@@ -95,7 +96,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, mockProcessor);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenReturn("payload")
                 .thenReturn("payload2");
 
@@ -116,7 +117,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenReturn("payload");
 
         // act
@@ -136,7 +137,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenReturn("payload");
 
         // act
@@ -157,7 +158,7 @@ public class DefaultMessageProcessorTest {
                 .build();
         final Message message = Message.builder().receiptHandle("handle").build();
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(queueProperties), any(Parameter.class), eq(message)))
+        when(argumentResolverService.resolveArgument(eq(queueProperties), any(MethodParameter.class), eq(message)))
                 .thenReturn("payload");
 
         // act

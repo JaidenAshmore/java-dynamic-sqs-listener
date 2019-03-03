@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container;
+package com.jashmore.sqs.spring;
 
 import static java.util.stream.Collectors.toList;
 
@@ -6,8 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import com.jashmore.sqs.spring.QueueWrapper;
-import lombok.RequiredArgsConstructor;
+import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

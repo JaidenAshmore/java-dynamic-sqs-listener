@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container;
+package com.jashmore.sqs.spring;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,10 +12,11 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 
+import com.jashmore.sqs.spring.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.QueueWrapper;
+import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

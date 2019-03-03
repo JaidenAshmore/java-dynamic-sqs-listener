@@ -15,7 +15,7 @@ public class MessageIdArgumentResolverTest {
     private final MessageIdArgumentResolver messageIdArgumentResolver = new MessageIdArgumentResolver();
 
     @Test
-    public void name() {
+    public void messageIdCanBeResolvedFromMessage() {
         // arrange
         final Message message = Message.builder().messageId("id").build();
 

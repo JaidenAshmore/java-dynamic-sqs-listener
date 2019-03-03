@@ -1,6 +1,7 @@
 package com.jashmore.sqs.argument;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.argument.payload.Payload;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -18,12 +19,12 @@ public class DelegatingArgumentResolverService implements ArgumentResolverServic
     private final Set<ArgumentResolver<?>> argumentResolvers;
 
     @Override
-    public Object resolveArgument(final QueueProperties queueProperties, final Parameter parameter, final Message message) {
+    public Object resolveArgument(final QueueProperties queueProperties, final MethodParameter methodParameter, final Message message) {
         return argumentResolvers.stream()
-                .filter(resolver -> resolver.canResolveParameter(parameter))
+                .filter(resolver -> resolver.canResolveParameter(methodParameter))
                 .map(resolver -> {
                     try {
-                        return resolver.resolveArgumentForParameter(queueProperties, parameter, message);
+                        return resolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
                     } catch (final Throwable throwable) {
                         if (ArgumentResolutionException.class.isAssignableFrom(throwable.getClass())) {
                             throw throwable;

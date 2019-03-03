@@ -29,10 +29,10 @@ public interface ArgumentResolverService {
      * <p>Note that this does not need to be able to resolve the {@link Acknowledge} argument as that is provided by the {@link MessageProcessor}.
      *
      * @param queueProperties details about the queue that the message came from
-     * @param parameter       the parameter to get the argument value for
+     * @param methodParameter the parameter to get the argument value for
      * @param message         the message being processed by this queue
      * @return the value of the argument
      * @throws ArgumentResolutionException when there was an error determine the parameter argument value
      */
-    Object resolveArgument(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException;
+    Object resolveArgument(QueueProperties queueProperties, MethodParameter methodParameter, Message message) throws ArgumentResolutionException;
 }

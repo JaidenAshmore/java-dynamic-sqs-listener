@@ -4,6 +4,7 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.spring.QueueContainerService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
