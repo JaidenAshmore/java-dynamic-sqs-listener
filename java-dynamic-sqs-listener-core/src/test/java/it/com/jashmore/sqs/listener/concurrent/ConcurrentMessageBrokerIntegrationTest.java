@@ -92,7 +92,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         messageBroker.start();
 
         // assert
-        messageReceivedLatch.await(1, SECONDS);
+        messageReceivedLatch.await(60, SECONDS);
         assertThat(messageConsumer.numberOfTimesProcessed.get()).isEqualTo(concurrencyLevel);
 
         // cleanup
@@ -216,10 +216,11 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
 
         @SuppressWarnings("unused")
         public void consume(@Payload final String messagePayload) throws InterruptedException {
+            log.info("Consuming message: {}", messagePayload);
             numberOfTimesProcessed.incrementAndGet();
             messagesReceivedLatch.countDown();
             if (testCompletedLatch != null) {
-                testCompletedLatch.await(1, SECONDS);
+                testCompletedLatch.await(10, SECONDS);
             }
         }
     }
