@@ -178,31 +178,39 @@ The [CustomQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-li
 is a bit verbose so it would most likely be more useful to provide your own annotation that will build the components needed for this use case. See
 [Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
 
-### Testing locally with an example
+### Testing locally an example Spring Boot app with the Spring Starter 
 The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
 SQS Server so you don't need to do any setting up of queues on AWS to test this yourself. For example to run a sample Spring Application you can use the
 [Spring Starter Example](examples/java-dynamic-sqs-listener-spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
 
-1. Clone this repository
+1. Build the framework
 ```bash
-git clone git@github.com:JaidenAshmore/java-dynamic-sqs-listener.git  
+mvn clean install -DskipTests
 ```
+
+1. Run the Spring Starer Example Spring Boot app
+```bash
+(cd examples/java-dynamic-sqs-listener-spring-starter-examples && mvn spring-boot:run)
+``` 
+
+### Testing locally a dynamic concurrency example
+This shows an example of running the SQS Listener in a Java application that will dynamically change the concurrency
+level while it is executing.
+
+This examples works by having a thread constantly placing new messages while the SQS Listener will randomly change
+the rate of concurrency every 10 seconds.
 
 1. Build the framework
 ```bash
-mvn package -DskipTests
+mvn clean install -DskipTests
 ```
 
-1. Change directory to the example
+1. Run the Spring Starer Example Spring Boot app
 ```bash
-cd examples/java-dynamic-sqs-listener-spring-starter-examples
-```
-
-1. Run the Spring Boot app
-```bash
-mvn spring-boot:run
+(cd examples/java-dynamic-sqs-listener-core-examples && mvn exec:java)
 ``` 
 
+### Other examples
 See [examples](./examples) for all of the other available examples. 
 
 ## Bugs and Feedback

@@ -46,4 +46,17 @@
             <version>${project.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <mainClass>com.jashmore.sqs.examples.ConcurrentBrokerExample</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
