@@ -1,5 +1,5 @@
 # Java Dynamic SQS Listener
-[![Build Status](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener.png)](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener)
+[![Build Status](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener.svg?branch=master)](https://travis-ci.org/JaidenAshmore/java-dynamic-sqs-listener)
 [![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=master)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/alerts/)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/context:java)
