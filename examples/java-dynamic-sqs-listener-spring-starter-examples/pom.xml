@@ -91,7 +91,7 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <configuration>
-                        <mainClass>com.jashmore.examples.spring.aws.Application</mainClass>
+                        <mainClass>com.jashmore.sqs.examples.Application</mainClass>
                     </configuration>
                     <executions>
                         <execution>
