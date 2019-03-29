@@ -7,6 +7,10 @@ This contains all of the documentation for the framework.
 more in depth understanding take a look at the JavaDoc for the API.
 1. How to Guides:
     1. Core Framework How To Guides
+        1. [How to extend a message's visibility during processing](how-to-guides/core/core-how-to-extend-message-visibility-during-processing.md): useful for
+        extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
+        1. [How to manually acknowledge message](how-to-guides/core/core-how-to-manually-acknowledge-message.md): useful for when you want to mark the
+        message as successfully processed before the method has finished executing
         1. [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing how the
         arguments in the method being executed are resolved
         1. [How to implement a custom MessageRetriever](how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic
