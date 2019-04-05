@@ -11,7 +11,7 @@ public void messageConsumer(@Payload final String messagePayload) {
 ```
 
 There are only a few core [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)s
-that are provided and therefore may not cover the use cases that is desired. Therefore, the consumers can define their own wrapper that will be used with the
+that are provided and therefore may not cover the use cases that is desired. Therefore, consumers can define their own wrapper that will be used with the
 core ones provided.
 
 ## Example Use Case
@@ -19,7 +19,7 @@ An application wants to provide a custom annotation to wrap methods with some me
 example, the `SleepingMessageRetriever` built in the [how to implement a custom message retrieval](../core/core-how-to-implement-a-custom-message-retrieval.md).
 
 ## Prerequisites
-1. This relies on no [QueueContainerService](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/QueueContainerService.java)
+1. This relies on no [QueueContainerService](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueContainerService.java)
 being provided by the consumer of this framework and therefore the default will be used. See
 [QueueListenerAutoConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
 for more information about how the [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)
@@ -48,7 +48,7 @@ we wrote (see [Core - How to implement a custom message retrieval](../core/core-
     ```
 1. Implement the [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)
 interface with the custom implementation. As we are using annotations to indicate the method to wrap, we can extend the
-[AbstractQueueAnnotationWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/AbstractQueueAnnotationWrapper.java)
+[AbstractQueueAnnotationWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/AbstractQueueAnnotationWrapper.java)
 to make matching on annotations easier. At this point whenever we enter `wrapMethodContainingAnnotation` we have found a bean with a method
 annotated with `SleepingQueueListener` and now we need to create a
 [MessageListenerContainer](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainer.java)

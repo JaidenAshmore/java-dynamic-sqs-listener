@@ -3,7 +3,7 @@ While most of the examples provided in this library are shown using a local [Ela
 [Localstack](https://github.com/localstack/localstack) for a mock SQS queue, the real application should be using an actual SQS queue. This provides a very
 high level, generic guide to creating a Queue in AWS which should help you getting started. However, the online documentation provided by Amazon would be a
 better resources for learning about SQS queues, for example I used
-[AWS Documentation - SQS Setting UP](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-setting-up.html) myself to
+[AWS Documentation - SQS Setting Up](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-setting-up.html) myself to
 write this guide.
 
 In this example we are defining the SQS Properties needed via Environment variables in the application. See `SqsAsyncClient#create()` for more thorough

@@ -1,6 +1,6 @@
 # Spring - How to write Integration Tests
 This guide provides details on how to write a simple integration test for a spring boot application. Note that writing integration tests through the SQS queue
-can be flaky and therefore you should prefer to call your message listener directly in your integration test if possible.
+can be flaky and therefore you should prefer to call your message listener directly in your integration test when testing normal business logic.
 
 For this guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/java-dynamic-sqs-listener-spring-integration-test-example)
 module will be used, which is a very simple application that has a single queue listener that calls out to a service when a message is retrieved. The
@@ -64,7 +64,7 @@ unintentionally.
 1. Write a test that uses the [LocalSqsAsyncClient](../../../util/local-amazon-sqs/src/main/java/com/jashmore/sqs/util/LocalSqsAsyncClient.java) to send
 messages on the queue and assert that they are consumed.
     ```java
-    public class MyService() {
+    public class MyServiceTest {
 
         // Configuration defined above...
     
@@ -85,4 +85,3 @@ messages on the queue and assert that they are consumed.
  
     }
     ```
-

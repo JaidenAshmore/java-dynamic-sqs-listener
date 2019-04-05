@@ -32,7 +32,3 @@ the server for the maven repository.
     ```gpg --keyserver hkp://pool.sks-keyservers.net --send-keys ${KEY_ID}```
     ```gpg --keyserver hkp://keyserver.ubuntu.com --send-keys ${KEY_ID}```
 1. Run the Maven release process: `mvn release:prepare release:perform`
-
-
-
-

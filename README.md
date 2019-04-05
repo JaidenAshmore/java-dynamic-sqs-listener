@@ -6,16 +6,16 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-parent.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
 
 The Java Dynamic SQS Listener is a library that simplifies the listening of messages on an [AWS SQS queue](https://aws.amazon.com/sqs/).  It has been
-built from the ground up with the goal of making it easily customisable, allowing each component of the library to be easily interchanged if desired.
-The library has also been implemented to allow for it to change dynamically during runtime, for example the amount of messages being processed concurrently
-can be changed via a feature flag or other configuration properties.
+built from the ground up with the goal of making it easily customisable, allowing each component of the library to be easily interchanged if desired, as well
+as allowing dynamic changes to configuration during runtime, for example the amount of messages being processed concurrently can be changed via a feature flag
+or other configuration properties.
 
 To keep the README minimal and easy to digest, the rest of the documentation is kept in the [doc](./doc/documentation.md) folder which provides a more
 thorough overview of how to use the library.
 
 ## Core Infrastructure
 This library has been divided into four main components each with distinct responsibilities. The following is a diagram describing a simple flow of a
-single SQS message flowing through each of the components to eventually execute on the consumer's method that can process this message.
+single SQS message flowing through each of the components to eventually be executed by some code.
 
 ![Core Framework Architecture Diagram](./doc/resources/architecture_diagram.png "Core Framework Architecture Diagram")
 
@@ -35,7 +35,7 @@ of messages from the [MessageRetriever](./java-dynamic-sqs-listener-api/src/main
 [MessageProcessor](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java). It can determine when more messages
 are to be processed and the rate of concurrency for processing messages.
 
-See [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
+See the [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
 
 ## Spring Quick Guide
 The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
@@ -69,7 +69,18 @@ public class MyMessageListener {
 
 This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
 is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
-[How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue.
+[How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
+
+### How to Mark the message as successfully processed
+When the method executing the message finishes without throwing an exception, the
+[MessageProcessor](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) will acknowledge the message
+as a success, therefore removing it from the queue. If any exception is thrown, the message will not be acknowledged and if there is a redrive policy the
+message may be placed back onto the queue for another attempt.
+
+Note that if the method contains an
+[Acknowledge](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) argument it is now up to the method
+to manually acknowledge the message as a success as the [MessageProcessor](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
+will not acknowledge the message automatically when the method executes without throwing an exception.
 
 ### Setting up a queue listener that batches requests for messages
 The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
@@ -78,7 +89,7 @@ finish in 10 milliseconds but one takes 10 seconds no other messages will be pic
 [@BatchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/batching/BatchingQueueListener.java)
 provides the same basic functionality but it also provides a timeout where eventually it will request for more messages even for the threads that are
 ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot messages
- on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
+on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
 
 ```java
 @Service
@@ -94,7 +105,7 @@ In this example above we have set it to process 10 messages at once and when the
 before requesting messages for threads waiting for another message.
 
 ### Setting up a queue listener that prefetches messages
-The amount of messages for a service may be extremely high that prefetching messages may be a way to optimise the throughput of the application. The
+When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
 [@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
 annotation can be used to pretech messages in a background thread while messages are currently being processed.  The usage is something like this:
 
@@ -134,7 +145,7 @@ do the logic for converting the message payload to uppercase.
             @Override
             public boolean canResolveParameter(MethodParameter methodParameter) {
                 return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                    && AnnotationUtils.findParameterAnnotation(methodParameter, UppercasePayload.class);
+                    && AnnotationUtils.findParameterAnnotation(methodParameter, UppercasePayload.class).isPresent();
            }
         
            @Override
@@ -144,14 +155,14 @@ do the logic for converting the message payload to uppercase.
         }
     ```
     You may be curious why a custom `AnnotationUtils.findParameterAnnotation` function is used instead of getting the annotation directly from the parameter.
-    The reason for this is due to proxying of object, such as by applying Aspects around your code via CGLIB, which result in a proxy class being used
-    instead of the base class you expect. To find the annotation the code needs to traverse the class hierarchy to eventually find the class that you are
-    looking for. For more information about this, take a look at
+    The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
+    CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
+    annotations. For more information about this, take a look at the JavaDoc provided in
     [AnnotationUtils](./java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
     this problem being tested in
     [PayloadArgumentResolver_ProxyClassTest.java](./java-dynamic-sqs-listener-core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
 1. Include the custom [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
-context for automatic inclusion into the
+context for automatic injection into the
 [ArgumentResolverService](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
      ```java
      @Configuration
@@ -174,8 +185,8 @@ For a more extensive guide for doing this, take a look at
 [Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
 
 ### Building a custom queue listener annotation
-The [CustomQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/custom/CustomQueueListener.java)
-is a bit verbose so it would most likely be more useful to provide your own annotation that will build the components needed for this use case. See
+The core Queue Listener annotations may not provide the exact use case necessary for the application and they also do not provide any dynamic functionality and
+therefore it would be useful to provide your own annotation. See
 [Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
 
 ### Testing locally an example Spring Boot app with the Spring Starter 
