@@ -27,7 +27,7 @@ public void messageListener(@UserGroup final String userGroup) {
          "user": {
              "group": "admin"
          }
-    },
+    }
     // other fields here
 }
 ```
@@ -50,7 +50,7 @@ interface that will be able to resolve these arguments with those annotations.
         public boolean canResolveParameter(MethodParameter methodParameter) {
             // make sure only String parameters with the @UserGroup annotations are resolved using this
             return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                && AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class);
+                && AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class).isPresent();
         }
     
         @Override
