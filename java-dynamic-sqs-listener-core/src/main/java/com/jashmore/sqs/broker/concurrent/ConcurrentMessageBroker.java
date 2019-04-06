@@ -7,20 +7,16 @@ import com.google.common.annotations.VisibleForTesting;
 
 import com.jashmore.sqs.broker.AbstractMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.ResizableSemaphore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -97,7 +93,7 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
          * wait for the whole {@link ExecutorService} to finish and therefore we don't care about an individual thread.
          */
         @Override
-        @SuppressFBWarnings({"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
+        @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
         public void run() {
             boolean shouldShutdown = false;
             while (!shouldShutdown) {
@@ -115,43 +111,16 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
                     continue;
                 }
 
-                concurrentThreadsExecutor.submit(() -> {
-                    final Future<?> messageProcessedFuture;
+                CompletableFuture.supplyAsync(() -> {
                     try {
-                        final Message message;
-                        try {
-                            message = messageRetriever.retrieveMessage();
-                        } catch (final InterruptedException exception) {
-                            log.trace("Thread interrupted waiting for a message");
-                            return;
-                        }
-
-                        messageProcessedFuture = concurrentThreadsExecutor.submit(() -> {
-                            try {
-                                messageProcessor.processMessage(message);
-                                log.trace("Message successfully processed removing from queue");
-                            } catch (final MessageProcessingException messageProcessingException) {
-                                log.error("Error processing message", messageProcessingException);
-                            } finally {
-                                concurrentMessagesBeingProcessedSemaphore.release();
-                            }
-                        });
-                    } catch (Throwable throwable) {
-                        // We need to make sure the semaphore is released if there was a problem processing the message
-                        log.error("Error thrown trying to retrieve a message for processing", throwable);
-                        concurrentMessagesBeingProcessedSemaphore.release();
-                        return;
+                        return messageRetriever.retrieveMessage();
+                    } catch (final InterruptedException exception) {
+                        log.trace("Thread interrupted waiting for a message");
+                        throw new RuntimeException("Failure to get message");
                     }
-
-                    try {
-                        messageProcessedFuture.get();
-                    } catch (InterruptedException exception) {
-                        log.trace("Thread interrupted waiting for the message to be processed");
-                        // do nothing, thread will exit
-                    } catch (ExecutionException exception) {
-                        log.error("Error processing message", exception);
-                    }
-                });
+                }, concurrentThreadsExecutor)
+                        .thenAcceptAsync(messageProcessor::processMessage, messageProcessingThreadsExecutor)
+                        .whenComplete((ignoredResult, throwable) -> concurrentMessagesBeingProcessedSemaphore.release());
             }
 
             log.debug("Shutting down message controller");
@@ -190,7 +159,7 @@ public class ConcurrentMessageBroker extends AbstractMessageBroker {
             } else {
                 messageProcessingThreadsExecutor.shutdown();
             }
-            while (!concurrentThreadsExecutor.isTerminated() && !messageProcessingThreadsExecutor.isTerminated()) {
+            while (!concurrentThreadsExecutor.isTerminated() || !messageProcessingThreadsExecutor.isTerminated()) {
                 log.debug("Waiting for all threads to finish...");
                 try {
                     concurrentThreadsExecutor.awaitTermination(1, MINUTES);

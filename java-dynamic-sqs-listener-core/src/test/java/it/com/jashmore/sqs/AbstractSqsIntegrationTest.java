@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -40,13 +41,13 @@ public abstract class AbstractSqsIntegrationTest {
     public static void sendNumberOfMessages(int numberOfMessages,
                                             final SqsAsyncClient sqsAsyncClient,
                                             final String queueUrl) {
-        int numberOfMessagesSent = 0;
-        while (numberOfMessagesSent < numberOfMessages) {
+        final AtomicInteger numberOfMessagesSent = new AtomicInteger(0);
+        while (numberOfMessagesSent.get() < numberOfMessages) {
             final SendMessageBatchRequest.Builder sendMessageBatchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
-            final int batchSize = Math.min(numberOfMessages - numberOfMessagesSent, MAX_SEND_MESSAGE_BATCH_SIZE);
+            final int batchSize = Math.min(numberOfMessages - numberOfMessagesSent.get(), MAX_SEND_MESSAGE_BATCH_SIZE);
             sendMessageBatchRequestBuilder.entries(IntStream.range(0, batchSize)
                     .map(index -> numberOfMessages + index)
-                    .mapToObj(id -> SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + id).build())
+                    .mapToObj(id -> SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + (numberOfMessagesSent.get() + id)).build())
                     .collect(Collectors.toSet()));
             try {
                 sqsAsyncClient.sendMessageBatch(sendMessageBatchRequestBuilder.build()).get();
@@ -55,7 +56,7 @@ public abstract class AbstractSqsIntegrationTest {
                 throw new RuntimeException(exception);
             }
 
-            numberOfMessagesSent += batchSize;
+            numberOfMessagesSent.getAndAdd(batchSize);
         }
     }
 }
