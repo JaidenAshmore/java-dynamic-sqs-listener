@@ -8,6 +8,8 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * {@link MessageResolver} that will resolve the message immediately by trigger the deletion of the message on the queue.
  */
@@ -24,14 +26,14 @@ public class IndividualMessageResolver implements MessageResolver {
                 .receiptHandle(message.receiptHandle())
                 .build();
 
-        sqsAsyncClient.deleteMessage(deleteMessageRequest)
-                .whenComplete((response, exception) -> {
-                    if (exception != null) {
-                        log.error("Error deleting message: " + message.messageId(), exception);
-                        return;
-                    }
-
-                    log.debug("Message successfully deleted: {}", message.messageId());
-                });
+        try {
+            sqsAsyncClient.deleteMessage(deleteMessageRequest)
+                    .get();
+            log.debug("Message successfully deleted: {}", message.messageId());
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException exception) {
+            log.error("Error deleting message: " + message.messageId(), exception);
+        }
     }
 }

@@ -26,6 +26,7 @@ import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,7 +34,6 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -45,11 +45,20 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
     public LocalSqsRule localSqsRule = new LocalSqsRule();
 
     private String queueUrl;
+    private SqsAsyncClient sqsAsyncClient;
+    private QueueProperties queueProperties;
+    private ArgumentResolverService argumentResolverService;
 
     @Before
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
+        queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
+        sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, sqsAsyncClient);
+    }
 
+    @After
+    public void tearDown() {
         // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
         // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
         Thread.interrupted();
@@ -59,17 +68,15 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
     public void concurrentListenerCanConsumeMultipleMessagesFromQueueAtOnce() throws Exception {
         // arrange
         final int concurrencyLevel = 5;
-        final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                IndividualMessageRetrieverProperties.builder().visibilityTimeoutForMessagesInSeconds(5).build()
+                IndividualMessageRetrieverProperties.builder()
+                        .visibilityTimeoutForMessagesInSeconds(5)
+                        .build()
         );
-        final CountDownLatch messageReceivedLatch = new CountDownLatch(concurrencyLevel);
-        final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final ArgumentResolverService argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, sqsAsyncClient);
-        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, testCompletedLatch);
+        final CountDownLatch concurrentMessagesLatch = new CountDownLatch(concurrencyLevel);
+        final MessageConsumer messageConsumer = new MessageConsumer(concurrentMessagesLatch);
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
@@ -90,15 +97,13 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
 
         // act
         messageBroker.start();
-
-        // assert
-        messageReceivedLatch.await(60, SECONDS);
-        assertThat(messageConsumer.numberOfTimesProcessed.get()).isEqualTo(concurrencyLevel);
+        concurrentMessagesLatch.await(60, SECONDS);
 
         // cleanup
-        final Future<?> containerStoppedFuture = messageBroker.stop();
-        testCompletedLatch.countDown();
-        containerStoppedFuture.get(4, SECONDS);
+        messageBroker.stop().get(4, SECONDS);
+
+        // assert
+        assertThat(messageConsumer.numberOfTimesProcessed.get()).isEqualTo(concurrencyLevel);
         assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
@@ -117,7 +122,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
         final ArgumentResolverService argumentResolverService = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
-        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
+        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
@@ -170,7 +175,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
         final ArgumentResolverService argumentResolverService = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
-        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch, null);
+        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
@@ -204,24 +209,20 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class MessageConsumer {
         private final CountDownLatch messagesReceivedLatch;
-        private final CountDownLatch testCompletedLatch;
         private final AtomicInteger numberOfTimesProcessed = new AtomicInteger(0);
 
-        public MessageConsumer(final CountDownLatch messagesReceivedLatch, final CountDownLatch testCompletedLatch) {
+        public MessageConsumer(final CountDownLatch messagesReceivedLatch) {
             this.messagesReceivedLatch = messagesReceivedLatch;
-            this.testCompletedLatch = testCompletedLatch;
         }
 
         @SuppressWarnings("unused")
-        public void consume(@Payload final String messagePayload) throws InterruptedException {
+        public void consume(@Payload final String messagePayload) {
             log.info("Consuming message: {}", messagePayload);
             numberOfTimesProcessed.incrementAndGet();
             messagesReceivedLatch.countDown();
-            if (testCompletedLatch != null) {
-                testCompletedLatch.await(10, SECONDS);
-            }
         }
     }
 }

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
+
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -255,11 +257,12 @@ public class BatchingMessageRetrieverTest {
                         }
                     }
                     receivedMessageLatch.countDown();
-
-                    return ReceiveMessageResponse.builder()
-                            .messages(Message.builder().build(), Message.builder().build(), Message.builder().build(),
-                                    Message.builder().build(), Message.builder().build())
-                            .build();
+                    try {
+                        testCompletedLatch.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return ReceiveMessageResponse.builder().build();
                 }));
         batchingMessageRetriever.start();
 
@@ -269,15 +272,15 @@ public class BatchingMessageRetrieverTest {
                 .collect(Collectors.toSet());
         waitForLatch(receivedMessageLatch, 1000);
 
-        // assert
-        verify(sqsAsyncClient, times(1)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
-
         // cleanup
+        allMessagesFutures.forEach(future -> future.cancel(true));
         final Future<Object> stoppingFuture = batchingMessageRetriever.stop();
         testCompletedLatch.countDown();
-        allMessagesFutures.forEach(future -> future.cancel(true));
         stoppingFuture.get(1, SECONDS);
+
+        // assert
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
     }
 
     @Test
