@@ -1,5 +1,7 @@
 package com.jashmore.sqs.retriever.batching;
 
+import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BACKOFF_TIME_IN_MS;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import com.jashmore.sqs.QueueProperties;
@@ -133,16 +135,9 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 }
 
                 try {
-                    final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest
-                            .builder()
-                            .queueUrl(queueProperties.getQueueUrl())
-                            .visibilityTimeout(properties.getVisibilityTimeoutInSeconds())
-                            .maxNumberOfMessages(numberOfMessagesToObtain)
-                            .waitTimeSeconds(getWaitTimeInSeconds())
-                            .build();
-                    final Future<ReceiveMessageResponse> receiveMessageResponseFuture = sqsAsyncClient.receiveMessage(receiveMessageRequest);
                     try {
-                        final ReceiveMessageResponse response = receiveMessageResponseFuture.get();
+                        final ReceiveMessageResponse response = sqsAsyncClient.receiveMessage(buildReceiveMessageRequest(numberOfMessagesToObtain))
+                                .get();
                         for (final Message message : response.messages()) {
                             messagesDownloaded.put(message);
                         }
@@ -152,10 +147,59 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     }
                 } catch (final Throwable throwable) {
                     log.error("Error thrown trying to obtain messages", throwable);
+                    try {
+                        Thread.sleep(getBackoffTimeInMs());
+                    } catch (final InterruptedException interruptedException) {
+                        log.trace("Thread interrupted during error backoff thread sleeping");
+                        break;
+                    }
                 }
             }
             completedFuture.complete("Stopped");
         }
+    }
+
+    /**
+     * Build the request that will download the messages from SQS.
+     *
+     * @param numberOfMessagesToObtain the maximum number of messages to obtain
+     * @return the request that will be sent to SQS
+     */
+    private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
+        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
+                .builder()
+                .queueUrl(queueProperties.getQueueUrl())
+                .maxNumberOfMessages(numberOfMessagesToObtain)
+                .waitTimeSeconds(getWaitTimeInSeconds());
+
+        final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutInSeconds();
+        if (visibilityTimeoutInSeconds != null) {
+            if (visibilityTimeoutInSeconds < 0) {
+                log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
+            } else {
+                requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
+            }
+        }
+
+        return requestBuilder.build();
+    }
+
+    /**
+     * Get the amount of time in milliseconds that the thread should wait after a failure to get messages.
+     *
+     * @return the amount of time to backoff on errors in milliseconds
+     */
+    private int getBackoffTimeInMs() {
+        return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
+                .filter(backoffPeriod -> {
+                    if (backoffPeriod > 0) {
+                        return true;
+                    } else {
+                        log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default instead", backoffPeriod);
+                        return false;
+                    }
+                })
+                .orElse(DEFAULT_BACKOFF_TIME_IN_MS);
     }
 
     /**

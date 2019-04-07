@@ -32,7 +32,7 @@ public interface AsyncMessageRetriever extends MessageRetriever {
      *
      * <ul>
      *     <li>This method must be non-blocking and return once the background thread has been triggered to stop.</li>
-     *     <li>If this retriever has not been started or has already been stopped, any calls to this method will throw an {@link IllegalStateException}.</li>
+     *     <li>If this retriever has not been started or has already been stopped, any calls to this method will return a resolved {@link Future}</li>
      *     <li>The returned {@link Future} does not have any requirements for the value resolved and therefore should not be relied upon.</li>
      * </ul>
      *
