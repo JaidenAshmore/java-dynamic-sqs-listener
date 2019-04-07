@@ -12,7 +12,7 @@ import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
@@ -69,14 +69,12 @@ public class Application {
                 .start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        final LocalSqsAsyncClient delegate = new LocalSqsAsyncClient(SqsQueuesConfig
+        return new LocalSqsAsyncClient(SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("test").build())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("anotherTest").build())
                 .build());
-        delegate.buildQueues();
-        return new RandomlyFailingSqsAsyncClient(delegate);
     }
 
     /**
@@ -88,7 +86,7 @@ public class Application {
     @Bean
     public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
         return (queueProperties) -> {
-            final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = StaticPrefetchingMessageRetrieverProperties
+            final PrefetchingProperties prefetchingProperties = PrefetchingProperties
                     .builder()
                     .maxPrefetchedMessages(10)
                     .desiredMinPrefetchedMessages(0)
@@ -96,7 +94,7 @@ public class Application {
                     .visibilityTimeoutForMessagesInSeconds(30)
                     .errorBackoffTimeInMilliseconds(10)
                     .build();
-            return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, staticPrefetchingMessageRetrieverProperties, Executors.newCachedThreadPool());
+            return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
         };
     }
 
