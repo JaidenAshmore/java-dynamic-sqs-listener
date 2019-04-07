@@ -13,8 +13,9 @@ import javax.validation.constraints.PositiveOrZero;
 public class StaticBatchingMessageRetrieverProperties implements BatchingMessageRetrieverProperties {
     private final int numberOfThreadsWaitingTrigger;
     private final Integer messageRetrievalPollingPeriodInMs;
-    private final int visibilityTimeoutInSeconds;
+    private final Integer visibilityTimeoutInSeconds;
     private final Integer waitTimeInSeconds;
+    private final Integer errorBackoffTimeInMilliseconds;
 
     @Positive
     @Override
@@ -29,9 +30,10 @@ public class StaticBatchingMessageRetrieverProperties implements BatchingMessage
         return messageRetrievalPollingPeriodInMs;
     }
 
+    @Nullable
     @Positive
     @Override
-    public int getVisibilityTimeoutInSeconds() {
+    public Integer getVisibilityTimeoutInSeconds() {
         return visibilityTimeoutInSeconds;
     }
 
@@ -40,5 +42,12 @@ public class StaticBatchingMessageRetrieverProperties implements BatchingMessage
     @Override
     public Integer getMessageWaitTimeInSeconds() {
         return waitTimeInSeconds;
+    }
+
+    @Nullable
+    @PositiveOrZero
+    @Override
+    public Integer getErrorBackoffTimeInMilliseconds() {
+        return errorBackoffTimeInMilliseconds;
     }
 }
