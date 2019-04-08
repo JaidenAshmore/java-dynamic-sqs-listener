@@ -218,7 +218,7 @@ public class BatchingMessageRetrieverTest {
 
         // act
         final Future<?> messageRetrievalFuture = requestMessageOnNewThread(batchingMessageRetriever);
-        
+
         try {
             // assert
             waitForLatch(receivedMessageLatch, pollingPeriodInMs / 4);
@@ -265,16 +265,8 @@ public class BatchingMessageRetrieverTest {
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> CompletableFuture.supplyAsync(() -> {
-                    if (receivedMessageLatch.getCount() == 0) {
-                        try {
-                            testCompletedLatch.await();
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            return ReceiveMessageResponse.builder().build();
-                        }
-                    }
-                    receivedMessageLatch.countDown();
                     try {
+                        receivedMessageLatch.countDown();
                         testCompletedLatch.await();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -291,9 +283,6 @@ public class BatchingMessageRetrieverTest {
 
         // cleanup
         allMessagesFutures.forEach(future -> future.cancel(true));
-        final Future<Object> stoppingFuture = batchingMessageRetriever.stop();
-        testCompletedLatch.countDown();
-        stoppingFuture.get(1, SECONDS);
 
         // assert
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
