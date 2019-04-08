@@ -453,7 +453,7 @@ public class BatchingMessageRetrieverTest {
         // assert
         assertThat(firstMessageTime).hasNonNegativeValue();
         assertThat(secondMessageTime).hasNonNegativeValue();
-        assertThat(secondMessageTime).hasValueGreaterThan(firstMessageTime.get() + backoffTimeInMs);
+        assertThat(secondMessageTime).hasValueGreaterThanOrEqualTo(firstMessageTime.get() + backoffTimeInMs);
     }
 
     @Test
@@ -489,7 +489,7 @@ public class BatchingMessageRetrieverTest {
         // assert
         assertThat(firstMessageTime).hasNonNegativeValue();
         assertThat(secondMessageTime).hasNonNegativeValue();
-        assertThat(secondMessageTime).hasValueGreaterThan(firstMessageTime.get() + DEFAULT_BACKOFF_TIME_IN_MS);
+        assertThat(secondMessageTime).hasValueGreaterThanOrEqualTo(firstMessageTime.get() + DEFAULT_BACKOFF_TIME_IN_MS);
     }
 
     private Future<?> requestMessageOnNewThread(final BatchingMessageRetriever batchingMessageRetriever) {
