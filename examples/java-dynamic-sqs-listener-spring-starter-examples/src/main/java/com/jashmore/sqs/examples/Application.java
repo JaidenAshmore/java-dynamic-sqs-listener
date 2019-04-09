@@ -12,7 +12,8 @@ import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
@@ -86,7 +87,7 @@ public class Application {
     @Bean
     public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
         return (queueProperties) -> {
-            final PrefetchingProperties prefetchingProperties = PrefetchingProperties
+            final PrefetchingMessageRetrieverProperties prefetchingProperties = StaticPrefetchingMessageRetrieverProperties
                     .builder()
                     .maxPrefetchedMessages(10)
                     .desiredMinPrefetchedMessages(0)

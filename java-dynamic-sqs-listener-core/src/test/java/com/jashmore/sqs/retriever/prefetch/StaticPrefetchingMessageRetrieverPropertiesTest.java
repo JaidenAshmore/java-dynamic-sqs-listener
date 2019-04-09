@@ -7,29 +7,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class PrefetchingPropertiesTest {
-
+public class StaticPrefetchingMessageRetrieverPropertiesTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
-    public void desiredMinPrefetchedMessagesIsRequired() {
-        // arrange
-        expectedException.expect(isA(NullPointerException.class));
-
-        // act
-        PrefetchingProperties.builder()
-                .maxPrefetchedMessages(10)
-                .build();
-    }
-
-    @Test
     public void maxPrefetchedMessagesIsRequired() {
         // arrange
-        expectedException.expect(isA(NullPointerException.class));
+        expectedException.expect(isA(IllegalArgumentException.class));
+        expectedException.expectMessage("maxPrefetchedMessages should be greater than equal to zero");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(10)
                 .build();
     }
@@ -41,7 +30,7 @@ public class PrefetchingPropertiesTest {
         expectedException.expectMessage("desiredMinPrefetchedMessages should be greater than equal to zero");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(-1)
                 .build();
     }
@@ -49,7 +38,7 @@ public class PrefetchingPropertiesTest {
     @Test
     public void zeroDesiredMinMessagePrefetchedMessagesIsEligibleValue() {
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .maxPrefetchedMessages(2)
                 .desiredMinPrefetchedMessages(0)
                 .build();
@@ -62,7 +51,7 @@ public class PrefetchingPropertiesTest {
         expectedException.expectMessage("maxPrefetchedMessages(2) should be greater than or equal to desiredMinPrefetchedMessages(5)");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(5)
                 .maxPrefetchedMessages(2)
                 .build();
@@ -75,7 +64,7 @@ public class PrefetchingPropertiesTest {
         expectedException.expectMessage("errorBackoffTimeInMilliseconds should be greater than or equal to zero");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(2)
                 .maxPrefetchedMessages(5)
                 .errorBackoffTimeInMilliseconds(-100)
@@ -89,7 +78,7 @@ public class PrefetchingPropertiesTest {
         expectedException.expectMessage("maxWaitTimeInSecondsToObtainMessagesFromServer should be greater than or equal to zero");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(2)
                 .maxPrefetchedMessages(5)
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(-1)
@@ -103,7 +92,7 @@ public class PrefetchingPropertiesTest {
         expectedException.expectMessage("maxWaitTimeInSecondsToObtainMessagesFromServer should be less than the SQS limit of 20");
 
         // act
-        PrefetchingProperties.builder()
+        StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(2)
                 .maxPrefetchedMessages(5)
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS + 10)

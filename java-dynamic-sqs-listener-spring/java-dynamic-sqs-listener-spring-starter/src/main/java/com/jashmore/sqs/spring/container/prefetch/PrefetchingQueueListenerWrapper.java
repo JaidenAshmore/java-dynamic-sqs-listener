@@ -11,7 +11,7 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
@@ -50,7 +50,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final PrefetchingProperties batchingProperties = PrefetchingProperties
+        final StaticPrefetchingMessageRetrieverProperties batchingProperties = StaticPrefetchingMessageRetrieverProperties
                 .builder()
                 .desiredMinPrefetchedMessages(annotation.desiredMinPrefetchedMessages())
                 .maxPrefetchedMessages(annotation.maxPrefetchedMessages())

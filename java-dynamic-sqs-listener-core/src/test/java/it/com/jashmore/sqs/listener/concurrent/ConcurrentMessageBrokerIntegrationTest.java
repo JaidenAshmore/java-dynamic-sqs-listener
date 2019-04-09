@@ -22,7 +22,7 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
 import lombok.extern.slf4j.Slf4j;
@@ -163,7 +163,7 @@ public class ConcurrentMessageBrokerIntegrationTest extends AbstractSqsIntegrati
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                PrefetchingProperties
+                StaticPrefetchingMessageRetrieverProperties
                         .builder()
                         .visibilityTimeoutForMessagesInSeconds(1)
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(1)
