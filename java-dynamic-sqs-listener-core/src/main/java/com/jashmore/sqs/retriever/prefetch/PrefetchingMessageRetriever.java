@@ -2,6 +2,7 @@ package com.jashmore.sqs.retriever.prefetch;
 
 import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import com.jashmore.sqs.QueueProperties;
@@ -91,7 +92,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         if (properties.getDesiredMinPrefetchedMessages() == 0) {
             this.internalMessageQueue = new SynchronousQueue<>();
         } else {
-            this.internalMessageQueue = new LinkedBlockingQueue<>(properties.getDesiredMinPrefetchedMessages() - 1);
+            this.internalMessageQueue = new LinkedBlockingQueue<>(desiredMinPrefetchedMessages - 1);
         }
     }
 
@@ -103,7 +104,14 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         log.info("Starting retrieval of messages");
         fetchingMessagesCompletedFuture = new CompletableFuture<>();
-        fetchingMessagesFuture = executorService.submit(new QueueMessageRetriever(fetchingMessagesCompletedFuture));
+        fetchingMessagesFuture = executorService.submit(() -> {
+            final QueueMessageRetriever backgroundMessageRetriever = new QueueMessageRetriever(
+                    sqsAsyncClient, queueProperties, properties, internalMessageQueue, maxPrefetchedMessages
+            );
+            backgroundMessageRetriever.run();
+            log.debug("Finished obtaining messages");
+            fetchingMessagesCompletedFuture.complete("Done");
+        });
     }
 
     @Override
@@ -133,8 +141,13 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
      * This does the actually retrieval of the messages in the background where it places it into a {@link BlockingQueue} for retrieval.
      */
     @AllArgsConstructor
-    private class QueueMessageRetriever implements Runnable {
-        private final CompletableFuture<Object> completableFuture;
+    @VisibleForTesting
+    static class QueueMessageRetriever implements Runnable {
+        private final SqsAsyncClient sqsAsyncClient;
+        private final QueueProperties queueProperties;
+        private final PrefetchingMessageRetrieverProperties properties;
+        private final BlockingQueue<Message> internalMessageQueue;
+        private final int maxPrefetchedMessages;
 
         @Override
         public void run() {
@@ -167,8 +180,6 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     }
                 }
             }
-            log.debug("Finished obtaining messages");
-            completableFuture.complete("DONE");
         }
 
         /**
