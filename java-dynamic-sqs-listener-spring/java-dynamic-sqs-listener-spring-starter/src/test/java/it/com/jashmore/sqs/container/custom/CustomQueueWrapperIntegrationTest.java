@@ -14,7 +14,7 @@ import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.resolver.MessageResolver;
 import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.custom.CustomQueueListener;
 import com.jashmore.sqs.spring.container.custom.MessageBrokerFactory;
 import com.jashmore.sqs.spring.container.custom.MessageProcessorFactory;
@@ -98,7 +98,7 @@ public class CustomQueueWrapperIntegrationTest {
         @Bean
         public MessageRetrieverFactory myMessageRetrieverFactory(final SqsAsyncClient sqsAsyncClient) {
             return (queueProperties) -> {
-                final PrefetchingProperties prefetchingProperties = PrefetchingProperties
+                final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = StaticPrefetchingMessageRetrieverProperties
                         .builder()
                         .maxPrefetchedMessages(10)
                         .desiredMinPrefetchedMessages(0)
@@ -106,7 +106,7 @@ public class CustomQueueWrapperIntegrationTest {
                         .visibilityTimeoutForMessagesInSeconds(30)
                         .errorBackoffTimeInMilliseconds(10)
                         .build();
-                return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties, Executors.newCachedThreadPool());
+                return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, staticPrefetchingMessageRetrieverProperties, Executors.newCachedThreadPool());
             };
         }
 

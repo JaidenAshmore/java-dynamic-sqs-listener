@@ -44,7 +44,7 @@ public class PrefetchingMessageRetrieverTest {
             .queueUrl(QUEUE_URL)
             .build();
 
-    private static final PrefetchingProperties DEFAULT_PREFETCHING_PROPERTIES = PrefetchingProperties.builder()
+    private static final StaticPrefetchingMessageRetrieverProperties DEFAULT_PREFETCHING_PROPERTIES = StaticPrefetchingMessageRetrieverProperties.builder()
             .desiredMinPrefetchedMessages(10)
             .maxPrefetchedMessages(20)
             .maxWaitTimeInSecondsToObtainMessagesFromServer(2)
@@ -61,6 +61,42 @@ public class PrefetchingMessageRetrieverTest {
     private SqsAsyncClient sqsAsyncClient;
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    @Test
+    public void lessMaxPrefetchedMessagesThanDesiredPrefetchedThrowsException() {
+        // arrange
+        final PrefetchingMessageRetrieverProperties properties = new PrefetchingMessageRetrieverProperties() {
+            @Override
+            public int getDesiredMinPrefetchedMessages() {
+                return 10;
+            }
+
+            @Override
+            public int getMaxPrefetchedMessages() {
+                return 5;
+            }
+
+            @Override
+            public Integer getMaxWaitTimeInSecondsToObtainMessagesFromServer() {
+                return null;
+            }
+
+            @Override
+            public Integer getVisibilityTimeoutForMessagesInSeconds() {
+                return null;
+            }
+
+            @Override
+            public Integer getErrorBackoffTimeInMilliseconds() {
+                return null;
+            }
+        };
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("maxPrefetchedMessages should be greater than or equal to desiredMinPrefetchedMessages");
+
+        // act
+        new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties, executorService);
+    }
 
     @Test
     public void messageObtainedFromServerCanBeObtained() throws InterruptedException {
@@ -206,11 +242,11 @@ public class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch twoMessagesRetrieved = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .maxPrefetchedMessages(4)
                 .desiredMinPrefetchedMessages(2)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         final Message firstRequestMessage = Message.builder().build();
         final Message secondRequestMessage = Message.builder().build();
         final Message thirdMessage = Message.builder().build();
@@ -242,11 +278,11 @@ public class PrefetchingMessageRetrieverTest {
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch secondMessageRequestedLatch = new CountDownLatch(1);
         final CountDownLatch finalMessageRequestedLatch = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(5)
                 .maxPrefetchedMessages(5)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(ReceiveMessageResponse.builder()
                         .messages(
@@ -286,11 +322,11 @@ public class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
         final CountDownLatch messagesReceivedLatch = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(4)
                 .maxPrefetchedMessages(5)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(invocation -> {
                     messagesReceivedLatch.countDown();
@@ -326,7 +362,7 @@ public class PrefetchingMessageRetrieverTest {
         final CountDownLatch firstmessagesRequested = new CountDownLatch(1);
         final CountDownLatch secondmessagesRequested = new CountDownLatch(1);
         final CountDownLatch thirdmessagesRequested = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(2)
                 .maxPrefetchedMessages(4)
                 .build();
@@ -344,7 +380,7 @@ public class PrefetchingMessageRetrieverTest {
                     return mockFutureWithGet(ReceiveMessageResponse.builder().messages(Message.builder().build()).build());
                 });
         final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES,
-                prefetchingProperties, executorService);
+                staticPrefetchingMessageRetrieverProperties, executorService);
         prefetchingMessageRetriever.start();
 
         // act
@@ -420,11 +456,11 @@ public class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch messagesReceivedLatch = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .maxPrefetchedMessages(2)
                 .desiredMinPrefetchedMessages(2)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenAnswer((invocation -> {
             messagesReceivedLatch.countDown();
             return mockFutureWithGet(ReceiveMessageResponse.builder().messages(Message.builder().build(), Message.builder().build()));
@@ -440,7 +476,7 @@ public class PrefetchingMessageRetrieverTest {
     }
 
     /**
-     * This makes sure that if {@link PrefetchingProperties#desiredMinPrefetchedMessages} is set to zero it will not attempt to call out for more messages
+     * This makes sure that if {@link StaticPrefetchingMessageRetrieverProperties#desiredMinPrefetchedMessages} is set to zero it will not attempt to call out for more messages
      * until there are no messages left in the retriever.
      */
     @Test
@@ -448,11 +484,11 @@ public class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch secondPrefetchRequested = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .maxPrefetchedMessages(2)
                 .desiredMinPrefetchedMessages(0)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureWithGet(ReceiveMessageResponse.builder()
                         .messages(Message.builder().build(), Message.builder().build())
@@ -479,12 +515,12 @@ public class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch secondPrefetchRequested = new CountDownLatch(1);
         final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        final PrefetchingProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+        final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .maxPrefetchedMessages(2)
                 .desiredMinPrefetchedMessages(0)
                 .errorBackoffTimeInMilliseconds(0)
                 .build();
-        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, prefetchingProperties);
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = buildRetriever(testCompletedLatch, staticPrefetchingMessageRetrieverProperties);
         final Message expectedMessage = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(answerWithMockFutureThatThrows(new RuntimeException("error")))
@@ -507,8 +543,8 @@ public class PrefetchingMessageRetrieverTest {
         return buildRetriever(testCompletedLatch, DEFAULT_PREFETCHING_PROPERTIES);
     }
 
-    private PrefetchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch, final PrefetchingProperties prefetchingProperties) {
-        return new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, prefetchingProperties, executorService) {
+    private PrefetchingMessageRetriever buildRetriever(final CountDownLatch testCompletedLatch, final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties) {
+        return new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, staticPrefetchingMessageRetrieverProperties, executorService) {
             @Override
             public synchronized Future<Object> stop() {
                 try {
@@ -544,7 +580,8 @@ public class PrefetchingMessageRetrieverTest {
         return future;
     }
 
-    private Answer<CompletableFuture<ReceiveMessageResponse>> waitUntilTestCompleted(final CountDownLatch messageRequestedLatch, final CountDownLatch testCompletedLatch) {
+    private Answer<CompletableFuture<ReceiveMessageResponse>> waitUntilTestCompleted(final CountDownLatch messageRequestedLatch,
+                                                                                     final CountDownLatch testCompletedLatch) {
         return (invocation) -> {
             messageRequestedLatch.countDown();
             testCompletedLatch.await(1, SECONDS);

@@ -189,6 +189,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
      *
      * @return the amount of time to backoff on errors in milliseconds
      */
+    @SuppressWarnings("Duplicates")
     private int getBackoffTimeInMs() {
         return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
                 .filter(backoffPeriod -> {

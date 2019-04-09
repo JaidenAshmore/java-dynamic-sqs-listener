@@ -23,7 +23,7 @@ import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +88,7 @@ public class ConcurrentBrokerExample {
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                PrefetchingProperties
+                StaticPrefetchingMessageRetrieverProperties
                         .builder()
                         .desiredMinPrefetchedMessages(10)
                         .maxPrefetchedMessages(20)

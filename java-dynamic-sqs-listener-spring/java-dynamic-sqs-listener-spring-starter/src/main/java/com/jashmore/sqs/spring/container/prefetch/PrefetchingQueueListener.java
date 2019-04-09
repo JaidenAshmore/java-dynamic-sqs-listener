@@ -9,7 +9,7 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import org.springframework.core.env.Environment;
@@ -70,7 +70,7 @@ public @interface PrefetchingQueueListener {
      * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
      *
      * @return the minimum number of prefetched messages
-     * @see PrefetchingProperties#desiredMinPrefetchedMessages for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#desiredMinPrefetchedMessages for more details and constraints
      */
     int desiredMinPrefetchedMessages() default 0;
 
@@ -78,7 +78,7 @@ public @interface PrefetchingQueueListener {
      * The total number of messages that can be prefetched from the server and stored in memory for execution.
      *
      * @return the max number of prefetched issues
-     * @see PrefetchingProperties#maxPrefetchedMessages for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#maxPrefetchedMessages for more details and constraints
      */
     int maxPrefetchedMessages() default MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 
@@ -86,7 +86,7 @@ public @interface PrefetchingQueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see PrefetchingProperties#visibilityTimeoutForMessagesInSeconds for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#visibilityTimeoutForMessagesInSeconds for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 }

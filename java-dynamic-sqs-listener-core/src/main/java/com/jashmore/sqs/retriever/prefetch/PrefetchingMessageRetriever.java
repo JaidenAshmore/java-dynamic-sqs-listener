@@ -1,5 +1,7 @@
 package com.jashmore.sqs.retriever.prefetch;
 
+import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS;
+
 import com.google.common.base.Preconditions;
 
 import com.jashmore.sqs.QueueProperties;
@@ -12,10 +14,10 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,17 +59,17 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final ExecutorService executorService;
-    private final PrefetchingProperties properties;
+    private final PrefetchingMessageRetrieverProperties properties;
     private final BlockingQueue<Message> internalMessageQueue;
+    private final int maxPrefetchedMessages;
 
-    private QueueMessageRetriever queueMessageRetriever;
     private Future<?> fetchingMessagesFuture;
     private CompletableFuture<Object> fetchingMessagesCompletedFuture;
 
 
     public PrefetchingMessageRetriever(final SqsAsyncClient sqsAsyncClient,
                                        final QueueProperties queueProperties,
-                                       final PrefetchingProperties properties,
+                                       final PrefetchingMessageRetrieverProperties properties,
                                        final ExecutorService executorService) {
         Preconditions.checkNotNull(sqsAsyncClient, "sqsAsyncClient");
         Preconditions.checkNotNull(queueProperties, "queueProperties");
@@ -78,6 +80,11 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         this.queueProperties = queueProperties;
         this.executorService = executorService;
         this.properties = properties;
+        this.maxPrefetchedMessages = properties.getMaxPrefetchedMessages();
+        final int desiredMinPrefetchedMessages = properties.getDesiredMinPrefetchedMessages();
+
+        Preconditions.checkArgument(maxPrefetchedMessages >= desiredMinPrefetchedMessages,
+                "maxPrefetchedMessages should be greater than or equal to desiredMinPrefetchedMessages");
 
         // As LinkedBlockingQueue does not allow for an empty queue we use a SynchronousQueue so that it will only get more messages until the consumer has
         // grabbed on from the retriever
@@ -96,8 +103,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         log.info("Starting retrieval of messages");
         fetchingMessagesCompletedFuture = new CompletableFuture<>();
-        queueMessageRetriever = new QueueMessageRetriever(fetchingMessagesCompletedFuture);
-        fetchingMessagesFuture = executorService.submit(queueMessageRetriever);
+        fetchingMessagesFuture = executorService.submit(new QueueMessageRetriever(fetchingMessagesCompletedFuture));
     }
 
     @Override
@@ -114,7 +120,6 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
             return fetchingMessagesCompletedFuture;
         } finally {
             fetchingMessagesFuture = null;
-            queueMessageRetriever = null;
             fetchingMessagesCompletedFuture = null;
         }
     }
@@ -133,64 +138,93 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         @Override
         public void run() {
-            boolean shouldStop = false;
-            while (!shouldStop) {
+            while (true) {
                 try {
-                    final ReceiveMessageResponse result;
                     try {
-                        result = retrieveMoreMessages();
+                        final ReceiveMessageResponse result = sqsAsyncClient.receiveMessage(buildReceiveMessageRequest())
+                                .get();
                         log.debug("Retrieved {} new messages for {} existing messages. Total: {}",
                                 result.messages().size(),
                                 internalMessageQueue.size(),
                                 internalMessageQueue.size() + result.messages().size()
                         );
-                    } catch (final InterruptedException interruptedException) {
-                        log.info("Thread interrupted. Exiting...");
-                        shouldStop = true;
-                        continue;
-                    }
 
-                    for (final Message message : result.messages()) {
-                        try {
+                        for (final Message message : result.messages()) {
                             internalMessageQueue.put(message);
-                        } catch (InterruptedException exception) {
-                            log.warn("Thread interrupted. Exiting...");
-                            shouldStop = true;
                         }
+                    } catch (final InterruptedException exception) {
+                        log.debug("Thread interrupted while placing messages onto queue. Exiting...");
+                        break;
                     }
                 } catch (final Throwable throwable) {
                     log.error("Exception thrown when retrieving messages", throwable);
 
                     try {
-                        Thread.sleep(properties.getErrorBackoffTimeInMilliseconds());
+                        Thread.sleep(getBackoffTimeInMs());
                     } catch (final InterruptedException interruptedException) {
-                        log.warn("Thread interrupted during error backoff. Exiting...");
-                        shouldStop = true;
+                        log.debug("Thread interrupted during error backoff. Exiting...");
+                        break;
                     }
                 }
             }
-            log.info("Finished obtaining messages");
+            log.debug("Finished obtaining messages");
             completableFuture.complete("DONE");
         }
 
-        private ReceiveMessageResponse retrieveMoreMessages() throws InterruptedException {
-            final int numberOfPrefetchSlotsLeft = properties.getMaxPrefetchedMessages() - internalMessageQueue.size();
+        /**
+         * Build the request that will download the messages from SQS.
+         *
+         * @return the request that will be sent to SQS
+         */
+        private ReceiveMessageRequest buildReceiveMessageRequest() {
+            final int numberOfPrefetchSlotsLeft = maxPrefetchedMessages - internalMessageQueue.size();
             final int numberOfMessagesToObtain = Math.min(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS, numberOfPrefetchSlotsLeft);
 
             log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
-            final ReceiveMessageRequest request = ReceiveMessageRequest
+            final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
                     .builder()
                     .queueUrl(queueProperties.getQueueUrl())
-                    .waitTimeSeconds(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
-                    .visibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
-                    .maxNumberOfMessages(numberOfMessagesToObtain)
-                    .build();
-            try {
-                final Future<ReceiveMessageResponse> receiveMessageResultFuture = sqsAsyncClient.receiveMessage(request);
-                return receiveMessageResultFuture.get();
-            } catch (final ExecutionException executionException) {
-                throw new RuntimeException("Failed to obtain messages", executionException.getCause());
+                    .waitTimeSeconds(getWaitTimeInSeconds())
+                    .maxNumberOfMessages(numberOfMessagesToObtain);
+            final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
+            if (visibilityTimeoutInSeconds != null) {
+                if (visibilityTimeoutInSeconds < 0) {
+                    log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
+                } else {
+                    requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
+                }
             }
+
+            return requestBuilder.build();
+        }
+
+        /**
+         * Get the amount of time in milliseconds that the thread should wait after a failure to get messages.
+         *
+         * @return the amount of time to backoff on errors in milliseconds
+         */
+        @SuppressWarnings("Duplicates")
+        private int getBackoffTimeInMs() {
+            return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
+                    .filter(backoffPeriod -> {
+                        if (backoffPeriod > 0) {
+                            return true;
+                        } else {
+                            log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default instead", backoffPeriod);
+                            return false;
+                        }
+                    })
+                    .orElse(DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
+        }
+
+        /**
+         * Gets the wait time in seconds, defaulting to {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} if it is not present.
+         *
+         * @return the amount of time to wait for messages from SQS
+         */
+        private int getWaitTimeInSeconds() {
+            return Optional.ofNullable(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
+                    .orElse(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
         }
     }
 }
