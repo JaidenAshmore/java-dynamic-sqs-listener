@@ -44,10 +44,10 @@ import java.util.concurrent.SynchronousQueue;
  *         in a single request</li>
  *     <li>SQS responds with 10 messages.</li>
  *     <li>7 messages are placed into {@link #internalMessageQueue} but no more able to be placed in due to the limit of the queue and therefore the
- *         {@link QueueMessageRetriever} thread is blocked until messages are consumed before placing the other 3 messages onto the queue.</li>
+ *         {@link BackgroundMessagePrefetcher} thread is blocked until messages are consumed before placing the other 3 messages onto the queue.</li>
  *     <li>As the consumers begin to consume the messages from this retriever the queue begins to shrink in size until there are 7 messages in the queue but
  *         zero needing to be placed in from the original request.</li>
- *     <li>At this point the {@link QueueMessageRetriever} is free to go out and obtain more messages from SQS and it will attempt to retrieve
+ *     <li>At this point the {@link BackgroundMessagePrefetcher} is free to go out and obtain more messages from SQS and it will attempt to retrieve
  *         8 messages (this is due to the limit of 15 messages at maximum being prefetched)</li>
  *     <li>This process repeats as more messages are consumed and placed onto the queues.</li>
  * </ol>
@@ -86,13 +86,14 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
 
         Preconditions.checkArgument(maxPrefetchedMessages >= desiredMinPrefetchedMessages,
                 "maxPrefetchedMessages should be greater than or equal to desiredMinPrefetchedMessages");
+        Preconditions.checkArgument(desiredMinPrefetchedMessages > 0, "desiredMinPrefetchedMessages must be greater than zero");
 
         // As LinkedBlockingQueue does not allow for an empty queue we use a SynchronousQueue so that it will only get more messages until the consumer has
         // grabbed on from the retriever
-        if (properties.getDesiredMinPrefetchedMessages() == 0) {
+        if (properties.getDesiredMinPrefetchedMessages() == 1) {
             this.internalMessageQueue = new SynchronousQueue<>();
         } else {
-            this.internalMessageQueue = new LinkedBlockingQueue<>(desiredMinPrefetchedMessages - 1);
+            this.internalMessageQueue = new LinkedBlockingQueue<>(desiredMinPrefetchedMessages);
         }
     }
 
@@ -103,15 +104,16 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         }
 
         log.info("Starting retrieval of messages");
-        fetchingMessagesCompletedFuture = new CompletableFuture<>();
+        final CompletableFuture<Object> backgroundThreadCompletedFuture = new CompletableFuture<>();
         fetchingMessagesFuture = executorService.submit(() -> {
-            final QueueMessageRetriever backgroundMessageRetriever = new QueueMessageRetriever(
+            final BackgroundMessagePrefetcher backgroundMessageRetriever = new BackgroundMessagePrefetcher(
                     sqsAsyncClient, queueProperties, properties, internalMessageQueue, maxPrefetchedMessages
             );
             backgroundMessageRetriever.run();
             log.debug("Finished obtaining messages");
-            fetchingMessagesCompletedFuture.complete("Done");
+            backgroundThreadCompletedFuture.complete("Done");
         });
+        fetchingMessagesCompletedFuture = backgroundThreadCompletedFuture;
     }
 
     @Override
@@ -142,7 +144,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
      */
     @AllArgsConstructor
     @VisibleForTesting
-    static class QueueMessageRetriever implements Runnable {
+    static class BackgroundMessagePrefetcher implements Runnable {
         private final SqsAsyncClient sqsAsyncClient;
         private final QueueProperties queueProperties;
         private final PrefetchingMessageRetrieverProperties properties;
@@ -156,13 +158,15 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     try {
                         final ReceiveMessageResponse result = sqsAsyncClient.receiveMessage(buildReceiveMessageRequest())
                                 .get();
-                        log.debug("Retrieved {} new messages for {} existing messages. Total: {}",
+                        log.trace("Retrieved {} new messages for {} existing messages. Total: {}",
                                 result.messages().size(),
                                 internalMessageQueue.size(),
                                 internalMessageQueue.size() + result.messages().size()
                         );
 
                         for (final Message message : result.messages()) {
+                            // This is what actually controls the desired prefetched messages. As this call is blocking until there is room in the queue
+                            // it will keep adding messages into the queue and once it is complete it will go and download more messages via the while loop
                             internalMessageQueue.put(message);
                         }
                     } catch (final InterruptedException exception) {
@@ -212,18 +216,22 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         /**
          * Get the amount of time in milliseconds that the thread should wait after a failure to get messages.
          *
+         * <p>Visible for testing as testing with the actual default backoff time makes the unit tests slow
+         *
          * @return the amount of time to backoff on errors in milliseconds
          */
         @SuppressWarnings("Duplicates")
-        private int getBackoffTimeInMs() {
+        @VisibleForTesting()
+        int getBackoffTimeInMs() {
             return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
                     .filter(backoffPeriod -> {
-                        if (backoffPeriod > 0) {
-                            return true;
-                        } else {
-                            log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default instead", backoffPeriod);
+                        if (backoffPeriod < 0) {
+                            log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default({}) instead", backoffPeriod,
+                                    DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
                             return false;
                         }
+
+                        return true;
                     })
                     .orElse(DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
         }
@@ -234,7 +242,22 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
          * @return the amount of time to wait for messages from SQS
          */
         private int getWaitTimeInSeconds() {
-            return Optional.ofNullable(properties.getMaxWaitTimeInSecondsToObtainMessagesFromServer())
+            return Optional.ofNullable(properties.getMessageWaitTimeInSeconds())
+                    .filter(waitTimeInSeconds -> {
+                        if (waitTimeInSeconds <= 0) {
+                            log.warn("Non-positive messageWaitTimeInSeconds provided({}), using default instead", waitTimeInSeconds,
+                                    AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+                            return false;
+                        }
+
+                        if (waitTimeInSeconds > AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS) {
+                            log.warn("messageWaitTimeInSeconds provided({}) is greater than AWS maximum({}), using default instead", waitTimeInSeconds,
+                                    AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+                            return false;
+                        }
+
+                        return true;
+                    })
                     .orElse(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
         }
     }

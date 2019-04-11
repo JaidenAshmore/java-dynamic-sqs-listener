@@ -101,7 +101,7 @@ public class CustomQueueWrapperIntegrationTest {
                 final StaticPrefetchingMessageRetrieverProperties staticPrefetchingMessageRetrieverProperties = StaticPrefetchingMessageRetrieverProperties
                         .builder()
                         .maxPrefetchedMessages(10)
-                        .desiredMinPrefetchedMessages(0)
+                        .desiredMinPrefetchedMessages(1)
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(5)
                         .visibilityTimeoutForMessagesInSeconds(30)
                         .errorBackoffTimeInMilliseconds(10)

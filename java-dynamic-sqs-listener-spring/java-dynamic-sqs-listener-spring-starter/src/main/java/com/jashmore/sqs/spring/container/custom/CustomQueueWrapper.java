@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
  *         final PrefetchingProperties prefetchingProperties = PrefetchingProperties
  *                 .builder()
  *                 .maxPrefetchedMessages(10)
- *                 .desiredMinPrefetchedMessages(0)
+ *                 .desiredMinPrefetchedMessages(1)
  *                 .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
  *                 .visibilityTimeoutForMessagesInSeconds(30)
  *                 .errorBackoffTimeInMilliseconds(10)
