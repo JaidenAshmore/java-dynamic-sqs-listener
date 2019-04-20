@@ -9,6 +9,7 @@ import lombok.ToString;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 
 @Builder(toBuilder = true)
@@ -24,7 +25,7 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     private final Integer errorBackoffTimeInMilliseconds;
 
     @Override
-    public @Min(0) @NotNull int getDesiredMinPrefetchedMessages() {
+    public @Positive @NotNull int getDesiredMinPrefetchedMessages() {
         return desiredMinPrefetchedMessages;
     }
 

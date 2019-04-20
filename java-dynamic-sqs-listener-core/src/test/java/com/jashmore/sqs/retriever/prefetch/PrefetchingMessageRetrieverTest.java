@@ -608,7 +608,7 @@ public class PrefetchingMessageRetrieverTest {
     @Test
     public void cancellingRetrieverDuringBackoffWillNotRequestMoreMessages() throws Exception {
         // arrange
-        final int backoffTimeInMilliseconds = 2_000;
+        final int backoffTimeInMilliseconds = 4_000;
         final PrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
                 .build();
@@ -635,6 +635,7 @@ public class PrefetchingMessageRetrieverTest {
             throw new RuntimeException(exception);
         }
     }
+
 
     private CompletableFuture<ReceiveMessageResponse> mockReceiveMessageResponse(final Message... messages) {
         return mockFutureWithGet(ReceiveMessageResponse.builder()

@@ -14,7 +14,6 @@ public class StaticPrefetchingMessageRetrieverPropertiesTest {
     public void maxPrefetchedMessagesIsRequired() {
         // arrange
         expectedException.expect(isA(NullPointerException.class));
-        expectedException.expectMessage("maxPrefetchedMessages");
 
         // act
         StaticPrefetchingMessageRetrieverProperties.builder()
@@ -23,23 +22,13 @@ public class StaticPrefetchingMessageRetrieverPropertiesTest {
     }
 
     @Test
-    public void desiredMinMessagePrefetchedMessagesIsRequiredField() {
+    public void desiredMinMessagePrefetchedMessagesFailsWhenLessThanZero() {
         // arrange
         expectedException.expect(isA(NullPointerException.class));
-        expectedException.expectMessage("desiredMinPrefetchedMessages");
 
         // act
         StaticPrefetchingMessageRetrieverProperties.builder()
-                .maxPrefetchedMessages(1)
-                .build();
-    }
-
-    @Test
-    public void canBuildPropertiesWithOnlyPrefetchingMinAndMax() {
-        // act
-        StaticPrefetchingMessageRetrieverProperties.builder()
-                .desiredMinPrefetchedMessages(5)
-                .maxPrefetchedMessages(10)
+                .desiredMinPrefetchedMessages(-1)
                 .build();
     }
 }
