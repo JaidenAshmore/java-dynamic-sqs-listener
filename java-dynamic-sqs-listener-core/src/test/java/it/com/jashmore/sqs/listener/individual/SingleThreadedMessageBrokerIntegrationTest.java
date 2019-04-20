@@ -20,7 +20,7 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
-import it.com.jashmore.sqs.AbstractSqsIntegrationTest;
+import it.com.jashmore.sqs.listener.util.SqsIntegrationTestUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,7 +29,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsIntegrationTest {
+public class SingleThreadedMessageBrokerIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     @Rule
     public final LocalSqsRule localSqsRule = new LocalSqsRule();
@@ -39,10 +39,6 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
     @Before
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
-
-        // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
-        // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
-        Thread.interrupted();
     }
 
     @Test
@@ -69,7 +65,7 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
                 messageConsumer
         );
         final MessageBroker container = new SingleThreadedMessageBroker(messageRetriever, messageProcessor);
-        sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
+        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
         container.start();
@@ -80,9 +76,10 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
 
         // cleanup
         container.stop().get(10, SECONDS);
-        assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
+        SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public static class MessageConsumer {
         private final CountDownLatch messagesReceivedLatch;
         private final CountDownLatch testCompletedLatch;
@@ -93,7 +90,6 @@ public class SingleThreadedMessageBrokerIntegrationTest extends AbstractSqsInteg
             this.testCompletedLatch = testCompletedLatch;
         }
 
-        @SuppressWarnings("unused")
         public void consume(@Payload final String messagePayload) throws InterruptedException {
             numberOfTimesProcessed.incrementAndGet();
             messagesReceivedLatch.countDown();

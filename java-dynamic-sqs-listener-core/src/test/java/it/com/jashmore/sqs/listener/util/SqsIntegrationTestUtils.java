@@ -1,9 +1,10 @@
-package it.com.jashmore.sqs;
+package it.com.jashmore.sqs.listener.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
@@ -16,12 +17,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
-public abstract class AbstractSqsIntegrationTest {
+@UtilityClass
+public class SqsIntegrationTestUtils {
     private static final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
 
     public static void assertNoMessagesInQueue(final SqsAsyncClient sqsAsyncClient,
                                                final String queueUrl) {
-        GetQueueAttributesRequest request = GetQueueAttributesRequest
+        final GetQueueAttributesRequest request = GetQueueAttributesRequest
                 .builder()
                 .queueUrl(queueUrl)
                 .attributeNames(APPROXIMATE_NUMBER_OF_MESSAGES, APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
@@ -46,8 +48,8 @@ public abstract class AbstractSqsIntegrationTest {
             final SendMessageBatchRequest.Builder sendMessageBatchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
             final int batchSize = Math.min(numberOfMessages - numberOfMessagesSent.get(), MAX_SEND_MESSAGE_BATCH_SIZE);
             sendMessageBatchRequestBuilder.entries(IntStream.range(0, batchSize)
-                    .map(index -> numberOfMessages + index)
-                    .mapToObj(id -> SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + (numberOfMessagesSent.get() + id)).build())
+                    .map(index -> numberOfMessagesSent.get() + index)
+                    .mapToObj(id ->  SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + id).build())
                     .collect(Collectors.toSet()));
             try {
                 sqsAsyncClient.sendMessageBatch(sendMessageBatchRequestBuilder.build()).get();
