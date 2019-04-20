@@ -37,6 +37,19 @@ are to be processed and the rate of concurrency for processing messages.
 
 See the [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
 
+### Dependencies
+The framework relies on the following dependencies and therefore it is recommended to upgrade the applications dependencies to a point somewhere near these
+for compatibility.
+- [Core Framework](java-dynamic-sqs-listener-core)
+  - JDK 1.8 or higher
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.2.0
+  - [Guava](https://github.com/google/guava): 21.0
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.8 
+- [Spring Framework](java-dynamic-sqs-listener-spring)
+  - All of the core dependencies
+  - [Spring](https://github.com/spring-projects/spring-framework): 5.0.8.RELEASE
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.0.2.RELEASE
+
 ## Spring Quick Guide
 The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
 kept in the [core module](./java-dynamic-sqs-listener-core) which is framework agnostic.*
