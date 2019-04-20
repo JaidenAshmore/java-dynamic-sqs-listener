@@ -75,7 +75,7 @@ public @interface QueueListener {
      * @return the period in ms that threads will wait for messages to be requested from SQS
      * @see BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs() for more details
      */
-    int maxPeriodBetweenBatchesInMs() default 2000;
+    long maxPeriodBetweenBatchesInMs() default 2000L;
 
     /**
      * The message visibility that will be used for messages obtained from the queue.

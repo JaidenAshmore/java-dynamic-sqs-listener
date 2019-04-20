@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
+import com.jashmore.sqs.util.RetrieverUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
@@ -103,7 +104,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
             throw new IllegalStateException("PrefetchingMessageRetriever is already running");
         }
 
-        log.info("Starting retrieval of messages");
+        log.debug("Starting retrieval of messages");
         final CompletableFuture<Object> backgroundThreadCompletedFuture = new CompletableFuture<>();
         fetchingMessagesFuture = executorService.submit(() -> {
             final BackgroundMessagePrefetcher backgroundMessageRetriever = new BackgroundMessagePrefetcher(
@@ -199,7 +200,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
             final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
                     .builder()
                     .queueUrl(queueProperties.getQueueUrl())
-                    .waitTimeSeconds(getWaitTimeInSeconds())
+                    .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties.getMessageWaitTimeInSeconds()))
                     .maxNumberOfMessages(numberOfMessagesToObtain);
             final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
             if (visibilityTimeoutInSeconds != null) {
@@ -234,31 +235,6 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                         return true;
                     })
                     .orElse(DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
-        }
-
-        /**
-         * Gets the wait time in seconds, defaulting to {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} if it is not present.
-         *
-         * @return the amount of time to wait for messages from SQS
-         */
-        private int getWaitTimeInSeconds() {
-            return Optional.ofNullable(properties.getMessageWaitTimeInSeconds())
-                    .filter(waitTimeInSeconds -> {
-                        if (waitTimeInSeconds <= 0) {
-                            log.warn("Non-positive messageWaitTimeInSeconds provided({}), using default instead", waitTimeInSeconds,
-                                    AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
-                            return false;
-                        }
-
-                        if (waitTimeInSeconds > AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS) {
-                            log.warn("messageWaitTimeInSeconds provided({}) is greater than AWS maximum({}), using default instead", waitTimeInSeconds,
-                                    AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
-                            return false;
-                        }
-
-                        return true;
-                    })
-                    .orElse(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
         }
     }
 }

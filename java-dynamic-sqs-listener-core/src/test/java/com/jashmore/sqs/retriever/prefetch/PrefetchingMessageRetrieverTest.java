@@ -627,8 +627,6 @@ public class PrefetchingMessageRetrieverTest {
         verify(sqsAsyncClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
     }
 
-    // TODO: Any other tests for the request messages
-
     private void responseThrowingException(final CompletableFuture<ReceiveMessageResponse> mockResponse,
                                            final Throwable throwable) {
         try {
