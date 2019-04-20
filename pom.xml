@@ -75,6 +75,8 @@
         <logback.version>1.2.3</logback.version>
         <lombok.version>1.16.18</lombok.version>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
+        <maven.failsafe.version>2.22.1</maven.failsafe.version>
+        <maven.surefire.version>2.22.1</maven.surefire.version>
         <mockito.version>2.13.0</mockito.version>
         <pitest.version>1.4.5</pitest.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -226,7 +228,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.20.1</version>
+                <version>${maven.surefire.version}</version>
                 <configuration>
                     <runOrder>random</runOrder>
                     <excludes>
@@ -237,7 +239,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.20.1</version>
+                <version>${maven.failsafe.version}</version>
                 <configuration>
                     <includes>
                         <include>it/**/*.java</include>
