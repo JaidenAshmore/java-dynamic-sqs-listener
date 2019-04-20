@@ -10,12 +10,12 @@ import javax.validation.constraints.Positive;
  */
 @Builder
 public class StaticBatchingMessageResolverProperties implements BatchingMessageResolverProperties {
-    private final int bufferingTimeInMs;
+    private final long bufferingTimeInMs;
     private final int bufferingSizeLimit;
 
     @Positive
     @Override
-    public int getBufferingTimeInMs() {
+    public long getBufferingTimeInMs() {
         return bufferingTimeInMs;
     }
 

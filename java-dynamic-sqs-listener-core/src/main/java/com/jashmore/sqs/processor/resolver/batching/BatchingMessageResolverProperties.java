@@ -18,7 +18,7 @@ public interface BatchingMessageResolverProperties {
      * @return the time in milliseconds that a message can be buffered for resolution
      */
     @Positive
-    int getBufferingTimeInMs();
+    long getBufferingTimeInMs();
 
     /**
      * The maximum size of the buffer before a batch of message resolution should be triggered.

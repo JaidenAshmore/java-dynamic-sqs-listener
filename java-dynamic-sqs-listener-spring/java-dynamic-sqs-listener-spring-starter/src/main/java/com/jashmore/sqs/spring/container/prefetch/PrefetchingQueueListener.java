@@ -72,7 +72,7 @@ public @interface PrefetchingQueueListener {
      * @return the minimum number of prefetched messages
      * @see StaticPrefetchingMessageRetrieverProperties#desiredMinPrefetchedMessages for more details and constraints
      */
-    int desiredMinPrefetchedMessages() default 0;
+    int desiredMinPrefetchedMessages() default 1;
 
     /**
      * The total number of messages that can be prefetched from the server and stored in memory for execution.

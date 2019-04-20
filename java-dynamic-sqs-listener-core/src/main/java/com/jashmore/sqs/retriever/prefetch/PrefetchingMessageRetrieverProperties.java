@@ -5,6 +5,7 @@ import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SEC
 import com.jashmore.sqs.aws.AwsConstants;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -22,13 +23,13 @@ public interface PrefetchingMessageRetrieverProperties {
      *
      * <p>Constraints on this field include:
      * <ul>
-     *     <li>This value must be greater than or equal to 0</li>
+     *     <li>This value must be greater than 0</li>
      *     <li>This value must be less than {@link #getMaxPrefetchedMessages()}</li>
      * </ul>
      *
      * @return the minimum number of prefetched messages
      */
-    @PositiveOrZero
+    @Positive
     int getDesiredMinPrefetchedMessages();
 
     /**
@@ -59,9 +60,10 @@ public interface PrefetchingMessageRetrieverProperties {
      * @return the wait time in seconds for obtaining messages
      * @see ReceiveMessageRequest#waitTimeSeconds for the usage
      */
+    @Nullable
     @Positive
     @Max(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-    Integer getMaxWaitTimeInSecondsToObtainMessagesFromServer();
+    Integer getMessageWaitTimeInSeconds();
 
     /**
      * The visibility timeout for the message.
@@ -72,16 +74,19 @@ public interface PrefetchingMessageRetrieverProperties {
      *
      * @return the visibility timeout for messages where null means to use the SQS default visibility timeout
      */
+    @Nullable
     Integer getVisibilityTimeoutForMessagesInSeconds();
 
     /**
      * If there was an error retrieving a message from the remote server, the retriever will backoff and try again after this many milliseconds, which
      * prevents constant cycling of this thread that achieves nothing.
      *
-     * <p>If this value is null, negative or zero, {@link PrefetchingMessageRetrieverConstants#DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS} will be used
+     * <p>If this value is null or negative, {@link PrefetchingMessageRetrieverConstants#DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS} will be used
      * as the backoff period.
      *
      * @return the backoff time in milliseconds or null if the default backoff time should be used
      */
+    @Nullable
+    @PositiveOrZero
     Integer getErrorBackoffTimeInMilliseconds();
 }

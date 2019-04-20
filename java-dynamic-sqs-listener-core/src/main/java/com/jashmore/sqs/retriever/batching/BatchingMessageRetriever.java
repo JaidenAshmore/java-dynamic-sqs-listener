@@ -8,6 +8,8 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.util.RetrieverUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,8 +54,20 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             log.warn("Retriever has already started");
             return;
         }
-        backgroundThreadStoppingFuture = new CompletableFuture<>();
-        backgroundThreadFuture = executorService.submit(new BackgroundBatchingMessageRetriever(backgroundThreadStoppingFuture));
+
+        log.debug("Starting retrieval of messages");
+        final CompletableFuture<Object> backgroundThreadCompletableFuture = new CompletableFuture<>();
+        backgroundThreadFuture = executorService.submit(() -> {
+            final BackgroundBatchingMessageRetriever backgroundBatchingMessageRetriever = new BackgroundBatchingMessageRetriever(
+                    queueProperties, sqsAsyncClient, properties, numberWaitingForMessages, messagesDownloaded, shouldObtainMessagesLock
+            );
+
+            backgroundBatchingMessageRetriever.run();
+            log.debug("Finished obtaining messages");
+            backgroundThreadCompletableFuture.complete("Done");
+        });
+
+        backgroundThreadStoppingFuture = backgroundThreadCompletableFuture;
     }
 
     @Override
@@ -105,8 +119,14 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
      */
     @AllArgsConstructor
     @VisibleForTesting
-    class BackgroundBatchingMessageRetriever implements Runnable {
-        private final CompletableFuture<Object> completedFuture;
+    static class BackgroundBatchingMessageRetriever implements Runnable {
+        private final QueueProperties queueProperties;
+        private final SqsAsyncClient sqsAsyncClient;
+        private final BatchingMessageRetrieverProperties properties;
+
+        private final AtomicInteger numberWaitingForMessages;
+        private final BlockingQueue<Message> messagesDownloaded;
+        private final Object shouldObtainMessagesLock;
 
         @Override
         public void run() {
@@ -117,7 +137,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     final int triggerValue = properties.getNumberOfThreadsWaitingTrigger();
                     if ((numberWaitingForMessages.get() - messagesDownloaded.size()) < triggerValue) {
                         try {
-                            shouldObtainMessagesLock.wait(getPollingPeriodInMs(triggerValue));
+                            waitForEnoughThreadsToRequestMessages(getPollingPeriodInMs(triggerValue));
                         } catch (InterruptedException exception) {
                             log.debug("Thread interrupted while waiting for messages");
                             break;
@@ -127,12 +147,13 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                             AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
                 }
 
-                log.debug("Requesting {} messages", numberOfMessagesToObtain);
-
                 if (numberOfMessagesToObtain <= 0) {
+                    log.debug("Requesting 0 messages");
                     // We don't want to go request out if there are no messages to retrieve
                     continue;
                 }
+
+                log.debug("Requesting {} messages", numberOfMessagesToObtain);
 
                 try {
                     try {
@@ -148,85 +169,66 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 } catch (final Throwable throwable) {
                     log.error("Error thrown trying to obtain messages", throwable);
                     try {
-                        Thread.sleep(getBackoffTimeInMs());
+                        backoff(RetrieverUtils.safelyGetBackoffTime(properties.getErrorBackoffTimeInMilliseconds(), DEFAULT_BACKOFF_TIME_IN_MS));
                     } catch (final InterruptedException interruptedException) {
                         log.trace("Thread interrupted during error backoff thread sleeping");
                         break;
                     }
                 }
             }
-            completedFuture.complete("Stopped");
         }
-    }
 
-    /**
-     * Build the request that will download the messages from SQS.
-     *
-     * @param numberOfMessagesToObtain the maximum number of messages to obtain
-     * @return the request that will be sent to SQS
-     */
-    private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
-        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
-                .builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .maxNumberOfMessages(numberOfMessagesToObtain)
-                .waitTimeSeconds(getWaitTimeInSeconds());
+        @SuppressFBWarnings("WA_NOT_IN_LOOP") // Suppressed because it is actually in a loop this is just for testing purposes
+        @VisibleForTesting
+        void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
+            shouldObtainMessagesLock.wait(waitPeriodInMs);
+        }
 
-        final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutInSeconds();
-        if (visibilityTimeoutInSeconds != null) {
-            if (visibilityTimeoutInSeconds < 0) {
-                log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
-            } else {
-                requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
+        @VisibleForTesting
+        void backoff(final long backoffTimeInMs) throws InterruptedException {
+            Thread.sleep(backoffTimeInMs);
+        }
+
+        /**
+         * Build the request that will download the messages from SQS.
+         *
+         * @param numberOfMessagesToObtain the maximum number of messages to obtain
+         * @return the request that will be sent to SQS
+         */
+        private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
+            final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
+                    .builder()
+                    .queueUrl(queueProperties.getQueueUrl())
+                    .maxNumberOfMessages(numberOfMessagesToObtain)
+                    .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties.getMessageWaitTimeInSeconds()));
+
+            final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutInSeconds();
+            if (visibilityTimeoutInSeconds != null) {
+                if (visibilityTimeoutInSeconds < 0) {
+                    log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
+                } else {
+                    requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
+                }
             }
+
+            return requestBuilder.build();
         }
 
-        return requestBuilder.build();
-    }
-
-    /**
-     * Get the amount of time in milliseconds that the thread should wait after a failure to get messages.
-     *
-     * @return the amount of time to backoff on errors in milliseconds
-     */
-    @SuppressWarnings("Duplicates")
-    private int getBackoffTimeInMs() {
-        return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
-                .filter(backoffPeriod -> {
-                    if (backoffPeriod > 0) {
-                        return true;
-                    } else {
-                        log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default instead", backoffPeriod);
-                        return false;
-                    }
-                })
-                .orElse(DEFAULT_BACKOFF_TIME_IN_MS);
-    }
-
-    /**
-     * Gets the wait time in seconds, defaulting to {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} if it is not present.
-     *
-     * @return the amount of time to wait for messages from SQS
-     */
-    private int getWaitTimeInSeconds() {
-        return Optional.ofNullable(properties.getMessageWaitTimeInSeconds())
-                .orElse(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
-    }
-
-    /**
-     * Safely get the polling period in milliseconds, default to zero if no value is defined and logging a warning indicating that not setting a value
-     * could cause this retriever to block forever if the number of threads never reaches
-     * {@link BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger()}.
-     *
-     * @param triggerValue the number of threads that would trigger the batch retrieval of messages
-     * @return the polling period in ms
-     */
-    private int getPollingPeriodInMs(final int triggerValue) {
-        return Optional.ofNullable(properties.getMessageRetrievalPollingPeriodInMs())
-                .orElseGet(() -> {
-                    log.warn("No polling period specifically set, defaulting to zero which will have the thread blocked until {} threads request messages",
-                            triggerValue);
-                    return 0;
-                });
+        /**
+         * Safely get the polling period in milliseconds, default to zero if no value is defined and logging a warning indicating that not setting a value
+         * could cause this retriever to block forever if the number of threads never reaches
+         * {@link BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger()}.
+         *
+         * @param triggerValue the number of threads that would trigger the batch retrieval of messages
+         * @return the polling period in ms
+         */
+        private long getPollingPeriodInMs(final int triggerValue) {
+            return Optional.ofNullable(properties.getMessageRetrievalPollingPeriodInMs())
+                    .orElseGet(() -> {
+                        log.warn("No polling period specifically set, defaulting to zero which will have the thread blocked until {} threads request messages",
+                                triggerValue);
+                        return 0L;
+                    });
+        }
     }
 }

@@ -90,7 +90,7 @@ public class Application {
             final PrefetchingMessageRetrieverProperties prefetchingProperties = StaticPrefetchingMessageRetrieverProperties
                     .builder()
                     .maxPrefetchedMessages(10)
-                    .desiredMinPrefetchedMessages(0)
+                    .desiredMinPrefetchedMessages(1)
                     .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
                     .visibilityTimeoutForMessagesInSeconds(30)
                     .errorBackoffTimeInMilliseconds(10)

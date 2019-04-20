@@ -49,7 +49,7 @@ public interface BatchingMessageRetrieverProperties {
      */
     @Nullable
     @PositiveOrZero
-    Integer getMessageRetrievalPollingPeriodInMs();
+    Long getMessageRetrievalPollingPeriodInMs();
 
     /**
      * Represents the time that messages received from the SQS queue should be invisible from other consumers of the queue before it is considered a failure
@@ -93,5 +93,5 @@ public interface BatchingMessageRetrieverProperties {
      */
     @Nullable
     @PositiveOrZero
-    Integer getErrorBackoffTimeInMilliseconds();
+    Long getErrorBackoffTimeInMilliseconds();
 }
