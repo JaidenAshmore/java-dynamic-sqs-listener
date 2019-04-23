@@ -1,5 +1,5 @@
 # Java Dynamic SQS Listener
-[![Build Status](https://semaphoreci.com/api/v1/jaidenashmore/java-dynamic-sqs-listener/branches/master/badge.svg)](https://semaphoreci.com/jaidenashmore/java-dynamic-sqs-listener)
+[![Build Status](https://semaphoreci.com/api/v1/jaidenashmore/java-dynamic-sqs-listener/branches/master/shields_badge.svg)](https://semaphoreci.com/jaidenashmore/java-dynamic-sqs-listener)
 [![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=master)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/alerts/)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/context:java)
@@ -30,10 +30,12 @@ the processing of a message from the queue by delegating it to the corresponding
 arguments of the method being executed from the message. For example, a parameter with the
 [@Payload](./java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/payload/Payload.java) annotation will be resolved with the
 body of the message cast to that type (e.g. a POJO).
-- The [MessageBroker](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker) is the main container that controls the whole flow
+- The [MessageBroker](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker/MessageBroker.java) is the main container that controls the whole flow
 of messages from the [MessageRetriever](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) to the
 [MessageProcessor](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java). It can determine when more messages
 are to be processed and the rate of concurrency for processing messages.
+- The [MessageResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java) is used when the message has been
+successfully processed and it is needed to be removed from the SQS queue so it isn't processed again.
 
 See the [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
 

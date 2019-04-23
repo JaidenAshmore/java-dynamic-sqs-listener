@@ -16,7 +16,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.resolver.MessageResolver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -26,7 +26,6 @@ import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 
 public class DefaultMessageProcessorTest {
     private static final String QUEUE_URL = "queueUrl";

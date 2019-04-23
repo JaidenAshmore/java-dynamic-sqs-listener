@@ -15,7 +15,7 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.singlethread.SingleThreadedMessageBroker;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;

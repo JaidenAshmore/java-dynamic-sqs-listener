@@ -1,4 +1,4 @@
-package com.jashmore.sqs.processor.resolver.batching;
+package com.jashmore.sqs.resolver.batching;
 
 import com.jashmore.sqs.aws.AwsConstants;
 

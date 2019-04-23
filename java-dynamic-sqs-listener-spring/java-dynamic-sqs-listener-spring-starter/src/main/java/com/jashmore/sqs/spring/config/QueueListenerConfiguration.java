@@ -15,11 +15,9 @@ import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
-import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolverService;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -177,11 +175,6 @@ public class QueueListenerConfiguration {
                                                                  final SqsAsyncClient sqsAsyncClient,
                                                                  final QueueResolverService queueResolverService) {
                 return new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
-            }
-
-            @Bean
-            public QueueWrapper coreProvidedCustomQueueWrapper(final BeanFactory beanFactory, final QueueResolverService queueResolverService) {
-                return new CustomQueueWrapper(beanFactory, queueResolverService);
             }
 
             @Bean

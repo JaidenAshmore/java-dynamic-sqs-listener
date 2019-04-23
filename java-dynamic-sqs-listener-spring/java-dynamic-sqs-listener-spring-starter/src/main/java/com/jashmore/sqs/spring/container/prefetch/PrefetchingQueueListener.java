@@ -11,7 +11,6 @@ import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import org.springframework.core.env.Environment;
 
 import java.lang.annotation.Retention;
@@ -23,7 +22,7 @@ import java.lang.annotation.Target;
  * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link DefaultMessageProcessor}
  * for the implementations of the framework. Not all of the properties for each implementation are available to simplify this usage.
  *
- * @see QueueListenerWrapper for what processes this annotation
+ * @see PrefetchingQueueListenerWrapper for what processes this annotation
  */
 @Retention(RUNTIME)
 @Target(METHOD)

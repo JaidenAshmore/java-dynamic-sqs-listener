@@ -18,12 +18,13 @@ import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBro
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.processor.resolver.MessageResolver;
-import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
-import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
+import com.jashmore.sqs.resolver.AsyncMessageResolver;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
+import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,7 @@ public class ConcurrentBrokerExample {
      * @param args unused args
      * @throws Exception if there was a problem running the program
      */
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     public static void main(final String[] args) throws Exception {
         // Sets up the SQS that will be used
         final SqsAsyncClient sqsAsyncClient = startElasticMqServer();
@@ -103,10 +105,11 @@ public class ConcurrentBrokerExample {
         // Creates the class that will deal with taking messages and getting them processed by the message consumer
         final MessageConsumer messageConsumer = new MessageConsumer();
         final Method messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
-        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient, StaticBatchingMessageResolverProperties.builder()
-                .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
-                .bufferingTimeInMs(5000)
-                .build());
+        final AsyncMessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient,
+                StaticBatchingMessageResolverProperties.builder()
+                        .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
+                        .bufferingTimeInMs(5000)
+                        .build());
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService(sqsAsyncClient),
                 queueProperties,
@@ -135,6 +138,9 @@ public class ConcurrentBrokerExample {
                     }
                 })
         );
+
+        // As the BatchingMessageResolver uses a background thread to delete the messages in batches we need to start it in a background thread
+        executorService.submit(messageResolver);
 
         // When we start listening it will receive messages from SQS and pass them to the MessageConsumer for processing
         concurrentMessageBroker.start();

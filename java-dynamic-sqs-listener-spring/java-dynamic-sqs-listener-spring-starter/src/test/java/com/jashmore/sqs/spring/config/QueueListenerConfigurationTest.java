@@ -16,7 +16,6 @@ import com.jashmore.sqs.spring.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
-import com.jashmore.sqs.spring.container.custom.CustomQueueWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -175,7 +174,7 @@ public class QueueListenerConfigurationTest {
                             .collect(toSet());
 
                     assertThat(queueWrapperClasses).containsExactlyInAnyOrder(
-                            QueueListenerWrapper.class, CustomQueueWrapper.class, PrefetchingQueueListenerWrapper.class, BatchingQueueListenerWrapper.class
+                            QueueListenerWrapper.class, PrefetchingQueueListenerWrapper.class, BatchingQueueListenerWrapper.class
                     );
                 });
     }
@@ -205,7 +204,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(queueWrappers);
-                    assertThat(queueWrappers).hasSize(5);
+                    assertThat(queueWrappers).hasSize(4);
                 });
     }
 
