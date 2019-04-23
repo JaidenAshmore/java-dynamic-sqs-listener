@@ -30,10 +30,12 @@ the processing of a message from the queue by delegating it to the corresponding
 arguments of the method being executed from the message. For example, a parameter with the
 [@Payload](./java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/payload/Payload.java) annotation will be resolved with the
 body of the message cast to that type (e.g. a POJO).
-- The [MessageBroker](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker) is the main container that controls the whole flow
+- The [MessageBroker](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker/MessageBroker.java) is the main container that controls the whole flow
 of messages from the [MessageRetriever](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) to the
 [MessageProcessor](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java). It can determine when more messages
 are to be processed and the rate of concurrency for processing messages.
+- The [MessageResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java) is used when the message has been
+successfully processed and it is needed to be removed from the SQS queue so it isn't processed again.
 
 See the [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
 

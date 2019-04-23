@@ -7,12 +7,11 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
-import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
 import org.springframework.core.env.Environment;
 
 import java.lang.annotation.Retention;
@@ -27,7 +26,7 @@ import java.lang.annotation.Target;
  * with a {@link BatchingMessageResolver} as the components of the library. Not all of the properties for each implementation are available to simplify
  * this usage.
  *
- * @see QueueListenerWrapper for what processes this annotation
+ * @see BatchingQueueListenerWrapper for what processes this annotation
  */
 @Retention(RUNTIME)
 @Target(METHOD)

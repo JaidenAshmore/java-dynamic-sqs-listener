@@ -6,9 +6,9 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.processor.resolver.MessageResolver;
-import com.jashmore.sqs.processor.resolver.batching.BatchingMessageResolver;
-import com.jashmore.sqs.processor.resolver.batching.StaticBatchingMessageResolverProperties;
+import com.jashmore.sqs.resolver.MessageResolver;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
+import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
@@ -86,6 +86,6 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
             identifier = annotation.identifier().trim();
         }
 
-        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker);
+        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker, messageResolver);
     }
 }

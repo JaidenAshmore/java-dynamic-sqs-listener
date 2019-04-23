@@ -14,8 +14,9 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.processor.resolver.MessageResolver;
-import com.jashmore.sqs.processor.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.resolver.MessageResolver;
+import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
+import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
@@ -67,7 +68,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
@@ -116,7 +117,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
@@ -142,9 +143,8 @@ public class ConcurrentMessageBrokerIntegrationTest {
         messageReceivedLatch.await(1, MINUTES);
 
         // cleanup
-        messageRetriever.stop().get(5, SECONDS);
-        log.debug("Stopped message retriever");
         messageBroker.stop().get(10, SECONDS);
+        messageRetriever.stop().get(10, SECONDS);
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 

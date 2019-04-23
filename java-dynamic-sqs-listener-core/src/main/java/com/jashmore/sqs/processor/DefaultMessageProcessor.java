@@ -6,7 +6,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import com.jashmore.sqs.processor.resolver.MessageResolver;
+import com.jashmore.sqs.resolver.MessageResolver;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
 

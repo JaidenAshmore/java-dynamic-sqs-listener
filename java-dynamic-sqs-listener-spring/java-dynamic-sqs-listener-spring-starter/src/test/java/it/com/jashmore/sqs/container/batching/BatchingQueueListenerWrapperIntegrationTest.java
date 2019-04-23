@@ -23,25 +23,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit4.SpringRunner;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 @Slf4j
 @SpringBootTest(classes = {Application.class, BatchingQueueListenerWrapperIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
 public class BatchingQueueListenerWrapperIntegrationTest {
+    private static final String QUEUE_NAME = "BatchingQueueListenerWrapperIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(NUMBER_OF_MESSAGES_TO_SEND);
-
-    private static final Map<String, Boolean> messagesProcessed = new ConcurrentHashMap<>();
+    private static final int MESSAGE_VISIBILITY_IN_SECONDS = 2;
 
     @ClassRule
     public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName("BatchingQueueListenerWrapperIntegrationTest").build()
+            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME).build()
     ));
 
     @Rule
@@ -55,10 +59,9 @@ public class BatchingQueueListenerWrapperIntegrationTest {
         @Service
         public static class MessageListener {
             @SuppressWarnings("unused")
-            @BatchingQueueListener(value = "BatchingQueueListenerWrapperIntegrationTest")
+            @BatchingQueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {
                 log.info("Obtained message: {}", payload);
-                messagesProcessed.put(payload, true);
                 COUNT_DOWN_LATCH.countDown();
             }
         }
@@ -70,18 +73,26 @@ public class BatchingQueueListenerWrapperIntegrationTest {
     }
 
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException {
+    public void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> {
                     log.info("Sending message: " + i);
-                    localSqsAsyncClient.sendMessageToLocalQueue("BatchingQueueListenerWrapperIntegrationTest", "message: " + i);
+                    localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i);
                 });
 
         // act
-        COUNT_DOWN_LATCH.await(20, TimeUnit.SECONDS);
+        COUNT_DOWN_LATCH.await();
+        // Wait the visibility timeout to make sure that all messages were processed and deleted from the queue
+        Thread.sleep(MESSAGE_VISIBILITY_IN_SECONDS * 1000 * 2);
 
         // assert
-        assertThat(messagesProcessed).hasSize(100);
+        final CompletableFuture<GetQueueAttributesResponse> queueAttributes = localSqsAsyncClient.getQueueAttributes(GetQueueAttributesRequest.builder()
+                .queueUrl(localSqsAsyncClient.getQueueUrl(QUEUE_NAME))
+                .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES, QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
+                .build());
+        final GetQueueAttributesResponse getQueueAttributesResponse = queueAttributes.get();
+        assertThat(getQueueAttributesResponse.attributes().get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES)).isEqualTo("0");
+        assertThat(getQueueAttributesResponse.attributes().get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)).isEqualTo("0");
     }
 }

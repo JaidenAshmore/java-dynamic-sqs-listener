@@ -77,7 +77,7 @@ will be injected with an implementation that extends the message visibility of t
 [VisibilityExtenderArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/visibility/VisibilityExtenderArgumentResolver.java). 
 
 ### Message Broker
-The [MessageBroker](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker) is the main container that controls the whole flow
+The [MessageBroker](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker/MessageBroker.java) is the main container that controls the whole flow
 of messages from the [MessageRetriever](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever) to the
 [MessageProcessor](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java). It can provide logic like the rate
 of concurrency of the messages being processed or when messages should be processed.
@@ -89,3 +89,22 @@ for local development and testing and does not have a significant production use
 - [ConcurrentMessageBroker](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/broker/concurrent/ConcurrentMessageBroker.java): this
 implementation will run on multiple threads each processing messages. It has dynamic configuration and this allows the rate of concurrency to change
 dynamically while the application is running.
+
+### Message Resolver
+The [MessageResolver](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java) is used when the message has been
+successfully processed and it is needed to be removed from the SQS queue so it isn't processed again.
+
+Core implementation include:
+- [IndividualMessageResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/resolver/individual/IndividualMessageResolver.java): this
+implementation will immediately call out to SQS to remove the message from the queue asynchronously. This is useful for when you want the message to be
+immediately removed and the extra calls to SQS is not a problem when there are many messages being deleted at once.
+- [BatchingMessageResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/resolver/batching/BatchingMessageResolver.java): this
+implementation will batch calls to delete messages from the SQS queue into a batch that will go out together once asynchronously. This is useful if you
+are processing many messages at the same time and it is desirable to reduce the number of calls out to SQS. A disadvantage is that the message may
+sit in the batch for enough time that the visibility expires and it is placed onto the queue. To mitigate this, smaller batch
+timeout should be used or by increasing the visibility timeout. 
+- [BlockingMessageResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/resolver/blocking/BlockingMessageResolver.java): this
+implementation will delegate to another [MessageResolver](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java)
+implementation and will block the thread until the underlying implementation finishes resolving the message. This can be useful if you don't want to
+process any more messages  on this thread until the previous is successfully removed from SQS. It is also useful for testing as it reduces the amount of
+asynchronous code running and therefore can reduce flaky tests.
