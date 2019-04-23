@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class BatchingMessageResolverTest {
     private static final int BUFFERING_TIME_IN_MS = 10;
@@ -64,7 +65,7 @@ public class BatchingMessageResolverTest {
 
         // act
         final long startTime = System.currentTimeMillis();
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
         final long endTime = System.currentTimeMillis();
 
         // assert
@@ -91,7 +92,7 @@ public class BatchingMessageResolverTest {
 
         // act
         final long startTime = System.currentTimeMillis();
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
         final long endTime = System.currentTimeMillis();
 
         // assert
@@ -117,7 +118,7 @@ public class BatchingMessageResolverTest {
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id2").receiptHandle("receipt2").build());
 
         // act
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
 
         // assert
         verify(sqsAsyncClient).deleteMessageBatch(DeleteMessageBatchRequest.builder()
@@ -149,7 +150,7 @@ public class BatchingMessageResolverTest {
                 .build());
 
         // act
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
 
         // assert
         messageResolvedCompletableFuture.get();
@@ -176,7 +177,7 @@ public class BatchingMessageResolverTest {
                 .build());
 
         // act
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
 
         // assert
         try {
@@ -204,7 +205,7 @@ public class BatchingMessageResolverTest {
                 .build());
 
         // act
-        CompletableFuture.runAsync(batchingMessageResolver).get();
+        CompletableFuture.runAsync(batchingMessageResolver).get(30, TimeUnit.SECONDS);
 
         // assert
         try {
@@ -241,7 +242,7 @@ public class BatchingMessageResolverTest {
         resolverThreadFuture.cancel(true);
 
         // assert
-        messageResolvedFuture.get();
+        messageResolvedFuture.get(30, TimeUnit.SECONDS);
         assertThat(messageResolvedFuture).isCompleted();
     }
 
@@ -262,10 +263,9 @@ public class BatchingMessageResolverTest {
                 });
 
         // act
-        Executors.newCachedThreadPool().submit(batchingMessageResolver).get();
+        Executors.newCachedThreadPool().submit(batchingMessageResolver).get(30, TimeUnit.SECONDS);
 
         // assert
         assertThat(messageResolvedFuture).isCompletedExceptionally();
     }
-
 }
