@@ -7,10 +7,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import org.springframework.core.env.Environment;
 
 import java.lang.annotation.Retention;

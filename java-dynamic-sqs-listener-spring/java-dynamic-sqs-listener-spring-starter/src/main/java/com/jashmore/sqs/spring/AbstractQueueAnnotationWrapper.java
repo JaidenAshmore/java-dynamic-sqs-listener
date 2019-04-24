@@ -1,6 +1,5 @@
 package com.jashmore.sqs.spring;
 
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
 
 import java.lang.annotation.Annotation;
@@ -20,7 +19,7 @@ public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> imple
     }
 
     @Override
-    public MessageListenerContainer wrapMethod(final Object bean, final Method method) {
+    public IdentifiableMessageListenerContainer wrapMethod(final Object bean, final Method method) {
         final T annotation = AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
                 .orElseThrow(() -> new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName()));
 
@@ -42,5 +41,5 @@ public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> imple
      * @param annotation the annotation found on the method containing details about this listener
      * @return the container that wraps the method for usage by the queue listeners
      */
-    protected abstract MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, T annotation);
+    protected abstract IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, T annotation);
 }

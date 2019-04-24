@@ -1,6 +1,6 @@
 package com.jashmore.sqs.spring;
 
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainer;
 
 import java.lang.reflect.Method;
 
@@ -20,11 +20,11 @@ public interface QueueWrapper {
     boolean canWrapMethod(Method method);
 
     /**
-     * Wrap a method with a {@link MessageListenerContainer} that will handle the messages being processed.
+     * Wrap a method with a {@link MessageListenerContainer} that will handle the messages being processed and identify it with a unique identifier.
      *
      * @param bean   the specific bean for this method
      * @param method the method of the bean that will be run for each message
      * @return the container that will wrap this method
      */
-    MessageListenerContainer wrapMethod(Object bean, Method method);
+    IdentifiableMessageListenerContainer wrapMethod(Object bean, Method method);
 }

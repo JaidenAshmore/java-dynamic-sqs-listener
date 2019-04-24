@@ -6,7 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -68,12 +68,6 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
         this.queueWrappers = queueWrappers;
     }
 
-    @VisibleForTesting
-    DefaultQueueContainerService(final ExecutorService executorService, final List<QueueWrapper> queueWrappers) {
-        this.executorService = executorService;
-        this.queueWrappers = queueWrappers;
-    }
-
     /**
      * Initialise all of the containers for this application by finding all bean methods that need to be wrapped.
      */
@@ -97,13 +91,13 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
             for (final Method method : bean.getClass().getMethods()) {
                 for (final QueueWrapper annotationProcessor : queueWrappers) {
                     if (annotationProcessor.canWrapMethod(method)) {
-                        final MessageListenerContainer messageListenerContainer = annotationProcessor.wrapMethod(bean, method);
-                        if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
+                        final IdentifiableMessageListenerContainer identifiableMessageListenerContainer = annotationProcessor.wrapMethod(bean, method);
+                        if (messageContainers.containsKey(identifiableMessageListenerContainer.getIdentifier())) {
                             throw new IllegalStateException("Created two MessageListenerContainers with the same identifier: "
-                                    + messageListenerContainer.getIdentifier());
+                                    + identifiableMessageListenerContainer.getIdentifier());
                         }
-                        log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
-                        messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);
+                        log.debug("Created MessageListenerContainer with id: {}", identifiableMessageListenerContainer.getIdentifier());
+                        messageContainers.put(identifiableMessageListenerContainer.getIdentifier(), identifiableMessageListenerContainer.getContainer());
                     }
                 }
             }
