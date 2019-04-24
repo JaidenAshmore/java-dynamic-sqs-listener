@@ -12,9 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 
-import com.jashmore.sqs.spring.DefaultQueueContainerService;
-import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Rule;
@@ -81,9 +79,11 @@ public class DefaultQueueContainerServiceTest {
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
         when(queueWrapper.canWrapMethod(method)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainer = mock(IdentifiableMessageListenerContainer.class);
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        when(identifiableContainer.getIdentifier()).thenReturn("identifier");
+        when(identifiableContainer.getContainer()).thenReturn(container);
+        when(queueWrapper.wrapMethod(bean, method)).thenReturn(identifiableContainer);
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
 
@@ -102,9 +102,6 @@ public class DefaultQueueContainerServiceTest {
         final QueueWrapper queueWrapper = mock(QueueWrapper.class);
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
-        final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
 
@@ -121,18 +118,21 @@ public class DefaultQueueContainerServiceTest {
         // arrange
         final BeanWithTwoMethods bean = new BeanWithTwoMethods();
         final Method methodOne = bean.getClass().getMethod("methodOne");
-        final Method methodTwo = bean.getClass().getMethod("methodTwo");
         final QueueWrapper queueWrapper = mock(QueueWrapper.class);
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
+
         when(queueWrapper.canWrapMethod(methodOne)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainerOne = mock(IdentifiableMessageListenerContainer.class);
+        when(identifiableContainerOne.getIdentifier()).thenReturn("identifier");
+        when(queueWrapper.wrapMethod(bean, methodOne)).thenReturn(identifiableContainerOne);
+
+        final Method methodTwo = bean.getClass().getMethod("methodTwo");
         when(queueWrapper.canWrapMethod(methodTwo)).thenReturn(true);
-        final MessageListenerContainer containerOne = mock(MessageListenerContainer.class);
-        when(containerOne.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, methodOne)).thenReturn(containerOne);
-        final MessageListenerContainer containerTwo = mock(MessageListenerContainer.class);
-        when(queueWrapper.wrapMethod(bean, methodTwo)).thenReturn(containerTwo);
-        when(containerTwo.getIdentifier()).thenReturn("identifier");
+        final IdentifiableMessageListenerContainer identifiableContainerTwo = mock(IdentifiableMessageListenerContainer.class);
+        when(identifiableContainerTwo.getIdentifier()).thenReturn("identifier");
+        when(queueWrapper.wrapMethod(bean, methodTwo)).thenReturn(identifiableContainerTwo);
+
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         expectedException.expect(IllegalStateException.class);
@@ -150,9 +150,11 @@ public class DefaultQueueContainerServiceTest {
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
         when(queueWrapper.canWrapMethod(method)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainer = mock(IdentifiableMessageListenerContainer.class);
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        when(identifiableContainer.getIdentifier()).thenReturn("identifier");
+        when(identifiableContainer.getContainer()).thenReturn(container);
+        when(queueWrapper.wrapMethod(bean, method)).thenReturn(identifiableContainer);
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);
@@ -175,9 +177,11 @@ public class DefaultQueueContainerServiceTest {
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
         when(queueWrapper.canWrapMethod(method)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainer = mock(IdentifiableMessageListenerContainer.class);
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        when(identifiableContainer.getIdentifier()).thenReturn("identifier");
+        when(identifiableContainer.getContainer()).thenReturn(container);
+        when(queueWrapper.wrapMethod(bean, method)).thenReturn(identifiableContainer);
         doAnswer((invocationOnMock) -> {
             log.info("Stopping container");
             return null;
@@ -215,9 +219,11 @@ public class DefaultQueueContainerServiceTest {
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
         when(queueWrapper.canWrapMethod(method)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainer = mock(IdentifiableMessageListenerContainer.class);
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        when(identifiableContainer.getIdentifier()).thenReturn("identifier");
+        when(identifiableContainer.getContainer()).thenReturn(container);
+        when(queueWrapper.wrapMethod(bean, method)).thenReturn(identifiableContainer);
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);
@@ -249,9 +255,11 @@ public class DefaultQueueContainerServiceTest {
         final DefaultQueueContainerService defaultQueueContainerService = new DefaultQueueContainerService(ImmutableList.of(queueWrapper));
         when(queueWrapper.canWrapMethod(any(Method.class))).thenReturn(false);
         when(queueWrapper.canWrapMethod(method)).thenReturn(true);
+        final IdentifiableMessageListenerContainer identifiableContainer = mock(IdentifiableMessageListenerContainer.class);
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
-        when(container.getIdentifier()).thenReturn("identifier");
-        when(queueWrapper.wrapMethod(bean, method)).thenReturn(container);
+        when(identifiableContainer.getIdentifier()).thenReturn("identifier");
+        when(identifiableContainer.getContainer()).thenReturn(container);
+        when(queueWrapper.wrapMethod(bean, method)).thenReturn(identifiableContainer);
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultQueueContainerService.setApplicationContext(applicationContext);

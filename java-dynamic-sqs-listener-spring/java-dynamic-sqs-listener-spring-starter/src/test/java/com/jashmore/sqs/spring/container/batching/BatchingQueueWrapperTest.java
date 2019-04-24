@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,11 +44,39 @@ public class BatchingQueueWrapperTest {
         final Method method = BatchingQueueWrapperTest.class.getMethod("myMethod");
 
         // act
-        final MessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(SimpleMessageListenerContainer.class);
+        assertThat(messageListenerContainer.getContainer()).isInstanceOf(SimpleMessageListenerContainer.class);
+    }
+
+    @Test
+    public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
+        // arrange
+        final Object bean = new BatchingQueueWrapperTest();
+        final Method method = BatchingQueueWrapperTest.class.getMethod("myMethod");
+
+        // act
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(messageListenerContainer).isNotNull();
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("com.jashmore.sqs.spring.container.batching.BatchingQueueWrapperTest#myMethod");
+    }
+
+    @Test
+    public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
+        // arrange
+        final Object bean = new BatchingQueueWrapperTest();
+        final Method method = BatchingQueueWrapperTest.class.getMethod("myMethodWithIdentifier");
+
+        // act
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(messageListenerContainer).isNotNull();
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("identifier");
     }
 
     @Test
@@ -64,8 +92,16 @@ public class BatchingQueueWrapperTest {
         verify(queueResolver).resolveQueueUrl("test");
     }
 
+
+    @SuppressWarnings("WeakerAccess")
     @BatchingQueueListener("test")
     public void myMethod() {
+
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @BatchingQueueListener(value = "test2", identifier = "identifier")
+    public void myMethodWithIdentifier() {
 
     }
 }

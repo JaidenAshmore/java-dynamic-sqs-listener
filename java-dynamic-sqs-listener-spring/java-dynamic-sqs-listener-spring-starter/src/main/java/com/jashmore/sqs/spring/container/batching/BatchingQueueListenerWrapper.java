@@ -4,6 +4,7 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -13,9 +14,8 @@ import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
+import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,8 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
     }
 
     @Override
-    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final BatchingQueueListener annotation) {
+    protected IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
+                                                                                  final BatchingQueueListener annotation) {
         final ExecutorService executor = Executors.newCachedThreadPool();
         final QueueProperties queueProperties = QueueProperties
                 .builder()
@@ -86,6 +87,9 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
             identifier = annotation.identifier().trim();
         }
 
-        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker, messageResolver);
+        return IdentifiableMessageListenerContainer.builder()
+                .identifier(identifier)
+                .container(new SimpleMessageListenerContainer(messageRetriever, messageBroker, messageResolver))
+                .build();
     }
 }

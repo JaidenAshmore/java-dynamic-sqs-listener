@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container;
+package com.jashmore.sqs.container;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -8,7 +8,6 @@ import com.jashmore.sqs.resolver.AsyncMessageResolver;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.spring.QueueContainerService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
@@ -23,16 +22,6 @@ import javax.annotation.concurrent.GuardedBy;
  */
 @Slf4j
 public class SimpleMessageListenerContainer implements MessageListenerContainer {
-    /**
-     * The identifier for this container.
-     *
-     * <p>This identifier must be unique across all other containers so that it can be uniquely obtained to start
-     * or stop specifically.
-     *
-     * @see QueueContainerService#startContainer(String) for usage of this identifier
-     * @see QueueContainerService#stopContainer(String) for usage of this identifier
-     */
-    private final String identifier;
 
     /**
      * The {@link MessageRetriever} that will be used in this container to obtain messages to process.
@@ -73,16 +62,13 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
      * Container that can be built when the {@link MessageBroker} is using an {@link AsyncMessageRetriever}. This takes the {@link AsyncMessageRetriever} so
      * that during the lifecycle of the spring container, it can be enabled and disabled at the same time that the {@link MessageBroker} is.
      *
-     * @param identifier       the unique identifier for this container
      * @param messageRetriever the message retriever for this listener
      * @param messageBroker    the message broker that handles the processing of messages
      * @param messageResolver  the message resolver that will be used in this container
      */
-    public SimpleMessageListenerContainer(final String identifier,
-                                          final MessageRetriever messageRetriever,
+    public SimpleMessageListenerContainer(final MessageRetriever messageRetriever,
                                           final MessageBroker messageBroker,
                                           final MessageResolver messageResolver) {
-        this.identifier = identifier;
         this.messageRetriever = messageRetriever;
         this.messageBroker = messageBroker;
         this.messageResolver = messageResolver;
@@ -92,23 +78,16 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
     }
 
     @VisibleForTesting
-    SimpleMessageListenerContainer(final String identifier,
-                                   final MessageRetriever messageRetriever,
+    SimpleMessageListenerContainer(final MessageRetriever messageRetriever,
                                    final MessageBroker messageBroker,
                                    final MessageResolver messageResolver,
                                    final ExecutorService executorService) {
-        this.identifier = identifier;
         this.messageRetriever = messageRetriever;
         this.messageBroker = messageBroker;
         this.messageResolver = messageResolver;
         this.executorService = executorService;
 
         this.messageResolverCompletableFuture = null;
-    }
-
-    @Override
-    public String getIdentifier() {
-        return identifier;
     }
 
     @Override
@@ -142,7 +121,6 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
                 ((AsyncMessageRetriever)messageRetriever).stop().get();
             }
 
-            // TODO: All of the tests for these
             if (messageResolverCompletableFuture != null) {
                 messageResolverCompletableFuture.cancel(true);
             }

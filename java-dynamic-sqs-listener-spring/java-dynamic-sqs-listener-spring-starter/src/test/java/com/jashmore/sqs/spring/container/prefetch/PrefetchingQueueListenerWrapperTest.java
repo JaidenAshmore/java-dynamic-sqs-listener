@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.spring.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,11 +48,40 @@ public class PrefetchingQueueListenerWrapperTest {
         final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("myMethod");
 
         // act
-        final MessageListenerContainer messageListenerContainer = prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = prefetchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(SimpleMessageListenerContainer.class);
+        assertThat(messageListenerContainer.getContainer()).isInstanceOf(SimpleMessageListenerContainer.class);
+    }
+
+    @Test
+    public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
+        // arrange
+        final Object bean = new PrefetchingQueueListenerWrapperTest();
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("myMethod");
+
+        // act
+        final IdentifiableMessageListenerContainer messageListenerContainer = prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(messageListenerContainer).isNotNull();
+        assertThat(messageListenerContainer.getIdentifier())
+                .isEqualTo("com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapperTest#myMethod");
+    }
+
+    @Test
+    public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
+        // arrange
+        final Object bean = new PrefetchingQueueListenerWrapperTest();
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("myMethodWithIdentifier");
+
+        // act
+        final IdentifiableMessageListenerContainer messageListenerContainer = prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(messageListenerContainer).isNotNull();
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("identifier");
     }
 
     @Test
@@ -68,8 +97,15 @@ public class PrefetchingQueueListenerWrapperTest {
         verify(queueResolver).resolveQueueUrl("test");
     }
 
+    @SuppressWarnings("WeakerAccess")
     @PrefetchingQueueListener("test")
     public void myMethod() {
+
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @PrefetchingQueueListener(value = "test2", identifier = "identifier")
+    public void myMethodWithIdentifier() {
 
     }
 }

@@ -1,6 +1,5 @@
-package com.jashmore.sqs.spring.container;
+package com.jashmore.sqs.container;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -31,7 +30,7 @@ public class SimpleMessageListenerContainerTest {
 
     @Mock
     private MessageBroker messageBroker;
-    
+
     @Mock
     private MessageResolver messageResolver;
 
@@ -57,18 +56,9 @@ public class SimpleMessageListenerContainerTest {
     }
 
     @Test
-    public void identifierPassedIsTheIdentifierForTheContainer() {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
-
-        // assert
-        assertThat(container.getIdentifier()).isEqualTo("identifier");
-    }
-
-    @Test
     public void onStartTheMessageBrokerIsStarted() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
 
         // act
         container.start();
@@ -80,7 +70,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void whenContainerIsAlreadyStartedTheMessageBrokerAndMessageRetrieverAreNotStartedAgain() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
 
         // act
         container.start();
@@ -94,7 +84,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenNotRunningDoesNothing() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
 
         // act
         container.stop();
@@ -106,7 +96,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillStopAsyncMessageRetrievers() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -119,7 +109,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillStopTheMessageBroker() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -132,7 +122,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillWaitUntilMessageBrokerIsStopped() throws InterruptedException, ExecutionException {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -145,7 +135,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillWaitUntilAsyncMessageRetrieverIsStopped() throws InterruptedException, ExecutionException {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -158,7 +148,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void exceptionThrownWhileStoppingAsyncMessageRetrieverWillNotBubbleException() throws InterruptedException, ExecutionException {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
         when(asyncMessageRetrieverStoppedFuture.get()).thenThrow(new ExecutionException("test", new IllegalArgumentException()));
 
@@ -170,7 +160,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void exceptionThrownWhileStoppingMessageBrokerWillNotBubbleException() throws InterruptedException, ExecutionException {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
         when(messageBrokerStoppedFuture.get()).thenThrow(new ExecutionException("test", new IllegalArgumentException()));
 
@@ -181,7 +171,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingAlreadyStoppedContainerWillDoNothing() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever, messageBroker, messageResolver);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -196,7 +186,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void asyncMessageResolverWillBeStartedOnBackgroundThreadWhenStartCalled() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever,
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever,
                 messageBroker, asyncMessageResolver, executorService);
 
         // act
@@ -209,7 +199,7 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void whenAsyncMessageResolverStartedItWillCancelThreadWhenContainerIsStopped() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer("identifier", asyncMessageRetriever,
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever,
                 messageBroker, asyncMessageResolver, executorService);
         doReturn(messageResolverThreadFuture).when(executorService).submit(asyncMessageResolver);
         container.start();
