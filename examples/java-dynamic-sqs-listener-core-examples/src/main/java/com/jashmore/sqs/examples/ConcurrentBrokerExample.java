@@ -16,6 +16,8 @@ import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.AsyncMessageResolver;
@@ -95,12 +97,8 @@ public class ConcurrentBrokerExample {
                         .desiredMinPrefetchedMessages(10)
                         .maxPrefetchedMessages(20)
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
-                        .build(),
-                executorService
+                        .build()
         );
-
-        // As this retrieves messages asynchronously we need to start the background thread
-        messageRetriever.start();
 
         // Creates the class that will deal with taking messages and getting them processed by the message consumer
         final MessageConsumer messageConsumer = new MessageConsumer();
@@ -139,11 +137,9 @@ public class ConcurrentBrokerExample {
                 })
         );
 
-        // As the BatchingMessageResolver uses a background thread to delete the messages in batches we need to start it in a background thread
-        executorService.submit(messageResolver);
-
-        // When we start listening it will receive messages from SQS and pass them to the MessageConsumer for processing
-        concurrentMessageBroker.start();
+        final MessageListenerContainer messageListenerContainer
+                = new SimpleMessageListenerContainer(messageRetriever, concurrentMessageBroker, messageResolver);
+        messageListenerContainer.start();
 
         // Create some producers of messages
         final Future<?> producerFuture = executorService.submit(new Producer(sqsAsyncClient, queueUrl));

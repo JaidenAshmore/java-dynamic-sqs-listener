@@ -1,6 +1,7 @@
 package com.jashmore.sqs.container;
 
-import static org.mockito.Mockito.doReturn;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,6 +21,7 @@ import org.mockito.junit.MockitoRule;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class SimpleMessageListenerContainerTest {
     @Rule
@@ -38,28 +40,27 @@ public class SimpleMessageListenerContainerTest {
     private AsyncMessageResolver asyncMessageResolver;
 
     @Mock
-    private ExecutorService executorService;
+    private ExecutorService mockExecutorService;
 
     @Mock
     private Future<Object> messageBrokerStoppedFuture;
 
-    @Mock
-    private Future<Object> asyncMessageRetrieverStoppedFuture;
-
-    @Mock
-    private Future<?> messageResolverThreadFuture;
+    private SimpleMessageListenerContainer container;
 
     @Before
     public void setUp() {
         when(messageBroker.stop()).thenReturn(messageBrokerStoppedFuture);
-        when(asyncMessageRetriever.stop()).thenReturn(asyncMessageRetrieverStoppedFuture);
+
+        container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver) {
+            @Override
+            ExecutorService getNewExecutorService() {
+                return mockExecutorService;
+            }
+        };
     }
 
     @Test
     public void onStartTheMessageBrokerIsStarted() {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-
         // act
         container.start();
 
@@ -69,23 +70,17 @@ public class SimpleMessageListenerContainerTest {
 
     @Test
     public void whenContainerIsAlreadyStartedTheMessageBrokerAndMessageRetrieverAreNotStartedAgain() {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-
         // act
         container.start();
         container.start();
 
         // assert
-        verify(asyncMessageRetriever, times(1)).start();
+        verify(mockExecutorService, times(1)).submit(any(AsyncMessageRetriever.class));
         verify(messageBroker, times(1)).start();
     }
 
     @Test
     public void stoppingContainerWhenNotRunningDoesNothing() {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-
         // act
         container.stop();
 
@@ -94,22 +89,34 @@ public class SimpleMessageListenerContainerTest {
     }
 
     @Test
-    public void stoppingContainerWhenRunningWillStopAsyncMessageRetrievers() {
+    public void stoppingContainerWhenRunningWillStopTheExecutorServiceAndWaitUntilFinished() throws Exception {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
         container.stop();
 
         // assert
-        verify(asyncMessageRetriever).stop();
+        verify(mockExecutorService).shutdownNow();
+        verify(mockExecutorService).awaitTermination(1, TimeUnit.MINUTES);
+    }
+
+    @Test
+    public void threadInterruptedWhileWaitingForExecutorServiceShutdownWilLInterruptCurrentThread() throws Exception {
+        // arrange
+        container.start();
+        when(mockExecutorService.awaitTermination(1, TimeUnit.MINUTES)).thenThrow(new InterruptedException());
+
+        // act
+        container.stop();
+
+        // assert
+        assertThat(Thread.interrupted()).isTrue();
     }
 
     @Test
     public void stoppingContainerWhenRunningWillStopTheMessageBroker() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -122,7 +129,6 @@ public class SimpleMessageListenerContainerTest {
     @Test
     public void stoppingContainerWhenRunningWillWaitUntilMessageBrokerIsStopped() throws InterruptedException, ExecutionException {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -133,45 +139,8 @@ public class SimpleMessageListenerContainerTest {
     }
 
     @Test
-    public void stoppingContainerWhenRunningWillWaitUntilAsyncMessageRetrieverIsStopped() throws InterruptedException, ExecutionException {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-        container.start();
-
-        // act
-        container.stop();
-
-        // assert
-        verify(asyncMessageRetrieverStoppedFuture).get();
-    }
-
-    @Test
-    public void exceptionThrownWhileStoppingAsyncMessageRetrieverWillNotBubbleException() throws InterruptedException, ExecutionException {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-        container.start();
-        when(asyncMessageRetrieverStoppedFuture.get()).thenThrow(new ExecutionException("test", new IllegalArgumentException()));
-
-        // act
-        container.stop();
-    }
-
-
-    @Test
-    public void exceptionThrownWhileStoppingMessageBrokerWillNotBubbleException() throws InterruptedException, ExecutionException {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
-        container.start();
-        when(messageBrokerStoppedFuture.get()).thenThrow(new ExecutionException("test", new IllegalArgumentException()));
-
-        // act
-        container.stop();
-    }
-
-    @Test
     public void stoppingAlreadyStoppedContainerWillDoNothing() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver);
         container.start();
 
         // act
@@ -180,34 +149,23 @@ public class SimpleMessageListenerContainerTest {
 
         // assert
         verify(messageBroker, times(1)).stop();
-        verify(asyncMessageRetriever, times(1)).stop();
+        verify(mockExecutorService, times(1)).shutdownNow();
     }
 
     @Test
     public void asyncMessageResolverWillBeStartedOnBackgroundThreadWhenStartCalled() {
         // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever,
-                messageBroker, asyncMessageResolver, executorService);
+        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, asyncMessageResolver) {
+            @Override
+            ExecutorService getNewExecutorService() {
+                return mockExecutorService;
+            }
+        };
 
         // act
         container.start();
 
         // assert
-        verify(executorService).submit(asyncMessageResolver);
-    }
-
-    @Test
-    public void whenAsyncMessageResolverStartedItWillCancelThreadWhenContainerIsStopped() {
-        // arrange
-        final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(asyncMessageRetriever,
-                messageBroker, asyncMessageResolver, executorService);
-        doReturn(messageResolverThreadFuture).when(executorService).submit(asyncMessageResolver);
-        container.start();
-
-        // act
-        container.stop();
-
-        // assert
-        verify(messageResolverThreadFuture).cancel(true);
+        verify(mockExecutorService).submit(asyncMessageResolver);
     }
 }

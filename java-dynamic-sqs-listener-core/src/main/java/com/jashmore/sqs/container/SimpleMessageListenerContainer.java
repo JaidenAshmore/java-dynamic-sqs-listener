@@ -8,12 +8,14 @@ import com.jashmore.sqs.resolver.AsyncMessageResolver;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -45,18 +47,8 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
      */
     private final MessageResolver messageResolver;
 
-    private final ExecutorService executorService;
-
-    /**
-     * Stores whether the container is currently running.
-     *
-     * <p>This is kept thread safe by making sure all methods for this container are synchronized.
-     */
     @GuardedBy("this")
-    private volatile boolean isRunning;
-
-    @GuardedBy("this")
-    private Future<?> messageResolverCompletableFuture;
+    private ExecutorService executorService;
 
     /**
      * Container that can be built when the {@link MessageBroker} is using an {@link AsyncMessageRetriever}. This takes the {@link AsyncMessageRetriever} so
@@ -72,64 +64,62 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
         this.messageRetriever = messageRetriever;
         this.messageBroker = messageBroker;
         this.messageResolver = messageResolver;
-        this.executorService = Executors.newCachedThreadPool();
 
-        this.messageResolverCompletableFuture = null;
+        this.executorService = null;
     }
 
-    @VisibleForTesting
-    SimpleMessageListenerContainer(final MessageRetriever messageRetriever,
-                                   final MessageBroker messageBroker,
-                                   final MessageResolver messageResolver,
-                                   final ExecutorService executorService) {
-        this.messageRetriever = messageRetriever;
-        this.messageBroker = messageBroker;
-        this.messageResolver = messageResolver;
-        this.executorService = executorService;
-
-        this.messageResolverCompletableFuture = null;
-    }
-
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     @Override
     public synchronized void start() {
-        if (isRunning) {
+        if (executorService != null) {
             return;
         }
 
+        executorService = getNewExecutorService();
+
         if (messageRetriever instanceof AsyncMessageRetriever) {
-            ((AsyncMessageRetriever)messageRetriever).start();
+            executorService.submit((AsyncMessageRetriever) messageRetriever);
         }
 
         if (messageResolver instanceof AsyncMessageResolver) {
-            messageResolverCompletableFuture = executorService.submit((AsyncMessageResolver) messageResolver);
+            executorService.submit((AsyncMessageResolver) messageResolver);
         }
 
         messageBroker.start();
-
-        isRunning = true;
     }
 
     @Override
     public synchronized void stop() {
-        if (!isRunning) {
+        if (executorService == null) {
             return;
         }
 
         try {
-            final Future<?> messageBrokerStoppedFuture = messageBroker.stop();
-            if (messageRetriever instanceof AsyncMessageRetriever) {
-                ((AsyncMessageRetriever)messageRetriever).stop().get();
+            executorService.shutdownNow();
+
+            try {
+                final Future<?> messageBrokerStoppedFuture = messageBroker.stop();
+
+                messageBrokerStoppedFuture.get();
+            } catch (final InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+            } catch (final ExecutionException executionException) {
+                log.error("Error waiting for container to stop", executionException.getCause());
             }
 
-            if (messageResolverCompletableFuture != null) {
-                messageResolverCompletableFuture.cancel(true);
+            try {
+                executorService.awaitTermination(1, TimeUnit.MINUTES);
+            } catch (final InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
             }
-
-            messageBrokerStoppedFuture.get();
-        } catch (final InterruptedException | ExecutionException exception) {
-            log.error("Error waiting for container to stop", exception.getCause());
         } finally {
-            isRunning = false;
+            // Reset so we can start the container again in the future
+            executorService = null;
         }
+    }
+
+    @VisibleForTesting
+    ExecutorService getNewExecutorService() {
+        return Executors.newCachedThreadPool();
     }
 }
