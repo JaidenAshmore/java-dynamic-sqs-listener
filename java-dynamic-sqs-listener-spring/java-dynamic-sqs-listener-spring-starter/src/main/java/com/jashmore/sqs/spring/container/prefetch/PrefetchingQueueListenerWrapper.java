@@ -5,7 +5,7 @@ import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SEC
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
-import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -23,8 +23,6 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * {@link QueueWrapper} that will wrap methods annotated with {@link PrefetchingQueueListener @PrefetchingQueueListener} with some predefined
@@ -36,7 +34,6 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
-    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     @Override
     protected Class<PrefetchingQueueListener> getAnnotationClass() {
@@ -69,7 +66,6 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                executor,
                 StaticConcurrentMessageBrokerProperties
                         .builder()
                         .concurrencyLevel(annotation.concurrencyLevel())

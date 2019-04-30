@@ -1,4 +1,4 @@
-package com.jashmore.sqs.broker.concurrent.properties;
+package com.jashmore.sqs.broker.concurrent;
 
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.retriever.MessageRetriever;

@@ -9,8 +9,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * Container used to handle the entire lifecycle of a wrapped method in the spring context.
  *
  * <p>The responsibility of this container is being able to start and stop the processing of messages for the wrapped method. This
- * may only need to call down to the underlying {@link MessageBroker#start()} but there could be more complicated actions needing
- * to be made, such as starting an {@link AsyncMessageRetriever}.
+ * may will start any background threads needed for any component of the library.
  *
  * <p>These containers must be thread safe as there could be multiple threads starting and stopping these containers.
  */
