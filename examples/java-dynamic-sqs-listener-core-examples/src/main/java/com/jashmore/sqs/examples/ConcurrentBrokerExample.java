@@ -13,9 +13,9 @@ import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
+import com.jashmore.sqs.broker.concurrent.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
-import com.jashmore.sqs.broker.concurrent.properties.CachingConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.broker.concurrent.properties.ConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
@@ -120,7 +120,6 @@ public class ConcurrentBrokerExample {
         final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                executorService,
                 // Represents a concurrent implementation that will fluctuate between 0 and 10 threads all processing messages
                 new CachingConcurrentMessageBrokerProperties(10000, new ConcurrentMessageBrokerProperties() {
                     private final Random random = new Random(1);

@@ -1,4 +1,4 @@
-package com.jashmore.sqs.broker.concurrent.properties;
+package com.jashmore.sqs.broker.concurrent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -6,6 +6,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jashmore.sqs.broker.concurrent.CachingConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import org.junit.Test;
 
 public class CachingConcurrentMessageBrokerPropertiesTest {

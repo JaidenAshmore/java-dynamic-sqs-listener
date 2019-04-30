@@ -1,4 +1,4 @@
-package com.jashmore.sqs.broker.concurrent.properties;
+package com.jashmore.sqs.broker.concurrent;
 
 import com.google.common.base.Preconditions;
 
@@ -20,7 +20,7 @@ import javax.validation.constraints.Min;
  */
 @ToString
 @EqualsAndHashCode
-@Builder
+@Builder(toBuilder = true)
 @ThreadSafe
 public final class StaticConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
     private static final Integer DEFAULT_CONCURRENCY_POLLING_IN_MS = 60_000;

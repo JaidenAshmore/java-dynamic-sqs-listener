@@ -2,7 +2,6 @@ package com.jashmore.sqs.broker.concurrent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
 import org.junit.Test;
 
 public class StaticConcurrentMessageBrokerPropertiesTest {

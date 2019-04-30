@@ -18,9 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SimpleMessageListenerContainerTest {
@@ -42,15 +40,10 @@ public class SimpleMessageListenerContainerTest {
     @Mock
     private ExecutorService mockExecutorService;
 
-    @Mock
-    private Future<Object> messageBrokerStoppedFuture;
-
     private SimpleMessageListenerContainer container;
 
     @Before
     public void setUp() {
-        when(messageBroker.stop()).thenReturn(messageBrokerStoppedFuture);
-
         container = new SimpleMessageListenerContainer(asyncMessageRetriever, messageBroker, messageResolver) {
             @Override
             ExecutorService getNewExecutorService() {
@@ -65,7 +58,7 @@ public class SimpleMessageListenerContainerTest {
         container.start();
 
         // assert
-        verify(messageBroker).start();
+        verify(mockExecutorService).submit(messageBroker);
     }
 
     @Test
@@ -76,7 +69,7 @@ public class SimpleMessageListenerContainerTest {
 
         // assert
         verify(mockExecutorService, times(1)).submit(any(AsyncMessageRetriever.class));
-        verify(messageBroker, times(1)).start();
+        verify(mockExecutorService).submit(messageBroker);
     }
 
     @Test
@@ -85,7 +78,7 @@ public class SimpleMessageListenerContainerTest {
         container.stop();
 
         // assert
-        verify(messageBroker, never()).stop();
+        verify(mockExecutorService, never()).submit(messageBroker);
     }
 
     @Test
@@ -115,30 +108,6 @@ public class SimpleMessageListenerContainerTest {
     }
 
     @Test
-    public void stoppingContainerWhenRunningWillStopTheMessageBroker() {
-        // arrange
-        container.start();
-
-        // act
-        container.stop();
-
-        // assert
-        verify(messageBroker).stop();
-    }
-
-    @Test
-    public void stoppingContainerWhenRunningWillWaitUntilMessageBrokerIsStopped() throws InterruptedException, ExecutionException {
-        // arrange
-        container.start();
-
-        // act
-        container.stop();
-
-        // assert
-        verify(messageBrokerStoppedFuture).get();
-    }
-
-    @Test
     public void stoppingAlreadyStoppedContainerWillDoNothing() {
         // arrange
         container.start();
@@ -148,7 +117,6 @@ public class SimpleMessageListenerContainerTest {
         container.stop();
 
         // assert
-        verify(messageBroker, times(1)).stop();
         verify(mockExecutorService, times(1)).shutdownNow();
     }
 

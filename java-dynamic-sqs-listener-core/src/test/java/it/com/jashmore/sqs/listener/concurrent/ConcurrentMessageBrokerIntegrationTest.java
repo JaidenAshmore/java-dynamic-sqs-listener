@@ -11,7 +11,7 @@ import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
-import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -33,7 +33,6 @@ import org.junit.Test;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 
 @Slf4j
 public class ConcurrentMessageBrokerIntegrationTest {
@@ -80,7 +79,6 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                Executors.newCachedThreadPool(),
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .build()
@@ -131,7 +129,6 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                Executors.newCachedThreadPool(),
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .build()

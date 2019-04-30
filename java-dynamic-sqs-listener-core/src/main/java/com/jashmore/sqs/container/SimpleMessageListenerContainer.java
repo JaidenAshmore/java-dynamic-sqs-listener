@@ -11,10 +11,8 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -85,7 +83,7 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
             executorService.submit((AsyncMessageResolver) messageResolver);
         }
 
-        messageBroker.start();
+        executorService.submit(messageBroker);
     }
 
     @Override
@@ -96,16 +94,6 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
 
         try {
             executorService.shutdownNow();
-
-            try {
-                final Future<?> messageBrokerStoppedFuture = messageBroker.stop();
-
-                messageBrokerStoppedFuture.get();
-            } catch (final InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-            } catch (final ExecutionException executionException) {
-                log.error("Error waiting for container to stop", executionException.getCause());
-            }
 
             try {
                 executorService.awaitTermination(1, TimeUnit.MINUTES);
