@@ -56,7 +56,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .numberOfThreadsWaitingTrigger(annotation.concurrencyLevel())
                 .build();
         final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(
-                queueProperties, sqsAsyncClient, executor, batchingMessageRetrieverProperties);
+                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties);
 
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
 

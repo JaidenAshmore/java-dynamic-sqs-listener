@@ -12,6 +12,7 @@ import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.properties.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -53,7 +54,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, localSqsRule.getLocalAmazonSqsAsync());
     }
 
-    @Test
+    @Test(timeout = 30_000)
     public void allMessagesSentIntoQueueAreProcessed() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
@@ -85,19 +86,22 @@ public class ConcurrentMessageBrokerIntegrationTest {
                         .build()
         );
         SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
+        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
+                messageRetriever, messageBroker, messageResolver
+        );
 
         // act
-        messageBroker.start();
+        simpleMessageListenerContainer.start();
 
         // assert
         messageReceivedLatch.await(60, SECONDS);
 
         // cleanup
-        messageBroker.stop().get(4, SECONDS);
+        simpleMessageListenerContainer.stop();
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
-    @Test
+    @Test(timeout = 30_000)
     public void usingPrefetchingMessageRetrieverCanConsumeAllMessages() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
@@ -112,8 +116,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
                         .maxWaitTimeInSecondsToObtainMessagesFromServer(1)
                         .desiredMinPrefetchedMessages(30)
                         .maxPrefetchedMessages(40)
-                        .build(),
-                Executors.newCachedThreadPool()
+                        .build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
@@ -133,18 +136,20 @@ public class ConcurrentMessageBrokerIntegrationTest {
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
+        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
+                messageRetriever, messageBroker, messageResolver
+        );
+
         SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
-        messageRetriever.start();
 
         // act
-        messageBroker.start();
+        simpleMessageListenerContainer.start();
 
         // assert
         messageReceivedLatch.await(1, MINUTES);
 
         // cleanup
-        messageBroker.stop().get(10, SECONDS);
-        messageRetriever.stop().get(10, SECONDS);
+        simpleMessageListenerContainer.stop();
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 

@@ -59,7 +59,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .build();
         final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                sqsAsyncClient, queueProperties, batchingProperties, executor);
+                sqsAsyncClient, queueProperties, batchingProperties);
 
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
 
