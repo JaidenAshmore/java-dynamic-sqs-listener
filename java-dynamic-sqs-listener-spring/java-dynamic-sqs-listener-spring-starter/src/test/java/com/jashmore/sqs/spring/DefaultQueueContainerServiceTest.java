@@ -114,7 +114,7 @@ public class DefaultQueueContainerServiceTest {
     }
 
     @Test
-    public void duplicateMessageListenerContainsThrowsExceptionOnInitialisation() throws NoSuchMethodException {
+    public void duplicateMessageListenerContainsThrowsExceptionWhenStarting() throws NoSuchMethodException {
         // arrange
         final BeanWithTwoMethods bean = new BeanWithTwoMethods();
         final Method methodOne = bean.getClass().getMethod("methodOne");
@@ -136,9 +136,10 @@ public class DefaultQueueContainerServiceTest {
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "bean" });
         when(applicationContext.getBean("bean")).thenReturn(bean);
         expectedException.expect(IllegalStateException.class);
+        defaultQueueContainerService.setApplicationContext(applicationContext);
 
         // act
-        defaultQueueContainerService.setApplicationContext(applicationContext);
+        defaultQueueContainerService.startAllContainers();
     }
 
     @Test

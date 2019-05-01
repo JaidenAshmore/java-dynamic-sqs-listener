@@ -1,20 +1,18 @@
-package it.com.jashmore.sqs.container.basic;
+package it.com.jashmore.sqs.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.argument.payload.Payload;
+import com.jashmore.sqs.spring.QueueContainerService;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.test.LocalSqsRule;
-import com.jashmore.sqs.test.PurgeQueuesRule;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,31 +22,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, QueueListenerWrapperIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, DefaultQueueContainerServiceIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
-public class QueueListenerWrapperIntegrationTest {
-    private static final String QUEUE_NAME = "QueueListenerWrapperIntegrationTest";
-
-    private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
-    private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(NUMBER_OF_MESSAGES_TO_SEND);
-
-    private static final Map<String, Boolean> messagesProcessed = new ConcurrentHashMap<>();
+public class DefaultQueueContainerServiceIntegrationTest {
+    private static final String QUEUE_NAME = "DefaultQueueContainerServiceIntegrationTest";
+    private static final int MESSAGE_VISIBILITY_IN_SECONDS = 1;
 
     @ClassRule
     public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
             SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME).build()
     ));
 
-    @Rule
-    public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
+    private static final CountDownLatch proxiedTestMethodCompleted = new CountDownLatch(1);
 
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
@@ -62,28 +51,30 @@ public class QueueListenerWrapperIntegrationTest {
 
         @Service
         public static class MessageListener {
-            @QueueListener(value = QUEUE_NAME)
+            @SuppressWarnings("unused")
+            @QueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {
-                log.info("Obtained message: {}", payload);
-                messagesProcessed.put(payload, true);
-                COUNT_DOWN_LATCH.countDown();
+                log.info("Message received: {}", payload);
+                proxiedTestMethodCompleted.countDown();
             }
         }
     }
 
+    @Autowired
+    private QueueContainerService queueContainerService;
+
     @Test
-    public void allMessagesAreProcessedByListeners() throws InterruptedException {
+    public void queueContainerServiceCanStartAndStopQueuesForProcessing() throws Exception {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> {
-                    log.info("Sending message: " + i);
-                    localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i);
-                });
+        queueContainerService.stopAllContainers();
+        log.info("Containers stopped");
+        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message").get();
 
         // act
-        COUNT_DOWN_LATCH.await(20, TimeUnit.SECONDS);
+        Thread.sleep(1000); // Make sure the queues are not running
+        queueContainerService.startAllContainers();
 
         // assert
-        assertThat(messagesProcessed).hasSize(100);
+        proxiedTestMethodCompleted.await(30, TimeUnit.SECONDS);
     }
 }

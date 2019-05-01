@@ -121,9 +121,15 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             log.debug("Requesting {} messages", numberOfMessagesToObtain);
 
             try {
+                final ReceiveMessageResponse response;
                 try {
-                    final ReceiveMessageResponse response = sqsAsyncClient.receiveMessage(buildReceiveMessageRequest(numberOfMessagesToObtain))
+                    response = sqsAsyncClient.receiveMessage(buildReceiveMessageRequest(numberOfMessagesToObtain))
                             .get();
+                } catch (final InterruptedException interruptedException) {
+                    log.debug("Thread interrupted while obtaining messages from SQS");
+                    break;
+                }
+                try {
                     for (final Message message : response.messages()) {
                         messagesDownloaded.put(message);
                     }
