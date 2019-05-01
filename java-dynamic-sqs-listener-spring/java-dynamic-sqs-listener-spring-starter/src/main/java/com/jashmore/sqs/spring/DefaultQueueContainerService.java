@@ -89,7 +89,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
      * @param containerConsumer the consumer to call
      */
     private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
-        final CompletableFuture[] allTaskCompletableFutures = containersLazilyLoaded.get().values().stream()
+        final CompletableFuture<?>[] allTaskCompletableFutures = containersLazilyLoaded.get().values().stream()
                 .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
                 .toArray(CompletableFuture[]::new);
 

@@ -3,7 +3,6 @@ package com.jashmore.sqs.examples;
 import com.jashmore.sqs.spring.QueueContainerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
