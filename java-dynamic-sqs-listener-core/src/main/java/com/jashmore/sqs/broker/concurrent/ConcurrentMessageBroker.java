@@ -23,13 +23,6 @@ public class ConcurrentMessageBroker implements MessageBroker {
     private final MessageProcessor messageProcessor;
     private final ConcurrentMessageBrokerProperties properties;
 
-    /**
-     * Semaphore used to control the number of threads that are available to be run.
-     *
-     * <p>This is set to zero but will be replaced by the value from the {@link #properties}.
-     */
-    private final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
-
     public ConcurrentMessageBroker(final MessageRetriever messageRetriever,
                                    final MessageProcessor messageProcessor,
                                    final ConcurrentMessageBrokerProperties properties) {
@@ -40,7 +33,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
 
     /**
      * RV_RETURN_VALUE_IGNORED_BAD_PRACTICE is ignored because we don't actually care about the return future for submitting a thread to process a message.
-     * Instead the {@link #concurrentMessagesBeingProcessedSemaphore} is used to control the number of concurrent threads and when we should down we
+     * Instead the {@link ResizableSemaphore} is used to control the number of concurrent threads and when we should down we
      * wait for the whole {@link ExecutorService} to finish and therefore we don't care about an individual thread.
      */
     @Override
@@ -94,8 +87,8 @@ public class ConcurrentMessageBroker implements MessageBroker {
     private void updateConcurrencyLevelIfChanged(final ResizableSemaphore resizableSemaphore) {
         final int newConcurrencyLevel = properties.getConcurrencyLevel();
 
-        if (concurrentMessagesBeingProcessedSemaphore.getMaximumPermits() != newConcurrencyLevel) {
-            log.debug("Changing concurrency from {} to {}", concurrentMessagesBeingProcessedSemaphore.getMaximumPermits(), newConcurrencyLevel);
+        if (resizableSemaphore.getMaximumPermits() != newConcurrencyLevel) {
+            log.debug("Changing concurrency from {} to {}", resizableSemaphore.getMaximumPermits(), newConcurrencyLevel);
             resizableSemaphore.changePermitSize(newConcurrencyLevel);
         }
     }
