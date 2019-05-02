@@ -81,12 +81,14 @@ public class BatchingMessageResolver implements AsyncMessageResolver {
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
+        boolean continueProcessing = true;
+        while (continueProcessing) {
             final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
             try {
                 Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, getBatchSize(), getBufferingTimeInMs(), TimeUnit.MILLISECONDS);
             } catch (final InterruptedException interruptedException) {
                 // Do nothing, we still want to send the current batch of messages
+                continueProcessing = false;
             }
 
             if (!batchOfMessagesToResolve.isEmpty()) {
