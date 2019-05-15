@@ -234,6 +234,8 @@
                     <excludes>
                         <exclude>it/**/*.java</exclude>
                     </excludes>
+                    <!-- https://issues.apache.org/jira/browse/SUREFIRE-1588#comment-16670105 -->
+                    <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>
             <plugin>
