@@ -11,7 +11,6 @@ import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -23,7 +22,6 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * </ul>
  */
 @SpringBootApplication
-@ComponentScan("com.jashmore.sqs.examples")
 @EnableScheduling
 @Slf4j
 public class Application {

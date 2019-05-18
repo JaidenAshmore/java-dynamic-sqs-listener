@@ -14,7 +14,7 @@ public class MessageListeners {
      *
      * @param payload the payload of the SQS Message
      */
-    @QueueListener(value = "test", identifier = "test")
+    @QueueListener(value = "test")
     public void method(@Payload final String payload) {
         log.info("Message Received: {}", payload);
     }

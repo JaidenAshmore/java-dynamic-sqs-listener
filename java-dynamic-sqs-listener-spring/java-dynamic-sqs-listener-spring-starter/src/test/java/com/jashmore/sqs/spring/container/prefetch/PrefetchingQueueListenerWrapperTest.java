@@ -67,7 +67,7 @@ public class PrefetchingQueueListenerWrapperTest {
         // assert
         assertThat(messageListenerContainer).isNotNull();
         assertThat(messageListenerContainer.getIdentifier())
-                .isEqualTo("com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapperTest#myMethod");
+                .isEqualTo("prefetching-queue-listener-wrapper-test-my-method");
     }
 
     @Test

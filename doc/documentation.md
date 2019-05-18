@@ -23,6 +23,8 @@ more in depth understanding take a look at the JavaDoc for the API.
         queue listening without the verbosity of the custom queue listener
         1. [How to write Spring Integration Tests](how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
         writing right?
+        1. [How to Start/Stop Queue Listeners](how-to-guides/spring/spring-how-to-start-stop-queue-listeners.md): guide for starting and stopping the
+        processing of messages for specific queue listeners
     1. [How to Connect to an AWS SQS Queue](how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
 1. Local Development:
     1. [Setting up IntelliJ](local-development/setting-up-intellij.md): steps for setting IntelliJ up for development,

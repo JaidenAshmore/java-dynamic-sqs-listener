@@ -133,6 +133,11 @@ public class ConcurrentBrokerExample {
                     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
                         return CONCURRENCY_LEVEL_PERIOD_IN_MS;
                     }
+
+                    @Override
+                    public String threadNameFormat() {
+                        return "my-message-listener-thread-%d";
+                    }
                 })
         );
 

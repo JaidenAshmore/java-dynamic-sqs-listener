@@ -16,6 +16,7 @@ import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -60,21 +61,22 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
                 messageResolver, method, bean);
 
+        final String identifier;
+        if (StringUtils.isEmpty(annotation.identifier().trim())) {
+            identifier = IdentifierUtils.buildIdentifierForMethod(bean.getClass(), method);
+        } else {
+            identifier = annotation.identifier().trim();
+        }
+
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
                 StaticConcurrentMessageBrokerProperties
                         .builder()
                         .concurrencyLevel(annotation.concurrencyLevel())
+                        .threadNameFormat(identifier + "-%d")
                         .build()
         );
-
-        final String identifier;
-        if (StringUtils.isEmpty(annotation.identifier().trim())) {
-            identifier = bean.getClass().getName() + "#" + method.getName();
-        } else {
-            identifier = annotation.identifier().trim();
-        }
 
         return IdentifiableMessageListenerContainer.builder()
                 .identifier(identifier)

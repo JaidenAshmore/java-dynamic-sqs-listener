@@ -25,6 +25,7 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
 
     private final LoadingCache<Integer, Integer> cachedConcurrencyLevel;
     private final LoadingCache<Integer, Integer> cachedPreferredConcurrencyPollingRateInSeconds;
+    private final String threadNameFormat;
 
     /**
      * Constructor.
@@ -41,6 +42,8 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
         this.cachedPreferredConcurrencyPollingRateInSeconds = CacheBuilder.newBuilder()
                 .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
                 .build(CacheLoader.from(delegateProperties::getPreferredConcurrencyPollingRateInMilliseconds));
+
+        this.threadNameFormat = delegateProperties.threadNameFormat();
     }
 
     @Override
@@ -51,5 +54,10 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     @Override
     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
         return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+    }
+
+    @Override
+    public String threadNameFormat() {
+        return threadNameFormat;
     }
 }

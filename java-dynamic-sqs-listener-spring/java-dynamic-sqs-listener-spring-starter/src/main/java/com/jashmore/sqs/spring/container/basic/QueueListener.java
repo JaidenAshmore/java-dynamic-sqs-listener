@@ -40,7 +40,7 @@ public @interface QueueListener {
      *
      * @return the queue name or URL of the queue
      * @see Environment#resolveRequiredPlaceholders(String) for how the placeholders are resolved
-     * @see QueueProperties#queueUrl for how the URL of the queue is resolved if a queue name is supplied here
+     * @see QueueProperties#getQueueUrl() for how the URL of the queue is resolved if a queue name is supplied here
      */
     String value();
 
@@ -50,8 +50,11 @@ public @interface QueueListener {
      * <p>This can be used if you need to access the {@link MessageListenerContainer} for this queue listener specifically to start/stop it
      * specifically.
      *
-     * <p>If no value is provided for the identifier the class path and method name is used as the unique identifier. For example,
-     * <pre>com.company.queues.MyQueue#method(String, String)</pre>.
+     * <p>If no value is provided for the identifier the class path and method name is used as the unique identifier. For example, the method
+     * <pre>com.company.queues.MyQueue#method(String, String)</pre> would result in the following identifier <pre>my-queue-method</pre>.
+     *
+     * <p>The identifier for the queue will also be used to name the threads that will be executing the message processing. For example if your identifier
+     * is <pre>'my-queue-method'</pre> the threads that will be created will be named like <pre>'my-queue-method-0'</pre>, etc.
      *
      * @return the unique identifier for this queue listener
      */

@@ -62,7 +62,7 @@ public class BatchingQueueWrapperTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("com.jashmore.sqs.spring.container.batching.BatchingQueueWrapperTest#myMethod");
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("batching-queue-wrapper-test-my-method");
     }
 
     @Test

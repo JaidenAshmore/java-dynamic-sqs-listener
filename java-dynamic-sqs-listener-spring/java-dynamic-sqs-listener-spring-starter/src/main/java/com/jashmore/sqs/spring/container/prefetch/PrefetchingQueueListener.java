@@ -40,7 +40,7 @@ public @interface PrefetchingQueueListener {
      *
      * @return the queue name or URL of the queue
      * @see Environment#resolveRequiredPlaceholders(String) for how the placeholders are resolved
-     * @see QueueProperties#queueUrl for how the URL of the queue is resolved if a queue name is supplied here
+     * @see QueueProperties#getQueueUrl()  for how the URL of the queue is resolved if a queue name is supplied here
      */
     String value();
 
@@ -50,8 +50,11 @@ public @interface PrefetchingQueueListener {
      * <p>This can be used if you need to access the {@link MessageListenerContainer} for this queue listener specifically to start/stop it
      * specifically.
      *
-     * <p>If no value is provided for the identifier the class path and method name is used as the unique identifier. For example,
-     * <pre>com.company.queues.MyQueue#method(String, String)</pre>.
+     * <p>If no value is provided for the identifier the class path and method name is used as the unique identifier. For example, the method
+     * <pre>com.company.queues.MyQueue#method(String, String)</pre> would result in the following identifier <pre>my-queue-method</pre>.
+     *
+     * <p>The identifier for the queue will also be used to name the threads that will be executing the message processing. For example if your identifier
+     * is <pre>'my-queue-method'</pre> the threads that will be created will be named like <pre>'my-queue-method-0'</pre>, etc.
      *
      * @return the unique identifier for this queue listener
      */
@@ -69,7 +72,7 @@ public @interface PrefetchingQueueListener {
      * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
      *
      * @return the minimum number of prefetched messages
-     * @see StaticPrefetchingMessageRetrieverProperties#desiredMinPrefetchedMessages for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
      */
     int desiredMinPrefetchedMessages() default 1;
 
@@ -77,7 +80,7 @@ public @interface PrefetchingQueueListener {
      * The total number of messages that can be prefetched from the server and stored in memory for execution.
      *
      * @return the max number of prefetched issues
-     * @see StaticPrefetchingMessageRetrieverProperties#maxPrefetchedMessages for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
      */
     int maxPrefetchedMessages() default MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 
@@ -85,7 +88,7 @@ public @interface PrefetchingQueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see StaticPrefetchingMessageRetrieverProperties#visibilityTimeoutForMessagesInSeconds for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#getVisibilityTimeoutForMessagesInSeconds() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 }

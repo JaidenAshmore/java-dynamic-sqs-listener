@@ -265,15 +265,7 @@
                     <jvmArgs>
                         <value>-Dslf4jtest.print.level=ERROR</value>
                     </jvmArgs>
-                    <skip>${skipTests}</skip>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>mutation-testing</id>
-                        <goals><goal>mutationCoverage</goal></goals>
-                        <phase>verify</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -352,6 +344,7 @@
                             <excludes>
                                 <exclude>com/jashmore/sqs/examples/**/*</exclude>
                                 <exclude>com/jashmore/sqs/aws/*</exclude>
+                                <exclude>com/jashmore/sqs/spring/util/*</exclude>
                             </excludes>
                             <rules>
                                 <rule implementation="org.jacoco.maven.RuleConfiguration">
