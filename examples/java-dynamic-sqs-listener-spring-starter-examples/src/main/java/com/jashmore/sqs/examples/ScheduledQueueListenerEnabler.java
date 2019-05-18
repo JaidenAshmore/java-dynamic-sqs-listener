@@ -21,9 +21,9 @@ public class ScheduledQueueListenerEnabler {
     public void turnOfSqsListener() throws InterruptedException {
         log.info("Turning off SQS Listener for a short period");
 
-        queueContainerService.stopContainer("test");
+        queueContainerService.stopContainer("message-listeners-method");
         Thread.sleep(5_000);
         log.info("Turning SQS Listener back om");
-        queueContainerService.startContainer("test");
+        queueContainerService.startContainer("message-listeners-method");
     }
 }

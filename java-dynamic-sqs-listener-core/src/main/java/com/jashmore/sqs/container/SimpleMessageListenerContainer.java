@@ -22,7 +22,6 @@ import javax.annotation.concurrent.GuardedBy;
  */
 @Slf4j
 public class SimpleMessageListenerContainer implements MessageListenerContainer {
-
     /**
      * The {@link MessageRetriever} that will be used in this container to obtain messages to process.
      *

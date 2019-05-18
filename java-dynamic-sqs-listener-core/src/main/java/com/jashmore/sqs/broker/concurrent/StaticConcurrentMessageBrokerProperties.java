@@ -2,6 +2,7 @@ package com.jashmore.sqs.broker.concurrent;
 
 import com.google.common.base.Preconditions;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -31,8 +32,12 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     @NonNull
     private final Integer preferredConcurrencyPollingRateInMilliseconds;
 
+    private final String threadNameFormat;
+
+    @SuppressFBWarnings("RV_RETURN_VAL")
     public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
-                                                   final Integer preferredConcurrencyPollingRateInMilliseconds) {
+                                                   final Integer preferredConcurrencyPollingRateInMilliseconds,
+                                                   final String threadNameFormat) {
         Preconditions.checkArgument(concurrencyLevel == null || concurrencyLevel >= 0, "concurrencyLevel should be greater than or equal to zero");
         Preconditions.checkArgument(preferredConcurrencyPollingRateInMilliseconds == null || preferredConcurrencyPollingRateInMilliseconds >= 0,
                 "preferredConcurrencyPollingRateInMilliseconds should be greater than or equal to zero");
@@ -41,6 +46,13 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
                 .orElse(0);
         this.preferredConcurrencyPollingRateInMilliseconds = Optional.ofNullable(preferredConcurrencyPollingRateInMilliseconds)
                 .orElse(DEFAULT_CONCURRENCY_POLLING_IN_MS);
+
+        this.threadNameFormat = threadNameFormat;
+        if (threadNameFormat != null) {
+            // Test that the thread name is in the correct format
+            //noinspection ResultOfMethodCallIgnored
+            String.format(threadNameFormat, 0);
+        }
     }
 
     @Override
@@ -51,5 +63,10 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     @Override
     public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
         return preferredConcurrencyPollingRateInMilliseconds;
+    }
+
+    @Override
+    public String threadNameFormat() {
+        return threadNameFormat;
     }
 }

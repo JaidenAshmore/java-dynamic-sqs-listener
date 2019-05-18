@@ -3,6 +3,8 @@ package com.jashmore.sqs.broker.concurrent;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
@@ -40,7 +42,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
     @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
     public void run() {
         final ExecutorService concurrentThreadsExecutor = Executors.newCachedThreadPool();
-        final ExecutorService messageProcessingThreadsExecutor = Executors.newCachedThreadPool();
+        final ExecutorService messageProcessingThreadsExecutor = buildMessageProcessingExecutorService();
         final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
 
         while (!Thread.currentThread().isInterrupted()) {
@@ -103,8 +105,19 @@ public class ConcurrentMessageBroker implements MessageBroker {
                 concurrentThreadsExecutor.awaitTermination(1, MINUTES);
                 messageProcessingThreadsExecutor.awaitTermination(1, MINUTES);
             } catch (final InterruptedException interruptedException) {
-                log.warn("Interrupted while waiting for all messages to shutdown!");
+                log.warn("Interrupted while waiting for all messages to shutdown, some threads may still be running");
+                return;
             }
         }
+    }
+
+    private ExecutorService buildMessageProcessingExecutorService() {
+        final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
+
+        if (properties.threadNameFormat() != null) {
+            threadFactoryBuilder.setNameFormat(properties.threadNameFormat());
+        }
+
+        return Executors.newCachedThreadPool(threadFactoryBuilder.build());
     }
 }

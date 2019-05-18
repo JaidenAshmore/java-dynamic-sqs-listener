@@ -67,7 +67,7 @@ public class QueueListenerWrapperTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("com.jashmore.sqs.spring.container.basic.QueueListenerWrapperTest#myMethod");
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("queue-listener-wrapper-test-my-method");
     }
 
     @Test

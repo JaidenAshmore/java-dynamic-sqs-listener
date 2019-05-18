@@ -17,6 +17,7 @@ import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -74,7 +75,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
 
         final String identifier;
         if (StringUtils.isEmpty(annotation.identifier().trim())) {
-            identifier = bean.getClass().getName() + "#" + method.getName();
+            identifier = IdentifierUtils.buildIdentifierForMethod(bean.getClass(), method);
         } else {
             identifier = annotation.identifier().trim();
         }

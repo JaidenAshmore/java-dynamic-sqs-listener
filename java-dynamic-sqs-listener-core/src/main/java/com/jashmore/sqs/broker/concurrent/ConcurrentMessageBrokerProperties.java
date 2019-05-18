@@ -1,6 +1,5 @@
 package com.jashmore.sqs.broker.concurrent;
 
-import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.retriever.MessageRetriever;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -70,4 +69,16 @@ public interface ConcurrentMessageBrokerProperties {
      */
     @Min(0)
     Integer getPreferredConcurrencyPollingRateInMilliseconds();
+
+    /**
+     * The String format for the name of the children threads that process the message.
+     *
+     * <p>The format must accept a single integer as the thread number. For example {@code 'my-thread-%d'} is a valid format that can be used,
+     * whereas {@code 'my-thread'} is not a valid format.
+     *
+     * <p>If this is null, the default cached thread pool name format will be used.
+     *
+     * @return the format for the name of threads that process messages
+     */
+    String threadNameFormat();
 }
