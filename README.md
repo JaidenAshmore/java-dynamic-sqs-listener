@@ -1,6 +1,6 @@
 # Java Dynamic SQS Listener
-[![Build Status](https://semaphoreci.com/api/v1/jaidenashmore/java-dynamic-sqs-listener/branches/master/shields_badge.svg)](https://semaphoreci.com/jaidenashmore/java-dynamic-sqs-listener)
-[![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=master)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=master)
+[![Build Status](https://semaphoreci.com/api/v1/jaidenashmore/java-dynamic-sqs-listener/branches/2-x/shields_badge.svg)](https://semaphoreci.com/jaidenashmore/java-dynamic-sqs-listener)
+[![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=2.x)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=2.x)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/alerts/)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/JaidenAshmore/java-dynamic-sqs-listener.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JaidenAshmore/java-dynamic-sqs-listener/context:java)
 [![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-parent.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
