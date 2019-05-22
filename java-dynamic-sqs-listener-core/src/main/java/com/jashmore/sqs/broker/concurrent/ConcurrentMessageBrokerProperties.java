@@ -2,8 +2,10 @@ package com.jashmore.sqs.broker.concurrent;
 
 import com.jashmore.sqs.retriever.MessageRetriever;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
 
 /**
  * Properties for dynamically configuring how the {@link ConcurrentMessageBroker} is able to process messages concurrently.
@@ -68,7 +70,7 @@ public interface ConcurrentMessageBrokerProperties {
      * @return the number of milliseconds between polls for the concurrency level
      */
     @Min(0)
-    Integer getPreferredConcurrencyPollingRateInMilliseconds();
+    Long getPreferredConcurrencyPollingRateInMilliseconds();
 
     /**
      * The String format for the name of the children threads that process the message.
@@ -80,5 +82,20 @@ public interface ConcurrentMessageBrokerProperties {
      *
      * @return the format for the name of threads that process messages
      */
-    String threadNameFormat();
+    @Nullable
+    String getThreadNameFormat();
+
+    /**
+     * The number of milliseconds that the background thread for organising concurrent threads should backoff before attempting again.
+     *
+     * <p>This is needed to stop the background thread from trying again and again over and over causing a flood of error log messages that may make it
+     * difficult to debug.
+     *
+     * <p>If this value is null, negative or zero, {@link ConcurrentMessageBrokerConstants#DEFAULT_BACKOFF_TIME_IN_MS} will be used as the backoff period.
+     *
+     * @return the number of milliseconds to sleep the thread after an error is thrown
+     */
+    @Nullable
+    @PositiveOrZero
+    Long getErrorBackoffTimeInMilliseconds();
 }

@@ -7,7 +7,9 @@ import com.google.common.cache.LoadingCache;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
 
 /**
  * Implementation that will cache the values as the methods to retrieve the values may be costly.
@@ -24,7 +26,8 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     private static final int SINGLE_CACHE_VALUE_KEY = 0;
 
     private final LoadingCache<Integer, Integer> cachedConcurrencyLevel;
-    private final LoadingCache<Integer, Integer> cachedPreferredConcurrencyPollingRateInSeconds;
+    private final LoadingCache<Integer, Long> cachedPreferredConcurrencyPollingRateInSeconds;
+    private final LoadingCache<Integer, Long> cachedErrorBackoffTimeInMilliseconds;
     private final String threadNameFormat;
 
     /**
@@ -43,7 +46,11 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
                 .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
                 .build(CacheLoader.from(delegateProperties::getPreferredConcurrencyPollingRateInMilliseconds));
 
-        this.threadNameFormat = delegateProperties.threadNameFormat();
+        this.cachedErrorBackoffTimeInMilliseconds = CacheBuilder.newBuilder()
+                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                .build(CacheLoader.from(delegateProperties::getErrorBackoffTimeInMilliseconds));
+
+        this.threadNameFormat = delegateProperties.getThreadNameFormat();
     }
 
     @Override
@@ -52,12 +59,18 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     }
 
     @Override
-    public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
+    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
         return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 
     @Override
-    public String threadNameFormat() {
+    public String getThreadNameFormat() {
         return threadNameFormat;
+    }
+
+    @Nullable
+    @Override
+    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+        return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 }

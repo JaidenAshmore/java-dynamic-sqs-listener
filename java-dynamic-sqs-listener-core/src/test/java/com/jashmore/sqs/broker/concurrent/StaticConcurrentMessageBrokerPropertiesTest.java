@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
+import java.util.IllegalFormatException;
+
 public class StaticConcurrentMessageBrokerPropertiesTest {
     @Test
     public void concurrencyLevelReturnedFromConstructor() {
@@ -43,7 +45,7 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
         // act
         final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
                 .builder()
-                .preferredConcurrencyPollingRateInMilliseconds(1)
+                .preferredConcurrencyPollingRateInMilliseconds(1L)
                 .concurrencyLevel(1)
                 .build();
 
@@ -52,11 +54,20 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void negativeConcurrencyPollingRatehrowsIllegalArgumentException() {
+    public void negativeConcurrencyPollingRateThrowsIllegalArgumentException() {
         // act
         StaticConcurrentMessageBrokerProperties
                 .builder()
-                .preferredConcurrencyPollingRateInMilliseconds(-1)
+                .preferredConcurrencyPollingRateInMilliseconds(-1L)
+                .build();
+    }
+
+    @Test(expected = IllegalFormatException.class)
+    public void invalidThreadNameFormatThrowsException() {
+        // act
+        StaticConcurrentMessageBrokerProperties
+                .builder()
+                .threadNameFormat("invalid-%s-format-%d")
                 .build();
     }
 }
