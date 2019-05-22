@@ -1,14 +1,17 @@
 package com.jashmore.sqs.broker.concurrent;
 
+import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_BACKOFF_TIME_IN_MS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.ResizableSemaphore;
+import com.jashmore.sqs.util.properties.PropertyUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,30 +49,41 @@ public class ConcurrentMessageBroker implements MessageBroker {
         final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
 
         while (!Thread.currentThread().isInterrupted()) {
-            updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
-
-            final long numberOfMillisecondsToObtainPermit = properties.getPreferredConcurrencyPollingRateInMilliseconds();
             try {
-                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
-                if (!obtainedPermit) {
+                updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
+
+                final long numberOfMillisecondsToObtainPermit = getNumberOfMillisecondsToObtainPermit();
+                try {
+                    final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
+                    if (!obtainedPermit) {
+                        continue;
+                    }
+                } catch (final InterruptedException interruptedException) {
+                    log.debug("Interrupted exception caught while adding more listeners, shutting down!");
+                    Thread.currentThread().interrupt();
                     continue;
                 }
-            } catch (final InterruptedException interruptedException) {
-                log.info("Interrupted exception caught while adding more listeners, shutting down!");
-                Thread.currentThread().interrupt();
-                continue;
-            }
 
-            CompletableFuture.supplyAsync(() -> {
+                CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return messageRetriever.retrieveMessage();
+                    } catch (final InterruptedException exception) {
+                        log.debug("Thread interrupted waiting for a message");
+                        throw new RuntimeException("Failure to get message");
+                    }
+                }, concurrentThreadsExecutor)
+                        .thenAcceptAsync(messageProcessor::processMessage, messageProcessingThreadsExecutor)
+                        .whenComplete((ignoredResult, throwable) -> concurrentMessagesBeingProcessedSemaphore.release());
+            } catch (final Throwable throwable) {
                 try {
-                    return messageRetriever.retrieveMessage();
-                } catch (final InterruptedException exception) {
-                    log.trace("Thread interrupted waiting for a message");
-                    throw new RuntimeException("Failure to get message");
+                    final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
+                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, throwable);
+                    Thread.sleep(errorBackoffTimeInMilliseconds);
+                } catch (final InterruptedException interruptedException) {
+                    log.debug("Thread interrupted during backoff period");
+                    Thread.currentThread().interrupt();
                 }
-            }, concurrentThreadsExecutor)
-                    .thenAcceptAsync(messageProcessor::processMessage, messageProcessingThreadsExecutor)
-                    .whenComplete((ignoredResult, throwable) -> concurrentMessagesBeingProcessedSemaphore.release());
+            }
         }
 
         log.debug("Shutting down message controller");
@@ -88,6 +102,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
      */
     private void updateConcurrencyLevelIfChanged(final ResizableSemaphore resizableSemaphore) {
         final int newConcurrencyLevel = properties.getConcurrencyLevel();
+        Preconditions.checkArgument(newConcurrencyLevel >= 0, "concurrencyLevel should be non-negative");
 
         if (resizableSemaphore.getMaximumPermits() != newConcurrencyLevel) {
             log.debug("Changing concurrency from {} to {}", resizableSemaphore.getMaximumPermits(), newConcurrencyLevel);
@@ -111,13 +126,54 @@ public class ConcurrentMessageBroker implements MessageBroker {
         }
     }
 
+    /**
+     * Build the {@link ExecutorService} that will be used for the threads that are processing the messages.
+     *
+     * <p>This will provide the logic to name the threads to make it easier to debug multiple different message listeners in the system.
+     *
+     * @return the executor service that will be used for processing messages
+     */
     private ExecutorService buildMessageProcessingExecutorService() {
-        final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
+        try {
+            final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
 
-        if (properties.threadNameFormat() != null) {
-            threadFactoryBuilder.setNameFormat(properties.threadNameFormat());
+            final String threadNameFormat = properties.getThreadNameFormat();
+            if (threadNameFormat != null) {
+                threadFactoryBuilder.setNameFormat(threadNameFormat);
+            }
+
+            return Executors.newCachedThreadPool(threadFactoryBuilder.build());
+        } catch (final Throwable throwable) {
+            log.error("Error thrown building message processing executor service, returning default");
+            return Executors.newCachedThreadPool();
         }
+    }
 
-        return Executors.newCachedThreadPool(threadFactoryBuilder.build());
+    /**
+     * Get the number of seconds that the thread should wait when there was an error trying to organise a thread to process.
+     *
+     * @return the backoff time in milliseconds
+     * @see ConcurrentMessageBrokerProperties#getErrorBackoffTimeInMilliseconds() for more information
+     */
+    private long getErrorBackoffTimeInMilliseconds() {
+        return PropertyUtils.safelyGetPositiveOrZeroLongValue(
+                "errorBackoffTimeInMilliseconds",
+                properties::getErrorBackoffTimeInMilliseconds,
+                DEFAULT_BACKOFF_TIME_IN_MS
+        );
+    }
+
+    /**
+     * Safely get the number of milliseconds that should wait to get a permit for creating a new thread.
+     *
+     * @return the number of milliseconds to wait
+     * @see ConcurrentMessageBrokerProperties#getPreferredConcurrencyPollingRateInMilliseconds() for more information
+     */
+    private long getNumberOfMillisecondsToObtainPermit() {
+        return PropertyUtils.safelyGetPositiveLongValue(
+                "preferredConcurrencyPollingRateInMilliseconds",
+                properties::getPreferredConcurrencyPollingRateInMilliseconds,
+                DEFAULT_BACKOFF_TIME_IN_MS
+        );
     }
 }

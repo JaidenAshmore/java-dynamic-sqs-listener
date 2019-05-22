@@ -74,14 +74,14 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getPreferredConcurrencyPollingRateInMilliseconds())
-                .thenReturn(1)
-                .thenReturn(2);
+                .thenReturn(1L)
+                .thenReturn(2L);
         final CachingConcurrentMessageBrokerProperties cachingProperties = new CachingConcurrentMessageBrokerProperties(100, delegate);
 
         // act
         cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
         Thread.sleep(60);
-        int pollingRate = cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
+        long pollingRate = cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
 
         // assert
         assertThat(pollingRate).isEqualTo(1);
@@ -94,14 +94,14 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getPreferredConcurrencyPollingRateInMilliseconds())
-                .thenReturn(1)
-                .thenReturn(2);
+                .thenReturn(1L)
+                .thenReturn(2L);
         final CachingConcurrentMessageBrokerProperties cachingProperties = new CachingConcurrentMessageBrokerProperties(100, delegate);
 
         // act
         cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
         Thread.sleep(120);
-        int pollingRate = cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
+        long pollingRate = cachingProperties.getPreferredConcurrencyPollingRateInMilliseconds();
 
         // assert
         assertThat(pollingRate).isEqualTo(2);
