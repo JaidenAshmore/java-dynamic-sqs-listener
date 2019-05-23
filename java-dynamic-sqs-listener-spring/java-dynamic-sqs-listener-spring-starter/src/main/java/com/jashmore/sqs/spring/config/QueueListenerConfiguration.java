@@ -173,22 +173,25 @@ public class QueueListenerConfiguration {
             @Bean
             public QueueWrapper coreProvidedQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
                                                                  final SqsAsyncClient sqsAsyncClient,
-                                                                 final QueueResolverService queueResolverService) {
-                return new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
+                                                                 final QueueResolverService queueResolverService,
+                                                                 final Environment environment) {
+                return new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
             }
 
             @Bean
             public QueueWrapper coreProvidedPrefetchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
                                                                             final SqsAsyncClient sqsAsyncClient,
-                                                                            final QueueResolverService queueResolverService) {
-                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
+                                                                            final QueueResolverService queueResolverService,
+                                                                            final Environment environment) {
+                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
             }
 
             @Bean
             public QueueWrapper coreProvidedBatchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
                                                                          final SqsAsyncClient sqsAsyncClient,
-                                                                         final QueueResolverService queueResolverService) {
-                return new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService);
+                                                                         final QueueResolverService queueResolverService,
+                                                                         final Environment environment) {
+                return new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
             }
         }
     }

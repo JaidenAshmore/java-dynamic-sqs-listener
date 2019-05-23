@@ -73,6 +73,19 @@ public @interface BatchingQueueListener {
     int concurrencyLevel() default 5;
 
     /**
+     * The number of threads that will be processing messages converted from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example <pre>concurrencyLevelString = "${my.profile.property}"</pre>
+     * instead of having it hardcoded in {@link #concurrencyLevel()}.
+     *
+     * <p>If this value is not empty, the value set by {@link #concurrencyLevel()} will be ignored.
+     *
+     * @return the total number of threads processing messages as a string
+     * @see ConcurrentMessageBrokerProperties#getConcurrencyLevel() for more details and constraints
+     */
+    String concurrencyLevelString() default "";
+
+    /**
      * The maximum period of time that the {@link BatchingMessageRetriever} will wait for all threads to be ready before retrieving messages.
      *
      * <p>This tries to reduce the number of times that requests for messages are made to SQS by waiting for all of the threads to be requiring messages
@@ -85,10 +98,34 @@ public @interface BatchingQueueListener {
     long maxPeriodBetweenBatchesInMs() default 2000L;
 
     /**
+     * The maximum period of time that the {@link BatchingMessageRetriever} will wait for all threads to be ready before retrieving messages converted
+     * from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example
+     * <pre>maxPeriodBetweenBatchesInMsString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #maxPeriodBetweenBatchesInMs()}.
+     *
+     * @return the period in ms that threads will wait for messages to be requested from SQS
+     * @see BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs() for more details
+     * @see #maxPeriodBetweenBatchesInMs() for more information about this field
+     */
+    String maxPeriodBetweenBatchesInMsString() default "";
+
+    /**
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
      * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
+
+    /**
+     * The message visibility that will be used for messages obtained from the queue converted from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example
+     * <pre>messageVisibilityTimeoutInSeconds = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #messageVisibilityTimeoutInSeconds()}.
+     *
+     * @return the message visibility for messages fetched from the queue
+     * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     */
+    String messageVisibilityTimeoutInSecondsString() default "";
 }

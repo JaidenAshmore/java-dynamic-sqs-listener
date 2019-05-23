@@ -9,6 +9,7 @@ import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
@@ -17,8 +18,9 @@ import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -29,11 +31,12 @@ import java.lang.reflect.Method;
  * implementations of the framework.
  */
 @Slf4j
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
+    private final Environment environment;
 
     @Override
     protected Class<QueueListener> getAnnotationClass() {
@@ -47,14 +50,9 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final BatchingMessageRetrieverProperties batchingMessageRetrieverProperties = StaticBatchingMessageRetrieverProperties
-                .builder()
-                .visibilityTimeoutInSeconds(annotation.messageVisibilityTimeoutInSeconds())
-                .messageRetrievalPollingPeriodInMs(annotation.maxPeriodBetweenBatchesInMs())
-                .numberOfThreadsWaitingTrigger(annotation.concurrencyLevel())
-                .build();
-        final BatchingMessageRetriever messageRetriever = new BatchingMessageRetriever(
-                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties);
+        final int concurrencyLevel = getConcurrencyLevel(annotation);
+
+        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, concurrencyLevel);
 
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
 
@@ -73,7 +71,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 messageProcessor,
                 StaticConcurrentMessageBrokerProperties
                         .builder()
-                        .concurrencyLevel(annotation.concurrencyLevel())
+                        .concurrencyLevel(concurrencyLevel)
                         .threadNameFormat(identifier + "-%d")
                         .build()
         );
@@ -82,5 +80,40 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .identifier(identifier)
                 .container(new SimpleMessageListenerContainer(messageRetriever, messageBroker, messageResolver))
                 .build();
+    }
+
+    private MessageRetriever buildMessageRetriever(final QueueListener annotation, final QueueProperties queueProperties, final int concurrencyLevel) {
+        final BatchingMessageRetrieverProperties batchingMessageRetrieverProperties = StaticBatchingMessageRetrieverProperties
+                .builder()
+                .visibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
+                .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
+                .numberOfThreadsWaitingTrigger(concurrencyLevel)
+                .build();
+        return new BatchingMessageRetriever(
+                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties);
+    }
+
+    private int getConcurrencyLevel(final QueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.concurrencyLevelString())) {
+            return annotation.concurrencyLevel();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
+    }
+
+    private long getMaxPeriodBetweenBatchesInMs(final QueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.maxPeriodBetweenBatchesInMsString())) {
+            return annotation.maxPeriodBetweenBatchesInMs();
+        }
+
+        return Long.parseLong(environment.resolvePlaceholders(annotation.maxPeriodBetweenBatchesInMsString()));
+    }
+
+    private int getMessageVisibilityTimeoutInSeconds(final QueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
+            return annotation.messageVisibilityTimeoutInSeconds();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()));
     }
 }

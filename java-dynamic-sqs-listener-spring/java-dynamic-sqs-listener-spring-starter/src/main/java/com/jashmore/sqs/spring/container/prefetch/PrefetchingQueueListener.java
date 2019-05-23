@@ -9,6 +9,7 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import org.springframework.core.env.Environment;
@@ -69,12 +70,38 @@ public @interface PrefetchingQueueListener {
     int concurrencyLevel() default 5;
 
     /**
+     * The number of threads that will be processing messages converted from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example <pre>concurrencyLevelString = "${my.profile.property}"</pre>
+     * instead of having it hardcoded in {@link #concurrencyLevel()}.
+     *
+     * <p>If this value is not empty, the value set by {@link #concurrencyLevel()} will be ignored.
+     *
+     * @return the total number of threads processing messages as a string
+     * @see ConcurrentMessageBrokerProperties#getConcurrencyLevel() for more details and constraints
+     */
+    String concurrencyLevelString() default "";
+
+    /**
      * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
      *
      * @return the minimum number of prefetched messages
      * @see StaticPrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
      */
     int desiredMinPrefetchedMessages() default 1;
+
+    /**
+     * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example
+     * <pre>desiredMinPrefetchedMessagesString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #desiredMinPrefetchedMessages()}.
+     *
+     * <p>If this value is not empty, the value set by {@link #desiredMinPrefetchedMessages()} will be ignored.
+     *
+     * @return the minimum number of prefetched messages
+     * @see StaticPrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
+     */
+    String desiredMinPrefetchedMessagesString() default "";
 
     /**
      * The total number of messages that can be prefetched from the server and stored in memory for execution.
@@ -85,10 +112,34 @@ public @interface PrefetchingQueueListener {
     int maxPrefetchedMessages() default MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 
     /**
+     * The total number of messages that can be prefetched from the server and stored in memory for execution built from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example <pre>maxPrefetchedMessages = "${my.profile.property}"</pre>
+     * instead of having it hardcoded in {@link #maxPrefetchedMessages()}.
+     *
+     * <p>If this value is not empty, the value set by {@link #maxPrefetchedMessages()} will be ignored.
+     *
+     * @return the max number of prefetched issues
+     * @see StaticPrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
+     */
+    String maxPrefetchedMessagesString() default "";
+
+    /**
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
      * @see StaticPrefetchingMessageRetrieverProperties#getVisibilityTimeoutForMessagesInSeconds() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
+
+    /**
+     * The message visibility that will be used for messages obtained from the queue converted from a string representation.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example
+     * <pre>messageVisibilityTimeoutInSeconds = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #messageVisibilityTimeoutInSeconds()}.
+     *
+     * @return the message visibility for messages fetched from the queue
+     * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     */
+    String messageVisibilityTimeoutInSecondsString() default "";
 }

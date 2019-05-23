@@ -11,7 +11,9 @@ import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
@@ -20,6 +22,7 @@ import com.jashmore.sqs.spring.queue.QueueResolverService;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -35,6 +38,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueResolverService queueResolverService;
+    private final Environment environment;
 
     @Override
     protected Class<PrefetchingQueueListener> getAnnotationClass() {
@@ -49,29 +53,9 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final StaticPrefetchingMessageRetrieverProperties batchingProperties = StaticPrefetchingMessageRetrieverProperties
-                .builder()
-                .desiredMinPrefetchedMessages(annotation.desiredMinPrefetchedMessages())
-                .maxPrefetchedMessages(annotation.maxPrefetchedMessages())
-                .visibilityTimeoutForMessagesInSeconds(annotation.messageVisibilityTimeoutInSeconds())
-                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-                .build();
-        final PrefetchingMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                sqsAsyncClient, queueProperties, batchingProperties);
-
+        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties);
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
-
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
-                messageResolver, method, bean);
-
-        final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
-                StaticConcurrentMessageBrokerProperties
-                        .builder()
-                        .concurrencyLevel(annotation.concurrencyLevel())
-                        .build()
-        );
+        final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);
 
         final String identifier;
         if (StringUtils.isEmpty(annotation.identifier().trim())) {
@@ -80,9 +64,63 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
             identifier = annotation.identifier().trim();
         }
 
+        final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
+                messageRetriever,
+                messageProcessor,
+                StaticConcurrentMessageBrokerProperties
+                        .builder()
+                        .concurrencyLevel(getConcurrencyLevel(annotation))
+                        .threadNameFormat(identifier + "-%d")
+                        .build()
+        );
+
         return IdentifiableMessageListenerContainer.builder()
                 .identifier(identifier)
                 .container(new SimpleMessageListenerContainer(messageRetriever, messageBroker, messageResolver))
                 .build();
+    }
+
+    private int getConcurrencyLevel(final PrefetchingQueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.concurrencyLevelString())) {
+            return annotation.concurrencyLevel();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
+    }
+
+    private int getMaxPrefetchedMessages(final PrefetchingQueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.maxPrefetchedMessagesString())) {
+            return annotation.maxPrefetchedMessages();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.maxPrefetchedMessagesString()));
+    }
+
+    private int getMessageVisibilityTimeoutInSeconds(final PrefetchingQueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
+            return annotation.messageVisibilityTimeoutInSeconds();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()));
+    }
+
+    private int getDesiredMinPrefetchedMessages(final PrefetchingQueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.desiredMinPrefetchedMessagesString())) {
+            return annotation.desiredMinPrefetchedMessages();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.desiredMinPrefetchedMessagesString()));
+    }
+
+    private MessageRetriever buildMessageRetriever(final PrefetchingQueueListener annotation,
+                                                   final QueueProperties queueProperties) {
+        final PrefetchingMessageRetrieverProperties prefetchingProperties = StaticPrefetchingMessageRetrieverProperties
+                .builder()
+                .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
+                .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
+                .visibilityTimeoutForMessagesInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
+                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .build();
+        return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties);
     }
 }
