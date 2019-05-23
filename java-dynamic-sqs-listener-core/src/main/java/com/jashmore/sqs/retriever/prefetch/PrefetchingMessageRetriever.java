@@ -8,14 +8,14 @@ import com.google.common.base.Preconditions;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
-import com.jashmore.sqs.util.RetrieverUtils;
+import com.jashmore.sqs.util.properties.PropertyUtils;
+import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
-import java.util.Optional;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -157,12 +157,12 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
                 .builder()
                 .queueUrl(queueProperties.getQueueUrl())
-                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties.getMessageWaitTimeInSeconds()))
+                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds))
                 .maxNumberOfMessages(numberOfMessagesToObtain);
         final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
         if (visibilityTimeoutInSeconds != null) {
             if (visibilityTimeoutInSeconds < 0) {
-                log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
+                log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
             } else {
                 requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
             }
@@ -181,16 +181,10 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     @SuppressWarnings("Duplicates")
     @VisibleForTesting()
     int getBackoffTimeInMs() {
-        return Optional.ofNullable(properties.getErrorBackoffTimeInMilliseconds())
-                .filter(backoffPeriod -> {
-                    if (backoffPeriod < 0) {
-                        log.warn("Non-positive errorBackoffTimeInMilliseconds provided({}), using default({}) instead", backoffPeriod,
-                                DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
-                        return false;
-                    }
-
-                    return true;
-                })
-                .orElse(DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS);
+        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
+                "errorBackoffTimeInMilliseconds",
+                properties::getErrorBackoffTimeInMilliseconds,
+                DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS
+        );
     }
 }
