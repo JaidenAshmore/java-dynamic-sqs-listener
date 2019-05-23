@@ -59,7 +59,7 @@ public interface BatchingMessageRetrieverProperties {
      * set on the SQS queue will be used.
      *
      * @return the visibility timeout for the message
-     * @see ReceiveMessageRequest#visibilityTimeout for where this is applied against
+     * @see ReceiveMessageRequest#visibilityTimeout() for where this is applied against
      */
     @Nullable
     @Positive
@@ -73,7 +73,7 @@ public interface BatchingMessageRetrieverProperties {
      * <p>If this value is null, the {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} will be used when requesting messages from SQS.
      *
      * @return the wait time in seconds for obtaining messages
-     * @see ReceiveMessageRequest#waitTimeSeconds for the usage
+     * @see ReceiveMessageRequest#waitTimeSeconds()  for the usage
      */
     @Nullable
     @PositiveOrZero

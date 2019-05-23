@@ -49,6 +49,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -63,7 +64,7 @@ import javax.validation.constraints.Min;
  */
 @Slf4j
 public class ConcurrentBrokerExample {
-    private static final int CONCURRENCY_LEVEL_PERIOD_IN_MS = 5000;
+    private static final long CONCURRENCY_LEVEL_PERIOD_IN_MS = 5000L;
     private static final int CONCURRENCY_LEVEL_LIMIT = 10;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -130,13 +131,18 @@ public class ConcurrentBrokerExample {
                     }
 
                     @Override
-                    public @Min(0) Integer getPreferredConcurrencyPollingRateInMilliseconds() {
+                    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
                         return CONCURRENCY_LEVEL_PERIOD_IN_MS;
                     }
 
                     @Override
-                    public String threadNameFormat() {
+                    public String getThreadNameFormat() {
                         return "my-message-listener-thread-%d";
+                    }
+
+                    @Override
+                    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+                        return 0L;
                     }
                 })
         );
