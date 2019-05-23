@@ -181,7 +181,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
     @SuppressWarnings("Duplicates")
     @VisibleForTesting()
     int getBackoffTimeInMs() {
-        return PropertyUtils.safelyGetPositiveIntegerValue(
+        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
                 "errorBackoffTimeInMilliseconds",
                 properties::getErrorBackoffTimeInMilliseconds,
                 DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS
