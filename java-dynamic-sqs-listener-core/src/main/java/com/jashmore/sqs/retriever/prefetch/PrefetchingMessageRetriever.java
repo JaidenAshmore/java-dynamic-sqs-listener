@@ -8,7 +8,7 @@ import com.google.common.base.Preconditions;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
-import com.jashmore.sqs.util.RetrieverUtils;
+import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -157,12 +157,12 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
                 .builder()
                 .queueUrl(queueProperties.getQueueUrl())
-                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties.getMessageWaitTimeInSeconds()))
+                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds))
                 .maxNumberOfMessages(numberOfMessagesToObtain);
         final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
         if (visibilityTimeoutInSeconds != null) {
             if (visibilityTimeoutInSeconds < 0) {
-                log.warn("Non-positive visibilityTimeoutInSeconds provided: ", visibilityTimeoutInSeconds);
+                log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
             } else {
                 requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
             }
