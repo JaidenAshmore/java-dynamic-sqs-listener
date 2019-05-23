@@ -83,16 +83,20 @@ public class BatchingMessageResolver implements AsyncMessageResolver {
     public void run() {
         boolean continueProcessing = true;
         while (continueProcessing) {
-            final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
             try {
-                Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, getBatchSize(), getBufferingTimeInMs(), TimeUnit.MILLISECONDS);
-            } catch (final InterruptedException interruptedException) {
-                // Do nothing, we still want to send the current batch of messages
-                continueProcessing = false;
-            }
+                final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
+                try {
+                    Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, getBatchSize(), getBufferingTimeInMs(), TimeUnit.MILLISECONDS);
+                } catch (final InterruptedException interruptedException) {
+                    // Do nothing, we still want to send the current batch of messages
+                    continueProcessing = false;
+                }
 
-            if (!batchOfMessagesToResolve.isEmpty()) {
-                submitMessageDeletionBatch(batchOfMessagesToResolve);
+                if (!batchOfMessagesToResolve.isEmpty()) {
+                    submitMessageDeletionBatch(batchOfMessagesToResolve);
+                }
+            } catch (final Throwable throwable) {
+                log.error("Exception thrown when retrieving messages", throwable);
             }
         }
     }
