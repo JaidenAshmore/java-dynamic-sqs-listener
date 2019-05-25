@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring.container.basic;
+package com.jashmore.sqs.spring.container.batching;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -23,12 +23,8 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
 
-/**
- * Class is hard to test as it is the one building all of the dependencies internally using new constructors. Don't really know a better way to do this
- * without building unnecessary classes.
- */
 @SuppressWarnings("WeakerAccess")
-public class QueueListenerWrapperTest {
+public class BatchingQueueListenerWrapperTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -47,21 +43,21 @@ public class QueueListenerWrapperTest {
     @Mock
     private Environment environment;
 
-    private QueueListenerWrapper queueListenerWrapper;
+    private BatchingQueueListenerWrapper batchingQueueListenerWrapper;
 
     @Before
     public void setUp() {
-        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolver, environment);
+        batchingQueueListenerWrapper = new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolver, environment);
     }
 
     @Test
     public void queueListenerWrapperCanBuildMessageListenerContainer() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("myMethod");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
@@ -71,25 +67,25 @@ public class QueueListenerWrapperTest {
     @Test
     public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("myMethod");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("queue-listener-wrapper-test-my-method");
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("batching-queue-listener-wrapper-test-my-method");
     }
 
     @Test
     public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethodWithIdentifier");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("myMethodWithIdentifier");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
@@ -99,11 +95,11 @@ public class QueueListenerWrapperTest {
     @Test
     public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("myMethod");
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         verify(queueResolver).resolveQueueUrl("test");
@@ -114,12 +110,12 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.concurrency}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        batchingQueueListenerWrapper.wrapMethod(bean, method);
     }
 
     @Test
@@ -127,12 +123,12 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        batchingQueueListenerWrapper.wrapMethod(bean, method);
     }
 
     @Test
@@ -140,58 +136,56 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        batchingQueueListenerWrapper.wrapMethod(bean, method);
     }
 
     @Test
     public void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final IdentifiableMessageListenerContainer messageListenerContainer = batchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
     }
 
     @Test
-    public void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
+    public void batchingMessageRetrieversBuiltFromAnnotationProperties() throws Exception {
         // arrange
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethodWithParameters");
-        final QueueListener annotation = method.getAnnotation(QueueListener.class);
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFields");
+        final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
 
         // act
-        final BatchingMessageRetrieverProperties properties
-                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(300)
-                .messageRetrievalPollingPeriodInMs(60L)
+                .messageRetrievalPollingPeriodInMs(40L)
                 .numberOfThreadsWaitingTrigger(2)
                 .build()
         );
     }
 
     @Test
-    public void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
+    public void batchingMessageRetrieversBuiltFromAnnotationStringProperties() throws Exception {
         // arrange
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        final QueueListener annotation = method.getAnnotation(QueueListener.class);
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
 
         // act
-        final BatchingMessageRetrieverProperties properties
-                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
@@ -202,24 +196,24 @@ public class QueueListenerWrapperTest {
         );
     }
 
-    @QueueListener("test")
+    @BatchingQueueListener("test")
     public void myMethod() {
 
     }
 
-    @QueueListener(value = "test2", identifier = "identifier")
+    @BatchingQueueListener(value = "test2", identifier = "identifier")
     public void myMethodWithIdentifier() {
 
     }
 
-    @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
+    @BatchingQueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
             messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPeriodBetweenBatchesInMsString = "${prop.period}")
     public void methodWithFieldsUsingEnvironmentProperties() {
 
     }
 
-    @QueueListener(value = "test", concurrencyLevel = 6, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 60)
-    public void myMethodWithParameters() {
+    @BatchingQueueListener(value = "test2", messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
+    public void methodWithFields() {
 
     }
 }

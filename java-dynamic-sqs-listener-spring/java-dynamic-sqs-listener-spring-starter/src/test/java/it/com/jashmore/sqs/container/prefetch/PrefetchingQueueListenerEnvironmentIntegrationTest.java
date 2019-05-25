@@ -33,10 +33,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, PrefetchingQueueListenerWrapperIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, PrefetchingQueueListenerEnvironmentIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
-public class PrefetchingQueueListenerWrapperIntegrationTest {
-    private static final String QUEUE_NAME = "PrefetchingQueueListenerWrapperIntegrationTest";
+public class PrefetchingQueueListenerEnvironmentIntegrationTest {
+    private static final String QUEUE_NAME = "PrefetchingQueueListenerIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(NUMBER_OF_MESSAGES_TO_SEND);
     private static final int MESSAGE_VISIBILITY_IN_SECONDS = 2;
