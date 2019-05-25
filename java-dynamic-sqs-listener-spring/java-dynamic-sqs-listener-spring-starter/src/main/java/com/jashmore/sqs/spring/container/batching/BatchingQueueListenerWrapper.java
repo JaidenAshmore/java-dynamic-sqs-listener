@@ -30,7 +30,6 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
-import javax.annotation.Nonnull;
 
 /**
  * {@link QueueWrapper} that will wrap methods annotated with {@link QueueListener @QueueListener} with some predefined
