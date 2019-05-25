@@ -46,7 +46,7 @@ for compatibility.
   - JDK 1.8 or higher
   - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.2.0
   - [Guava](https://github.com/google/guava): 21.0
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.8 
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.9
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
   - [Spring](https://github.com/spring-projects/spring-framework): 5.0.8.RELEASE
