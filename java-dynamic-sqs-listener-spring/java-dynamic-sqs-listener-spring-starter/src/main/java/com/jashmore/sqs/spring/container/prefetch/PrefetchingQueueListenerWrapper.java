@@ -2,6 +2,8 @@ package com.jashmore.sqs.spring.container.prefetch;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
@@ -112,15 +114,17 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
         return Integer.parseInt(environment.resolvePlaceholders(annotation.desiredMinPrefetchedMessagesString()));
     }
 
-    private MessageRetriever buildMessageRetriever(final PrefetchingQueueListener annotation,
-                                                   final QueueProperties queueProperties) {
-        final PrefetchingMessageRetrieverProperties prefetchingProperties = StaticPrefetchingMessageRetrieverProperties
-                .builder()
+    @VisibleForTesting
+    PrefetchingMessageRetrieverProperties buildMessageRetrieverProperties(final PrefetchingQueueListener annotation) {
+        return StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
                 .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
                 .visibilityTimeoutForMessagesInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .build();
-        return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, prefetchingProperties);
+    }
+
+    private MessageRetriever buildMessageRetriever(final PrefetchingQueueListener annotation, final QueueProperties queueProperties) {
+        return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, buildMessageRetrieverProperties(annotation));
     }
 }

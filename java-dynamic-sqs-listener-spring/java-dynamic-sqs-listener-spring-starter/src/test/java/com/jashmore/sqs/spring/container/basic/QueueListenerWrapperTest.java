@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
@@ -160,6 +162,46 @@ public class QueueListenerWrapperTest {
         assertThat(messageListenerContainer).isNotNull();
     }
 
+    @Test
+    public void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
+        // arrange
+        final Method method = QueueListenerWrapperTest.class.getMethod("myMethodWithParameters");
+        final QueueListener annotation = method.getAnnotation(QueueListener.class);
+
+        // act
+        final BatchingMessageRetrieverProperties properties
+                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
+                .visibilityTimeoutInSeconds(300)
+                .messageRetrievalPollingPeriodInMs(60L)
+                .numberOfThreadsWaitingTrigger(2)
+                .build()
+        );
+    }
+
+    @Test
+    public void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
+        // arrange
+        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final QueueListener annotation = method.getAnnotation(QueueListener.class);
+        when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
+        when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
+
+        // act
+        final BatchingMessageRetrieverProperties properties
+                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
+                .visibilityTimeoutInSeconds(40)
+                .messageRetrievalPollingPeriodInMs(30L)
+                .numberOfThreadsWaitingTrigger(2)
+                .build()
+        );
+    }
+
     @QueueListener("test")
     public void myMethod() {
 
@@ -173,6 +215,11 @@ public class QueueListenerWrapperTest {
     @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
             messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPeriodBetweenBatchesInMsString = "${prop.period}")
     public void methodWithFieldsUsingEnvironmentProperties() {
+
+    }
+
+    @QueueListener(value = "test", concurrencyLevel = 6, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 60)
+    public void myMethodWithParameters() {
 
     }
 }

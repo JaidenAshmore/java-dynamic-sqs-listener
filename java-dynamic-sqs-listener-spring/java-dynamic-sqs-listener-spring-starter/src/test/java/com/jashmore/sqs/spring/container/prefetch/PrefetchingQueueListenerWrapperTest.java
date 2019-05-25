@@ -1,5 +1,6 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
+import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -7,6 +8,8 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
@@ -174,6 +177,49 @@ public class PrefetchingQueueListenerWrapperTest {
         assertThat(messageListenerContainer).isNotNull();
     }
 
+    @Test
+    public void prefetchingQueueListenerCanBeBuiltFromStringProperties() throws Exception {
+        // arrange
+        when(environment.resolvePlaceholders(anyString())).thenReturn("1");
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        when(environment.resolvePlaceholders("${prop.maxPrefetched}")).thenReturn("30");
+        when(environment.resolvePlaceholders("${prop.desiredMinPrefetchedMessages}")).thenReturn("40");
+        when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
+        final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
+
+        // act
+        final PrefetchingMessageRetrieverProperties properties = prefetchingQueueListenerWrapper.buildMessageRetrieverProperties(annotation);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
+                .maxPrefetchedMessages(30)
+                .desiredMinPrefetchedMessages(40)
+                .visibilityTimeoutForMessagesInSeconds(40)
+                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .build()
+        );
+    }
+
+    @Test
+    public void prefetchingQueueListenerCanBeBuiltFromProperties() throws Exception {
+        // arrange
+        when(environment.resolvePlaceholders(anyString())).thenReturn("1");
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingProperties");
+        final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
+
+        // act
+        final PrefetchingMessageRetrieverProperties properties = prefetchingQueueListenerWrapper.buildMessageRetrieverProperties(annotation);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
+                .maxPrefetchedMessages(20)
+                .desiredMinPrefetchedMessages(5)
+                .visibilityTimeoutForMessagesInSeconds(300)
+                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .build()
+        );
+    }
+
     @PrefetchingQueueListener("test")
     public void myMethod() {
 
@@ -189,6 +235,13 @@ public class PrefetchingQueueListenerWrapperTest {
             desiredMinPrefetchedMessagesString = "${prop.desiredMinPrefetchedMessages}"
     )
     public void methodWithFieldsUsingEnvironmentProperties() {
+
+    }
+
+    @PrefetchingQueueListener(value = "test2", concurrencyLevel = 2, messageVisibilityTimeoutInSeconds = 300,
+            maxPrefetchedMessages = 20, desiredMinPrefetchedMessages = 5
+    )
+    public void methodWithFieldsUsingProperties() {
 
     }
 }

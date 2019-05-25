@@ -1,5 +1,7 @@
 package com.jashmore.sqs.spring.container.basic;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
@@ -83,14 +85,17 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
     }
 
     private MessageRetriever buildMessageRetriever(final QueueListener annotation, final QueueProperties queueProperties, final int concurrencyLevel) {
-        final BatchingMessageRetrieverProperties batchingMessageRetrieverProperties = StaticBatchingMessageRetrieverProperties
-                .builder()
+        return new BatchingMessageRetriever(
+                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation, concurrencyLevel));
+    }
+
+    @VisibleForTesting
+    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation, final int concurrencyLevel) {
+        return StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
                 .numberOfThreadsWaitingTrigger(concurrencyLevel)
                 .build();
-        return new BatchingMessageRetriever(
-                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties);
     }
 
     private int getConcurrencyLevel(final QueueListener annotation) {
