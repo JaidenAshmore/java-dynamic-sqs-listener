@@ -143,10 +143,9 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     break;
                 }
             } catch (final ExecutionException | RuntimeException exception) {
-                log.error("Error thrown trying to obtain messages", exception);
                 try {
                     final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
-                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, throwable);
+                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, exception);
                     backoff(errorBackoffTimeInMilliseconds);
                 } catch (final InterruptedException interruptedException) {
                     log.debug("Thread interrupted during backoff period");
