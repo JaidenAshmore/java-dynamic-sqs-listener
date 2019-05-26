@@ -10,6 +10,7 @@ import com.jashmore.sqs.resolver.MessageResolver;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,8 +61,8 @@ public class DefaultMessageProcessor implements MessageProcessor {
 
         try {
             messageConsumerMethod.invoke(messageConsumerBean, arguments);
-        } catch (final Throwable throwable) {
-            throw new MessageProcessingException("Error processing message", throwable);
+        } catch (final IllegalAccessException | InvocationTargetException | RuntimeException exception) {
+            throw new MessageProcessingException("Error processing message", exception);
         }
 
         // If the method doesn't consume the Acknowledge field, it will acknowledge the method here on success

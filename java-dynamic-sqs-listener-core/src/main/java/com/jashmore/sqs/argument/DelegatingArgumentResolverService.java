@@ -23,12 +23,13 @@ public class DelegatingArgumentResolverService implements ArgumentResolverServic
                 .map(resolver -> {
                     try {
                         return resolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
-                    } catch (final Throwable throwable) {
-                        if (ArgumentResolutionException.class.isAssignableFrom(throwable.getClass())) {
-                            throw throwable;
+                    } catch (final RuntimeException runtimeException) {
+                        // Make sure to wrap any unintended exceptions with the expected exception for errors
+                        if (!ArgumentResolutionException.class.isAssignableFrom(runtimeException.getClass())) {
+                            throw new ArgumentResolutionException("Error obtaining an argument value for parameter", runtimeException);
                         }
 
-                        throw new ArgumentResolutionException("Error obtaining an argument value for parameter", throwable);
+                        throw runtimeException;
                     }
                 })
                 .findFirst()
