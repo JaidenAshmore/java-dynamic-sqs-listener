@@ -35,18 +35,18 @@ public class RetryableMessageProcessor implements MessageProcessor {
     private void processMessageWithRetries(final Message message, final int retryAttempts) throws MessageProcessingException {
         try {
             delegateMessageProcessor.processMessage(message);
-        } catch (final Throwable throwable) {
-            if (retryAttempts > 0) {
-                log.error("Error processing message. Trying " + retryAttempts + " more times", throwable);
-                try {
-                    backoff();
-                } catch (final InterruptedException exception) {
-                    throw new MessageProcessingException("Interrupted while processing message", exception);
-                }
-                processMessageWithRetries(message, retryAttempts - 1);
-            } else {
-                throw throwable;
+        } catch (final RuntimeException runtimeException) {
+            if (retryAttempts <= 0) {
+                throw runtimeException;
             }
+
+            log.error("Error processing message. Trying " + retryAttempts + " more times", runtimeException);
+            try {
+                backoff();
+            } catch (final InterruptedException exception) {
+                throw new MessageProcessingException("Interrupted while processing message", exception);
+            }
+            processMessageWithRetries(message, retryAttempts - 1);
         }
     }
 
