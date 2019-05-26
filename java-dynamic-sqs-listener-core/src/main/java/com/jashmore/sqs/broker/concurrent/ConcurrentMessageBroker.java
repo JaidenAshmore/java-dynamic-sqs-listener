@@ -90,8 +90,8 @@ public class ConcurrentMessageBroker implements MessageBroker {
         try {
             shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingThreadsExecutor);
             log.debug("Message controller shut down");
-        } catch (final Throwable throwable) {
-            log.error("Exception thrown while waiting for broker to shutdown", throwable);
+        } catch (final RuntimeException runtimeException) {
+            log.error("Exception thrown while waiting for broker to shutdown", runtimeException);
         }
     }
 

@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
@@ -131,8 +132,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     log.debug("Thread interrupted while placing messages onto queue. Exiting...");
                     break;
                 }
-            } catch (final Throwable throwable) {
-                log.error("Exception thrown when retrieving messages", throwable);
+            } catch (final ExecutionException | RuntimeException exception) {
+                log.error("Exception thrown when retrieving messages", exception);
 
                 try {
                     Thread.sleep(getBackoffTimeInMs());

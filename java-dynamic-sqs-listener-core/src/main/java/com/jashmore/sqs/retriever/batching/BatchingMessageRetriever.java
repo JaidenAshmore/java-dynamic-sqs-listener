@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -132,6 +133,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     log.debug("Thread interrupted while obtaining messages from SQS");
                     break;
                 }
+
                 try {
                     for (final Message message : response.messages()) {
                         messagesDownloaded.put(message);
@@ -140,11 +142,10 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     log.debug("Thread interrupted while placing messages on internal queue");
                     break;
                 }
-            } catch (final Throwable throwable) {
-                log.error("Error thrown trying to obtain messages", throwable);
+            } catch (final ExecutionException | RuntimeException exception) {
                 try {
                     final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
-                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, throwable);
+                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, exception);
                     backoff(errorBackoffTimeInMilliseconds);
                 } catch (final InterruptedException interruptedException) {
                     log.debug("Thread interrupted during backoff period");

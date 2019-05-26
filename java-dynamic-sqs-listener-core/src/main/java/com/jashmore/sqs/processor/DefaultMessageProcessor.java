@@ -10,6 +10,7 @@ import com.jashmore.sqs.resolver.MessageResolver;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -39,8 +40,8 @@ public class DefaultMessageProcessor implements MessageProcessor {
         final Object result;
         try {
             result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
-        } catch (final Throwable throwable) {
-            throw new MessageProcessingException("Error processing message", throwable);
+        } catch (final InvocationTargetException | IllegalAccessException | RuntimeException exception) {
+            throw new MessageProcessingException("Error processing message", exception);
         }
 
         if (hasAcknowledgeParameter()) {
