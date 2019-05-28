@@ -8,7 +8,6 @@ import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
-import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.DefaultQueueContainerService;
@@ -117,14 +116,6 @@ public class QueueListenerConfiguration {
                 return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
             }
 
-            /**
-             * The default {@link MessageAttributeArgumentResolver} that will be able to deserialise message attributes using the Jackson {@link ObjectMapper}.
-             *
-             * <p>If a custom {@link ObjectMapper} needs to be supplied for the parsing of the  or the default {@link PayloadMapper} implementation is not
-             * up to scratch, the consumer can supply their own {@link PayloadMapper} bean and this one will not be used.
-             *
-             * @return the payload mapper for message payload deserialisation
-             */
             @Bean
             @ConditionalOnMissingBean(MessageAttributeArgumentResolver.class)
             public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final ObjectMapper objectMapper) {

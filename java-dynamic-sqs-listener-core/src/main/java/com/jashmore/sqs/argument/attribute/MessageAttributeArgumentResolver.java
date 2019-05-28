@@ -25,9 +25,8 @@ import java.util.Optional;
  * <p>This current implementation uses the Jackson {@link ObjectMapper} to perform all of the parsing and there is the potential for a future version of this
  * library to split this out so that Jackson isn't a required dependency.
  *
- * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-attributes.html">SQS Message Attributes</a> for more
- *     information
- * @see MessageAttributeValue for more information about these attributes
+ * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-attributes.html">SQS Message Attributes</a>
+ * @see MessageAttributeValue
  */
 public class MessageAttributeArgumentResolver implements ArgumentResolver<Object> {
     private final ObjectMapper objectMapper;
