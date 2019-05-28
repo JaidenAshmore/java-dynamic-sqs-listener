@@ -22,6 +22,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -328,6 +329,25 @@ public class PrefetchingMessageRetrieverTest {
         assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout())
                 .isEqualTo(DEFAULT_PREFETCHING_PROPERTIES.getVisibilityTimeoutForMessagesInSeconds());
     }
+
+    @Test
+    public void whenNoMessageVisibilityTimeoutFromPrefetchingPropertiesIncludedNoVisibilityTimeoutIsUsedInMessageRequest() {
+        // arrange
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(responseThrowingInterruptedException);
+        final PrefetchingMessageRetriever backgroundMessagePrefetcher
+                = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES,
+                new LinkedBlockingQueue<>(), AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS + 1);
+
+        // act
+        backgroundMessagePrefetcher.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames()).contains(QueueAttributeName.ALL.toString());
+    }
+
 
     @Test
     public void whenNoMessageVisibilityTimeoutFromPrefetchingPropertiesIncludedTheAwsMaximumWaitingTimeIsUsed() {

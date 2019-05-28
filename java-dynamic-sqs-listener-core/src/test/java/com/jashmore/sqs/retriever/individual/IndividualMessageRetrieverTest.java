@@ -16,6 +16,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -58,6 +59,7 @@ public class IndividualMessageRetrieverTest {
         verify(sqsAsyncClient, times(5)).receiveMessage(ReceiveMessageRequest.builder()
                 .queueUrl(QUEUE_URL)
                 .maxNumberOfMessages(1)
+                .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .visibilityTimeout(5)
                 .build()

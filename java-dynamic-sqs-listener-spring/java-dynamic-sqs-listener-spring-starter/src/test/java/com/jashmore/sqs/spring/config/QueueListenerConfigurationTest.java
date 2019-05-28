@@ -4,12 +4,13 @@ import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
+import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
-import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.DefaultQueueContainerService;
@@ -35,6 +36,8 @@ import java.util.Set;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class QueueListenerConfigurationTest {
+    private static final ObjectMapper USER_OBJECT_MAPPER = new ObjectMapper();
+
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -64,25 +67,67 @@ public class QueueListenerConfigurationTest {
     }
 
     @Test
-    public void whenUserDoesNotProvideAPayloadMapperTheDefaultIsUsed() {
+    public void userConfigurationWithNoObjectMapperWillProvideOwnForArgumentResolvers() {
         this.contextRunner
-                .withSystemProperties("aws.region:localstack")
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    assertThat(context).hasSingleBean(PayloadMapper.class);
-                    assertThat(context.getBean(PayloadMapper.class)).isSameAs(
-                            context.getBean(QueueListenerConfiguration.ArgumentResolutionConfiguration.CoreArgumentResolversConfiguration.class)
-                                    .payloadMapper());
+                    final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
+                    assertThat(objectMapper).isNotNull();
                 });
     }
 
     @Test
-    public void whenUserProvidesAPayloadMapperTheDefaultIsNotUsed() {
+    public void customObjectMapperWillBeAbleToObtainThatObjectMapperWhenRequired() {
         this.contextRunner
-                .withUserConfiguration(UserConfigurationWithPayloadMapperDefined.class)
+                .withUserConfiguration(UserConfigurationWithCustomObjectMapper.class)
                 .run((context) -> {
-                    assertThat(context).hasSingleBean(PayloadMapper.class);
-                    assertThat(context.getBean(PayloadMapper.class)).isSameAs(
-                            context.getBean(UserConfigurationWithPayloadMapperDefined.class).payloadMapper());
+                    final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
+                    assertThat(objectMapper).isEqualTo(USER_OBJECT_MAPPER);
+                });
+    }
+
+    @Test
+    public void whenUserDoesNotProvideAPayloadArgumentResolverTheDefaultIsUsed() {
+        this.contextRunner
+                .withSystemProperties("aws.region:localstack")
+                .run((context) -> {
+                    assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
+                    assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
+                            context.getBean(QueueListenerConfiguration.ArgumentResolutionConfiguration.CoreArgumentResolversConfiguration.class)
+                                    .payloadArgumentResolver(new ObjectMapper()));
+                });
+    }
+
+    @Test
+    public void whenUserProvidesAPayloadArgumentResolverTheDefaultIsNotUsed() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithPayloadArgumentResolverDefined.class)
+                .run((context) -> {
+                    assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
+                    assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
+                            context.getBean(UserConfigurationWithPayloadArgumentResolverDefined.class).payloadArgumentResolver());
+                });
+    }
+
+    @Test
+    public void whenNoUserProvidesAMessageAttributeArgumentResolverTheDefaultIsUsed() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
+                .run((context) -> {
+                    assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
+                    assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
+                            context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
+                });
+    }
+
+    @Test
+    public void whenUserProvidesAMessageAttributeArgumentResolverTheDefaultIsNotUsed() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
+                .run((context) -> {
+                    assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
+                    assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
+                            context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
                 });
     }
 
@@ -133,7 +178,8 @@ public class QueueListenerConfigurationTest {
                             .collect(toSet());
 
                     assertThat(argumentResolvers).containsExactlyInAnyOrder(
-                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class, VisibilityExtenderArgumentResolver.class
+                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class, VisibilityExtenderArgumentResolver.class,
+                            MessageAttributeArgumentResolver.class
                     );
                 });
     }
@@ -150,7 +196,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
-                    assertThat(argumentResolvers).hasSize(4);
+                    assertThat(argumentResolvers).hasSize(5);
                 });
     }
 
@@ -236,10 +282,28 @@ public class QueueListenerConfigurationTest {
 
     @Import(UserConfigurationWithSqsClient.class)
     @Configuration
-    static class UserConfigurationWithPayloadMapperDefined {
+    static class UserConfigurationWithPayloadArgumentResolverDefined {
         @Bean
-        public PayloadMapper payloadMapper() {
-            return mock(PayloadMapper.class);
+        public PayloadArgumentResolver payloadArgumentResolver() {
+            return mock(PayloadArgumentResolver.class);
+        }
+    }
+
+    @Import(UserConfigurationWithSqsClient.class)
+    @Configuration
+    static class UserConfigurationWithMessageAttributeArgumentResolverDefined {
+        @Bean
+        public MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
+            return mock(MessageAttributeArgumentResolver.class);
+        }
+    }
+
+    @Import(UserConfigurationWithSqsClient.class)
+    @Configuration
+    static class UserConfigurationWithCustomObjectMapper {
+        @Bean
+        public ObjectMapper myObjectMapper() {
+            return USER_OBJECT_MAPPER;
         }
     }
 

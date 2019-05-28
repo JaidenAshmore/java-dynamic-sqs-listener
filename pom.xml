@@ -341,6 +341,7 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <excludes>
                                 <exclude>com/jashmore/sqs/examples/**/*</exclude>
                                 <exclude>com/jashmore/sqs/aws/*</exclude>

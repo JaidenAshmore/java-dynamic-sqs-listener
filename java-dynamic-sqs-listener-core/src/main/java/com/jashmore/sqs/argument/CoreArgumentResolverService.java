@@ -2,6 +2,8 @@ package com.jashmore.sqs.argument;
 
 import com.google.common.collect.ImmutableSet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -22,10 +24,12 @@ public class CoreArgumentResolverService implements ArgumentResolverService {
     private final DelegatingArgumentResolverService delegatingArgumentResolverService;
 
     public CoreArgumentResolverService(final PayloadMapper payloadMapper,
-                                       final SqsAsyncClient sqsAsyncClient) {
+                                       final SqsAsyncClient sqsAsyncClient,
+                                       final ObjectMapper objectMapper) {
         final Set<ArgumentResolver<?>> argumentResolvers = ImmutableSet.of(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
+                new MessageAttributeArgumentResolver(objectMapper),
                 new VisibilityExtenderArgumentResolver(sqsAsyncClient)
         );
         this.delegatingArgumentResolverService = new DelegatingArgumentResolverService(argumentResolvers);

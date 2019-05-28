@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -54,6 +55,7 @@ public class IndividualMessageRetriever implements MessageRetriever {
                 .builder()
                 .queueUrl(queueProperties.getQueueUrl())
                 .maxNumberOfMessages(1)
+                .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .visibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())
                 .build();

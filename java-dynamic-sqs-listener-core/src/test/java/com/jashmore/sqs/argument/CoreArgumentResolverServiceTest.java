@@ -6,6 +6,8 @@ import com.google.common.collect.ImmutableMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.argument.attribute.MessageAttribute;
+import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -18,6 +20,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -37,41 +40,87 @@ public class CoreArgumentResolverServiceTest {
 
     @Before
     public void setUp() {
-        service = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
+        service = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient, objectMapper);
     }
 
     @Test
-    public void shouldBeAbleToResolveMethodArgumentsWithDefaultResolvers() throws Exception {
+    public void shouldBeAbleToResolvePayloadParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
                 .messageId("messageId")
                 .build();
         final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
-        final MethodParameter mapFirstParameter = DefaultMethodParameter.builder()
+        final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
                 .method(method)
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        final MethodParameter stringSecondParameter = DefaultMethodParameter.builder()
+
+        // act
+        final Object payloadArgument = service.resolveArgument(queueProperties, messagePayloadParameter, message);
+
+        // assert
+        assertThat(payloadArgument).isEqualTo(payload);
+    }
+
+
+    @Test
+    public void shouldBeAbleToResolveMessageIdParameters() throws Exception {
+        // arrange
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
+        final Map<String, String> payload = ImmutableMap.of("key", "value");
+        final Message message = Message.builder()
+                .body(objectMapper.writeValueAsString(payload))
+                .messageId("messageId")
+                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
+        final MethodParameter messageIdParameter = DefaultMethodParameter.builder()
                 .method(method)
                 .parameter(method.getParameters()[1])
                 .parameterIndex(1)
                 .build();
 
         // act
-        final Object payloadArgument = service.resolveArgument(queueProperties, mapFirstParameter, message);
-        final Object messageIdArgument = service.resolveArgument(queueProperties, stringSecondParameter, message);
+        final Object messageIdArgument = service.resolveArgument(queueProperties, messageIdParameter, message);
 
         // assert
-        assertThat(payloadArgument).isEqualTo(payload);
         assertThat(messageIdArgument).isEqualTo("messageId");
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
-    public void method(@Payload final Map<String, String> payload, @MessageId final String messageId) {
+    @Test
+    public void shouldBeAbleToResolveMessageAttributeParameters() throws Exception {
+        // arrange
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
+        final Map<String, String> payload = ImmutableMap.of("key", "value");
+        final Message message = Message.builder()
+                .body(objectMapper.writeValueAsString(payload))
+                .messageId("messageId")
+                .messageAttributes(ImmutableMap.of(
+                        "key", MessageAttributeValue.builder()
+                                .dataType(MessageAttributeDataTypes.STRING.getValue())
+                                .stringValue("test")
+                                .build()
+                ))
+                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
+        final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
+                .method(method)
+                .parameter(method.getParameters()[2])
+                .parameterIndex(2)
+                .build();
+
+        // act
+        final Object payloadArgument = service.resolveArgument(queueProperties, messagePayloadParameter, message);
+
+        // assert
+        assertThat(payloadArgument).isEqualTo("test");
+    }
+
+    @SuppressWarnings( {"unused" })
+    public void method(@Payload final Map<String, String> payload, @MessageId final String messageId, @MessageAttribute("key") final String attribute) {
 
     }
 }

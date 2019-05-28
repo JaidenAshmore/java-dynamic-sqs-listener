@@ -18,21 +18,21 @@ public class DelegatingArgumentResolverService implements ArgumentResolverServic
 
     @Override
     public Object resolveArgument(final QueueProperties queueProperties, final MethodParameter methodParameter, final Message message) {
-        return argumentResolvers.stream()
-                .filter(resolver -> resolver.canResolveParameter(methodParameter))
-                .map(resolver -> {
-                    try {
-                        return resolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
-                    } catch (final RuntimeException runtimeException) {
-                        // Make sure to wrap any unintended exceptions with the expected exception for errors
-                        if (!ArgumentResolutionException.class.isAssignableFrom(runtimeException.getClass())) {
-                            throw new ArgumentResolutionException("Error obtaining an argument value for parameter", runtimeException);
-                        }
-
-                        throw runtimeException;
+        for (final ArgumentResolver<?> resolver: argumentResolvers) {
+            if (resolver.canResolveParameter(methodParameter)) {
+                try {
+                    return resolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
+                } catch (final RuntimeException runtimeException) {
+                    // Make sure to wrap any unintended exceptions with the expected exception for errors
+                    if (!ArgumentResolutionException.class.isAssignableFrom(runtimeException.getClass())) {
+                        throw new ArgumentResolutionException("Error obtaining an argument value for parameter", runtimeException);
                     }
-                })
-                .findFirst()
-                .orElseThrow(() -> new ArgumentResolutionException("No ArgumentResolver found that can process this parameter"));
+
+                    throw runtimeException;
+                }
+            }
+        }
+
+        throw new ArgumentResolutionException("No ArgumentResolver found that can process this parameter");
     }
 }
