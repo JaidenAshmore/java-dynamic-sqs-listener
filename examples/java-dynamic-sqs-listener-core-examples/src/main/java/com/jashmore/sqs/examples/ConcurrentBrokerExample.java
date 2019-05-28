@@ -189,7 +189,7 @@ public class ConcurrentBrokerExample {
      */
     private static ArgumentResolverService argumentResolverService(final SqsAsyncClient sqsAsyncClient) {
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        return new CoreArgumentResolverService(payloadMapper, sqsAsyncClient);
+        return new CoreArgumentResolverService(payloadMapper, sqsAsyncClient, OBJECT_MAPPER);
     }
 
     /**

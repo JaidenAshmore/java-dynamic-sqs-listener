@@ -19,6 +19,8 @@ more in depth understanding take a look at the JavaDoc for the API.
         1. [How to add a custom ArgumentResolver to a Spring application](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
         integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
         for how build a new ArgumentResolver from scratch
+        1. [How to provide a custom Object Mapper](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): guide for overriding the default
+        `ObjectMapper` that is used to serialise the message body and attributes
         1. [How to add your own queue listener](how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for
         queue listening without the verbosity of the custom queue listener
         1. [How to write Spring Integration Tests](how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are

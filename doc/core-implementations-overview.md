@@ -72,6 +72,11 @@ with an implementation that allows for a message to be manually acknowledged whe
 signature, the [MessageProcessor](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) is not required to
 acknowledge the message after a successful execution. These implementations should be provided by the
 [MessageProcessor](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) being used.
+- [MessageAttribute](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/attribute/MessageAttribute.java): arguments annotated with this
+will attempt to parse the contents of the message attribute into this field. For example, if the argument is a String then the attribute will be cast to a
+string where as if the argument is an integer it will try and parse the string into the number.  This also works with POJOs in that the resolver will
+ attempt to deserialised the message attribute into this POJO shape, e.g. via the Jackson Object Mapper.  This is provided by the
+[MessageAttributeArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/attribute/MessageAttributeArgumentResolver.java).
 - [VisibilityExtender](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/visibility/VisibilityExtender.java): arguments of this type
 will be injected with an implementation that extends the message visibility of the current message. This is provided by the
 [VisibilityExtenderArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/visibility/VisibilityExtenderArgumentResolver.java). 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
+import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -94,23 +95,16 @@ public class QueueListenerConfiguration {
          */
         @Configuration
         public static class CoreArgumentResolversConfiguration {
-            /**
-             * The default {@link PayloadMapper} that will be able to deserialise message payloads using the Jackson {@link ObjectMapper}.
-             *
-             * <p>If the payloads of the message cannot be deserialised by an {@link ObjectMapper} or the default {@link PayloadMapper} implementation is not
-             * up to scratch, the consumer can supply their own {@link PayloadMapper} bean and this one will not be used.
-             *
-             * @return the payload mapper for message payload deserialisation
-             */
             @Bean
-            @ConditionalOnMissingBean(PayloadMapper.class)
-            public PayloadMapper payloadMapper() {
-                return new JacksonPayloadMapper(new ObjectMapper());
+            @ConditionalOnMissingBean(ObjectMapper.class)
+            public ObjectMapper objectMapper() {
+                return new ObjectMapper();
             }
 
             @Bean
-            public PayloadArgumentResolver payloadArgumentResolver(final PayloadMapper payloadMapper) {
-                return new PayloadArgumentResolver(payloadMapper);
+            @ConditionalOnMissingBean(PayloadArgumentResolver.class)
+            public PayloadArgumentResolver payloadArgumentResolver(final ObjectMapper objectMapper) {
+                return new PayloadArgumentResolver(new JacksonPayloadMapper(objectMapper));
             }
 
             @Bean
@@ -121,6 +115,20 @@ public class QueueListenerConfiguration {
             @Bean
             public VisibilityExtenderArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
                 return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
+            }
+
+            /**
+             * The default {@link MessageAttributeArgumentResolver} that will be able to deserialise message attributes using the Jackson {@link ObjectMapper}.
+             *
+             * <p>If a custom {@link ObjectMapper} needs to be supplied for the parsing of the  or the default {@link PayloadMapper} implementation is not
+             * up to scratch, the consumer can supply their own {@link PayloadMapper} bean and this one will not be used.
+             *
+             * @return the payload mapper for message payload deserialisation
+             */
+            @Bean
+            @ConditionalOnMissingBean(MessageAttributeArgumentResolver.class)
+            public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final ObjectMapper objectMapper) {
+                return new MessageAttributeArgumentResolver(objectMapper);
             }
         }
     }

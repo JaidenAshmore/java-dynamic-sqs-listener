@@ -16,6 +16,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -200,9 +201,9 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
      * @return the request that will be sent to SQS
      */
     private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
-        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
-                .builder()
+        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
                 .queueUrl(queueProperties.getQueueUrl())
+                .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .maxNumberOfMessages(numberOfMessagesToObtain)
                 .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds));
 

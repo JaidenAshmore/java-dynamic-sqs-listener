@@ -21,6 +21,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -386,7 +387,6 @@ public class BatchingMessageRetrieverTest {
         assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds()).isEqualTo(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
     }
 
-
     @Test
     public void waitTimeProvidedInPropertiesGreaterThanAwsMaximumWillUseMaxWaitTimeInsteadForMessageRetrievalRequests() {
         // arrange
@@ -411,6 +411,29 @@ public class BatchingMessageRetrieverTest {
         final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds()).isEqualTo(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+    }
+
+    @Test
+    public void allMessageAttributesShouldBeDownloadedWhenRequestingMessages() {
+        // arrange
+        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
+        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
+                DEFAULT_PROPERTIES, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
+            @Override
+            void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
+                throw new InterruptedException();
+            }
+        };
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
+
+        // act
+        backgroundThread.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames()).containsExactly(QueueAttributeName.ALL.toString());
     }
 
     @Test

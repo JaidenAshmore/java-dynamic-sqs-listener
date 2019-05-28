@@ -50,7 +50,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
         queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, localSqsRule.getLocalAmazonSqsAsync());
+        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, localSqsRule.getLocalAmazonSqsAsync(), OBJECT_MAPPER);
     }
 
     @Test(timeout = 30_000)

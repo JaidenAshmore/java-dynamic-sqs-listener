@@ -68,12 +68,17 @@ public class ConcurrentMessageBroker implements MessageBroker {
                     try {
                         return messageRetriever.retrieveMessage();
                     } catch (final InterruptedException exception) {
-                        log.debug("Thread interrupted waiting for a message");
-                        throw new RuntimeException("Failure to get message");
+                        log.trace("Thread interrupted waiting for a message");
+                        throw new BrokerStoppedWhileRetrievingMessageException();
                     }
                 }, concurrentThreadsExecutor)
                         .thenAcceptAsync(messageProcessor::processMessage, messageProcessingThreadsExecutor)
-                        .whenComplete((ignoredResult, throwable) -> concurrentMessagesBeingProcessedSemaphore.release());
+                        .whenComplete((ignoredResult, throwable) -> {
+                            if (throwable != null && !(throwable.getCause() instanceof BrokerStoppedWhileRetrievingMessageException)) {
+                                log.error("Error processing message", throwable.getCause());
+                            }
+                            concurrentMessagesBeingProcessedSemaphore.release();
+                        });
             } catch (final Throwable throwable) {
                 try {
                     final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
@@ -175,5 +180,13 @@ public class ConcurrentMessageBroker implements MessageBroker {
                 properties::getPreferredConcurrencyPollingRateInMilliseconds,
                 DEFAULT_BACKOFF_TIME_IN_MS
         );
+    }
+
+    /**
+     * Internal exception used to be thrown when the thread is interrupted while retrieving messages. This is because we don't want a
+     * error to be logged for this scenario but only when their was an actual exception processing the message.
+     */
+    private static class BrokerStoppedWhileRetrievingMessageException extends RuntimeException {
+
     }
 }

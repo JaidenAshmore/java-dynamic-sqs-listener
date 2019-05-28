@@ -13,6 +13,7 @@ import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
@@ -155,9 +156,9 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         final int numberOfMessagesToObtain = Math.min(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS, numberOfPrefetchSlotsLeft);
 
         log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
-        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
-                .builder()
+        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
                 .queueUrl(queueProperties.getQueueUrl())
+                .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds))
                 .maxNumberOfMessages(numberOfMessagesToObtain);
         final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
