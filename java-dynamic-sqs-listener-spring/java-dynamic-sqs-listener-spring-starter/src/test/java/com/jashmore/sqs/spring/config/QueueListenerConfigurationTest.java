@@ -10,6 +10,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
 import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolver;
+import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
@@ -180,7 +181,7 @@ public class QueueListenerConfigurationTest {
 
                     assertThat(argumentResolvers).containsExactlyInAnyOrder(
                             PayloadArgumentResolver.class, MessageIdArgumentResolver.class, VisibilityExtenderArgumentResolver.class,
-                            MessageAttributeArgumentResolver.class, MessageSystemAttributeArgumentResolver.class
+                            MessageAttributeArgumentResolver.class, MessageSystemAttributeArgumentResolver.class, MessageArgumentResolver.class
                     );
                 });
     }
@@ -197,7 +198,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
-                    assertThat(argumentResolvers).hasSize(6);
+                    assertThat(argumentResolvers).hasSize(7);
                 });
     }
 

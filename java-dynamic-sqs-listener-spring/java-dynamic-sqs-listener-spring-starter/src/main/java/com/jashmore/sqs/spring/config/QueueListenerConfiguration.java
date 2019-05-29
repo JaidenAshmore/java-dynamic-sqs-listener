@@ -6,6 +6,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
 import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolver;
+import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -126,6 +127,11 @@ public class QueueListenerConfiguration {
             @ConditionalOnMissingBean(MessageAttributeArgumentResolver.class)
             public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final ObjectMapper objectMapper) {
                 return new MessageAttributeArgumentResolver(objectMapper);
+            }
+
+            @Bean
+            public MessageArgumentResolver messageArgumentResolver() {
+                return new MessageArgumentResolver();
             }
         }
     }
