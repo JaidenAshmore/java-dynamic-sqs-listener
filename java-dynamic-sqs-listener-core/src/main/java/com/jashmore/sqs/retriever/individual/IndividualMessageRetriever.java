@@ -55,6 +55,7 @@ public class IndividualMessageRetriever implements MessageRetriever {
                 .builder()
                 .queueUrl(queueProperties.getQueueUrl())
                 .maxNumberOfMessages(1)
+                .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .visibilityTimeout(properties.getVisibilityTimeoutForMessagesInSeconds())

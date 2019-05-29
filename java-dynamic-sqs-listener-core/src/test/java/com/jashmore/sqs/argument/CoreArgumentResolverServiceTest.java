@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.attribute.MessageAttribute;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
+import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -21,6 +22,7 @@ import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -46,7 +48,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolvePayloadParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -70,7 +72,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolveMessageIdParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -93,7 +95,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolveMessageAttributeParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -119,8 +121,35 @@ public class CoreArgumentResolverServiceTest {
         assertThat(payloadArgument).isEqualTo("test");
     }
 
+    @Test
+    public void shouldBeAbleToResolveMessageSystemAttributeParameters() throws Exception {
+        // arrange
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
+        final Map<String, String> payload = ImmutableMap.of("key", "value");
+        final Message message = Message.builder()
+                .body(objectMapper.writeValueAsString(payload))
+                .messageId("messageId")
+                .attributes(ImmutableMap.of(MessageSystemAttributeName.SEQUENCE_NUMBER, "test"))
+                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
+        final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
+                .method(method)
+                .parameter(method.getParameters()[3])
+                .parameterIndex(3)
+                .build();
+
+        // act
+        final Object payloadArgument = service.resolveArgument(queueProperties, messagePayloadParameter, message);
+
+        // assert
+        assertThat(payloadArgument).isEqualTo("test");
+    }
+
     @SuppressWarnings( {"unused" })
-    public void method(@Payload final Map<String, String> payload, @MessageId final String messageId, @MessageAttribute("key") final String attribute) {
+    public void method(@Payload final Map<String, String> payload,
+                       @MessageId final String messageId,
+                       @MessageAttribute("key") final String attribute,
+                       @MessageSystemAttribute(MessageSystemAttributeName.SEQUENCE_NUMBER) final String sequenceNumber) {
 
     }
 }

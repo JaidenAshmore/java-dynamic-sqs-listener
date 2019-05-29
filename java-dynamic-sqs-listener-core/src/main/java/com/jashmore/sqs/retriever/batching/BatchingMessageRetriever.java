@@ -203,6 +203,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
         final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
                 .queueUrl(queueProperties.getQueueUrl())
+                .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .maxNumberOfMessages(numberOfMessagesToObtain)
                 .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds));
