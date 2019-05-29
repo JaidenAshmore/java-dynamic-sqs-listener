@@ -59,6 +59,7 @@ public class IndividualMessageRetrieverTest {
         verify(sqsAsyncClient, times(5)).receiveMessage(ReceiveMessageRequest.builder()
                 .queueUrl(QUEUE_URL)
                 .maxNumberOfMessages(1)
+                .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .visibilityTimeout(5)

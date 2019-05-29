@@ -158,6 +158,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
         final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
                 .queueUrl(queueProperties.getQueueUrl())
+                .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds))
                 .maxNumberOfMessages(numberOfMessagesToObtain);

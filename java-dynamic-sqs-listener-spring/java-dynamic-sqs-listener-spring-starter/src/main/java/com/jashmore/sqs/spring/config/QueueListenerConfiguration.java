@@ -5,6 +5,7 @@ import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
 import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
+import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
@@ -114,6 +115,11 @@ public class QueueListenerConfiguration {
             @Bean
             public VisibilityExtenderArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
                 return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
+            }
+
+            @Bean
+            public MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver() {
+                return new MessageSystemAttributeArgumentResolver();
             }
 
             @Bean

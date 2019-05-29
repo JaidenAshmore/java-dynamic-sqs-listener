@@ -436,6 +436,30 @@ public class BatchingMessageRetrieverTest {
         assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames()).containsExactly(QueueAttributeName.ALL.toString());
     }
 
+
+    @Test
+    public void allMessageSystemAttributesShouldBeDownloadedWhenRequestingMessages() {
+        // arrange
+        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
+        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
+                DEFAULT_PROPERTIES, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
+            @Override
+            void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
+                throw new InterruptedException();
+            }
+        };
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
+
+        // act
+        backgroundThread.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().attributeNames()).containsExactly(QueueAttributeName.ALL);
+    }
+
     @Test
     public void nullPollingPeriodWillWaitUntilEnoughThreadsAreRequestingMessages() {
         // arrange

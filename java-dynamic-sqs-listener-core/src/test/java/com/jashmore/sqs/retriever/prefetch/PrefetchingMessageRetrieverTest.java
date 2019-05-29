@@ -331,7 +331,7 @@ public class PrefetchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenNoMessageVisibilityTimeoutFromPrefetchingPropertiesIncludedNoVisibilityTimeoutIsUsedInMessageRequest() {
+    public void allMessageAttributesAreIncludedInMessagesWhenRetrieved() {
         // arrange
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenReturn(responseThrowingInterruptedException);
@@ -348,6 +348,23 @@ public class PrefetchingMessageRetrieverTest {
         assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames()).contains(QueueAttributeName.ALL.toString());
     }
 
+    @Test
+    public void allMessageSystemAttributesAreIncludedInMessagesWhenRetrieved() {
+        // arrange
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(responseThrowingInterruptedException);
+        final PrefetchingMessageRetriever backgroundMessagePrefetcher
+                = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES,
+                new LinkedBlockingQueue<>(), AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS + 1);
+
+        // act
+        backgroundMessagePrefetcher.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().attributeNames()).contains(QueueAttributeName.ALL);
+    }
 
     @Test
     public void whenNoMessageVisibilityTimeoutFromPrefetchingPropertiesIncludedTheAwsMaximumWaitingTimeIsUsed() {
