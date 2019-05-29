@@ -48,7 +48,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolvePayloadParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -72,7 +72,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolveMessageIdParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -95,7 +95,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolveMessageAttributeParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -124,7 +124,7 @@ public class CoreArgumentResolverServiceTest {
     @Test
     public void shouldBeAbleToResolveMessageSystemAttributeParameters() throws Exception {
         // arrange
-        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class);
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final Map<String, String> payload = ImmutableMap.of("key", "value");
         final Message message = Message.builder()
                 .body(objectMapper.writeValueAsString(payload))
@@ -145,11 +145,33 @@ public class CoreArgumentResolverServiceTest {
         assertThat(payloadArgument).isEqualTo("test");
     }
 
+    @Test
+    public void shouldBeAbleToResolveMessageParameters() throws Exception {
+        // arrange
+        final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
+        final Message message = Message.builder()
+                .body("test")
+                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl("queueUrl").build();
+        final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
+                .method(method)
+                .parameter(method.getParameters()[4])
+                .parameterIndex(4)
+                .build();
+
+        // act
+        final Object payloadArgument = service.resolveArgument(queueProperties, messagePayloadParameter, message);
+
+        // assert
+        assertThat(payloadArgument).isSameAs(message);
+    }
+
     @SuppressWarnings( {"unused" })
     public void method(@Payload final Map<String, String> payload,
                        @MessageId final String messageId,
                        @MessageAttribute("key") final String attribute,
-                       @MessageSystemAttribute(MessageSystemAttributeName.SEQUENCE_NUMBER) final String sequenceNumber) {
+                       @MessageSystemAttribute(MessageSystemAttributeName.SEQUENCE_NUMBER) final String sequenceNumber,
+                       final Message message) {
 
     }
 }

@@ -57,6 +57,9 @@ a helper implementation that uses the DelegatingArgumentResolverService under th
 [ArgumentResolver](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s.
 
 The core arguments that be resolved include:
+- `software.amazon.awssdk.services.sqs.model.Message`: arguments that have the `Message` type will place the entire message that is being processed into
+this argument. This is useful if you need to forward this message to other services or want to manually extract information from the service. This is
+provided by the [MessageArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/message/MessageArgumentResolver.java).
 - [@Payload](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/payload/Payload.java): arguments annotated with this will parse the
 message body into that object. If this is a String a direct transfer of the message contents is passed in, otherwise if it is a Java Bean, an attempt to
 cast the message body to that bean will be used. This is provided by the
@@ -88,9 +91,6 @@ of messages from the [MessageRetriever](../java-dynamic-sqs-listener-api/src/mai
 of concurrency of the messages being processed or when messages should be processed.
 
 Core implementation include:
-- [SingleThreadedMessageBroker](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/broker/singlethread/SingleThreadedMessageBroker.java):
-this implementation only runs on a single thread and therefore only a single message can be processed at once. This would most often just be useful
-for local development and testing and does not have a significant production use case.
 - [ConcurrentMessageBroker](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/broker/concurrent/ConcurrentMessageBroker.java): this
 implementation will run on multiple threads each processing messages. It has dynamic configuration and this allows the rate of concurrency to change
 dynamically while the application is running.

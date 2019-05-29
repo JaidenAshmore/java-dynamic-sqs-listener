@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Calendar;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings( {"unused", "WeakerAccess"})
 public class MessageSystemAttributeArgumentResolverTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
