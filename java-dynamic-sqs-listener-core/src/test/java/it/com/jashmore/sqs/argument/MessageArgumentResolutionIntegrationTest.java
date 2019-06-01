@@ -105,8 +105,8 @@ public class MessageArgumentResolutionIntegrationTest {
         private final AtomicReference<Message> valueAtomicReference;
 
         public void consume(final Message message) {
-            latch.countDown();
             valueAtomicReference.set(message);
+            latch.countDown();
         }
     }
 }

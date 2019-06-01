@@ -111,6 +111,7 @@ public class MessageAttributeIntegrationTest {
         assertThat(messageAttributeReference).hasValue("expected value");
     }
 
+    @SuppressWarnings("WeakerAccess")
     @AllArgsConstructor
     public static class MessageConsumer {
         private final CountDownLatch latch;
@@ -118,8 +119,8 @@ public class MessageAttributeIntegrationTest {
 
         public void consume(@MessageAttribute("key") final String value) {
             log.info("Message processed with attribute: {}", value);
-            latch.countDown();
             valueAtomicReference.set(value);
+            latch.countDown();
         }
     }
 }
