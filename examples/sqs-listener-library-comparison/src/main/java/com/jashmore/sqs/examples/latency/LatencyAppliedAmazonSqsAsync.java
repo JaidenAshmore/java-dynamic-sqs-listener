@@ -15,7 +15,7 @@ public class LatencyAppliedAmazonSqsAsync implements AmazonSQSAsync {
     @Delegate(excludes = MethodsToOverride.class)
     private final AmazonSQSAsync delegate;
 
-    //@Override
+    @Override
     public ReceiveMessageResult receiveMessage(ReceiveMessageRequest request) {
         try {
             // Let's pretend there is some latency

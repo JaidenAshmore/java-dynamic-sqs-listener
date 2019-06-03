@@ -1,6 +1,14 @@
 package com.jashmore.sqs.examples;
 
 import static com.jashmore.sqs.examples.ExampleConstants.NUMBER_OF_MESSAGES;
+import static com.jashmore.sqs.examples.ExampleConstants.QUEUE_TO_TEST;
+import static com.jashmore.sqs.examples.Queues.JMS_10_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.JMS_30_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.PREFETCHING_10_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.PREFETCHING_30_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.QUEUE_LISTENER_10_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.QUEUE_LISTENER_30_QUEUE_NAME;
+import static com.jashmore.sqs.examples.Queues.SPRING_CLOUD_QUEUE_NAME;
 import static java.util.stream.Collectors.toSet;
 
 import akka.http.scaladsl.Http;
@@ -72,12 +80,18 @@ public class SqsListenersConfiguration {
         final LocalSqsAsyncClient localSqsAsyncClient = new LocalSqsAsyncClient(SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
-                .queue(SqsQueuesConfig.QueueConfig.builder().queueName("queueName").build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(JMS_10_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(JMS_30_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(SPRING_CLOUD_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(PREFETCHING_10_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(PREFETCHING_30_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_10_QUEUE_NAME).build())
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_30_QUEUE_NAME).build())
                 .build());
 
         localSqsAsyncClient.buildQueues();
 
-        sendMessagesToQueue(localSqsAsyncClient, "queueName", NUMBER_OF_MESSAGES);
+        sendMessagesToQueue(localSqsAsyncClient);
 
         return new LatencyAppliedSqsAsyncClient(localSqsAsyncClient);
     }
@@ -86,6 +100,7 @@ public class SqsListenersConfiguration {
      * Creates a SQS Client for the Spring Cloud and JMS SQS Listener Libraries.
      *
      * @param sqsRestServer the sqs server
+     * @param ignored       depend on the client as that is what actually builds the queue and places the messages on it
      * @return client for communicating with the local SQS
      */
     @Bean
@@ -158,11 +173,9 @@ public class SqsListenersConfiguration {
         return factory;
     }
 
-    private void sendMessagesToQueue(final SqsAsyncClient sqsAsyncClient,
-                                     final String queueName,
-                                     final int messageCount) throws ExecutionException, InterruptedException {
-        final String queueUrl = sqsAsyncClient.getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build()).get().queueUrl();
-        for (int i = 0; i < messageCount; i = i + 10) {
+    private void sendMessagesToQueue(final SqsAsyncClient sqsAsyncClient) throws ExecutionException, InterruptedException {
+        final String queueUrl = sqsAsyncClient.getQueueUrl(GetQueueUrlRequest.builder().queueName(QUEUE_TO_TEST).build()).get().queueUrl();
+        for (int i = 0; i < NUMBER_OF_MESSAGES; i = i + 10) {
             final int base = i;
 
             final SendMessageBatchRequest.Builder batchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);

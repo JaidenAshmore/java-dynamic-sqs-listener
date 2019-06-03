@@ -3,6 +3,11 @@ This module has the Spring Cloud, JMS and Java Dynamic SQS Listener libraries al
 to compare the performance of each of the types of libraries with different types of messages being processed. For example, a message that has a lot of
 IO or to test what happens if the time to get new messages from the queue is large.
 
+## Getting Started
+You can run the [Application](src/main/java/com/jashmore/sqs/examples/Application.java) which will place messages onto a queue and then the corresponding
+listener will process them. Take a look at the [ExampleConstants](src/main/java/com/jashmore/sqs/examples/ExampleConstants.java) for the types of variables
+that can be altered, such as the time to process the messages, etc.
+
 ## Results (02/June/2019)
 The results that I ran on my local machine (which is not the greatest environment but gives a rough estimate) are the following:
 
