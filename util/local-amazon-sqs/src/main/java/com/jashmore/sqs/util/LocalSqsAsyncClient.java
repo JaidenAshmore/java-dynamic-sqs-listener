@@ -113,7 +113,7 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
      * Build all of the queues that are required for this local client once the bean has been created.
      */
     @PostConstruct
-    private void buildQueues() {
+    public void buildQueues() {
         queueUrlMap = Maps.newHashMap();
         for (final SqsQueuesConfig.QueueConfig queueConfig : sqsQueuesConfig.getQueues()) {
 
