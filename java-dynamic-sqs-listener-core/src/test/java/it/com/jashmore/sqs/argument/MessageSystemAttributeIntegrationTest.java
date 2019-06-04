@@ -5,14 +5,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-import com.google.common.collect.ImmutableMap;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
-import com.jashmore.sqs.argument.attribute.MessageAttribute;
-import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
@@ -30,17 +26,14 @@ import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverPropertie
 import com.jashmore.sqs.test.LocalSqsRule;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.data.TemporalOffset;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -111,6 +104,7 @@ public class MessageSystemAttributeIntegrationTest {
         assertThat(messageAttributeReference.get()).isCloseTo(OffsetDateTime.now(), within(2, MINUTES));
     }
 
+    @SuppressWarnings("WeakerAccess")
     @AllArgsConstructor
     public static class MessageConsumer {
         private final CountDownLatch latch;
@@ -118,8 +112,8 @@ public class MessageSystemAttributeIntegrationTest {
 
         public void consume(@MessageSystemAttribute(MessageSystemAttributeName.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP) final OffsetDateTime value) {
             log.info("Message processed with attribute: {}", value);
-            latch.countDown();
             valueAtomicReference.set(value);
+            latch.countDown();
         }
     }
 }
