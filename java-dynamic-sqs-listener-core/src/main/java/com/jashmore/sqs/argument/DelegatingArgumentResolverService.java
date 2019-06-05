@@ -1,8 +1,6 @@
 package com.jashmore.sqs.argument;
 
-import com.jashmore.sqs.QueueProperties;
 import lombok.AllArgsConstructor;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Set;
 
@@ -17,22 +15,10 @@ public class DelegatingArgumentResolverService implements ArgumentResolverServic
     private final Set<ArgumentResolver<?>> argumentResolvers;
 
     @Override
-    public Object resolveArgument(final QueueProperties queueProperties, final MethodParameter methodParameter, final Message message) {
-        for (final ArgumentResolver<?> resolver: argumentResolvers) {
-            if (resolver.canResolveParameter(methodParameter)) {
-                try {
-                    return resolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
-                } catch (final RuntimeException runtimeException) {
-                    // Make sure to wrap any unintended exceptions with the expected exception for errors
-                    if (!ArgumentResolutionException.class.isAssignableFrom(runtimeException.getClass())) {
-                        throw new ArgumentResolutionException("Error obtaining an argument value for parameter", runtimeException);
-                    }
-
-                    throw runtimeException;
-                }
-            }
-        }
-
-        throw new ArgumentResolutionException("No ArgumentResolver found that can process this parameter");
+    public ArgumentResolver<?> getArgumentResolver(final MethodParameter methodParameter) throws UnsupportedArgumentResolutionException {
+        return argumentResolvers.stream()
+                .filter(resolver -> resolver.canResolveParameter(methodParameter))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedArgumentResolutionException(methodParameter));
     }
 }

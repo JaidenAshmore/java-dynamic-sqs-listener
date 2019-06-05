@@ -1,8 +1,6 @@
 package com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.Is.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -17,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.lang.reflect.Parameter;
 import java.util.Set;
 
 public class DelegatingArgumentResolverServiceTest {
@@ -28,65 +25,50 @@ public class DelegatingArgumentResolverServiceTest {
     public ExpectedException expectedException = ExpectedException.none();
 
     @Mock
-    private ArgumentResolver<Object> mockObjectArgumentResolver;
+    private MethodParameter methodParameter;
 
     @Test
-    public void whenNoResolversCanMatchParameterExceptionIsThrown() {
+    public void whenNoResolversCanMatchParameterExceptionIsThrown() throws Exception {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(any(MethodParameter.class))).thenReturn(false);
         final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("No ArgumentResolver found that can process this parameter");
+        when(methodParameter.getMethod()).thenReturn(this.getClass().getMethod("whenNoResolversCanMatchParameterExceptionIsThrown"));
+        when(methodParameter.getParameterIndex()).thenReturn(1);
+        expectedException.expect(UnsupportedArgumentResolutionException.class);
+        expectedException.expectMessage("No known for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#whenNoResolversCanMatchParameterExceptionIsThrown");
 
         // act
-        new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);
+        new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter);
     }
 
     @Test
-    public void whenResolvingArgumentThrowsExceptionArgumentResolutionExceptionWrapsIt() {
+    public void whenResolveCanMatchParameterThatIsReturned() {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(isNull())).thenReturn(true);
-        when(resolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
-                .thenThrow(new RuntimeException("error"));
         final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectCause(isA(RuntimeException.class));
 
         // act
-        new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);
-    }
-
-    @Test
-    public void whenResolvingArgumentThrowsArgumentResolutionExceptionItIsBubbled() {
-        // arrange
-        final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
-        when(resolver.canResolveParameter(isNull())).thenReturn(true);
-        final ArgumentResolutionException exception = new ArgumentResolutionException("error");
-        when(resolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
-                .thenThrow(exception);
-        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expect(is(exception));
-
-        // act
-        new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);
-    }
-
-    @Test
-    public void whenArgumentIsSuccessfullyResolvedTheValueIsReturned() {
-        // arrange=
-        when(mockObjectArgumentResolver.canResolveParameter(isNull())).thenReturn(true);
-        final Object argument = new Object();
-        when(mockObjectArgumentResolver.resolveArgumentForParameter(isNull(), isNull(), isNull()))
-                .thenReturn(argument);
-        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(mockObjectArgumentResolver);
-
-        // act
-        final Object actualArgument = new DelegatingArgumentResolverService(resolvers).resolveArgument(null, null, null);
+        final ArgumentResolver<?> matchedResolver = new DelegatingArgumentResolverService(resolvers).getArgumentResolver(null);
 
         // assert
-        assertThat(actualArgument).isEqualTo(argument);
+        assertThat(matchedResolver).isSameAs(matchedResolver);
+    }
+
+    @Test
+    public void whenMultipleResolversMatchParameterTheFirstIsReturned() {
+        // arrange
+        final ArgumentResolver<?> firstResolver = mock(ArgumentResolver.class);
+        when(firstResolver.canResolveParameter(isNull())).thenReturn(true);
+        final ArgumentResolver<?> secondResolver = mock(ArgumentResolver.class);
+        when(secondResolver.canResolveParameter(isNull())).thenReturn(true);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(firstResolver, secondResolver);
+
+        // act
+        final ArgumentResolver<?> matchedResolver = new DelegatingArgumentResolverService(resolvers).getArgumentResolver(null);
+
+        // assert
+        assertThat(matchedResolver).isSameAs(firstResolver);
     }
 }
