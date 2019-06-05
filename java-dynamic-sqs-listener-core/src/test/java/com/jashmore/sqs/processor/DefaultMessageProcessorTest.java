@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -12,9 +13,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.argument.ArgumentResolutionException;
+import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.MethodParameter;
+import com.jashmore.sqs.argument.UnsupportedArgumentResolutionException;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -52,40 +54,37 @@ public class DefaultMessageProcessorTest {
     @Mock
     private MessageResolver messageResolver;
 
+    @Mock
+    private ArgumentResolver<String> mockArgumentResolver;
+
+    @Mock
+    private ArgumentResolver<CompletableFuture<Object>> completableFutureArgumentResolver;
+
     @Test
     public void forEachParameterInMethodTheArgumentIsResolved() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
+        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenReturn("payload")
-                .thenReturn("payload2");
 
         // act
         processor.processMessage(message);
 
         // assert
-        verify(argumentResolverService, times(2)).resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message));
+        verify(argumentResolverService, times(2)).getArgumentResolver(any(MethodParameter.class));
     }
 
     @Test
     public void anyParameterUnableToBeResolvedWillThrowAnError() {
         // arrange
         final Method method = getMethodWithAcknowledge();
-        final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenThrow(new ArgumentResolutionException("Error resolving"));
+        when(argumentResolverService.getArgumentResolver(any(MethodParameter.class)))
+                .thenThrow(new UnsupportedArgumentResolutionException());
+        expectedException.expect(UnsupportedArgumentResolutionException.class);
 
         // act
-        try {
-            processor.processMessage(message);
-            fail("Should have thrown an exception");
-        } catch (final MessageProcessingException exception) {
-            // assert
-            assertThat(exception).hasCauseInstanceOf(ArgumentResolutionException.class);
-        }
+        new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
     }
 
     @Test
@@ -94,10 +93,11 @@ public class DefaultMessageProcessorTest {
         final Method method = getMethodWithAcknowledge();
         final DefaultMessageProcessorTest mockProcessor = mock(DefaultMessageProcessorTest.class);
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, mockProcessor);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload")
                 .thenReturn("payload2");
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, mockProcessor);
 
         // act
         processor.processMessage(message);
@@ -111,9 +111,10 @@ public class DefaultMessageProcessorTest {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         processor.processMessage(message);
@@ -127,9 +128,10 @@ public class DefaultMessageProcessorTest {
         // arrange
         final Method method = getMethodWithNoAcknowledge();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         processor.processMessage(message);
@@ -144,9 +146,10 @@ public class DefaultMessageProcessorTest {
         // arrange
         final Method method = getMethodThatThrowsException();
         final Message message = Message.builder().receiptHandle("handle").build();
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         try {
@@ -162,11 +165,12 @@ public class DefaultMessageProcessorTest {
     public void methodReturningCompletableFutureWillResolveMessageWhenFutureResolved() throws Exception {
         // arrange
         final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
         final Message message = Message.builder().receiptHandle("handle").build();
+        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         CompletableFuture.runAsync(() -> processor.processMessage(message));
@@ -181,11 +185,12 @@ public class DefaultMessageProcessorTest {
     public void methodReturningCompletableFutureWillNotResolveMessageWhenFutureRejected() throws Exception {
         // arrange
         final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
         final Message message = Message.builder().receiptHandle("handle").build();
+        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         CompletableFuture.runAsync(() -> processor.processMessage(message));
@@ -200,10 +205,11 @@ public class DefaultMessageProcessorTest {
     public void methodReturningCompletableFutureThatReturnsNullWillThrowMessageProcessingException() throws Exception {
         // arrange
         final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
         final Message message = Message.builder().receiptHandle("handle").build();
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
+        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(null);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
         expectedException.expect(MessageProcessingException.class);
 
         // act
@@ -214,11 +220,12 @@ public class DefaultMessageProcessorTest {
     public void threadInterruptedWhileGettingMessageWillThrowException() throws Exception {
         // arrange
         final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
         final Message message = Message.builder().receiptHandle("handle").build();
+        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(argumentResolverService.resolveArgument(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
+        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
 
         // act
         final AtomicBoolean exceptionThrown = new AtomicBoolean(false);

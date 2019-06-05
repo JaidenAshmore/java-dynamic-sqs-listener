@@ -1,9 +1,7 @@
 package com.jashmore.sqs.argument;
 
-import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -23,15 +21,13 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public interface ArgumentResolverService {
     /**
-     * Resolve the argument value for the given parameter of the method.
+     * Determine the {@link ArgumentResolver} that should be used for processing an argument of the method.
      *
      * <p>Note that this does not need to be able to resolve the {@link Acknowledge} argument as that is provided by the {@link MessageProcessor}.
      *
-     * @param queueProperties details about the queue that the message came from
-     * @param methodParameter the parameter to get the argument value for
-     * @param message         the message being processed by this queue
-     * @return the value of the argument
-     * @throws ArgumentResolutionException when there was an error determine the parameter argument value
+     * @param methodParameter details about the method parameter
+     * @return the resolver that should be used to resolve this parameter
+     * @throws UnsupportedArgumentResolutionException if there is no available {@link ArgumentResolver}
      */
-    Object resolveArgument(QueueProperties queueProperties, MethodParameter methodParameter, Message message) throws ArgumentResolutionException;
+    ArgumentResolver<?> getArgumentResolver(MethodParameter methodParameter) throws UnsupportedArgumentResolutionException;
 }
