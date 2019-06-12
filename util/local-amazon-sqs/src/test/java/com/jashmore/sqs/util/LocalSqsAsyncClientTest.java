@@ -13,6 +13,9 @@ import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.ListQueuesResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+
+import java.util.concurrent.TimeUnit;
 
 public class LocalSqsAsyncClientTest {
     @Rule
@@ -149,5 +152,53 @@ public class LocalSqsAsyncClientTest {
                 .thenApply(getQueueAttributesResponse -> getQueueAttributesResponse.attributes().get(QueueAttributeName.VISIBILITY_TIMEOUT))
                 .get();
         assertThat(visibilityTimeout).contains("60");
+    }
+
+    @Test
+    public void sendingMessagesToLocalQueueViaNameWillSendMessagesToCorrectQueue() throws Exception {
+        // arrange
+        final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
+                .sqsServerUrl(queueServerUrl)
+                .queue(SqsQueuesConfig.QueueConfig.builder()
+                        .queueName("queueName")
+                        .visibilityTimeout(60)
+                        .build())
+                .build();
+        final LocalSqsAsyncClient sqsAsyncClient = new LocalSqsAsyncClient(queuesConfig);
+        sqsAsyncClient.buildQueues();
+
+        // act
+        sqsAsyncClient.sendMessageToLocalQueue("queueName", SendMessageRequest.builder().messageBody("payload").build()).get(30, TimeUnit.SECONDS);
+        sqsAsyncClient.sendMessageToLocalQueue("queueName", "payload2").get(30, TimeUnit.SECONDS);
+        sqsAsyncClient.sendMessageToLocalQueue("queueName",  (builder) -> builder.messageBody("payload3")).get(30, TimeUnit.SECONDS);
+
+        // assert
+        final String approximateNumberOfMessages = sqsAsyncClient.getQueueAttributes(GetQueueAttributesRequest.builder()
+                .queueUrl(queueServerUrl + "/queue/queueName")
+                .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES)
+                .build())
+                .thenApply(response -> response.attributes().get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES))
+                .get(30, TimeUnit.SECONDS);
+        assertThat(approximateNumberOfMessages).isEqualTo("3");
+    }
+
+    @Test
+    public void queueNameCanBeUsedToGetQueueUrl() {
+        // arrange
+        final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
+                .sqsServerUrl(queueServerUrl)
+                .queue(SqsQueuesConfig.QueueConfig.builder()
+                        .queueName("queueName")
+                        .visibilityTimeout(60)
+                        .build())
+                .build();
+        final LocalSqsAsyncClient sqsAsyncClient = new LocalSqsAsyncClient(queuesConfig);
+        sqsAsyncClient.buildQueues();
+
+        // act
+        final String queueUrl = sqsAsyncClient.getQueueUrl("queueName");
+
+        // assert
+        assertThat(queueUrl).isEqualTo(queueServerUrl + "/queue/queueName");
     }
 }
