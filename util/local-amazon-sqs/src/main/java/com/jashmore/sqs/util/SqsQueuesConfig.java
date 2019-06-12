@@ -34,6 +34,7 @@ public class SqsQueuesConfig {
     @Value
     @Builder
     public static class QueueConfig {
+        public static final int DEFAULT_MAX_RECEIVE_COUNT = 3;
 
         /**
          * The name of the queue.
@@ -41,15 +42,23 @@ public class SqsQueuesConfig {
         private final String queueName;
 
         /**
+         * The name of the dead letter queue that should be created and linked to the queue.
+         *
+         * <p>If this value is null a dead letter queue will not be created. However if {@link #maxReceiveCount} is not null than a dead letter queue will
+         * be created with a default name of "{queueName}-dlq".
+         */
+        private final String deadLetterQueueName;
+
+        /**
          * The amount of time messages should be visible before putting back onto the queue.
          */
         private final Integer visibilityTimeout;
 
         /**
-         * The amount of times that a message can be retrieved before it should be plcaed into the Dead Letter Queue.
+         * The amount of times that a message can be retrieved before it should be placed into the Dead Letter Queue.
          *
-         * <p>If this value is non null a dead letter queue will be created and a redrive policy linked to it with this max receive count. If this value is null
-         * no dead letter queue will be created and attached.
+         * <p>If this value is non null a dead letter queue with a name of {@link #deadLetterQueueName} or "{queueName}-dlq" will be created and a
+         * re-drive policy linked to it with this max receive count.
          */
         private final Integer maxReceiveCount;
     }
