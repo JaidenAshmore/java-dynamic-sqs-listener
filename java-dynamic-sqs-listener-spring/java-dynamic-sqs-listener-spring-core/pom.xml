@@ -7,10 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
+    <artifactId>java-dynamic-sqs-listener-spring-core</artifactId>
 
-    <name>Java Dynamic SQS Listener - Spring Starter</name>
-    <description>Spring Starter for automatically setting up the Spring Core implementation in a Spring Boot Application.</description>
+    <name>Java Dynamic SQS Listener - Spring Core</name>
+    <description>Core Spring implementation for the Java Dynamic SQS Listener library.</description>
 
     <properties>
         <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
@@ -18,15 +18,35 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>java-dynamic-sqs-listener-spring-core</artifactId>
-            <version>${project.version}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-spring-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
