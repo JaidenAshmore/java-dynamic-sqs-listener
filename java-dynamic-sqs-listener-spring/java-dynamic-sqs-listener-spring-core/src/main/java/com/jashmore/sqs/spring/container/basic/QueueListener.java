@@ -5,6 +5,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
@@ -82,6 +83,31 @@ public @interface QueueListener {
      * @see ConcurrentMessageBrokerProperties#getConcurrencyLevel() for more details and constraints
      */
     String concurrencyLevelString() default "";
+
+    /**
+     * The total number of threads requesting messages that will result in the the background thread to actually request the messages.
+     *
+     * <p>This number should be positive but smaller than {@link AwsConstants#MAX_NUMBER_OF_MESSAGES_FROM_SQS} as it does not make sense to have a batch size
+     * greater than what AWS can provide.
+     *
+     * @return the total number of threads requesting messages for trigger a batch of messages to be retrieved
+     * @see BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger() for more details about this parameter
+     */
+    int batchSize() default 5;
+
+    /**
+     * The total number of threads requesting messages that will result in the the background thread to actually request the messages.
+     *
+     * <p>This number should be positive but smaller than {@link AwsConstants#MAX_NUMBER_OF_MESSAGES_FROM_SQS} as it does not make sense to have a batch size
+     * greater than what AWS can provide.
+     *
+     * <p>This can be used when you need to load the value from Spring properties for example
+     * <pre>batchSizeString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #batchSize()}.
+     *
+     * @return the total number of threads requesting messages for trigger a batch of messages to be retrieved
+     * @see BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger() for more details about this parameter
+     */
+    String batchSizeString() default "";
 
     /**
      * The maximum period of time that the {@link BatchingMessageRetriever} will wait for all threads to be ready before retrieving messages.

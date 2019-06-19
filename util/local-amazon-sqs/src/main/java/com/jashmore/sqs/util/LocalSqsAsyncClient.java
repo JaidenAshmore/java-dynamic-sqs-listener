@@ -1,6 +1,7 @@
 package com.jashmore.sqs.util;
 
 import static com.jashmore.sqs.util.SqsQueuesConfig.DEFAULT_SQS_SERVER_URL;
+import static com.jashmore.sqs.util.SqsQueuesConfig.QueueConfig.DEFAULT_MAX_RECEIVE_COUNT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -126,11 +127,14 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
                 attributesBuilder.put(QueueAttributeName.VISIBILITY_TIMEOUT, String.valueOf(queueConfig.getVisibilityTimeout()));
             }
 
-            if (queueConfig.getMaxReceiveCount() != null) {
-                final String deadLetterQueueArn = createDeadLetterQueue(queueConfig.getQueueName());
+            if (queueConfig.getMaxReceiveCount() != null || queueConfig.getDeadLetterQueueName() != null) {
+                final String deadLetterQueueName = Optional.ofNullable(queueConfig.getDeadLetterQueueName()).orElse(queueConfig.getQueueName() + "-dlq");
+                final int maxReceiveCount = Optional.ofNullable(queueConfig.getMaxReceiveCount())
+                        .orElse(DEFAULT_MAX_RECEIVE_COUNT);
+                final String deadLetterQueueArn = createDeadLetterQueue(deadLetterQueueName);
                 attributesBuilder.put(
                         QueueAttributeName.REDRIVE_POLICY,
-                        String.format("{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}", deadLetterQueueArn, queueConfig.getMaxReceiveCount())
+                        String.format("{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}", deadLetterQueueArn, maxReceiveCount)
                 );
             }
 
@@ -148,15 +152,13 @@ public class LocalSqsAsyncClient implements SqsAsyncClient {
     /**
      * Create a Dead Letter Queue that should be used for the queue with the provided name.
      *
-     * <p>This will create a queue with "-dlq" appended to the original queue's name.
-     *
      * @param queueName the name of the queue that this dead letter queue is for
      * @return the queue ARN of the dead letter queue created
      */
     private String createDeadLetterQueue(final String queueName) {
         try {
-            log.debug("Creating local queue: {}-dlq", queueName);
-            return delegate.createQueue((builder -> builder.queueName(queueName + "-dlq")))
+            log.debug("Creating dead letter queue: {}", queueName);
+            return delegate.createQueue((builder -> builder.queueName(queueName)))
                     .thenCompose(createQueueResponse -> delegate.getQueueAttributes(builder -> builder
                             .queueUrl(createQueueResponse.queueUrl())
                             .attributeNames(QueueAttributeName.QUEUE_ARN))

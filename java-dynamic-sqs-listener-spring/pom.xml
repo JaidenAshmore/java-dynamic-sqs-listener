@@ -12,10 +12,11 @@
     <packaging>pom</packaging>
 
     <name>Java Dynamic SQS Listener - Spring</name>
-    <description>Spring Starter for easily setting up queue listeners in a Spring Boot application.</description>
+    <description>Modules for setting up queue listeners in a Spring Boot application.</description>
 
     <modules>
         <module>java-dynamic-sqs-listener-spring-api</module>
+        <module>java-dynamic-sqs-listener-spring-core</module>
         <module>java-dynamic-sqs-listener-spring-starter</module>
     </modules>
 </project>

@@ -1,6 +1,7 @@
 package com.jashmore.sqs.resolver.batching;
 
 import lombok.Builder;
+import lombok.Value;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Positive;
@@ -8,6 +9,7 @@ import javax.validation.constraints.Positive;
 /**
  * Static implementation that will contain constant size and time limit for the buffer.
  */
+@Value
 @Builder(toBuilder = true)
 public class StaticBatchingMessageResolverProperties implements BatchingMessageResolverProperties {
     private final long bufferingTimeInMs;

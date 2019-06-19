@@ -29,9 +29,13 @@ public interface BatchingMessageRetrieverProperties {
      * <p>Note that this trigger size may not be reached due to the the waiting time going higher than {@link #getMessageRetrievalPollingPeriodInMs()}, in
      * this case it will just request as many messages as threads requesting messages.
      *
+     * <p>This number should be smaller than the maximum number of messages that can be downloaded from AWS as it doesn't make much sense to have a batch size
+     * greater than this value.
+     *
      * @return the number of threads to be requesting messages for the retrieval of messages background thread to be triggered
      */
     @Positive
+    @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS)
     int getNumberOfThreadsWaitingTrigger();
 
     /**

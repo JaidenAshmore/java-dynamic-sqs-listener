@@ -1,4 +1,4 @@
-package it.com.jashmore.example;
+package it.com.jashmore.sqs;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
