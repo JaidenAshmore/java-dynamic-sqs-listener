@@ -54,7 +54,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
 
         final int concurrencyLevel = getConcurrencyLevel(annotation);
 
-        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, concurrencyLevel);
+        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties);
 
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
 
@@ -71,8 +71,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                StaticConcurrentMessageBrokerProperties
-                        .builder()
+                StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .threadNameFormat(identifier + "-%d")
                         .build()
@@ -84,17 +83,17 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                 .build();
     }
 
-    private MessageRetriever buildMessageRetriever(final QueueListener annotation, final QueueProperties queueProperties, final int concurrencyLevel) {
+    private MessageRetriever buildMessageRetriever(final QueueListener annotation, final QueueProperties queueProperties) {
         return new BatchingMessageRetriever(
-                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation, concurrencyLevel));
+                queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation));
     }
 
     @VisibleForTesting
-    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation, final int concurrencyLevel) {
+    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation) {
         return StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
-                .numberOfThreadsWaitingTrigger(concurrencyLevel)
+                .numberOfThreadsWaitingTrigger(getBatchSize(annotation))
                 .build();
     }
 
@@ -105,6 +104,15 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
 
         return Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
     }
+
+    private int getBatchSize(final QueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.batchSizeString())) {
+            return annotation.batchSize();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.batchSizeString()));
+    }
+
 
     private long getMaxPeriodBetweenBatchesInMs(final QueueListener annotation) {
         if (StringUtils.isEmpty(annotation.maxPeriodBetweenBatchesInMsString())) {

@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolverProperties;
+import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverProperties;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
@@ -145,6 +147,19 @@ public class BatchingQueueListenerWrapperTest {
     }
 
     @Test
+    public void invalidBatchSizeStringFailsToWrapMessageListener() throws Exception {
+        // arrange
+        when(environment.resolvePlaceholders(anyString())).thenReturn("1");
+        when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("Test Invalid");
+        final Object bean = new BatchingQueueListenerWrapperTest();
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        expectedException.expect(NumberFormatException.class);
+
+        // act
+        batchingQueueListenerWrapper.wrapMethod(bean, method);
+    }
+
+    @Test
     public void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
@@ -165,13 +180,13 @@ public class BatchingQueueListenerWrapperTest {
         final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
 
         // act
-        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(300)
                 .messageRetrievalPollingPeriodInMs(40L)
-                .numberOfThreadsWaitingTrigger(2)
+                .numberOfThreadsWaitingTrigger(10)
                 .build()
         );
     }
@@ -181,17 +196,55 @@ public class BatchingQueueListenerWrapperTest {
         // arrange
         final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
+        when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("8");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
 
         // act
-        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+        final BatchingMessageRetrieverProperties properties = batchingQueueListenerWrapper.batchingMessageRetrieverProperties(annotation);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
+                .numberOfThreadsWaitingTrigger(8)
                 .visibilityTimeoutInSeconds(40)
                 .messageRetrievalPollingPeriodInMs(30L)
-                .numberOfThreadsWaitingTrigger(2)
+                .build()
+        );
+    }
+
+    @Test
+    public void batchingMessageResolverBuiltFromAnnotationProperties() throws Exception {
+        // arrange
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFields");
+        final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
+
+        // act
+        final BatchingMessageResolverProperties properties = batchingQueueListenerWrapper.batchingMessageResolverProperties(annotation);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticBatchingMessageResolverProperties.builder()
+                .bufferingSizeLimit(10)
+                .bufferingTimeInMs(40L)
+                .build()
+        );
+    }
+
+    @Test
+    public void batchingMessageResolverBuiltFromAnnotationStringProperties() throws Exception {
+        // arrange
+        final Method method = BatchingQueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final BatchingQueueListener annotation = method.getAnnotation(BatchingQueueListener.class);
+        when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("8");
+        when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
+        when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
+
+        // act
+        final BatchingMessageResolverProperties properties = batchingQueueListenerWrapper.batchingMessageResolverProperties(annotation);
+
+        // assert
+        assertThat(properties).isEqualTo(StaticBatchingMessageResolverProperties.builder()
+                .bufferingSizeLimit(8)
+                .bufferingTimeInMs(30L)
                 .build()
         );
     }
@@ -206,13 +259,13 @@ public class BatchingQueueListenerWrapperTest {
 
     }
 
-    @BatchingQueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
+    @BatchingQueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}", batchSizeString = "${prop.batchSize}",
             messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPeriodBetweenBatchesInMsString = "${prop.period}")
     public void methodWithFieldsUsingEnvironmentProperties() {
 
     }
 
-    @BatchingQueueListener(value = "test2", messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
+    @BatchingQueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
     public void methodWithFields() {
 
     }

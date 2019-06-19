@@ -165,18 +165,18 @@ public class QueueListenerWrapperTest {
     @Test
     public void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
         // arrange
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethodWithParameters");
+        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFields");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
 
         // act
         final BatchingMessageRetrieverProperties properties
-                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(300)
-                .messageRetrievalPollingPeriodInMs(60L)
-                .numberOfThreadsWaitingTrigger(2)
+                .messageRetrievalPollingPeriodInMs(40L)
+                .numberOfThreadsWaitingTrigger(10)
                 .build()
         );
     }
@@ -186,18 +186,19 @@ public class QueueListenerWrapperTest {
         // arrange
         final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
+        when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("8");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
 
         // act
         final BatchingMessageRetrieverProperties properties
-                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation, 2);
+                = queueListenerWrapper.batchingMessageRetrieverProperties(annotation);
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(40)
                 .messageRetrievalPollingPeriodInMs(30L)
-                .numberOfThreadsWaitingTrigger(2)
+                .numberOfThreadsWaitingTrigger(8)
                 .build()
         );
     }
@@ -212,14 +213,14 @@ public class QueueListenerWrapperTest {
 
     }
 
-    @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
+    @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}", batchSizeString = "${prop.batchSize}",
             messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPeriodBetweenBatchesInMsString = "${prop.period}")
     public void methodWithFieldsUsingEnvironmentProperties() {
 
     }
 
-    @QueueListener(value = "test", concurrencyLevel = 6, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 60)
-    public void myMethodWithParameters() {
+    @QueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
+    public void methodWithFields() {
 
     }
 }

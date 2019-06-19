@@ -52,17 +52,13 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
     @Override
     protected IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
                                                                                   final BatchingQueueListener annotation) {
-        final QueueProperties queueProperties = QueueProperties
-                .builder()
+        final QueueProperties queueProperties = QueueProperties.builder()
                 .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
                 .build();
 
-        final int concurrencyLevel = getConcurrencyLevel(annotation);
-        final long maxPeriodBetweenBatchesInMs = getMaxPeriodBetweenBatchesInMs(annotation);
+        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties);
 
-        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, concurrencyLevel);
-
-        final MessageResolver messageResolver = buildMessageResolver(queueProperties, concurrencyLevel, maxPeriodBetweenBatchesInMs);
+        final MessageResolver messageResolver = buildMessageResolver(annotation, queueProperties);
 
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);
 
@@ -76,9 +72,8 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
                 messageRetriever,
                 messageProcessor,
-                StaticConcurrentMessageBrokerProperties
-                        .builder()
-                        .concurrencyLevel(concurrencyLevel)
+                StaticConcurrentMessageBrokerProperties.builder()
+                        .concurrencyLevel(getConcurrencyLevel(annotation))
                         .threadNameFormat(identifier + "-%d")
                         .build()
         );
@@ -89,29 +84,33 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
                 .build();
     }
 
-    private MessageRetriever buildMessageRetriever(final BatchingQueueListener annotation, final QueueProperties queueProperties, final int concurrencyLevel) {
-        return new BatchingMessageRetriever(queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation, concurrencyLevel));
+    private MessageRetriever buildMessageRetriever(final BatchingQueueListener annotation,
+                                                   final QueueProperties queueProperties) {
+        return new BatchingMessageRetriever(queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation));
     }
 
     @VisibleForTesting
-    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final BatchingQueueListener annotation, final int concurrencyLevel) {
-        return StaticBatchingMessageRetrieverProperties
-                .builder()
+    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final BatchingQueueListener annotation) {
+        return StaticBatchingMessageRetrieverProperties.builder()
                 .visibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
-                .numberOfThreadsWaitingTrigger(concurrencyLevel)
+                .numberOfThreadsWaitingTrigger(getBatchSize(annotation))
                 .build();
     }
 
-    private MessageResolver buildMessageResolver(final QueueProperties queueProperties,
-                                                 final int concurrencyLevel,
-                                                 final long maxPeriodBetweenBatchesInMs) {
-        final BatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
-                .bufferingSizeLimit(concurrencyLevel)
-                .bufferingTimeInMs(maxPeriodBetweenBatchesInMs)
-                .build();
+    private MessageResolver buildMessageResolver(final BatchingQueueListener annotation,
+                                                 final QueueProperties queueProperties) {
+        final BatchingMessageResolverProperties batchingMessageResolverProperties = batchingMessageResolverProperties(annotation);
 
         return new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
+    }
+
+    @VisibleForTesting
+    BatchingMessageResolverProperties batchingMessageResolverProperties(final BatchingQueueListener annotation) {
+        return StaticBatchingMessageResolverProperties.builder()
+                .bufferingSizeLimit(getBatchSize(annotation))
+                .bufferingTimeInMs(getMaxPeriodBetweenBatchesInMs(annotation))
+                .build();
     }
 
     private int getConcurrencyLevel(final BatchingQueueListener annotation) {
@@ -120,6 +119,14 @@ public class BatchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper
         }
 
         return Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
+    }
+
+    private int getBatchSize(final BatchingQueueListener annotation) {
+        if (StringUtils.isEmpty(annotation.batchSizeString())) {
+            return annotation.batchSize();
+        }
+
+        return Integer.parseInt(environment.resolvePlaceholders(annotation.batchSizeString()));
     }
 
     private long getMaxPeriodBetweenBatchesInMs(final BatchingQueueListener annotation) {
