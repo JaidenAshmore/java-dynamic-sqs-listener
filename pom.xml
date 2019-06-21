@@ -236,6 +236,8 @@
                     </excludes>
                     <!-- https://issues.apache.org/jira/browse/SUREFIRE-1588#comment-16670105 -->
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <!-- https://stackoverflow.com/a/33757854 -->
+                    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
                 </configuration>
             </plugin>
             <plugin>
