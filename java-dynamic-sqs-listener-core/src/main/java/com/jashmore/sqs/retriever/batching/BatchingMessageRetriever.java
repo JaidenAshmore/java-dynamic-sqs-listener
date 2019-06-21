@@ -14,6 +14,8 @@ import com.jashmore.sqs.util.properties.PropertyUtils;
 import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -139,11 +141,25 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     for (final Message message : response.messages()) {
                         messagesDownloaded.put(message);
                     }
-                } catch (InterruptedException interruptedException) {
+                } catch (final InterruptedException interruptedException) {
                     log.debug("Thread interrupted while placing messages on internal queue");
                     break;
                 }
             } catch (final ExecutionException | RuntimeException exception) {
+                // Supposedly the SqsAsyncClient can get interrupted and this will remove the interrupted status from the thread and then wrap it
+                // in it's own version of the interrupted exception...If this happens when the retriever is being shut down it will keep on processing
+                // because it does not realise it is being shut down, therefore we have to check for this and quit if necessary
+                if (exception instanceof ExecutionException) {
+                    final Throwable executionExceptionCause = exception.getCause();
+                    if (executionExceptionCause instanceof SdkClientException) {
+                        if (executionExceptionCause.getCause() instanceof SdkInterruptedException) {
+                            log.debug("Thread interrupted while receiving messages");
+                            break;
+                        }
+                    }
+                }
+
+                log.error("Exception thrown when retrieving messages", exception);
                 try {
                     final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
                     log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, exception);

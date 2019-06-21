@@ -11,6 +11,8 @@ import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.util.properties.PropertyUtils;
 import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -134,6 +136,19 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     break;
                 }
             } catch (final ExecutionException | RuntimeException exception) {
+                // Supposedly the SqsAsyncClient can get interrupted and this will remove the interrupted status from the thread and then wrap it
+                // in it's own version of the interrupted exception...If this happens when the retriever is being shut down it will keep on processing
+                // because it does not realise it is being shut down, therefore we have to check for this and quit if necessary
+                if (exception instanceof ExecutionException) {
+                    final Throwable executionExceptionCause = exception.getCause();
+                    if (executionExceptionCause instanceof SdkClientException) {
+                        if (executionExceptionCause.getCause() instanceof SdkInterruptedException) {
+                            log.debug("Thread interrupted receiving messages");
+                            break;
+                        }
+                    }
+                }
+
                 log.error("Exception thrown when retrieving messages", exception);
 
                 try {
