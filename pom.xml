@@ -76,7 +76,7 @@
         <lombok.version>1.16.18</lombok.version>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
         <maven.failsafe.version>2.22.1</maven.failsafe.version>
-        <maven.surefire.version>2.22.1</maven.surefire.version>
+        <maven.surefire.version>3.0.0-M1</maven.surefire.version>
         <mockito.version>2.13.0</mockito.version>
         <pitest.version>1.4.5</pitest.version>
         <slf4j.version>1.7.25</slf4j.version>
