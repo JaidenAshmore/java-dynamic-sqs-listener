@@ -20,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -629,6 +631,26 @@ public class PrefetchingMessageRetrieverTest {
         // assert
         completableFuture.get();
         verify(sqsAsyncClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
+    }
+
+    @Test
+    public void whenSqsAsyncClientThrowsSdkInterruptedExceptionTheBackgroundThreadShouldStop() throws Exception {
+        // arrange
+        final LinkedBlockingQueue<Message> internalMessageQueue = new LinkedBlockingQueue<>();
+        internalMessageQueue.add(Message.builder().build());
+        doThrow(new ExecutionException(SdkClientException.builder().cause(new SdkInterruptedException()).build())).when(responseThrowingException).get();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(responseThrowingException);
+        final PrefetchingMessageRetriever backgroundMessagePrefetcher
+                = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES,
+                internalMessageQueue, 5);
+
+        // act
+        backgroundMessagePrefetcher.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
     }
 
     private void responseThrowingException(final CompletableFuture<ReceiveMessageResponse> mockResponse,

@@ -2,6 +2,7 @@ package com.jashmore.sqs.retriever.batching;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -557,6 +560,25 @@ public class BatchingMessageRetrieverTest {
 
         // assert
         assertThat(actualMessage).isEqualTo(message);
+    }
+
+    @Test
+    public void whenSqsAsyncClientThrowsSdkInterruptedExceptionTheBackgroundThreadShouldStop() throws Exception {
+        // arrange
+        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
+        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
+                DEFAULT_PROPERTIES, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object());
+
+        doThrow(new ExecutionException(SdkClientException.builder().cause(new SdkInterruptedException()).build())).when(responseThrowingException).get();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(responseThrowingException);
+
+        // act
+        backgroundThread.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
     }
 
     private void responseThrowingException(final CompletableFuture<ReceiveMessageResponse> mockResponse,
