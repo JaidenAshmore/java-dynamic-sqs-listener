@@ -22,7 +22,7 @@ import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
 import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.AllArgsConstructor;
@@ -68,7 +68,7 @@ public class VisibilityExtenderIntegrationTest {
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                IndividualMessageRetrieverProperties.builder()
+                StaticIndividualMessageRetrieverProperties.builder()
                         .visibilityTimeoutForMessagesInSeconds(ORIGINAL_MESSAGE_VISIBILITY)
                         .build()
         );

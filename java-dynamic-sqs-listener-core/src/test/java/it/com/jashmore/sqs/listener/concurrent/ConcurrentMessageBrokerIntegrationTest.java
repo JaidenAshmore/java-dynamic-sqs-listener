@@ -23,7 +23,7 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
@@ -64,7 +64,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                IndividualMessageRetrieverProperties.builder()
+                StaticIndividualMessageRetrieverProperties.builder()
                         .visibilityTimeoutForMessagesInSeconds(30)
                         .build()
         );
@@ -168,7 +168,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
                         .numberOfThreadsWaitingTrigger(10)
                         .messageRetrievalPollingPeriodInMs(3000L)
                         .visibilityTimeoutInSeconds(60)
-                .build()
+                        .build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
