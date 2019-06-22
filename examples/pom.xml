@@ -19,10 +19,10 @@
     </properties>
 
     <modules>
-        <module>java-dynamic-sqs-listener-core-examples</module>
-        <module>java-dynamic-sqs-listener-spring-starter-examples</module>
-        <module>java-dynamic-sqs-listener-spring-aws-example</module>
-        <module>java-dynamic-sqs-listener-spring-integration-test-example</module>
+        <module>core-examples</module>
+        <module>spring-aws-example</module>
+        <module>spring-integration-test-example</module>
+        <module>spring-starter-examples</module>
         <module>sqs-listener-library-comparison</module>
         <module>multiple-aws-account-example</module>
     </modules>
