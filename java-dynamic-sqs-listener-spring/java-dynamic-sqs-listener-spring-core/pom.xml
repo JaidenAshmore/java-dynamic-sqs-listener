@@ -13,7 +13,7 @@
     <description>Core Spring implementation for the Java Dynamic SQS Listener library.</description>
 
     <properties>
-        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <dependencies>
@@ -25,6 +25,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

@@ -58,34 +58,50 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <checkstyle.config.location>configuration/checkstyle/google_6_18_checkstyle.xml</checkstyle.config.location>
-        <findbugs.config.location>configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
 
-        <assertj.version>3.8.0</assertj.version>
-        <aws.sdk.version>2.2.0</aws.sdk.version>
-        <guava.version>21.0</guava.version>
-        <google.findbugs.version>3.0.1</google.findbugs.version>
-        <hamcrest.core.version>1.3</hamcrest.core.version>
+        <assertj.version>3.12.2</assertj.version>
+        <aws.sdk.version>2.5.69</aws.sdk.version>
+        <elasticmq.version>0.14.7</elasticmq.version>
+        <guava.version>28.0-jre</guava.version>
+        <hamcrest.verion>2.1</hamcrest.verion>
+        <spotbugs.version>3.1.11</spotbugs.version>
         <jackson.version>2.9.9</jackson.version>
+        <jacoco.version>0.8.4</jacoco.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <junit.version>4.12</junit.version>
+        <junit5.version>5.3.2</junit5.version>
         <logback.version>1.2.3</logback.version>
-        <lombok.version>1.16.18</lombok.version>
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
-        <maven.failsafe.version>2.22.1</maven.failsafe.version>
+        <lombok.version>1.18.8</lombok.version>
+        <maven.failsafe.version>3.0.0-M1</maven.failsafe.version>
         <maven.surefire.version>3.0.0-M1</maven.surefire.version>
-        <mockito.version>2.13.0</mockito.version>
-        <pitest.version>1.4.5</pitest.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <slf4j.test.version>1.2.0</slf4j.test.version>
-        <spring.version>5.0.8.RELEASE</spring.version>
-        <spring.boot.version>2.0.2.RELEASE</spring.boot.version>
+        <mockito.version>2.28.2</mockito.version>
+        <pitest.version>1.4.8</pitest.version>
+        <slf4j.version>1.7.26</slf4j.version>
+        <spring.version>5.1.8.RELEASE</spring.version>
+        <spring.boot.version>2.1.6.RELEASE</spring.boot.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Set up the default testing dependencies here so it does need to be done for each child module -->
         <dependency>
             <groupId>junit</groupId>
@@ -101,7 +117,7 @@
 
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -121,6 +137,16 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+        For some reason Spring Boot 2.1.x contains JUnit Jupiter as a dependency....
+        See https://stackoverflow.com/questions/53319852/spring-boot-2-1-0-has-junit5-dependencies-but-how-to-get-rid-of-it
+        -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -154,9 +180,22 @@
             </dependency>
 
             <dependency>
+                <groupId>org.elasticmq</groupId>
+                <artifactId>elasticmq-rest-sqs_2.11</artifactId>
+                <version>${elasticmq.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit5.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -167,8 +206,8 @@
 
             <dependency>
                 <groupId>org.hamcrest</groupId>
-                <artifactId>hamcrest-core</artifactId>
-                <version>${hamcrest.core.version}</version>
+                <artifactId>hamcrest</artifactId>
+                <version>${hamcrest.verion}</version>
             </dependency>
 
             <dependency>
@@ -194,12 +233,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>annotations</artifactId>
-                <version>${google.findbugs.version}</version>
             </dependency>
 
             <dependency>
@@ -291,7 +324,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>3.1.7</version>
+                <version>${spotbugs.version}</version>
                 <executions>
                     <execution>
                         <id>analyze-compile</id>
@@ -305,7 +338,7 @@
                     <failOnError>true</failOnError>
                     <threshold>Low</threshold>
                     <effort>Max</effort>
-                    <excludeFilterFile>${findbugs.config.location}</excludeFilterFile>
+                    <excludeFilterFile>${spotbugs.config.location}</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
@@ -319,7 +352,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.9</version>
+                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
