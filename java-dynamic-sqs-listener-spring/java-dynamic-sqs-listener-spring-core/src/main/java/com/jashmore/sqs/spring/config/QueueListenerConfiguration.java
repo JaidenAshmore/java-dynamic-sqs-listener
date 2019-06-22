@@ -1,5 +1,7 @@
 package com.jashmore.sqs.spring.config;
 
+import com.google.common.collect.ImmutableMap;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -10,13 +12,13 @@ import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
-import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.spring.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.QueueContainerService;
 import com.jashmore.sqs.spring.QueueWrapper;
+import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
-import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolverService;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
@@ -50,9 +52,28 @@ public class QueueListenerConfiguration {
      * @see SqsAsyncClient#create() for more details about how to use this default client
      */
     @Bean(destroyMethod = "close")
-    @ConditionalOnMissingBean(SqsAsyncClient.class)
+    @ConditionalOnMissingBean({SqsAsyncClient.class, SqsAsyncClientProvider.class})
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.create();
+    }
+
+    /**
+     * Provides the {@link SqsAsyncClientProvider} which is used to provide the relevant {@link SqsAsyncClient} as there could be multiple AWS
+     * Accounts/Credentials being used.
+     *
+     * <p>When a user provides their own bean of this class they provide all of the {@link SqsAsyncClient}s that will be used, such as defining their
+     * own default {@link SqsAsyncClient} and all other identifier clients, see {@link SqsAsyncClientProvider#getClient(String)}.
+     *
+     * <p>The user may define their own {@link SqsAsyncClient} which will be used instead of the one provided by {@link #sqsAsyncClient()} if they only
+     * want to use the default client and don't want to be able to pick one of multiple clients.
+     *
+     * @param defaultClient the default client
+     * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
+     */
+    @Bean
+    @ConditionalOnMissingBean({SqsAsyncClientProvider.class})
+    public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
+        return new DefaultSqsAsyncClientProvider(defaultClient, ImmutableMap.of());
     }
 
     /**
@@ -114,11 +135,6 @@ public class QueueListenerConfiguration {
             }
 
             @Bean
-            public VisibilityExtenderArgumentResolver visibilityExtenderArgumentResolver(final SqsAsyncClient sqsAsyncClient) {
-                return new VisibilityExtenderArgumentResolver(sqsAsyncClient);
-            }
-
-            @Bean
             public MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver() {
                 return new MessageSystemAttributeArgumentResolver();
             }
@@ -137,16 +153,15 @@ public class QueueListenerConfiguration {
     }
 
     /**
-     * The default provided {@link QueueResolverService} that can be used if it not overriden by a user defined bean.
+     * The default provided {@link QueueResolverService} that can be used if it not overridden by a user defined bean.
      *
-     * @param sqsAsyncClient client to communicate with the SQS queues
      * @param environment    the environment for this spring application
      * @return the default service used for queue resolution
      */
     @Bean
     @ConditionalOnMissingBean(QueueResolverService.class)
-    public QueueResolverService queueResolverService(final SqsAsyncClient sqsAsyncClient, final Environment environment) {
-        return new DefaultQueueResolverService(sqsAsyncClient, environment);
+    public QueueResolverService queueResolverService(final Environment environment) {
+        return new DefaultQueueResolverService(environment);
     }
 
     /**
@@ -183,26 +198,18 @@ public class QueueListenerConfiguration {
         public static class QueueWrapperConfiguration {
             @Bean
             public QueueWrapper coreProvidedQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                 final SqsAsyncClient sqsAsyncClient,
+                                                                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                  final QueueResolverService queueResolverService,
                                                                  final Environment environment) {
-                return new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
+                return new QueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolverService, environment);
             }
 
             @Bean
             public QueueWrapper coreProvidedPrefetchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                            final SqsAsyncClient sqsAsyncClient,
+                                                                            final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                             final QueueResolverService queueResolverService,
                                                                             final Environment environment) {
-                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
-            }
-
-            @Bean
-            public QueueWrapper coreProvidedBatchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                         final SqsAsyncClient sqsAsyncClient,
-                                                                         final QueueResolverService queueResolverService,
-                                                                         final Environment environment) {
-                return new BatchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolverService, environment);
+                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolverService, environment);
             }
         }
     }

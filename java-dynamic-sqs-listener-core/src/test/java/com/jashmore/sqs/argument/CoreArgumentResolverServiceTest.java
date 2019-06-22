@@ -17,10 +17,8 @@ import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
@@ -35,14 +33,11 @@ public class CoreArgumentResolverServiceTest {
 
     private PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);
 
-    @Mock
-    private SqsAsyncClient sqsAsyncClient;
-
     private CoreArgumentResolverService service;
 
     @Before
     public void setUp() {
-        service = new CoreArgumentResolverService(payloadMapper, sqsAsyncClient, objectMapper);
+        service = new CoreArgumentResolverService(payloadMapper, objectMapper);
     }
 
     @Test

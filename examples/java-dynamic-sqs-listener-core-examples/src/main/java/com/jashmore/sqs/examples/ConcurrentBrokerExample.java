@@ -110,8 +110,9 @@ public class ConcurrentBrokerExample {
                         .bufferingTimeInMs(5000)
                         .build());
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
-                argumentResolverService(sqsAsyncClient),
+                argumentResolverService(),
                 queueProperties,
+                sqsAsyncClient,
                 messageResolver,
                 messageReceivedMethod,
                 messageConsumer
@@ -184,12 +185,11 @@ public class ConcurrentBrokerExample {
     /**
      * Builds the {@link ArgumentResolverService} that will be used to parse the messages into arguments for the {@link MessageConsumer}.
      *
-     * @param sqsAsyncClient the client to communicate with the SQS queue
      * @return the service to resolve arguments for the message consumer
      */
-    private static ArgumentResolverService argumentResolverService(final SqsAsyncClient sqsAsyncClient) {
+    private static ArgumentResolverService argumentResolverService() {
         final PayloadMapper payloadMapper = new JacksonPayloadMapper(OBJECT_MAPPER);
-        return new CoreArgumentResolverService(payloadMapper, sqsAsyncClient, OBJECT_MAPPER);
+        return new CoreArgumentResolverService(payloadMapper, OBJECT_MAPPER);
     }
 
     /**

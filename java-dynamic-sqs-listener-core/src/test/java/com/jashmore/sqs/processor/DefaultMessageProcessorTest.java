@@ -27,6 +27,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
@@ -55,6 +56,9 @@ public class DefaultMessageProcessorTest {
     private MessageResolver messageResolver;
 
     @Mock
+    private SqsAsyncClient sqsAsyncClient;
+
+    @Mock
     private ArgumentResolver<String> mockArgumentResolver;
 
     @Mock
@@ -66,7 +70,8 @@ public class DefaultMessageProcessorTest {
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         processor.processMessage(message);
@@ -84,7 +89,7 @@ public class DefaultMessageProcessorTest {
         expectedException.expect(UnsupportedArgumentResolutionException.class);
 
         // act
-        new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, messageResolver, method, BEAN);
     }
 
     @Test
@@ -97,7 +102,8 @@ public class DefaultMessageProcessorTest {
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload")
                 .thenReturn("payload2");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, mockProcessor);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, mockProcessor);
 
         // act
         processor.processMessage(message);
@@ -114,7 +120,8 @@ public class DefaultMessageProcessorTest {
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         processor.processMessage(message);
@@ -131,7 +138,8 @@ public class DefaultMessageProcessorTest {
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         processor.processMessage(message);
@@ -149,7 +157,8 @@ public class DefaultMessageProcessorTest {
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         try {
@@ -170,7 +179,8 @@ public class DefaultMessageProcessorTest {
         final CompletableFuture<Object> future = new CompletableFuture<>();
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         CompletableFuture.runAsync(() -> processor.processMessage(message));
@@ -190,7 +200,8 @@ public class DefaultMessageProcessorTest {
         final CompletableFuture<Object> future = new CompletableFuture<>();
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         CompletableFuture.runAsync(() -> processor.processMessage(message));
@@ -209,7 +220,8 @@ public class DefaultMessageProcessorTest {
         doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(null);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
         expectedException.expect(MessageProcessingException.class);
 
         // act
@@ -225,7 +237,8 @@ public class DefaultMessageProcessorTest {
         final CompletableFuture<Object> future = new CompletableFuture<>();
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, messageResolver, method, BEAN);
+        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, messageResolver, method, BEAN);
 
         // act
         final AtomicBoolean exceptionThrown = new AtomicBoolean(false);

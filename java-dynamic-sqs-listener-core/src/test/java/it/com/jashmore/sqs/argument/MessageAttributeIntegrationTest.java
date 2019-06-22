@@ -41,19 +41,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MessageAttributeIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
+    private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
 
     @Rule
     public LocalSqsRule localSqsRule = new LocalSqsRule();
 
     private String queueUrl;
     private QueueProperties queueProperties;
-    private ArgumentResolverService argumentResolverService;
 
     @Before
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
         queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, localSqsRule.getLocalAmazonSqsAsync(), OBJECT_MAPPER);
     }
 
     @Test
@@ -72,8 +71,9 @@ public class MessageAttributeIntegrationTest {
         final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, messageAttributeReference);
         final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
-                argumentResolverService,
+                ARGUMENT_RESOLVER_SERVICE,
                 queueProperties,
+                sqsAsyncClient,
                 messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer

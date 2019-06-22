@@ -7,9 +7,12 @@ import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
+import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
+import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.resolver.MessageResolver;
 import lombok.AllArgsConstructor;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.InvocationTargetException;
@@ -30,6 +33,7 @@ import javax.annotation.concurrent.ThreadSafe;
 @AllArgsConstructor
 public class DefaultMessageProcessor implements MessageProcessor {
     private final QueueProperties queueProperties;
+    private final SqsAsyncClient sqsAsyncClient;
     private final MessageResolver messageResolver;
     private final Method messageConsumerMethod;
     private final Object messageConsumerBean;
@@ -39,10 +43,12 @@ public class DefaultMessageProcessor implements MessageProcessor {
 
     public DefaultMessageProcessor(final ArgumentResolverService argumentResolverService,
                                    final QueueProperties queueProperties,
+                                   final SqsAsyncClient sqsAsyncClient,
                                    final MessageResolver messageResolver,
                                    final Method messageConsumerMethod,
                                    final Object messageConsumerBean) {
         this.queueProperties = queueProperties;
+        this.sqsAsyncClient = sqsAsyncClient;
         this.messageResolver = messageResolver;
         this.messageConsumerMethod = messageConsumerMethod;
         this.messageConsumerBean = messageConsumerBean;
@@ -117,6 +123,10 @@ public class DefaultMessageProcessor implements MessageProcessor {
                         return message -> (Acknowledge) () -> messageResolver.resolveMessage(message);
                     }
 
+                    if (isVisibilityExtenderParameter(parameter)) {
+                        return message -> new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
+                    }
+
                     final ArgumentResolver<?> argumentResolver = argumentResolverService.getArgumentResolver(methodParameter);
                     return message -> argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
                 })
@@ -130,6 +140,10 @@ public class DefaultMessageProcessor implements MessageProcessor {
 
     private static boolean isAcknowledgeParameter(final Parameter parameter) {
         return Acknowledge.class.isAssignableFrom(parameter.getType());
+    }
+
+    private static boolean isVisibilityExtenderParameter(final Parameter parameter) {
+        return VisibilityExtender.class.isAssignableFrom(parameter.getType());
     }
 
     /**

@@ -3,6 +3,7 @@ package com.jashmore.sqs.spring.container.prefetch;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,8 @@ import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
+import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,6 +26,7 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 /**
  * Class is hard to test as it is the one building all of the dependencies internally using new constructors. Don't really know a better way to do this
@@ -40,7 +44,10 @@ public class PrefetchingQueueListenerWrapperTest {
     private ArgumentResolverService argumentResolverService;
 
     @Mock
-    private SqsAsyncClient sqsAsyncClient;
+    private SqsAsyncClientProvider sqsAsyncClientProvider;
+
+    @Mock
+    private SqsAsyncClient defaultClient;
 
     @Mock
     private QueueResolverService queueResolver;
@@ -52,7 +59,9 @@ public class PrefetchingQueueListenerWrapperTest {
 
     @Before
     public void setUp() {
-        prefetchingQueueListenerWrapper = new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolver, environment);
+        prefetchingQueueListenerWrapper = new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
+
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
     }
 
     @Test
@@ -108,7 +117,7 @@ public class PrefetchingQueueListenerWrapperTest {
         prefetchingQueueListenerWrapper.wrapMethod(bean, method);
 
         // assert
-        verify(queueResolver).resolveQueueUrl("test");
+        verify(queueResolver).resolveQueueUrl(defaultClient, "test");
     }
 
     @Test
@@ -220,6 +229,46 @@ public class PrefetchingQueueListenerWrapperTest {
         );
     }
 
+    @Test
+    public void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
+        // arrange
+        final Object bean = new PrefetchingQueueListenerWrapperTest();
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("myMethod");
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
+        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expectMessage("Expected the default SQS Client but there is none");
+
+        // act
+        prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+    }
+
+    @Test
+    public void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
+        // arrange
+        final Object bean = new PrefetchingQueueListenerWrapperTest();
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
+        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expectMessage("Expected a client with id 'clientId' but none were found");
+
+        // act
+        prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+    }
+
+    @Test
+    public void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
+        // arrange
+        final Object bean = new PrefetchingQueueListenerWrapperTest();
+        final Method method = PrefetchingQueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.of(mock(SqsAsyncClient.class)));
+
+        // act
+        final IdentifiableMessageListenerContainer container = prefetchingQueueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(container).isNotNull();
+    }
+
     @PrefetchingQueueListener("test")
     public void myMethod() {
 
@@ -242,6 +291,11 @@ public class PrefetchingQueueListenerWrapperTest {
             maxPrefetchedMessages = 20, desiredMinPrefetchedMessages = 5
     )
     public void methodWithFieldsUsingProperties() {
+
+    }
+
+    @PrefetchingQueueListener(value = "test2", sqsClient = "clientId")
+    public void methodUsingSpecificSqsAsyncClient() {
 
     }
 }

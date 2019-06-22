@@ -1,5 +1,7 @@
 package com.jashmore.sqs.spring.queue;
 
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+
 /**
  * Service that is injected into the applications dependency injection framework that can be used to resolve parameterised strings to a queue url if there is
  * a queue that exists.
@@ -19,9 +21,10 @@ public interface QueueResolverService {
      *     <li><code>http://localhost:4576/q/myQueueName</code> passed in will be returned as is</li>
      * </ul>
      *
+     * @param client         the client that can be used to get information about the queue
      * @param queueNameOrUrl queueName or queueUrl that may have parameterised placeholders in it.
      * @return the resolved url of the queue if it exists
      * @throws QueueResolutionException if there was an error resolving the queue URL
      */
-    String resolveQueueUrl(String queueNameOrUrl) throws QueueResolutionException;
+    String resolveQueueUrl(SqsAsyncClient client, String queueNameOrUrl) throws QueueResolutionException;
 }

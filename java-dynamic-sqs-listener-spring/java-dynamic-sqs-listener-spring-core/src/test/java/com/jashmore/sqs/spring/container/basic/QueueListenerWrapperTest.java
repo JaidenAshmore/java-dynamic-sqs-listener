@@ -2,6 +2,7 @@ package com.jashmore.sqs.spring.container.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,8 @@ import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
+import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,6 +25,7 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 /**
  * Class is hard to test as it is the one building all of the dependencies internally using new constructors. Don't really know a better way to do this
@@ -39,7 +43,10 @@ public class QueueListenerWrapperTest {
     private ArgumentResolverService argumentResolverService;
 
     @Mock
-    private SqsAsyncClient sqsAsyncClient;
+    private SqsAsyncClientProvider sqsAsyncClientProvider;
+
+    @Mock
+    private SqsAsyncClient defaultSqsAsyncClient;
 
     @Mock
     private QueueResolverService queueResolver;
@@ -51,7 +58,9 @@ public class QueueListenerWrapperTest {
 
     @Before
     public void setUp() {
-        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, sqsAsyncClient, queueResolver, environment);
+        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
+
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
     }
 
     @Test
@@ -106,7 +115,7 @@ public class QueueListenerWrapperTest {
         queueListenerWrapper.wrapMethod(bean, method);
 
         // assert
-        verify(queueResolver).resolveQueueUrl("test");
+        verify(queueResolver).resolveQueueUrl(defaultSqsAsyncClient, "test");
     }
 
     @Test
@@ -203,6 +212,46 @@ public class QueueListenerWrapperTest {
         );
     }
 
+    @Test
+    public void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
+        // arrange
+        final Object bean = new QueueListenerWrapperTest();
+        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
+        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expectMessage("Expected the default SQS Client but there is none");
+
+        // act
+        queueListenerWrapper.wrapMethod(bean, method);
+    }
+
+    @Test
+    public void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
+        // arrange
+        final Object bean = new QueueListenerWrapperTest();
+        final Method method = QueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
+        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expectMessage("Expected a client with id 'clientId' but none were found");
+
+        // act
+        queueListenerWrapper.wrapMethod(bean, method);
+    }
+
+    @Test
+    public void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
+        // arrange
+        final Object bean = new QueueListenerWrapperTest();
+        final Method method = QueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.of(mock(SqsAsyncClient.class)));
+
+        // act
+        final IdentifiableMessageListenerContainer container = queueListenerWrapper.wrapMethod(bean, method);
+
+        // assert
+        assertThat(container).isNotNull();
+    }
+
     @QueueListener("test")
     public void myMethod() {
 
@@ -221,6 +270,11 @@ public class QueueListenerWrapperTest {
 
     @QueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
     public void methodWithFields() {
+
+    }
+
+    @QueueListener(value = "test2", sqsClient = "clientId")
+    public void methodUsingSpecificSqsAsyncClient() {
 
     }
 }

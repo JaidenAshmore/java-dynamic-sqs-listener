@@ -14,11 +14,10 @@ import java.util.concurrent.ExecutionException;
 @Service
 @AllArgsConstructor
 public class DefaultQueueResolverService implements QueueResolverService {
-    private final SqsAsyncClient sqsAsyncClient;
     private final Environment environment;
 
     @Override
-    public String resolveQueueUrl(final String queueNameOrUrl) {
+    public String resolveQueueUrl(final SqsAsyncClient sqsAsyncClient, final String queueNameOrUrl) {
         final String resolvedQueueNameOrUrl = environment.resolveRequiredPlaceholders(queueNameOrUrl);
 
         if (resolvedQueueNameOrUrl.startsWith("http")) {
