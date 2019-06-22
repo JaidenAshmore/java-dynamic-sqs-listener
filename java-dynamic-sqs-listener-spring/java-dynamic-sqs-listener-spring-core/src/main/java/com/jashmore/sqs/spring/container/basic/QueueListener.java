@@ -153,7 +153,7 @@ public @interface QueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 
@@ -164,7 +164,7 @@ public @interface QueueListener {
      * <pre>messageVisibilityTimeoutInSeconds = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #messageVisibilityTimeoutInSeconds()}.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingMessageRetrieverProperties#getVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
      */
     String messageVisibilityTimeoutInSecondsString() default "";
 }

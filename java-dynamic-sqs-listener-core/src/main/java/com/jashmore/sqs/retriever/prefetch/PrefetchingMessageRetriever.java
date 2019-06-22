@@ -1,5 +1,6 @@
 package com.jashmore.sqs.retriever.prefetch;
 
+import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -9,7 +10,6 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkInterruptedException;
@@ -115,6 +115,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
      */
     @Override
     public void run() {
+        log.debug("Started background thread");
         while (true) {
             try {
                 try {
@@ -149,9 +150,8 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                     }
                 }
 
-                log.error("Exception thrown when retrieving messages", exception);
-
                 try {
+                    log.error("Exception thrown when retrieving messages", exception);
                     Thread.sleep(getBackoffTimeInMs());
                 } catch (final InterruptedException interruptedException) {
                     log.debug("Thread interrupted during error backoff. Exiting...");
@@ -159,6 +159,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                 }
             }
         }
+        log.debug("Stopped background thread");
     }
 
     /**
@@ -175,11 +176,11 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                 .queueUrl(queueProperties.getQueueUrl())
                 .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
-                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds))
+                .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .maxNumberOfMessages(numberOfMessagesToObtain);
-        final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutForMessagesInSeconds();
+        final Integer visibilityTimeoutInSeconds = properties.getMessageVisibilityTimeoutInSeconds();
         if (visibilityTimeoutInSeconds != null) {
-            if (visibilityTimeoutInSeconds < 0) {
+            if (visibilityTimeoutInSeconds <= 0) {
                 log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
             } else {
                 requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);

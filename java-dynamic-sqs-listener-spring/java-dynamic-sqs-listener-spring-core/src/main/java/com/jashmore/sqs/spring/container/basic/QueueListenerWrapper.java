@@ -97,7 +97,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
     @VisibleForTesting
     BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation) {
         return StaticBatchingMessageRetrieverProperties.builder()
-                .visibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
+                .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
                 .numberOfThreadsWaitingTrigger(getBatchSize(annotation))
                 .build();

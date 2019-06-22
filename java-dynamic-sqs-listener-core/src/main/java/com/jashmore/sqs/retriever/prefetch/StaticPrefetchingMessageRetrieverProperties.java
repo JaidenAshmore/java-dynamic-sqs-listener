@@ -1,7 +1,5 @@
 package com.jashmore.sqs.retriever.prefetch;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -10,7 +8,6 @@ import lombok.ToString;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
 
 @Builder(toBuilder = true)
 @ToString
@@ -20,8 +17,7 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     private final Integer desiredMinPrefetchedMessages;
     @NonNull
     private final Integer maxPrefetchedMessages;
-    private final Integer maxWaitTimeInSecondsToObtainMessagesFromServer;
-    private final Integer visibilityTimeoutForMessagesInSeconds;
+    private final Integer messageVisibilityTimeoutInSeconds;
     private final Integer errorBackoffTimeInMilliseconds;
 
     @Override
@@ -35,13 +31,8 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     }
 
     @Override
-    public @Size(max = MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS) Integer getMessageWaitTimeInSeconds() {
-        return maxWaitTimeInSecondsToObtainMessagesFromServer;
-    }
-
-    @Override
-    public Integer getVisibilityTimeoutForMessagesInSeconds() {
-        return visibilityTimeoutForMessagesInSeconds;
+    public Integer getMessageVisibilityTimeoutInSeconds() {
+        return messageVisibilityTimeoutInSeconds;
     }
 
     @Override

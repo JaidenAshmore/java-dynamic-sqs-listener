@@ -1,12 +1,8 @@
 package com.jashmore.sqs.retriever.prefetch;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-
-import com.jashmore.sqs.aws.AwsConstants;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -51,31 +47,16 @@ public interface PrefetchingMessageRetrieverProperties {
     int getMaxPrefetchedMessages();
 
     /**
-     * The number of seconds that the request for messages will wait for a message to be available on the queue.
-     *
-     * <p>Note that this will only wait until at least one message is received and it will not wait until the total number of requested messages is available.
-     *
-     * <p>If this value is null, the {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} will be used when requesting messages from SQS.
-     *
-     * @return the wait time in seconds for obtaining messages
-     * @see ReceiveMessageRequest#waitTimeSeconds for the usage
-     */
-    @Nullable
-    @Positive
-    @Max(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-    Integer getMessageWaitTimeInSeconds();
-
-    /**
      * The visibility timeout for the message.
      *
      * <p>E.g. the number of seconds that a message can be kept before it is assumed that it wasn't completed and will be put back onto the queue
      *
-     * @see ReceiveMessageRequest#visibilityTimeout for where this is applied against
-     *
      * @return the visibility timeout for messages where null means to use the SQS default visibility timeout
+     * @see ReceiveMessageRequest#visibilityTimeout() for where this is applied against
      */
     @Nullable
-    Integer getVisibilityTimeoutForMessagesInSeconds();
+    @Positive
+    Integer getMessageVisibilityTimeoutInSeconds();
 
     /**
      * If there was an error retrieving a message from the remote server, the retriever will backoff and try again after this many milliseconds, which

@@ -93,11 +93,9 @@ public class ConcurrentBrokerExample {
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                StaticPrefetchingMessageRetrieverProperties
-                        .builder()
+                StaticPrefetchingMessageRetrieverProperties.builder()
                         .desiredMinPrefetchedMessages(10)
                         .maxPrefetchedMessages(20)
-                        .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
                         .build()
         );
 

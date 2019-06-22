@@ -113,8 +113,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
                 queueProperties,
                 StaticPrefetchingMessageRetrieverProperties
                         .builder()
-                        .visibilityTimeoutForMessagesInSeconds(60)
-                        .maxWaitTimeInSecondsToObtainMessagesFromServer(1)
+                        .messageVisibilityTimeoutInSeconds(60)
                         .desiredMinPrefetchedMessages(30)
                         .maxPrefetchedMessages(40)
                         .build()
@@ -167,7 +166,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
                 StaticBatchingMessageRetrieverProperties.builder()
                         .numberOfThreadsWaitingTrigger(10)
                         .messageRetrievalPollingPeriodInMs(3000L)
-                        .visibilityTimeoutInSeconds(60)
+                        .messageVisibilityTimeoutInSeconds(60)
                         .build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);

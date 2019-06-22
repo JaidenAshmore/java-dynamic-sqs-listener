@@ -1,7 +1,5 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import com.jashmore.sqs.QueueProperties;
@@ -124,8 +122,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
         return StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
                 .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
-                .visibilityTimeoutForMessagesInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
-                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .build();
     }
 

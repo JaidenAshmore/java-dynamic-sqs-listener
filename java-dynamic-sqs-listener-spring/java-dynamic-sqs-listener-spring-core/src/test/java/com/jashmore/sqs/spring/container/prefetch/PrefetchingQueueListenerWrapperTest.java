@@ -1,6 +1,5 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -203,8 +202,7 @@ public class PrefetchingQueueListenerWrapperTest {
         assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
                 .maxPrefetchedMessages(30)
                 .desiredMinPrefetchedMessages(40)
-                .visibilityTimeoutForMessagesInSeconds(40)
-                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .messageVisibilityTimeoutInSeconds(40)
                 .build()
         );
     }
@@ -223,8 +221,7 @@ public class PrefetchingQueueListenerWrapperTest {
         assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
                 .maxPrefetchedMessages(20)
                 .desiredMinPrefetchedMessages(5)
-                .visibilityTimeoutForMessagesInSeconds(300)
-                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .messageVisibilityTimeoutInSeconds(300)
                 .build()
         );
     }

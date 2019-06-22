@@ -183,7 +183,7 @@ public class QueueListenerWrapperTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .visibilityTimeoutInSeconds(300)
+                .messageVisibilityTimeoutInSeconds(300)
                 .messageRetrievalPollingPeriodInMs(40L)
                 .numberOfThreadsWaitingTrigger(10)
                 .build()
@@ -205,7 +205,7 @@ public class QueueListenerWrapperTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .visibilityTimeoutInSeconds(40)
+                .messageVisibilityTimeoutInSeconds(40)
                 .messageRetrievalPollingPeriodInMs(30L)
                 .numberOfThreadsWaitingTrigger(8)
                 .build()

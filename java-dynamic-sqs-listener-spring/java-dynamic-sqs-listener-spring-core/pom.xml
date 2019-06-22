@@ -9,7 +9,7 @@
 
     <artifactId>java-dynamic-sqs-listener-spring-core</artifactId>
 
-    <name>Java Dynamic SQS Listener - Spring Core</name>
+    <name>Java Dynamic SQS Listener - Spring - Core</name>
     <description>Core Spring implementation for the Java Dynamic SQS Listener library.</description>
 
     <properties>
