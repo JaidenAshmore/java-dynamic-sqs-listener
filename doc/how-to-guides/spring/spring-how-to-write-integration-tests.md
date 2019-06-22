@@ -2,7 +2,7 @@
 This guide provides details on how to write a simple integration test for a spring boot application. Note that writing integration tests through the SQS queue
 can be flaky and therefore you should prefer to call your message listener directly in your integration test when testing normal business logic.
 
-For this guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/java-dynamic-sqs-listener-spring-integration-test-example)
+For this guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/spring-integration-test-example)
 module will be used, which is a very simple application that has a single queue listener that calls out to a service when a message is retrieved. The
 tests written includes test on:
  - A message was received and able to be successfully processed
@@ -18,7 +18,7 @@ from all of the queues present in the SQS Server.
 
 ### Examples
 The main example that should be used as a reference is the
-[SqsListenerExampleIntegrationTest](../../../examples/java-dynamic-sqs-listener-spring-integration-test-example/src/test/java/it/com/jashmore/sqs/examples/integrationtests/SqsListenerExampleIntegrationTest.java)
+[SqsListenerExampleIntegrationTest](../../../examples/spring-integration-test-example/src/test/java/it/com/jashmore/sqs/examples/integrationtests/SqsListenerExampleIntegrationTest.java)
 which will test all of those scenarios described above using the methods described below. Otherwise any of the other integration tests in the spring starter
 module would be good examples.
 
