@@ -20,6 +20,8 @@ import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
 import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
+import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
@@ -50,7 +52,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
     public void setUp() {
         queueUrl = localSqsRule.createRandomQueue();
         queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
-        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, localSqsRule.getLocalAmazonSqsAsync(), OBJECT_MAPPER);
+        argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
     }
 
     @Test(timeout = 30_000)
@@ -72,6 +74,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
+                sqsAsyncClient,
                 messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
@@ -122,6 +125,58 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final MessageProcessor messageProcessor = new DefaultMessageProcessor(
                 argumentResolverService,
                 queueProperties,
+                sqsAsyncClient,
+                messageResolver,
+                MessageConsumer.class.getMethod("consume", String.class),
+                messageConsumer
+        );
+        final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
+                messageRetriever,
+                messageProcessor,
+                StaticConcurrentMessageBrokerProperties.builder()
+                        .concurrencyLevel(concurrencyLevel)
+                        .build()
+        );
+        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
+                messageRetriever, messageBroker, messageResolver
+        );
+
+        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
+
+        // act
+        simpleMessageListenerContainer.start();
+
+        // assert
+        messageReceivedLatch.await(1, MINUTES);
+
+        // cleanup
+        simpleMessageListenerContainer.stop();
+        SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
+    }
+
+
+    @Test(timeout = 30_000)
+    public void usingBatchingMessageRetrieverCanConsumeAllMessages() throws Exception {
+        // arrange
+        final int concurrencyLevel = 10;
+        final int numberOfMessages = 100;
+        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        final AsyncMessageRetriever messageRetriever = new BatchingMessageRetriever(
+                queueProperties,
+                sqsAsyncClient,
+                StaticBatchingMessageRetrieverProperties.builder()
+                        .numberOfThreadsWaitingTrigger(10)
+                        .messageRetrievalPollingPeriodInMs(3000L)
+                        .visibilityTimeoutInSeconds(60)
+                .build()
+        );
+        final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
+        final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
+        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
+        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+                argumentResolverService,
+                queueProperties,
+                sqsAsyncClient,
                 messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer

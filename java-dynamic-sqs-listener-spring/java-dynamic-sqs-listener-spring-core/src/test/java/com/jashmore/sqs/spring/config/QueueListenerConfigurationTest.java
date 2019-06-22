@@ -13,12 +13,11 @@ import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolve
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
-import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.DefaultQueueContainerService;
 import com.jashmore.sqs.spring.QueueContainerService;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
-import com.jashmore.sqs.spring.container.batching.BatchingQueueListenerWrapper;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -180,7 +179,7 @@ public class QueueListenerConfigurationTest {
                             .collect(toSet());
 
                     assertThat(argumentResolvers).containsExactlyInAnyOrder(
-                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class, VisibilityExtenderArgumentResolver.class,
+                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class,
                             MessageAttributeArgumentResolver.class, MessageSystemAttributeArgumentResolver.class, MessageArgumentResolver.class
                     );
                 });
@@ -198,7 +197,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                             .containsExactlyElementsOf(argumentResolvers);
-                    assertThat(argumentResolvers).hasSize(7);
+                    assertThat(argumentResolvers).hasSize(6);
                 });
     }
 
@@ -221,9 +220,7 @@ public class QueueListenerConfigurationTest {
                             .map(QueueWrapper::getClass)
                             .collect(toSet());
 
-                    assertThat(queueWrapperClasses).containsExactlyInAnyOrder(
-                            QueueListenerWrapper.class, PrefetchingQueueListenerWrapper.class, BatchingQueueListenerWrapper.class
-                    );
+                    assertThat(queueWrapperClasses).containsExactlyInAnyOrder(QueueListenerWrapper.class, PrefetchingQueueListenerWrapper.class);
                 });
     }
 
@@ -252,7 +249,7 @@ public class QueueListenerConfigurationTest {
                     argumentResolversField.setAccessible(true);
                     assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(queueWrappers);
-                    assertThat(queueWrappers).hasSize(4);
+                    assertThat(queueWrappers).hasSize(3);
                 });
     }
 
@@ -272,6 +269,56 @@ public class QueueListenerConfigurationTest {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithCustomQueueContainerService.class)
                 .run((context) -> assertThat(context).doesNotHaveBean(QueueWrapper.class));
+    }
+
+    @Test
+    public void whenNoSqsAsyncClientProviderADefaultImplementationIsCreated() {
+        this.contextRunner
+                .withSystemProperties("aws.region:localstack")
+                .run((context) -> {
+                    assertThat(context).hasSingleBean(SqsAsyncClientProvider.class);
+                    assertThat(context.getBean(SqsAsyncClientProvider.class)).isSameAs(
+                            context.getBean(QueueListenerConfiguration.class).sqsAsyncClientProvider(null));
+                });
+    }
+
+    @Test
+    public void whenNoCustomSqsAsyncClientProviderAndSqsAsyncClientDefaultSqsAsyncClientIsTheSqsAsyncClientProvidersDefault() {
+        this.contextRunner
+                .withSystemProperties("aws.region:localstack")
+                .run((context) -> {
+                    final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
+                    final SqsAsyncClient expectedDefault = context.getBean(SqsAsyncClient.class);
+                    assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(expectedDefault);
+                });
+    }
+
+    @Test
+    public void whenCustomSqsAsyncClientProvidedTheDefaultSqsAsyncClientProviderUsesThisAsTheDefault() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .run((context) -> {
+                    final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
+                    final SqsAsyncClient userDefinedSqsAsyncClient = context.getBean(UserConfigurationWithSqsClient.class).userDefinedSqsAsyncClient();
+                    assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(userDefinedSqsAsyncClient);
+                });
+    }
+
+    @Test
+    public void whenCustomSqsAsyncClientProviderProvidedNoSqsAsyncClientBeanIsBuilt() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
+                .run((context) -> assertThat(context).doesNotHaveBean(SqsAsyncClient.class));
+    }
+
+    @Test
+    public void whenCustomSqsAsyncClientProviderThatIsUsedInsteadOfTheDefault() {
+        this.contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
+                .run((context) -> {
+                    assertThat(context.getBean(SqsAsyncClientProvider.class))
+                            .isSameAs(context.getBean(UserConfigurationWithSqsClientProvider.class).userDefinedSqsAsyncClientProvider());
+                });
     }
 
     @Configuration
@@ -342,6 +389,14 @@ public class QueueListenerConfigurationTest {
         @Bean
         public QueueWrapper customQueueWrapper() {
             return mock(QueueWrapper.class);
+        }
+    }
+
+    @Configuration
+    static class UserConfigurationWithSqsClientProvider {
+        @Bean
+        public SqsAsyncClientProvider userDefinedSqsAsyncClientProvider() {
+            return mock(SqsAsyncClientProvider.class);
         }
     }
 }

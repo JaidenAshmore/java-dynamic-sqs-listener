@@ -1,4 +1,4 @@
-package com.jashmore.sqs.argument.visibility;
+package com.jashmore.sqs.processor.argument;
 
 import java.util.concurrent.Future;
 

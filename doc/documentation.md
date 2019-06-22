@@ -15,6 +15,7 @@ more in depth understanding take a look at the JavaDoc for the API.
         extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
         1. [How to manually acknowledge message](how-to-guides/core/core-how-to-manually-acknowledge-message.md): useful for when you want to mark the
         message as successfully processed before the method has finished executing
+    1. [How to Connect to an AWS SQS Queue](how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
     1. Spring How To Guides
         1. [How to add a custom ArgumentResolver to a Spring application](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
         integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
@@ -27,7 +28,8 @@ more in depth understanding take a look at the JavaDoc for the API.
         writing right?
         1. [How to Start/Stop Queue Listeners](how-to-guides/spring/spring-how-to-start-stop-queue-listeners.md): guide for starting and stopping the
         processing of messages for specific queue listeners
-    1. [How to Connect to an AWS SQS Queue](how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
+        1. [How to connect to multiple AWS Accounts](how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues
+        across multiple AWS Accounts
 1. Local Development:
     1. [Setting up IntelliJ](local-development/setting-up-intellij.md): steps for setting IntelliJ up for development,
     e.g. configuring checkstyle, Lombok, etc

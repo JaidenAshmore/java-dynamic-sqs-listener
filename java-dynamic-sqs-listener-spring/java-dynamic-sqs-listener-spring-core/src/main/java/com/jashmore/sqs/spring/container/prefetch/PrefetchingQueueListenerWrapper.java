@@ -20,6 +20,8 @@ import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProp
 import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
 import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
 import com.jashmore.sqs.spring.QueueWrapper;
+import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.queue.QueueResolverService;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +40,7 @@ import java.lang.reflect.Method;
 @RequiredArgsConstructor
 public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper<PrefetchingQueueListener> {
     private final ArgumentResolverService argumentResolverService;
-    private final SqsAsyncClient sqsAsyncClient;
+    private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolverService queueResolverService;
     private final Environment environment;
 
@@ -50,14 +52,17 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
     @Override
     protected IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
                                                                                   final PrefetchingQueueListener annotation) {
+        final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation.sqsClient());
+
         final QueueProperties queueProperties = QueueProperties
                 .builder()
-                .queueUrl(queueResolverService.resolveQueueUrl(annotation.value()))
+                .queueUrl(queueResolverService.resolveQueueUrl(sqsAsyncClient, annotation.value()))
                 .build();
 
-        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties);
+        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, sqsAsyncClient);
         final MessageResolver messageResolver = new IndividualMessageResolver(queueProperties, sqsAsyncClient);
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties, messageResolver, method, bean);
+        final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
+                sqsAsyncClient, messageResolver, method, bean);
 
         final String identifier;
         if (StringUtils.isEmpty(annotation.identifier().trim())) {
@@ -124,7 +129,19 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
                 .build();
     }
 
-    private MessageRetriever buildMessageRetriever(final PrefetchingQueueListener annotation, final QueueProperties queueProperties) {
+    private MessageRetriever buildMessageRetriever(final PrefetchingQueueListener annotation,
+                                                   final QueueProperties queueProperties,
+                                                   final SqsAsyncClient sqsAsyncClient) {
         return new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, buildMessageRetrieverProperties(annotation));
+    }
+
+    private SqsAsyncClient getSqsAsyncClient(final String sqsClient) {
+        if (StringUtils.isEmpty(sqsClient)) {
+            return sqsAsyncClientProvider.getDefaultClient()
+                    .orElseThrow(() -> new QueueWrapperInitialisationException("Expected the default SQS Client but there is none"));
+        }
+
+        return sqsAsyncClientProvider.getClient(sqsClient)
+                .orElseThrow(() -> new QueueWrapperInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
     }
 }

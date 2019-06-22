@@ -9,9 +9,7 @@ import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
-import com.jashmore.sqs.argument.visibility.VisibilityExtenderArgumentResolver;
 import lombok.experimental.Delegate;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Set;
 
@@ -26,14 +24,12 @@ public class CoreArgumentResolverService implements ArgumentResolverService {
     private final DelegatingArgumentResolverService delegatingArgumentResolverService;
 
     public CoreArgumentResolverService(final PayloadMapper payloadMapper,
-                                       final SqsAsyncClient sqsAsyncClient,
                                        final ObjectMapper objectMapper) {
         final Set<ArgumentResolver<?>> argumentResolvers = ImmutableSet.of(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
                 new MessageAttributeArgumentResolver(objectMapper),
                 new MessageSystemAttributeArgumentResolver(),
-                new VisibilityExtenderArgumentResolver(sqsAsyncClient),
                 new MessageArgumentResolver()
         );
         this.delegatingArgumentResolverService = new DelegatingArgumentResolverService(argumentResolvers);

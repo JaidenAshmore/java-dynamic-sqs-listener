@@ -1,6 +1,7 @@
 package com.jashmore.sqs.argument.visibility;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;

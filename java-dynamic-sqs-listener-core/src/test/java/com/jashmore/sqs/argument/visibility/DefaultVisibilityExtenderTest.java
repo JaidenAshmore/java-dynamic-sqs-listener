@@ -1,6 +1,6 @@
 package com.jashmore.sqs.argument.visibility;
 
-import static com.jashmore.sqs.argument.visibility.VisibilityExtender.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS;
+import static com.jashmore.sqs.processor.argument.VisibilityExtender.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

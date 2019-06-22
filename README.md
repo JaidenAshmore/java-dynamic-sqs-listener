@@ -101,7 +101,7 @@ will not acknowledge the message automatically when the method executes without 
 The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
 a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
 finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
-[@BatchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/batching/BatchingQueueListener.java)
+[@QueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
 provides the same basic functionality but it also provides a timeout where eventually it will request for more messages even for the threads that are
 ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot messages
 on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
@@ -109,7 +109,7 @@ on the queue, only 2 requests would be made to SQS for retrieval and deletion of
 ```java
 @Service
 public class MyMessageListener {
-    @BatchingQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000) 
+    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000) 
     public void processMessage(@Payload final String payload) {
         // process the message payload here
     }
@@ -121,7 +121,7 @@ before requesting messages for threads waiting for another message.
 
 ### Setting up a queue listener that prefetches messages
 When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
-[@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+[@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
 annotation can be used to pretech messages in a background thread while messages are currently being processed.  The usage is something like this:
 
 ```java
@@ -235,6 +235,12 @@ mvn clean install -DskipTests
 ```bash
 (cd examples/java-dynamic-sqs-listener-core-examples && mvn exec:java)
 ``` 
+
+### Connecting to multiple AWS Accounts using the Spring Starter
+If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
+[SqsAsyncClientProvider](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
+which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
+at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md)
 
 ### Comparing Libraries
 If you want to see the difference between this library and others like the

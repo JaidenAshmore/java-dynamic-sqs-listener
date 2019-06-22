@@ -12,7 +12,9 @@ import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import org.springframework.core.env.Environment;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -60,6 +62,19 @@ public @interface QueueListener {
      * @return the unique identifier for this queue listener
      */
     String identifier() default "";
+
+    /**
+     * The unique identifier for the {@link SqsAsyncClient} that should be used for this queue.
+     *
+     * <p>As queues can be set up across multiple AWS Accounts there can be multiple {@link SqsAsyncClient}s being
+     * provided by the {@link SqsAsyncClientProvider}. When this identifier is set, it will obtain the client to be used
+     * via the {@link SqsAsyncClientProvider#getClient(String)} method.
+     *
+     * <p>If this value is not set (empty), the default client will be provided by a call to {@link SqsAsyncClientProvider#getDefaultClient()}.
+     *
+     * @return the identifier for the client to use or empty if the default should be used
+     */
+    String sqsClient() default "";
 
     /**
      * The number of threads that will be processing messages.

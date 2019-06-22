@@ -46,7 +46,7 @@ public class EnvironmentQueueResolverServiceIntegrationTest {
     @Test
     public void queueResolverResolvesVariablesFromEnvironmentProperties() {
         // act
-        final String queueUrl = queueResolver.resolveQueueUrl("${property.with.queue.url}");
+        final String queueUrl = queueResolver.resolveQueueUrl(LOCAL_SQS_RULE.getLocalAmazonSqsAsync(), "${property.with.queue.url}");
 
         // assert
         assertThat(queueUrl).isEqualTo("http://sqs.some.url");
@@ -55,7 +55,7 @@ public class EnvironmentQueueResolverServiceIntegrationTest {
     @Test
     public void queueResolverForQueueNameObtainsQueueUrlFromSqs() {
         // act
-        final String queueUrl = queueResolver.resolveQueueUrl("${property.with.queue.name}");
+        final String queueUrl = queueResolver.resolveQueueUrl(LOCAL_SQS_RULE.getLocalAmazonSqsAsync(), "${property.with.queue.name}");
 
         // assert
         assertThat(queueUrl).startsWith(LOCAL_SQS_RULE.getServerUrl());
