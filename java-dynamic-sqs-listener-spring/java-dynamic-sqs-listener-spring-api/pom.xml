@@ -13,7 +13,7 @@
     <description>API for the Spring Starter that will allow for definitions and extension of the Spring Starter.</description>
 
     <properties>
-        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <dependencies>
@@ -26,6 +26,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

@@ -15,7 +15,7 @@
     <description>Contains examples for all the different modules.</description>
 
     <properties>
-        <findbugs.config.location>../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <modules>

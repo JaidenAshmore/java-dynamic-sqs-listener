@@ -13,8 +13,7 @@
     <description>Contains examples for using the core implementation of the listener with plan Java objects.</description>
 
     <properties>
-        <elasticmq.version>0.13.9</elasticmq.version>
-        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <dependencies>

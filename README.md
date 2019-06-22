@@ -44,13 +44,13 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 - [Core Framework](java-dynamic-sqs-listener-core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.2.0
-  - [Guava](https://github.com/google/guava): 21.0
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.5.69
+  - [Guava](https://github.com/google/guava): 28.0-jre
   - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.9
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
-  - [Spring](https://github.com/spring-projects/spring-framework): 5.0.8.RELEASE
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.0.2.RELEASE
+  - [Spring](https://github.com/spring-projects/spring-framework): 5.1.8.RELEASE
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.1.6.RELEASE
 
 ## Spring Quick Guide
 The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are

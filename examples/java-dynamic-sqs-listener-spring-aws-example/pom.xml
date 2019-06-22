@@ -14,7 +14,7 @@
     <description>Contains examples for </description>
 
     <properties>
-        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <dependencies>
@@ -45,7 +45,6 @@
         <dependency>
             <groupId>org.elasticmq</groupId>
             <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-            <version>0.13.9</version>
         </dependency>
 
         <dependency>

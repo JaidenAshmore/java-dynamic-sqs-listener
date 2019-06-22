@@ -13,7 +13,7 @@
     <description>Spring Starter for automatically setting up the Spring Core implementation in a Spring Boot Application.</description>
 
     <properties>
-        <findbugs.config.location>../../configuration/findbugs/bugsExcludeFilter.xml</findbugs.config.location>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
     </properties>
 
     <dependencies>
