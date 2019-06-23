@@ -7,7 +7,7 @@ better resources for learning about SQS queues, for example I used
 write this guide.
 
 In this example we are defining the SQS Properties needed via Environment variables in the application. See `SqsAsyncClient#create()` for more thorough
-documentation about different ways to define these properties. The [Spring AWS Example](../../examples/java-dynamic-sqs-listener-spring-aws-example) will be
+documentation about different ways to define these properties. The [Spring AWS Example](../../examples/spring-aws-example) will be
 used for this guide.
 
 ## Steps

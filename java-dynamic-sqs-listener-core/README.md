@@ -4,7 +4,7 @@ significant amount of use cases but if it doesn't the consumer can easily implem
 
 ## Usage
 
-See [java-dynamic-sqs-listener-core-examples](../examples/java-dynamic-sqs-listener-core-examples) for examples of
+See [java-dynamic-sqs-listener-core-examples](../examples/core-examples) for examples of
 using this core code to listen to a queue.
 
 ## More Information?

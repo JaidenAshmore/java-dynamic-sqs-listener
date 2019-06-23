@@ -207,7 +207,7 @@ therefore it would be useful to provide your own annotation. See
 ### Testing locally an example Spring Boot app with the Spring Starter 
 The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
 SQS Server so you don't need to do any setting up of queues on AWS to test this yourself. For example to run a sample Spring Application you can use the
-[Spring Starter Example](examples/java-dynamic-sqs-listener-spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
+[Spring Starter Example](examples/spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
 
 1. Build the framework
 ```bash
@@ -216,7 +216,7 @@ mvn clean install -DskipTests
 
 1. Run the Spring Starer Example Spring Boot app
 ```bash
-(cd examples/java-dynamic-sqs-listener-spring-starter-examples && mvn spring-boot:run)
+(cd examples/spring-starter-examples && mvn spring-boot:run)
 ``` 
 
 ### Testing locally a dynamic concurrency example
@@ -233,7 +233,7 @@ mvn clean install -DskipTests
 
 1. Run the Spring Starer Example Spring Boot app
 ```bash
-(cd examples/java-dynamic-sqs-listener-core-examples && mvn exec:java)
+(cd examples/core-examples && mvn exec:java)
 ``` 
 
 ### Connecting to multiple AWS Accounts using the Spring Starter
@@ -245,7 +245,7 @@ at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how
 ### Comparing Libraries
 If you want to see the difference between this library and others like the
 [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and
-[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at the [sqs-listener-libary-comparison](./examples/sqs-listener-library-comparison)
+[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison)
 module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
 
 ### Other examples
