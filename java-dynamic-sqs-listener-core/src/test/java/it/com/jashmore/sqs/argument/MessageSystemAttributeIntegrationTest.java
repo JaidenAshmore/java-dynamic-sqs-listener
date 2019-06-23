@@ -22,7 +22,7 @@ import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
 import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class MessageSystemAttributeIntegrationTest {
         final MessageRetriever messageRetriever = new IndividualMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                IndividualMessageRetrieverProperties.builder()
+                StaticIndividualMessageRetrieverProperties.builder()
                         .visibilityTimeoutForMessagesInSeconds(30)
                         .build()
         );
