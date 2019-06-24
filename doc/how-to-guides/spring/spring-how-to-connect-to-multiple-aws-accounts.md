@@ -1,7 +1,7 @@
 # Spring - How to Connect to multiple AWS Accounts
 There may be a scenario where you need to connect to multiple queues across multiple AWS Accounts. In this scenario you would
 need to provide multiple `SqsAsyncClients` and for each queue listener you will need to indicate which one is desired. For a full
-example take a look at the [Multiple AWS Accounts Example](../../../examples/multiple-aws-account-example) which shows you how to
+example take a look at the [Multiple AWS Accounts Example](../../../examples/spring-multiple-aws-account-example) which shows you how to
 connect to two locally running ElasticMQ servers.
 
 ## Steps

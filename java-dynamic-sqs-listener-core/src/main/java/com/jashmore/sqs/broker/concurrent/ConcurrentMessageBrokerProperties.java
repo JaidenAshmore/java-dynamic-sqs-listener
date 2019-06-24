@@ -4,7 +4,6 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
 /**
@@ -51,17 +50,17 @@ public interface ConcurrentMessageBrokerProperties {
      *
      * @return the the level of concurrency for processing messages
      */
-    @Min(0)
+    @PositiveOrZero
     Integer getConcurrencyLevel();
 
     /**
      * The number of milliseconds that the coordinating thread will sleep when the maximum rate of concurrency has been reached before checking again.
      *
      * <p>The reason that this property is needed is because during the processing of messages, which could be a significantly long period, the rate
-     * of concurrency may have changed, more specifically increased. To make sure that more threads are spun up as required, the coordinating
-     * thread will block for this period of time and once it is awoken it will check to see if the concurrency level has changed. If it has, more threads
-     * can be spun up to process more messages. However, if the current number of threads is equal to or greater than the desired amount the coordinating
-     * thread will go back to sleep for this period of time or until the number of threads goes below this number.
+     * of concurrency may have changed, more specifically increased. The coordinating background thread should periodically check the concurrency rate
+     * while messages are processing so that it is as close to the desired concurrency rate. If the concurrency rate has increased, more threads
+     * can be spun up to process more messages. However, if the current number of threads running is equal to or greater than the desired amount
+     * the coordinating thread will go back to sleep for this period of time again or until the number of threads goes below this number.
      *
      * <p>There are performance considerations when determine an appropriate value for this property in that a higher polling period will result in less time
      * that the coordinating thread is awoken and is therefore less CPU intensive. However, decreasing this polling period makes it more responsive to changes
@@ -69,7 +68,7 @@ public interface ConcurrentMessageBrokerProperties {
      *
      * @return the number of milliseconds between polls for the concurrency level
      */
-    @Min(0)
+    @PositiveOrZero
     Long getPreferredConcurrencyPollingRateInMilliseconds();
 
     /**

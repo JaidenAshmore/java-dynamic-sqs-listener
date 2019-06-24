@@ -6,6 +6,7 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -17,12 +18,10 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
-import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
-import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.container.AbstractAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,15 +32,15 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import java.lang.reflect.Method;
 
 /**
- * {@link QueueWrapper} that will wrap methods annotated with {@link QueueListener @QueueListener} with some predefined
- * implementations of the framework.
+ * {@link com.jashmore.sqs.spring.container.MessageListenerContainerFactory} that will wrap methods annotated with
+ * {@link QueueListener @QueueListener} with some predefined implementations of the framework.
  */
 @Slf4j
 @AllArgsConstructor
-public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueListener> {
+public class BasicMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<QueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
-    private final QueueResolverService queueResolverService;
+    private final QueueResolver queueResolver;
     private final Environment environment;
 
     @Override
@@ -50,11 +49,11 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
     }
 
     @Override
-    protected IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
+    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
         final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation.sqsClient());
 
         final QueueProperties queueProperties = QueueProperties.builder()
-                .queueUrl(queueResolverService.resolveQueueUrl(sqsAsyncClient, annotation.value()))
+                .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
                 .build();
 
         final int concurrencyLevel = getConcurrencyLevel(annotation);
@@ -82,10 +81,7 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
                         .build()
         );
 
-        return IdentifiableMessageListenerContainer.builder()
-                .identifier(identifier)
-                .container(new SimpleMessageListenerContainer(messageRetriever, messageBroker, messageResolver))
-                .build();
+        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker, messageResolver);
     }
 
     private MessageRetriever buildMessageRetriever(final QueueListener annotation,
@@ -155,10 +151,10 @@ public class QueueListenerWrapper extends AbstractQueueAnnotationWrapper<QueueLi
     private SqsAsyncClient getSqsAsyncClient(final String sqsClient) {
         if (StringUtils.isEmpty(sqsClient)) {
             return sqsAsyncClientProvider.getDefaultClient()
-                    .orElseThrow(() -> new QueueWrapperInitialisationException("Expected the default SQS Client but there is none"));
+                    .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none"));
         }
 
         return sqsAsyncClientProvider.getClient(sqsClient)
-                .orElseThrow(() -> new QueueWrapperInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
+                .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
     }
 }

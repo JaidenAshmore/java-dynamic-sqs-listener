@@ -80,9 +80,9 @@ will attempt to parse the contents of the message attribute into this field. For
 string where as if the argument is an integer it will try and parse the string into the number.  This also works with POJOs in that the resolver will
  attempt to deserialised the message attribute into this POJO shape, e.g. via the Jackson Object Mapper.  This is provided by the
 [MessageAttributeArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/attribute/MessageAttributeArgumentResolver.java).
-- [VisibilityExtender](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/visibility/VisibilityExtender.java): arguments of this type
-will be injected with an implementation that extends the message visibility of the current message. This is provided by the
-[VisibilityExtenderArgumentResolver](../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/visibility/VisibilityExtenderArgumentResolver.java). 
+- [VisibilityExtender](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/argument/VisibilityExtender.java): arguments of this type
+will be injected with an implementation that extends the message visibility of the current message.  These implementations should be provided by the
+[MessageProcessor](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) being used.
 
 ### Message Broker
 The [MessageBroker](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/broker/MessageBroker.java) is the main container that controls the whole flow

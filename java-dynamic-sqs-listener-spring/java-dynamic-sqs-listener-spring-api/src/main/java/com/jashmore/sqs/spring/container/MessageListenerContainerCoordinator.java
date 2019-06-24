@@ -1,10 +1,10 @@
-package com.jashmore.sqs.spring;
+package com.jashmore.sqs.spring.container;
 
 /**
  * Service that can be injected into the Spring Application to start and stop the containers that are controlling
  * the consumption of queue messages.
  */
-public interface QueueContainerService {
+public interface MessageListenerContainerCoordinator {
     /**
      * Start all of the containers that have been built for the application.
      */

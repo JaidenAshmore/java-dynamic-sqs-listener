@@ -14,7 +14,6 @@ import net.jcip.annotations.ThreadSafe;
 import java.util.Locale;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
 /**
@@ -60,24 +59,28 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
         }
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Integer getConcurrencyLevel() {
+    public Integer getConcurrencyLevel() {
         return concurrencyLevel;
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
+    public Long getPreferredConcurrencyPollingRateInMilliseconds() {
         return preferredConcurrencyPollingRateInMilliseconds;
     }
 
+    @Nullable
     @Override
     public String getThreadNameFormat() {
         return threadNameFormat;
     }
 
     @Nullable
+    @PositiveOrZero
     @Override
-    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+    public Long getErrorBackoffTimeInMilliseconds() {
         return errorBackoffTimeInMilliseconds;
     }
 }

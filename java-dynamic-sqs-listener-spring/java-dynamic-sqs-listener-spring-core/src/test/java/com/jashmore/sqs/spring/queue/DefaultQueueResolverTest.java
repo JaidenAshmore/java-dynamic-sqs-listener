@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-public class DefaultQueueResolverServiceTest {
+public class DefaultQueueResolverTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -36,11 +36,11 @@ public class DefaultQueueResolverServiceTest {
     @Mock
     private Environment environment;
 
-    private DefaultQueueResolverService defaultQueueResolverService;
+    private DefaultQueueResolver defaultQueueResolver;
 
     @Before
     public void setUp() {
-        defaultQueueResolverService = new DefaultQueueResolverService(environment);
+        defaultQueueResolver = new DefaultQueueResolver(environment);
     }
 
     @After
@@ -56,7 +56,7 @@ public class DefaultQueueResolverServiceTest {
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("http://url");
 
         // act
-        final String queueUrl = defaultQueueResolverService.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        final String queueUrl = defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
 
         // assert
         assertThat(queueUrl).isEqualTo("http://url");
@@ -70,7 +70,7 @@ public class DefaultQueueResolverServiceTest {
                 .thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://url").build()));
 
         // act
-        final String queueUrl = defaultQueueResolverService.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        final String queueUrl = defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
 
         // assert
         assertThat(queueUrl).isEqualTo("http://url");
@@ -92,7 +92,7 @@ public class DefaultQueueResolverServiceTest {
         expectedException.expectCause(equalTo(exceptionCause));
 
         // act
-        defaultQueueResolverService.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
     }
 
     @Test
@@ -111,7 +111,7 @@ public class DefaultQueueResolverServiceTest {
         expectedException.expectCause(equalTo(exceptionCause));
 
         // act
-        defaultQueueResolverService.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
     }
 
     @Test
@@ -129,7 +129,7 @@ public class DefaultQueueResolverServiceTest {
 
         // act
         try {
-            defaultQueueResolverService.resolveQueueUrl(sqsAsyncClient, "${variable}");
+            defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
         } catch (final QueueResolutionException exception) {
             // assert
             assertThat(Thread.currentThread().isInterrupted()).isTrue();

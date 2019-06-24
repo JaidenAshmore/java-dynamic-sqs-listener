@@ -13,15 +13,15 @@ import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.spring.DefaultQueueContainerService;
-import com.jashmore.sqs.spring.QueueContainerService;
-import com.jashmore.sqs.spring.QueueWrapper;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
-import com.jashmore.sqs.spring.queue.DefaultQueueResolverService;
-import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
+import com.jashmore.sqs.spring.queue.QueueResolver;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -52,7 +52,7 @@ public class QueueListenerConfiguration {
      * @see SqsAsyncClient#create() for more details about how to use this default client
      */
     @Bean(destroyMethod = "close")
-    @ConditionalOnMissingBean({SqsAsyncClient.class, SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean( {SqsAsyncClient.class, SqsAsyncClientProvider.class})
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.create();
     }
@@ -71,7 +71,7 @@ public class QueueListenerConfiguration {
      * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
      */
     @Bean
-    @ConditionalOnMissingBean({SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean( {SqsAsyncClientProvider.class})
     public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
         return new DefaultSqsAsyncClientProvider(defaultClient, ImmutableMap.of());
     }
@@ -153,63 +153,64 @@ public class QueueListenerConfiguration {
     }
 
     /**
-     * The default provided {@link QueueResolverService} that can be used if it not overridden by a user defined bean.
+     * The default provided {@link QueueResolver} that can be used if it not overridden by a user defined bean.
      *
      * @param environment    the environment for this spring application
      * @return the default service used for queue resolution
      */
     @Bean
-    @ConditionalOnMissingBean(QueueResolverService.class)
-    public QueueResolverService queueResolverService(final Environment environment) {
-        return new DefaultQueueResolverService(environment);
+    @ConditionalOnMissingBean(QueueResolver.class)
+    public QueueResolver queueResolver(final Environment environment) {
+        return new DefaultQueueResolver(environment);
     }
 
     /**
      * Configuration used in regards to searching the application code for methods that need to be wrapped in {@link MessageListenerContainer}s.
      *
-     * <p>If the user has defined their own {@link QueueContainerService} this default configuration will not be used. This allows the consumer to configure
-     * the wrapping of their bean methods to how they feel is optimal. It can be also done if there is a bug in the existing default
-     * {@link QueueContainerService} provided.
+     * <p>If the user has defined their own {@link MessageListenerContainerCoordinator} this default configuration will not be used. This allows the
+     * consumer to configure the wrapping of their bean methods to how they feel is optimal. It can be also done if there is a bug in the existing default
+     * {@link MessageListenerContainerCoordinator} provided.
      */
     @Configuration
-    @ConditionalOnMissingBean(QueueContainerService.class)
+    @ConditionalOnMissingBean(MessageListenerContainerCoordinator.class)
     public static class QueueWrappingConfiguration {
 
         /**
-         * The default {@link QueueContainerService} that will be provided if it has not been overridden by the consumer.
+         * The default {@link MessageListenerContainerCoordinator} that will be provided if it has not been overridden by the consumer.
          *
-         * <p>This will use any {@link QueueWrapper}s defined in the spring context to wrap any bean methods with a {@link MessageListenerContainer}.
+         * <p>This will use any {@link MessageListenerContainerFactory}s defined in the spring context to wrap any bean methods with a
+         * {@link MessageListenerContainer}.
          *
-         * @param queueWrappers the wrappers provided in the context
-         * @return the default {@link QueueContainerService}
+         * @param messageListenerContainerFactories the wrappers provided in the context
+         * @return the default {@link MessageListenerContainerCoordinator}
          */
         @Bean
-        public QueueContainerService queueContainerService(final List<QueueWrapper> queueWrappers) {
-            return new DefaultQueueContainerService(queueWrappers);
+        public MessageListenerContainerCoordinator queueContainerService(final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+            return new DefaultMessageListenerContainerCoordinator(messageListenerContainerFactories);
         }
 
         /**
-         * Contains all of the core {@link QueueWrapper} implementations that should be enabled by default.
+         * Contains all of the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
          *
-         * <p>The consumer can provide any other {@link QueueWrapper} beans in their context and these will be included in the automatic wrapping of the methods
-         * by the {@link #queueContainerService(List)} bean.
+         * <p>The consumer can provide any other {@link MessageListenerContainerFactory} beans in their context and these will be included in the automatic
+         * wrapping of the methods by the {@link #queueContainerService(List)} bean.
          */
         @Configuration
-        public static class QueueWrapperConfiguration {
+        public static class MessageListenerContainerFactoryConfiguration {
             @Bean
-            public QueueWrapper coreProvidedQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                 final SqsAsyncClientProvider sqsAsyncClientProvider,
-                                                                 final QueueResolverService queueResolverService,
-                                                                 final Environment environment) {
-                return new QueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolverService, environment);
+            public MessageListenerContainerFactory basicMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
+                                                                                        final SqsAsyncClientProvider sqsAsyncClientProvider,
+                                                                                        final QueueResolver queueResolver,
+                                                                                        final Environment environment) {
+                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
             }
 
             @Bean
-            public QueueWrapper coreProvidedPrefetchingQueueListenerWrapper(final ArgumentResolverService argumentResolverService,
-                                                                            final SqsAsyncClientProvider sqsAsyncClientProvider,
-                                                                            final QueueResolverService queueResolverService,
-                                                                            final Environment environment) {
-                return new PrefetchingQueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolverService, environment);
+            public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
+                                                                                              final SqsAsyncClientProvider sqsAsyncClientProvider,
+                                                                                              final QueueResolver queueResolver,
+                                                                                              final Environment environment) {
+                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
             }
         }
     }

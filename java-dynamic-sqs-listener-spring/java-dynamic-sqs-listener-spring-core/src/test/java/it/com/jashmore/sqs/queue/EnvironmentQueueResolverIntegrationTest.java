@@ -5,7 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import com.google.common.collect.ImmutableList;
 
-import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
@@ -20,20 +20,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@SpringBootTest(classes = {Application.class, EnvironmentQueueResolverServiceIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, EnvironmentQueueResolverIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {
         "property.with.queue.url=http://sqs.some.url",
         "property.with.queue.name=EnvironmentQueueResolverIntegrationTest"
 })
 @RunWith(SpringRunner.class)
-public class EnvironmentQueueResolverServiceIntegrationTest {
+public class EnvironmentQueueResolverIntegrationTest {
     @ClassRule
     public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
             SqsQueuesConfig.QueueConfig.builder().queueName("EnvironmentQueueResolverIntegrationTest").build()
     ));
 
     @Autowired
-    private QueueResolverService queueResolver;
+    private QueueResolver queueResolver;
 
     @Configuration
     public static class TestConfig {

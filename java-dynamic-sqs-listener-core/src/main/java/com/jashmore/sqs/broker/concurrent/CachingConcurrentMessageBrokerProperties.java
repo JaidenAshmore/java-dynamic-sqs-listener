@@ -8,7 +8,6 @@ import net.jcip.annotations.ThreadSafe;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
 /**
@@ -53,24 +52,28 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
         this.threadNameFormat = delegateProperties.getThreadNameFormat();
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Integer getConcurrencyLevel() {
+    public Integer getConcurrencyLevel() {
         return cachedConcurrencyLevel.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
+    public Long getPreferredConcurrencyPollingRateInMilliseconds() {
         return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 
+    @Nullable
     @Override
     public String getThreadNameFormat() {
         return threadNameFormat;
     }
 
     @Nullable
+    @PositiveOrZero
     @Override
-    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+    public Long getErrorBackoffTimeInMilliseconds() {
         return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 }

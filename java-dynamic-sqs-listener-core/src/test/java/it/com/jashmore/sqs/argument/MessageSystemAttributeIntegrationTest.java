@@ -34,6 +34,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,7 +87,7 @@ public class MessageSystemAttributeIntegrationTest {
                         .build()
         );
         final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                messageRetriever, messageBroker, messageResolver
+                "id", messageRetriever, messageBroker, messageResolver
         );
         simpleMessageListenerContainer.start();
 

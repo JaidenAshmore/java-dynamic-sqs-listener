@@ -147,7 +147,7 @@ public class ConcurrentBrokerExample {
         );
 
         final MessageListenerContainer messageListenerContainer
-                = new SimpleMessageListenerContainer(messageRetriever, concurrentMessageBroker, messageResolver);
+                = new SimpleMessageListenerContainer("core-example-container", messageRetriever, concurrentMessageBroker, messageResolver);
         messageListenerContainer.start();
 
         // Create some producers of messages
