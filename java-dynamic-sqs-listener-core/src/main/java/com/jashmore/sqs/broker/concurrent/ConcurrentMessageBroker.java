@@ -1,9 +1,11 @@
 package com.jashmore.sqs.broker.concurrent;
 
 import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_BACKOFF_TIME_IN_MS;
+import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_SHUTDOWN_TIME_IN_SECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -44,11 +46,12 @@ public class ConcurrentMessageBroker implements MessageBroker {
     @Override
     @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
     public void run() {
+        log.info("Started ConcurrentMessageBroker background thread");
         final ExecutorService concurrentThreadsExecutor = Executors.newCachedThreadPool();
         final ExecutorService messageProcessingThreadsExecutor = buildMessageProcessingExecutorService();
         final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
 
-        while (!Thread.currentThread().isInterrupted()) {
+        while (true) {
             try {
                 updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
 
@@ -60,8 +63,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
                     }
                 } catch (final InterruptedException interruptedException) {
                     log.debug("Interrupted exception caught while adding more listeners, shutting down!");
-                    Thread.currentThread().interrupt();
-                    continue;
+                    break;
                 }
 
                 CompletableFuture.supplyAsync(() -> {
@@ -86,15 +88,15 @@ public class ConcurrentMessageBroker implements MessageBroker {
                     Thread.sleep(errorBackoffTimeInMilliseconds);
                 } catch (final InterruptedException interruptedException) {
                     log.debug("Thread interrupted during backoff period");
-                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         }
 
-        log.debug("Shutting down message controller");
+        log.info("ConcurrentMessageBroker background thread shutting down...");
         try {
             shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingThreadsExecutor);
-            log.debug("Message controller shut down");
+            log.info("ConcurrentMessageBroker background thread successfully stopped");
         } catch (final RuntimeException runtimeException) {
             log.error("Exception thrown while waiting for broker to shutdown", runtimeException);
         }
@@ -115,19 +117,37 @@ public class ConcurrentMessageBroker implements MessageBroker {
         }
     }
 
-    private void shutdownConcurrentThreads(final ExecutorService concurrentThreadsExecutor,
-                                           final ExecutorService messageProcessingThreadsExecutor) {
+    /**
+     * Shutdown all of the concurrent threads for retrieving messages by interrupting it but let any threads processing messages gracefully shutdown.
+     *
+     * <p>This method is visible for testing due to the difficulty in testing this.
+     *
+     * @param concurrentThreadsExecutor        the executor for retrieving messages
+     * @param messageProcessingThreadsExecutor the executor processing messages downloaded
+     */
+    @VisibleForTesting
+    void shutdownConcurrentThreads(final ExecutorService concurrentThreadsExecutor,
+                                   final ExecutorService messageProcessingThreadsExecutor) {
         concurrentThreadsExecutor.shutdownNow();
-        messageProcessingThreadsExecutor.shutdown();
-        while (!concurrentThreadsExecutor.isTerminated() || !messageProcessingThreadsExecutor.isTerminated()) {
-            log.debug("Waiting for all threads to finish...");
-            try {
-                concurrentThreadsExecutor.awaitTermination(1, MINUTES);
-                messageProcessingThreadsExecutor.awaitTermination(1, MINUTES);
-            } catch (final InterruptedException interruptedException) {
-                log.warn("Interrupted while waiting for all messages to shutdown, some threads may still be running");
-                return;
+        if (properties.shouldInterruptThreadsProcessingMessagesOnShutdown()) {
+            messageProcessingThreadsExecutor.shutdownNow();
+        } else {
+            messageProcessingThreadsExecutor.shutdown();
+        }
+        log.debug("Waiting for all threads to finish...");
+        try {
+            final long shutdownTimeoutInSeconds = getShutdownTimeoutInSeconds();
+            final long timeNow = System.currentTimeMillis();
+            final boolean concurrentThreadsShutdown = concurrentThreadsExecutor.awaitTermination(SECONDS.toMillis(shutdownTimeoutInSeconds), MILLISECONDS);
+            final long leftOverShutdownTimeoutInMilliseconds = System.currentTimeMillis() - timeNow;
+            final boolean messageProcessingThreadsShutdown = messageProcessingThreadsExecutor.awaitTermination(
+                    leftOverShutdownTimeoutInMilliseconds, MILLISECONDS);
+            if (!concurrentThreadsShutdown || !messageProcessingThreadsShutdown) {
+                log.error("Message processing threads did not shutdown within {} seconds", shutdownTimeoutInSeconds);
             }
+        } catch (final InterruptedException interruptedException) {
+            log.warn("Interrupted while waiting for all messages to shutdown, some threads may still be running");
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -165,6 +185,19 @@ public class ConcurrentMessageBroker implements MessageBroker {
                 "errorBackoffTimeInMilliseconds",
                 properties::getErrorBackoffTimeInMilliseconds,
                 DEFAULT_BACKOFF_TIME_IN_MS
+        );
+    }
+
+    /**
+     * Get the amount of time in seconds that we should wait for the server to shutdown.
+     *
+     * @return the amount of time in seconds to wait for shutdown
+     */
+    private long getShutdownTimeoutInSeconds() {
+        return PropertyUtils.safelyGetPositiveOrZeroLongValue(
+                "shutdownTimeoutInSeconds",
+                properties::getShutdownTimeoutInSeconds,
+                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
         );
     }
 

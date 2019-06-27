@@ -97,4 +97,24 @@ public interface ConcurrentMessageBrokerProperties {
     @Nullable
     @PositiveOrZero
     Long getErrorBackoffTimeInMilliseconds();
+
+    /**
+     * The number of seconds that the broker should wait for the message processing threads to finish when a shutdown is initiated.
+     *
+     * <p>If this value is negative or null, then {@link ConcurrentMessageBrokerConstants#DEFAULT_SHUTDOWN_TIME_IN_SECONDS} will be used for instead.
+     *
+     * @return the time in seconds to wait for shutdown of message processing threads
+     */
+    @Nullable
+    @PositiveOrZero
+    Long getShutdownTimeoutInSeconds();
+
+    /**
+     * Whether the threads that are processing messages should be interrupted during shutdown of the broker.
+     *
+     * <p>Setting this to true is useful if it may take long to process messages and it is undesirable for them to finish before shutting down.
+     *
+     * @return whether the message processing threads should be interrupted during shutdown
+     */
+    boolean shouldInterruptThreadsProcessingMessagesOnShutdown();
 }

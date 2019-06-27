@@ -1,9 +1,13 @@
 package com.jashmore.sqs.broker.concurrent;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,10 +16,12 @@ import static org.mockito.Mockito.when;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import org.assertj.core.data.Offset;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -26,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -321,5 +328,96 @@ public class ConcurrentMessageBrokerTest {
 
         // assert
         assertThat(actualMessageProcessingThreadName.get()).startsWith("pool-");
+    }
+
+    @Test
+    public void shuttingDownBrokerShouldNotInterruptMessageProcessingThreadsIfSetAsFalseInProperties() throws Exception {
+        // arrange
+        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(false);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
+        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
+        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
+        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+
+        // act
+        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+
+        // assert
+        verify(messageProcessingExecutorService).shutdown();
+    }
+
+    @Test
+    public void shuttingDownBrokerShouldInterruptMessageProcessingThreadsIfSetAsTrueInProperties() throws Exception {
+        // arrange
+        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
+        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
+        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
+        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+
+        // act
+        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+
+        // assert
+        verify(messageProcessingExecutorService).shutdownNow();
+    }
+
+    @Test
+    public void shuttingDownBrokerWillWaitTheProvidedShutdownTimeInSecondsForConcurrentThreadsExecutorToTerminate() throws Exception {
+        // arrange
+        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
+        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
+        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
+        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
+        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+
+        // act
+        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+
+        // assert
+        verify(concurrentThreadsExecutor).awaitTermination(1000L, MILLISECONDS);
+    }
+
+    @Test
+    public void shuttingDownBrokerWillWaitAnyTimeLeftForShutdownDependingOnTheTimeWaitingForTheConcurrentThreadsExecutorToTerminate() throws Exception {
+        // arrange
+        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
+        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
+        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
+        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
+        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenAnswer((invocation) -> {
+            Thread.sleep(500);
+            return true;
+        });
+        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+
+        // act
+        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+
+        // assert
+        final ArgumentCaptor<Long> terminationTimeInSecondsArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(messageProcessingExecutorService).awaitTermination(terminationTimeInSecondsArgumentCaptor.capture(), eq(MILLISECONDS));
+        assertThat(terminationTimeInSecondsArgumentCaptor.getValue()).isCloseTo(500L, Offset.offset(5L));
+    }
+
+    @Test
+    public void shuttingDownBrokerThatIsInterruptedWillInterruptThread() throws Exception {
+        // arrange
+        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
+        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
+        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
+        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
+        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
+
+        // act
+        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+
+        // assert
+        assertThat(Thread.interrupted()).isTrue();
     }
 }

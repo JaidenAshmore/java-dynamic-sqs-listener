@@ -90,7 +90,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             final int currentThreads = numberWaitingForMessages.incrementAndGet();
             final int numberOfThreadsWaitingTrigger = getNumberOfThreadsWaitingTrigger();
             if (currentThreads >= numberOfThreadsWaitingTrigger) {
-                log.debug("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
+                log.trace("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
                         numberOfThreadsWaitingTrigger);
                 // notify that we should grab a message
                 shouldObtainMessagesLock.notifyAll();
@@ -100,7 +100,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
 
     @Override
     public void run() {
-        log.debug("Started background thread");
+        log.info("Started BatchingMessageRetriever background thread");
         while (true) {
             try {
                 final int numberOfMessagesToObtain;
@@ -167,7 +167,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 }
             }
         }
-        log.debug("Stopped background thread");
+        log.info("BatchingMessageRetriever background thread has been successfully stopped");
     }
 
     @SuppressFBWarnings("WA_NOT_IN_LOOP") // Suppressed because it is actually in a loop this is just for testing purposes

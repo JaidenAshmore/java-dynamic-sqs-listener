@@ -70,4 +70,24 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
                 .threadNameFormat("invalid-%s-format-%d")
                 .build();
     }
+
+    @Test
+    public void shouldInterruptThreadsProcessingMessagesOnShutdownShouldBeFalseIfNothingSet() {
+        // act
+        final StaticConcurrentMessageBrokerProperties properties = StaticConcurrentMessageBrokerProperties.builder().build();
+
+        // assert
+        assertThat(properties.shouldInterruptThreadsProcessingMessagesOnShutdown()).isFalse();
+    }
+
+    @Test
+    public void shouldInterruptThreadsProcessingMessagesOnShutdownShouldBeTrueIfSet() {
+        // act
+        final StaticConcurrentMessageBrokerProperties properties = StaticConcurrentMessageBrokerProperties.builder()
+                .interruptThreadsProcessingMessagesOnShutdown(true)
+                .build();
+
+        // assert
+        assertThat(properties.shouldInterruptThreadsProcessingMessagesOnShutdown()).isTrue();
+    }
 }

@@ -88,7 +88,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
         if (properties.getDesiredMinPrefetchedMessages() == 1) {
             this.internalMessageQueue = new SynchronousQueue<>();
         } else {
-            this.internalMessageQueue = new LinkedBlockingQueue<>(desiredMinPrefetchedMessages);
+            this.internalMessageQueue = new LinkedBlockingQueue<>(desiredMinPrefetchedMessages - 1);
         }
     }
 
@@ -115,7 +115,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
      */
     @Override
     public void run() {
-        log.debug("Started background thread");
+        log.info("Started PrefetchingMessageRetriever background thread");
         while (true) {
             try {
                 try {
@@ -159,7 +159,7 @@ public class PrefetchingMessageRetriever implements AsyncMessageRetriever {
                 }
             }
         }
-        log.debug("Stopped background thread");
+        log.info("PrefetchingMessageRetriever background thread has been successfully stopped");
     }
 
     /**

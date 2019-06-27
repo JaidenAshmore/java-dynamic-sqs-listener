@@ -42,10 +42,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SqsListenerExampleIntegrationTest {
     static final String QUEUE_NAME = "testQueue";
     private static final int QUEUE_MAX_RECEIVE_COUNT = 3;
+    private static final int VISIBILITY_TIMEOUT_IN_SECONDS = 2;
 
     @ClassRule
     public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME).maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT).visibilityTimeout(5).build()
+            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME)
+                    .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
+                    .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
+                    .build()
     ));
 
     @Rule
@@ -76,7 +80,7 @@ public class SqsListenerExampleIntegrationTest {
 
         // act
         localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
-        messageReceivedCountDownLatch.await(5, TimeUnit.SECONDS);
+        messageReceivedCountDownLatch.await(VISIBILITY_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
 
         // assert
         verify(mockSomeService).run("my message");
@@ -89,7 +93,7 @@ public class SqsListenerExampleIntegrationTest {
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
         doAnswer(invocationOnMock -> {
             if (!processedMessageOnce.getAndSet(true)) {
-                throw new RuntimeException("error");
+                throw new RuntimeException("Expected Test Exception");
             }
             messageReceivedCountDownLatch.countDown();
             return null;
@@ -97,7 +101,7 @@ public class SqsListenerExampleIntegrationTest {
 
         // act
         localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
-        messageReceivedCountDownLatch.await(10, TimeUnit.SECONDS);
+        messageReceivedCountDownLatch.await(3 * VISIBILITY_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
 
         // assert
         verify(mockSomeService, times(2)).run("my message");
@@ -110,12 +114,12 @@ public class SqsListenerExampleIntegrationTest {
         final String queueUrl = localSqsAsyncClient.getQueueUrl(QUEUE_NAME);
         doAnswer(invocationOnMock -> {
             messageReceivedCountDownLatch.countDown();
-            throw new RuntimeException("error");
+            throw new RuntimeException("Expected Test Exception");
         }).when(mockSomeService).run(anyString());
 
         // act
         localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "my message");
-        messageReceivedCountDownLatch.await(20, TimeUnit.SECONDS);
+        messageReceivedCountDownLatch.await(VISIBILITY_TIMEOUT_IN_SECONDS * (QUEUE_MAX_RECEIVE_COUNT + 1), TimeUnit.SECONDS);
         waitForMessageVisibilityToExpire();
 
         // assert

@@ -22,12 +22,14 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     /**
      * Cache key as only a single value is being loaded into the cache.
      */
-    private static final int SINGLE_CACHE_VALUE_KEY = 0;
+    private static final Boolean SINGLE_CACHE_VALUE_KEY = true;
 
-    private final LoadingCache<Integer, Integer> cachedConcurrencyLevel;
-    private final LoadingCache<Integer, Long> cachedPreferredConcurrencyPollingRateInSeconds;
-    private final LoadingCache<Integer, Long> cachedErrorBackoffTimeInMilliseconds;
+    private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel;
+    private final LoadingCache<Boolean, Long> cachedPreferredConcurrencyPollingRateInSeconds;
+    private final LoadingCache<Boolean, Long> cachedErrorBackoffTimeInMilliseconds;
     private final String threadNameFormat;
+    private final LoadingCache<Boolean, Long> cachedShutdownTimeoutInSeconds;
+    private final LoadingCache<Boolean, Boolean> interruptThreadsProcessingMessagesOnShutdownCache;
 
     /**
      * Constructor.
@@ -50,6 +52,14 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
                 .build(CacheLoader.from(delegateProperties::getErrorBackoffTimeInMilliseconds));
 
         this.threadNameFormat = delegateProperties.getThreadNameFormat();
+
+        this.cachedShutdownTimeoutInSeconds = CacheBuilder.newBuilder()
+                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                .build(CacheLoader.from(delegateProperties::getShutdownTimeoutInSeconds));
+
+        this.interruptThreadsProcessingMessagesOnShutdownCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                .build(CacheLoader.from(delegateProperties::shouldInterruptThreadsProcessingMessagesOnShutdown));
     }
 
     @PositiveOrZero
@@ -75,5 +85,16 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     @Override
     public Long getErrorBackoffTimeInMilliseconds() {
         return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+    }
+
+    @Nullable
+    @Override
+    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
+        return cachedShutdownTimeoutInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+    }
+
+    @Override
+    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
+        return interruptThreadsProcessingMessagesOnShutdownCache.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 }

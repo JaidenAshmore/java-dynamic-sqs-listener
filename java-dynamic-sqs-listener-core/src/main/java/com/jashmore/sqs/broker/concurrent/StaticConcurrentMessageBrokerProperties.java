@@ -34,12 +34,16 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     private final Long preferredConcurrencyPollingRateInMilliseconds;
     private final String threadNameFormat;
     private final Long errorBackoffTimeInMilliseconds;
+    private final Long shutdownTimeoutInSeconds;
+    private final boolean interruptThreadsProcessingMessagesOnShutdown;
 
     @SuppressFBWarnings("RV_RETURN_VAL")
     public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
                                                    final Long preferredConcurrencyPollingRateInMilliseconds,
                                                    final String threadNameFormat,
-                                                   final Long errorBackoffTimeInMilliseconds) {
+                                                   final Long errorBackoffTimeInMilliseconds,
+                                                   final Long shutdownTimeoutInSeconds,
+                                                   final boolean interruptThreadsProcessingMessagesOnShutdown) {
         Preconditions.checkArgument(concurrencyLevel == null || concurrencyLevel >= 0, "concurrencyLevel should be greater than or equal to zero");
         Preconditions.checkArgument(preferredConcurrencyPollingRateInMilliseconds == null || preferredConcurrencyPollingRateInMilliseconds >= 0,
                 "preferredConcurrencyPollingRateInMilliseconds should be greater than or equal to zero");
@@ -57,6 +61,8 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
             //noinspection ResultOfMethodCallIgnored
             String.format(Locale.ROOT, threadNameFormat, 1);
         }
+        this.shutdownTimeoutInSeconds = shutdownTimeoutInSeconds;
+        this.interruptThreadsProcessingMessagesOnShutdown = interruptThreadsProcessingMessagesOnShutdown;
     }
 
     @PositiveOrZero
@@ -82,5 +88,16 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     @Override
     public Long getErrorBackoffTimeInMilliseconds() {
         return errorBackoffTimeInMilliseconds;
+    }
+
+    @Nullable
+    @Override
+    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
+        return shutdownTimeoutInSeconds;
+    }
+
+    @Override
+    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
+        return interruptThreadsProcessingMessagesOnShutdown;
     }
 }

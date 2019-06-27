@@ -23,7 +23,7 @@ public class ScheduledQueueListenerEnabler {
 
         messageListenerContainerCoordinator.stopContainer("message-listeners-method");
         Thread.sleep(5_000);
-        log.info("Turning SQS Listener back om");
+        log.info("Turning SQS Listener back on");
         messageListenerContainerCoordinator.startContainer("message-listeners-method");
     }
 }

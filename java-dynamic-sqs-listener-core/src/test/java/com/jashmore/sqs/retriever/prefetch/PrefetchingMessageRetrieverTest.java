@@ -491,6 +491,32 @@ public class PrefetchingMessageRetrieverTest {
     }
 
     @Test
+    public void whenDesiredMinPrefetchedIssuesIsTwoItWillCorrectlyTriggerForNewMessagesWhenThereIsOnlyOnePrefetchedInternally()
+            throws InterruptedException {
+        // arrange
+        final StaticPrefetchingMessageRetrieverProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
+                .desiredMinPrefetchedMessages(2)
+                .maxPrefetchedMessages(3)
+                .build();
+        final Message firstMessage = Message.builder().build();
+        final Message secondMessage = Message.builder().build();
+        final Message thirdMessage = Message.builder().build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(mockReceiveMessageResponse(firstMessage, secondMessage, thirdMessage));
+        final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES,
+                prefetchingProperties);
+        executorService.submit(prefetchingMessageRetriever);
+
+        // act
+        prefetchingMessageRetriever.retrieveMessage();
+        verify(sqsAsyncClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
+        prefetchingMessageRetriever.retrieveMessage();
+
+        // assert
+        verify(sqsAsyncClient, timeout(1000).times(2)).receiveMessage(any(ReceiveMessageRequest.class));
+    }
+
+    @Test
     public void whenMinDesiredAndMaxSameAreTheSameTheRetrieverWIllPrefetchNewMessagesAsSoonAsOneIsConsumed() throws InterruptedException {
         // arrange
         final StaticPrefetchingMessageRetrieverProperties prefetchingProperties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
@@ -501,7 +527,8 @@ public class PrefetchingMessageRetrieverTest {
         final Message secondMessage = Message.builder().build();
         final Message thirdMessage = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(firstMessage, secondMessage, thirdMessage));
+                .thenReturn(mockReceiveMessageResponse(firstMessage, secondMessage, thirdMessage))
+                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
         final PrefetchingMessageRetriever prefetchingMessageRetriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES,
                 prefetchingProperties);
         executorService.submit(prefetchingMessageRetriever);

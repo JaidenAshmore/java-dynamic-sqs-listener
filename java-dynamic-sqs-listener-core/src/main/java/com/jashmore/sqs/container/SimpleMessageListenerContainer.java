@@ -4,8 +4,6 @@ import static com.jashmore.sqs.container.SimpleMessageListenerContainerConstants
 import static com.jashmore.sqs.container.SimpleMessageListenerContainerConstants.DEFAULT_SHUTDOWN_TIMEOUT;
 import static com.jashmore.sqs.container.SimpleMessageListenerContainerConstants.DEFAULT_SHUTDOWN_TIMEOUT_TIME_UNIT;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.AsyncMessageResolver;
@@ -15,9 +13,11 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -60,6 +60,11 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
      */
     private final SimpleMessageListenerContainerProperties properties;
 
+    /**
+     * The supplier for getting a new {@link ExecutorService} when the container is started.
+     */
+    private final Supplier<ExecutorService> executorServiceSupplier;
+
     @GuardedBy("this")
     private ExecutorService executorService;
 
@@ -86,7 +91,7 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
                 .shutdownRetryLimit(DEFAULT_SHUTDOWN_RETRY_AMOUNT)
                 .build();
 
-        this.executorService = null;
+        this.executorServiceSupplier = Executors::newCachedThreadPool;
     }
 
     public SimpleMessageListenerContainer(final String identifier,
@@ -100,7 +105,21 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
         this.messageResolver = messageResolver;
         this.properties = properties;
 
-        this.executorService = null;
+        this.executorServiceSupplier = Executors::newCachedThreadPool;
+    }
+
+    public SimpleMessageListenerContainer(final String identifier,
+                                          final MessageRetriever messageRetriever,
+                                          final MessageBroker messageBroker,
+                                          final MessageResolver messageResolver,
+                                          final SimpleMessageListenerContainerProperties properties,
+                                          final Supplier<ExecutorService> executorServiceSupplier) {
+        this.identifier = identifier;
+        this.messageRetriever = messageRetriever;
+        this.messageBroker = messageBroker;
+        this.messageResolver = messageResolver;
+        this.properties = properties;
+        this.executorServiceSupplier = executorServiceSupplier;
     }
 
     @Override
@@ -108,43 +127,70 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
         return identifier;
     }
 
-    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
+    /**
+     * Suppresses warnings for not consuming the {@link java.util.concurrent.Future} from the executor service, as well as sleeping threads with the lock,
+     * which is not a problem due to the short period it is slept and I don't care about other threads being blocked until this finishes.
+     */
+    @SuppressFBWarnings({"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE", "SWL_SLEEP_WITH_LOCK_HELD"})
     @Override
     public synchronized void start() {
-        log.info("Container({}) is being started", identifier);
+        log.info("Container '{}' is being started", identifier);
         if (executorService != null) {
             log.debug("Container has already been started. No action taken");
             return;
         }
 
-        executorService = getNewExecutorService();
+        executorService = executorServiceSupplier.get();
+        final CountDownLatch componentsStartedLatch = new CountDownLatch(3);
 
         if (messageRetriever instanceof AsyncMessageRetriever) {
-            executorService.submit((AsyncMessageRetriever) messageRetriever);
+            executorService.submit(() -> {
+                componentsStartedLatch.countDown();
+                ((AsyncMessageRetriever) messageRetriever).run();
+            });
+        } else {
+            componentsStartedLatch.countDown();
         }
 
         if (messageResolver instanceof AsyncMessageResolver) {
-            executorService.submit((AsyncMessageResolver) messageResolver);
+            executorService.submit(() -> {
+                componentsStartedLatch.countDown();
+                ((AsyncMessageResolver) messageResolver).run();
+            });
+        } else {
+            componentsStartedLatch.countDown();
         }
 
-        executorService.submit(messageBroker);
-        log.info("Container({}) successfully started", identifier);
+        executorService.submit(() -> {
+            componentsStartedLatch.countDown();
+            messageBroker.run();
+        });
+
+        try {
+            componentsStartedLatch.await();
+            // Waits a little bit for the actual methods to be started due to the latch counting down to zero before the background thread is actually run
+            Thread.sleep(50);
+            log.info("Container '{}' successfully started", identifier);
+        } catch (final InterruptedException interruptedException) {
+            log.warn("Thread interrupted before container could be started up, it may not have started up correctly");
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
     public synchronized void stop() {
-        log.info("Container({}) is being stopped", identifier);
+        log.info("Container '{}' is being stopped", identifier);
         if (executorService == null) {
-            log.debug("Container({}) has already been stopped. No action taken", identifier);
+            log.debug("Container '{}' has already been stopped. No action taken", identifier);
             return;
         }
 
         try {
             final boolean didServiceShutdown = stopBackgroundThreadsWithRetries(properties.getShutdownRetryLimit());
             if (didServiceShutdown) {
-                log.info("Container({}) successfully stopped", identifier);
+                log.info("Container '{}' successfully stopped", identifier);
             } else {
-                log.error("Container({}) did not stop. There may be background threads still running", identifier);
+                log.error("Container '{}' did not stop. There may be background threads still running", identifier);
             }
         } finally {
             // Reset so we can start the container again in the future
@@ -166,18 +212,13 @@ public class SimpleMessageListenerContainer implements MessageListenerContainer 
             if (numberOfRetriesLeft <= 0) {
                 return false;
             } else {
-                log.warn("Container({}) has not stopped in {} {}, trying again", identifier, timeout, timeUnit);
+                log.warn("Container '{}' has not stopped in {} {}, trying again", identifier, timeout, timeUnit);
                 return stopBackgroundThreadsWithRetries(numberOfRetriesLeft - 1);
             }
         } catch (final InterruptedException interruptedException) {
-            log.warn("Container({}) shutdown was interrupted and may not have shutdown all threads", identifier);
+            log.warn("Container '{}' shutdown was interrupted and may not have shutdown all threads", identifier);
             Thread.currentThread().interrupt();
             return false;
         }
-    }
-
-    @VisibleForTesting
-    ExecutorService getNewExecutorService() {
-        return Executors.newCachedThreadPool();
     }
 }

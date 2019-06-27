@@ -81,6 +81,7 @@ public class BatchingMessageResolver implements AsyncMessageResolver {
 
     @Override
     public void run() {
+        log.info("Started BatchingMessageResolver background thread");
         boolean continueProcessing = true;
         while (continueProcessing) {
             try {
@@ -88,6 +89,7 @@ public class BatchingMessageResolver implements AsyncMessageResolver {
                 try {
                     Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, getBatchSize(), getBufferingTimeInMs(), TimeUnit.MILLISECONDS);
                 } catch (final InterruptedException interruptedException) {
+                    log.info("Thread interrupting while waiting for full batch.  Sending final batch before shutting down.");
                     // Do nothing, we still want to send the current batch of messages
                     continueProcessing = false;
                 }
@@ -95,10 +97,11 @@ public class BatchingMessageResolver implements AsyncMessageResolver {
                 if (!batchOfMessagesToResolve.isEmpty()) {
                     submitMessageDeletionBatch(batchOfMessagesToResolve);
                 }
-            } catch (final Throwable throwable) {
-                log.error("Exception thrown when retrieving messages", throwable);
+            } catch (final RuntimeException runtimeException) {
+                log.error("Exception thrown when resolving messages", runtimeException);
             }
         }
+        log.info("BatchingMessageResolver background thread has been successfully stopped");
     }
 
     /**

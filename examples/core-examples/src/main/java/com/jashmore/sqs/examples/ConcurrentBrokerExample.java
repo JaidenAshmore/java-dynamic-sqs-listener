@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -142,6 +143,17 @@ public class ConcurrentBrokerExample {
                     @Override
                     public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
                         return 0L;
+                    }
+
+                    @Nullable
+                    @Override
+                    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
+                        return false;
                     }
                 })
         );
