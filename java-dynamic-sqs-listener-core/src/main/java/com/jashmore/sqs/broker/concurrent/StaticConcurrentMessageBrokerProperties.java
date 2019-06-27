@@ -14,7 +14,6 @@ import net.jcip.annotations.ThreadSafe;
 import java.util.Locale;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
 /**
@@ -35,12 +34,16 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     private final Long preferredConcurrencyPollingRateInMilliseconds;
     private final String threadNameFormat;
     private final Long errorBackoffTimeInMilliseconds;
+    private final Long shutdownTimeoutInSeconds;
+    private final boolean interruptThreadsProcessingMessagesOnShutdown;
 
     @SuppressFBWarnings("RV_RETURN_VAL")
     public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
                                                    final Long preferredConcurrencyPollingRateInMilliseconds,
                                                    final String threadNameFormat,
-                                                   final Long errorBackoffTimeInMilliseconds) {
+                                                   final Long errorBackoffTimeInMilliseconds,
+                                                   final Long shutdownTimeoutInSeconds,
+                                                   final boolean interruptThreadsProcessingMessagesOnShutdown) {
         Preconditions.checkArgument(concurrencyLevel == null || concurrencyLevel >= 0, "concurrencyLevel should be greater than or equal to zero");
         Preconditions.checkArgument(preferredConcurrencyPollingRateInMilliseconds == null || preferredConcurrencyPollingRateInMilliseconds >= 0,
                 "preferredConcurrencyPollingRateInMilliseconds should be greater than or equal to zero");
@@ -58,26 +61,43 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
             //noinspection ResultOfMethodCallIgnored
             String.format(Locale.ROOT, threadNameFormat, 1);
         }
+        this.shutdownTimeoutInSeconds = shutdownTimeoutInSeconds;
+        this.interruptThreadsProcessingMessagesOnShutdown = interruptThreadsProcessingMessagesOnShutdown;
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Integer getConcurrencyLevel() {
+    public Integer getConcurrencyLevel() {
         return concurrencyLevel;
     }
 
+    @PositiveOrZero
     @Override
-    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
+    public Long getPreferredConcurrencyPollingRateInMilliseconds() {
         return preferredConcurrencyPollingRateInMilliseconds;
     }
 
+    @Nullable
     @Override
     public String getThreadNameFormat() {
         return threadNameFormat;
     }
 
     @Nullable
+    @PositiveOrZero
     @Override
-    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+    public Long getErrorBackoffTimeInMilliseconds() {
         return errorBackoffTimeInMilliseconds;
+    }
+
+    @Nullable
+    @Override
+    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
+        return shutdownTimeoutInSeconds;
+    }
+
+    @Override
+    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
+        return interruptThreadsProcessingMessagesOnShutdown;
     }
 }

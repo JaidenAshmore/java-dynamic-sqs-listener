@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -93,11 +94,9 @@ public class ConcurrentBrokerExample {
         final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
-                StaticPrefetchingMessageRetrieverProperties
-                        .builder()
+                StaticPrefetchingMessageRetrieverProperties.builder()
                         .desiredMinPrefetchedMessages(10)
                         .maxPrefetchedMessages(20)
-                        .maxWaitTimeInSecondsToObtainMessagesFromServer(10)
                         .build()
         );
 
@@ -145,11 +144,22 @@ public class ConcurrentBrokerExample {
                     public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
                         return 0L;
                     }
+
+                    @Nullable
+                    @Override
+                    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
+                        return false;
+                    }
                 })
         );
 
         final MessageListenerContainer messageListenerContainer
-                = new SimpleMessageListenerContainer(messageRetriever, concurrentMessageBroker, messageResolver);
+                = new SimpleMessageListenerContainer("core-example-container", messageRetriever, concurrentMessageBroker, messageResolver);
         messageListenerContainer.start();
 
         // Create some producers of messages

@@ -6,7 +6,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * Service that is injected into the applications dependency injection framework that can be used to resolve parameterised strings to a queue url if there is
  * a queue that exists.
  */
-public interface QueueResolverService {
+public interface QueueResolver {
     /**
      * Resolve the queue URL for a queue.
      *

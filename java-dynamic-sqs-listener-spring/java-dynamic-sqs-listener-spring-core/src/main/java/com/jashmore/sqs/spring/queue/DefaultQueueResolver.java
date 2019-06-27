@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Service
 @AllArgsConstructor
-public class DefaultQueueResolverService implements QueueResolverService {
+public class DefaultQueueResolver implements QueueResolver {
     private final Environment environment;
 
     @Override

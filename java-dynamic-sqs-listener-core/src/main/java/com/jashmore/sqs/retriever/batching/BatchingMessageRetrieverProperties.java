@@ -1,7 +1,5 @@
 package com.jashmore.sqs.retriever.batching;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-
 import com.jashmore.sqs.aws.AwsConstants;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
@@ -67,22 +65,7 @@ public interface BatchingMessageRetrieverProperties {
      */
     @Nullable
     @Positive
-    Integer getVisibilityTimeoutInSeconds();
-
-    /**
-     * The number of seconds that the request for messages will wait for a message to be available on the queue.
-     *
-     * <p>Note that this will only wait until at least one message is received and it will not wait until the total number of requested messages is available.
-     *
-     * <p>If this value is null, the {@link AwsConstants#MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS} will be used when requesting messages from SQS.
-     *
-     * @return the wait time in seconds for obtaining messages
-     * @see ReceiveMessageRequest#waitTimeSeconds()  for the usage
-     */
-    @Nullable
-    @PositiveOrZero
-    @Max(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-    Integer getMessageWaitTimeInSeconds();
+    Integer getMessageVisibilityTimeoutInSeconds();
 
     /**
      * The number of milliseconds that the background thread for receiving messages should sleep after an error is thrown.

@@ -47,10 +47,9 @@ public class BatchingMessageRetrieverTest {
     private static final long POLLING_PERIOD_IN_MS = 50L;
     private static final StaticBatchingMessageRetrieverProperties DEFAULT_PROPERTIES = StaticBatchingMessageRetrieverProperties
             .builder()
-            .visibilityTimeoutInSeconds(10)
+            .messageVisibilityTimeoutInSeconds(10)
             .numberOfThreadsWaitingTrigger(2)
             .messageRetrievalPollingPeriodInMs(POLLING_PERIOD_IN_MS)
-            .waitTimeInSeconds(10)
             .build();
 
     @Rule
@@ -179,7 +178,7 @@ public class BatchingMessageRetrieverTest {
     public void whenNoVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .visibilityTimeoutInSeconds(null)
+                .messageVisibilityTimeoutInSeconds(null)
                 .build();
         final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
         final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
@@ -205,7 +204,34 @@ public class BatchingMessageRetrieverTest {
     public void whenNegativeVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .visibilityTimeoutInSeconds(-1)
+                .messageVisibilityTimeoutInSeconds(-1)
+                .build();
+        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
+        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(
+                QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
+            @Override
+            void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
+                throw new InterruptedException();
+            }
+        };
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
+
+        // act
+        backgroundThread.run();
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
+    }
+
+
+    @Test
+    public void whenZeroVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
+        // arrange
+        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
+                .messageVisibilityTimeoutInSeconds(0)
                 .build();
         final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
         final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(
@@ -231,7 +257,7 @@ public class BatchingMessageRetrieverTest {
     public void whenValidVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeThisVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .visibilityTimeoutInSeconds(5)
+                .messageVisibilityTimeoutInSeconds(5)
                 .build();
         final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
         final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(
@@ -339,66 +365,11 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void waitTimeProvidedInPropertiesIsUsedForMessageRetrievalRequests() {
+    public void waitTimeForMessageRetrievalWillSqsMaximum() {
         // arrange
-        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .waitTimeInSeconds(10)
-                .build();
         final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
         final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
-                retrieverProperties, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
-            @Override
-            void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
-                throw new InterruptedException();
-            }
-        };
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
-
-        // act
-        backgroundThread.run();
-
-        // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
-        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds()).isEqualTo(10);
-    }
-
-    @Test
-    public void negativeWaitTimeProvidedInPropertiesWillUseMaxWaitTimeInsteadForMessageRetrievalRequests() {
-        // arrange
-        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .waitTimeInSeconds(-1)
-                .build();
-        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
-        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
-                retrieverProperties, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
-            @Override
-            void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
-                throw new InterruptedException();
-            }
-        };
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(Message.builder().build()));
-
-        // act
-        backgroundThread.run();
-
-        // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
-        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds()).isEqualTo(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
-    }
-
-    @Test
-    public void waitTimeProvidedInPropertiesGreaterThanAwsMaximumWillUseMaxWaitTimeInsteadForMessageRetrievalRequests() {
-        // arrange
-        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .waitTimeInSeconds(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS + 1)
-                .build();
-        final int threadsRequestingMessages = DEFAULT_PROPERTIES.getNumberOfThreadsWaitingTrigger();
-        final BatchingMessageRetriever backgroundThread = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient,
-                retrieverProperties, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
+                DEFAULT_PROPERTIES, new AtomicInteger(threadsRequestingMessages), new LinkedBlockingQueue<>(), new Object()) {
             @Override
             void waitForEnoughThreadsToRequestMessages(final long waitPeriodInMs) throws InterruptedException {
                 throw new InterruptedException();

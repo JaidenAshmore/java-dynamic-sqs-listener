@@ -1,4 +1,4 @@
-package com.jashmore.sqs.spring;
+package com.jashmore.sqs.spring.container;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
@@ -34,33 +34,33 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @Slf4j
 @ThreadSafe
-public class DefaultQueueContainerService implements QueueContainerService, ApplicationContextAware, SmartLifecycle {
+public class DefaultMessageListenerContainerCoordinator implements MessageListenerContainerCoordinator, ApplicationContextAware, SmartLifecycle {
     /**
-     * These {@link QueueWrapper}s should be injected by the spring application and therefore to add more wrappers into the system a corresponding bean
-     * with this interface must be included in the application.
+     * These {@link MessageListenerContainerFactory}s should be injected by the spring application and therefore to add more wrappers into the
+     * system a corresponding bean with this interface must be included in the application.
      */
-    private final List<QueueWrapper> queueWrappers;
+    private final List<MessageListenerContainerFactory> messageListenerContainerFactories;
 
     /**
      * This contains a supplier that can obtain all of the {@link MessageListenerContainer}s that have been built for this application.
      *
-     * <p>This must be contained within a {@link Supplier} because the {@link QueueContainerService} can be dependency injected into the application and
-     * because the construction of these containers needs to look at all beans there can be a cyclic dependency.
+     * <p>This must be contained within a {@link Supplier} because the {@link MessageListenerContainerCoordinator} can be dependency injected into the
+     * application and because the construction of these containers needs to look at all beans there can be a cyclic dependency.
      */
     private Supplier<Map<String, MessageListenerContainer>> containersLazilyLoaded;
 
     /**
      * Determines whether this container service is currently running in the Spring lifecycle.
      */
-    private AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public DefaultQueueContainerService(final List<QueueWrapper> queueWrappers) {
-        this.queueWrappers = queueWrappers;
+    public DefaultMessageListenerContainerCoordinator(final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+        this.messageListenerContainerFactories = messageListenerContainerFactories;
     }
 
     @Override
     public void setApplicationContext(@Nonnull final ApplicationContext applicationContext) throws BeansException {
-        containersLazilyLoaded = Suppliers.memoize(() -> calculateMessageListenerContainers(queueWrappers, applicationContext));
+        containersLazilyLoaded = Suppliers.memoize(() -> calculateMessageListenerContainers(messageListenerContainerFactories, applicationContext));
     }
 
     @Override
@@ -70,7 +70,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public void startContainer(final String queueIdentifier) {
-        runForQueue(queueIdentifier, MessageListenerContainer::start);
+        runForContainer(queueIdentifier, MessageListenerContainer::start);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public void stopContainer(final String queueIdentifier) {
-        runForQueue(queueIdentifier, MessageListenerContainer::stop);
+        runForContainer(queueIdentifier, MessageListenerContainer::stop);
     }
 
     /**
@@ -97,19 +97,20 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
             CompletableFuture.allOf(allTaskCompletableFutures).get();
         } catch (InterruptedException interruptedException) {
             log.warn("Thread interrupted while running command across all containers");
+            Thread.currentThread().interrupt();
         } catch (ExecutionException executionException) {
             log.error("Error running command on container", executionException);
         }
     }
 
     /**
-     * For the given queue with the identifier run the following {@link Consumer} for the container and wait until it is finished.
+     * For the given container with identifier run the following {@link Consumer} and wait until it is finished.
      *
-     * @param queueIdentifier   the identifier of the queue
-     * @param containerConsumer the container consumer to run
+     * @param containerIdentifier the identifier of the queue
+     * @param containerConsumer   the container consumer to run
      */
-    private void runForQueue(final String queueIdentifier, final Consumer<MessageListenerContainer> containerConsumer) {
-        final MessageListenerContainer container = Optional.ofNullable(containersLazilyLoaded.get().get(queueIdentifier))
+    private void runForContainer(final String containerIdentifier, final Consumer<MessageListenerContainer> containerConsumer) {
+        final MessageListenerContainer container = Optional.ofNullable(containersLazilyLoaded.get().get(containerIdentifier))
                 .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
 
         containerConsumer.accept(container);
@@ -122,7 +123,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public synchronized void start() {
-        log.info("Starting service");
+        log.info("Starting MessageListenerContainerCoordinator");
 
         startAllContainers();
 
@@ -131,7 +132,7 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
 
     @Override
     public synchronized void stop() {
-        log.info("Stopping service");
+        log.info("Stopping MessageListenerContainerCoordinator");
 
         stopAllContainers();
 
@@ -163,27 +164,27 @@ public class DefaultQueueContainerService implements QueueContainerService, Appl
      * Initialise all of the containers for this application by finding all bean methods that need to be wrapped.
      */
     private static Map<String, MessageListenerContainer> calculateMessageListenerContainers(
-            @Nonnull final List<QueueWrapper> queueWrappers,
+            @Nonnull final List<MessageListenerContainerFactory> messageListenerContainerFactories,
             @Nonnull final ApplicationContext applicationContext) {
-        if (queueWrappers.isEmpty()) {
+        if (messageListenerContainerFactories.isEmpty()) {
             return ImmutableMap.of();
         }
 
-        log.debug("Initialising QueueContainerService...");
+        log.debug("Starting all MessageListenerContainers");
         final Map<String, MessageListenerContainer> messageContainers = new HashMap<>();
 
         for (final String beanName : applicationContext.getBeanDefinitionNames()) {
             final Object bean = applicationContext.getBean(beanName);
             for (final Method method : bean.getClass().getMethods()) {
-                for (final QueueWrapper annotationProcessor : queueWrappers) {
-                    if (annotationProcessor.canWrapMethod(method)) {
-                        final IdentifiableMessageListenerContainer identifiableMessageListenerContainer = annotationProcessor.wrapMethod(bean, method);
-                        if (messageContainers.containsKey(identifiableMessageListenerContainer.getIdentifier())) {
+                for (final MessageListenerContainerFactory annotationProcessor : messageListenerContainerFactories) {
+                    if (annotationProcessor.canHandleMethod(method)) {
+                        final MessageListenerContainer messageListenerContainer = annotationProcessor.buildContainer(bean, method);
+                        if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
                             throw new IllegalStateException("Created two MessageListenerContainers with the same identifier: "
-                                    + identifiableMessageListenerContainer.getIdentifier());
+                                    + messageListenerContainer.getIdentifier());
                         }
-                        log.debug("Created MessageListenerContainer with id: {}", identifiableMessageListenerContainer.getIdentifier());
-                        messageContainers.put(identifiableMessageListenerContainer.getIdentifier(), identifiableMessageListenerContainer.getContainer());
+                        log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
+                        messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);
                     }
                 }
             }

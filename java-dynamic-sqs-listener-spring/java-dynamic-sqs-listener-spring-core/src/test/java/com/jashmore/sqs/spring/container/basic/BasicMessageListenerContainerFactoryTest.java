@@ -7,13 +7,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
-import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
+import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.queue.QueueResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import java.util.Optional;
  * without building unnecessary classes.
  */
 @SuppressWarnings("WeakerAccess")
-public class QueueListenerWrapperTest {
+public class BasicMessageListenerContainerFactoryTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -49,16 +49,16 @@ public class QueueListenerWrapperTest {
     private SqsAsyncClient defaultSqsAsyncClient;
 
     @Mock
-    private QueueResolverService queueResolver;
+    private QueueResolver queueResolver;
 
     @Mock
     private Environment environment;
 
-    private QueueListenerWrapper queueListenerWrapper;
+    private BasicMessageListenerContainerFactory queueListenerWrapper;
 
     @Before
     public void setUp() {
-        queueListenerWrapper = new QueueListenerWrapper(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
+        queueListenerWrapper = new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
 
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
     }
@@ -66,39 +66,39 @@ public class QueueListenerWrapperTest {
     @Test
     public void queueListenerWrapperCanBuildMessageListenerContainer() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final MessageListenerContainer messageListenerContainer = queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getContainer()).isInstanceOf(SimpleMessageListenerContainer.class);
+        assertThat(messageListenerContainer).isInstanceOf(SimpleMessageListenerContainer.class);
     }
 
     @Test
     public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final MessageListenerContainer messageListenerContainer = queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("queue-listener-wrapper-test-my-method");
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("basic-message-listener-container-factory-test-my-method");
     }
 
     @Test
     public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethodWithIdentifier");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethodWithIdentifier");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final MessageListenerContainer messageListenerContainer = queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
@@ -106,13 +106,13 @@ public class QueueListenerWrapperTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolverService() throws NoSuchMethodException {
+    public void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         verify(queueResolver).resolveQueueUrl(defaultSqsAsyncClient, "test");
@@ -123,12 +123,12 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.concurrency}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
     }
 
     @Test
@@ -136,12 +136,12 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
     }
 
     @Test
@@ -149,23 +149,23 @@ public class QueueListenerWrapperTest {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("Test Invalid");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
     }
 
     @Test
     public void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
 
         // act
-        final IdentifiableMessageListenerContainer messageListenerContainer = queueListenerWrapper.wrapMethod(bean, method);
+        final MessageListenerContainer messageListenerContainer = queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
@@ -174,7 +174,7 @@ public class QueueListenerWrapperTest {
     @Test
     public void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
         // arrange
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFields");
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFields");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
 
         // act
@@ -183,7 +183,7 @@ public class QueueListenerWrapperTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .visibilityTimeoutInSeconds(300)
+                .messageVisibilityTimeoutInSeconds(300)
                 .messageRetrievalPollingPeriodInMs(40L)
                 .numberOfThreadsWaitingTrigger(10)
                 .build()
@@ -193,7 +193,7 @@ public class QueueListenerWrapperTest {
     @Test
     public void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
         // arrange
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
         when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("8");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
@@ -205,7 +205,7 @@ public class QueueListenerWrapperTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .visibilityTimeoutInSeconds(40)
+                .messageVisibilityTimeoutInSeconds(40)
                 .messageRetrievalPollingPeriodInMs(30L)
                 .numberOfThreadsWaitingTrigger(8)
                 .build()
@@ -215,38 +215,38 @@ public class QueueListenerWrapperTest {
     @Test
     public void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("myMethod");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
-        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expect(MessageListenerContainerInitialisationException.class);
         expectedException.expectMessage("Expected the default SQS Client but there is none");
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
     }
 
     @Test
     public void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
-        expectedException.expect(QueueWrapperInitialisationException.class);
+        expectedException.expect(MessageListenerContainerInitialisationException.class);
         expectedException.expectMessage("Expected a client with id 'clientId' but none were found");
 
         // act
-        queueListenerWrapper.wrapMethod(bean, method);
+        queueListenerWrapper.buildContainer(bean, method);
     }
 
     @Test
     public void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
         // arrange
-        final Object bean = new QueueListenerWrapperTest();
-        final Method method = QueueListenerWrapperTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
+        final Object bean = new BasicMessageListenerContainerFactoryTest();
+        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.of(mock(SqsAsyncClient.class)));
 
         // act
-        final IdentifiableMessageListenerContainer container = queueListenerWrapper.wrapMethod(bean, method);
+        final MessageListenerContainer container = queueListenerWrapper.buildContainer(bean, method);
 
         // assert
         assertThat(container).isNotNull();

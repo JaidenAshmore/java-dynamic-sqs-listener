@@ -36,7 +36,7 @@ public class DelegatingArgumentResolverServiceTest {
         when(methodParameter.getMethod()).thenReturn(this.getClass().getMethod("whenNoResolversCanMatchParameterExceptionIsThrown"));
         when(methodParameter.getParameterIndex()).thenReturn(1);
         expectedException.expect(UnsupportedArgumentResolutionException.class);
-        expectedException.expectMessage("No known for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#whenNoResolversCanMatchParameterExceptionIsThrown");
+        expectedException.expectMessage("No eligible ArgumentResolver for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#whenNoResolversCanMatchParameterExceptionIsThrown");
 
         // act
         new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter);

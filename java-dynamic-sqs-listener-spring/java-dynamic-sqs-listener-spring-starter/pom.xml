@@ -9,7 +9,7 @@
 
     <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
 
-    <name>Java Dynamic SQS Listener - Spring Starter</name>
+    <name>Java Dynamic SQS Listener - Spring -  Starter</name>
     <description>Spring Starter for automatically setting up the Spring Core implementation in a Spring Boot Application.</description>
 
     <properties>

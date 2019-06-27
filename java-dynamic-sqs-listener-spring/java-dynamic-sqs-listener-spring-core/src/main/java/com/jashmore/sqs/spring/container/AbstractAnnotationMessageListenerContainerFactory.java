@@ -1,25 +1,26 @@
-package com.jashmore.sqs.spring;
+package com.jashmore.sqs.spring.container;
 
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 /**
- * Abstract {@link QueueWrapper} that will use annotations to determine whether the method can be wrapped or
+ * Abstract {@link MessageListenerContainerFactory} that will use annotations to determine whether the method can be wrapped or
  * not.
  *
  * @param <T> the type of annotation that the method should have for it to be wrapped
  */
-public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> implements QueueWrapper {
+public abstract class AbstractAnnotationMessageListenerContainerFactory<T extends Annotation> implements MessageListenerContainerFactory {
     @Override
-    public boolean canWrapMethod(final Method method) {
+    public boolean canHandleMethod(final Method method) {
         return AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
                 .isPresent();
     }
 
     @Override
-    public IdentifiableMessageListenerContainer wrapMethod(final Object bean, final Method method) {
+    public MessageListenerContainer buildContainer(final Object bean, final Method method) {
         final T annotation = AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
                 .orElseThrow(() -> new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName()));
 
@@ -41,5 +42,5 @@ public abstract class AbstractQueueAnnotationWrapper<T extends Annotation> imple
      * @param annotation the annotation found on the method containing details about this listener
      * @return the container that wraps the method for usage by the queue listeners
      */
-    protected abstract IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, T annotation);
+    protected abstract MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, T annotation);
 }

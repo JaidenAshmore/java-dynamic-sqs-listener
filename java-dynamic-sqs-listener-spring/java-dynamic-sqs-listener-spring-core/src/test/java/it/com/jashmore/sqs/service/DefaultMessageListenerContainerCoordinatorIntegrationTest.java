@@ -5,7 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.spring.QueueContainerService;
+import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
@@ -26,10 +26,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, DefaultQueueContainerServiceIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
-public class DefaultQueueContainerServiceIntegrationTest {
-    private static final String QUEUE_NAME = "DefaultQueueContainerServiceIntegrationTest";
+public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
+    private static final String QUEUE_NAME = "DefaultMessageListenerContainerCoordinatorIntegrationTest";
     private static final int MESSAGE_VISIBILITY_IN_SECONDS = 1;
 
     @ClassRule
@@ -61,18 +61,18 @@ public class DefaultQueueContainerServiceIntegrationTest {
     }
 
     @Autowired
-    private QueueContainerService queueContainerService;
+    private MessageListenerContainerCoordinator messageListenerContainerCoordinator;
 
     @Test
     public void queueContainerServiceCanStartAndStopQueuesForProcessing() throws Exception {
         // arrange
-        queueContainerService.stopAllContainers();
+        messageListenerContainerCoordinator.stopAllContainers();
         log.info("Containers stopped");
         localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message").get();
 
         // act
         Thread.sleep(1000); // Make sure the queues are not running
-        queueContainerService.startAllContainers();
+        messageListenerContainerCoordinator.startAllContainers();
 
         // assert
         proxiedTestMethodCompleted.await(30, TimeUnit.SECONDS);

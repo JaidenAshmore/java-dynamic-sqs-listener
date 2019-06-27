@@ -13,4 +13,9 @@ public class ConcurrentMessageBrokerConstants {
      * The default amount of time the thread should wait for a thread to process a message before it tries again and checks the available concurrency.
      */
     public static final long DEFAULT_CONCURRENCY_POLLING_IN_MS = 60_000L;
+
+    /**
+     * The default time that the broker will wait for background threads to process during a shutdown.
+     */
+    public static final long DEFAULT_SHUTDOWN_TIME_IN_SECONDS = 60;
 }

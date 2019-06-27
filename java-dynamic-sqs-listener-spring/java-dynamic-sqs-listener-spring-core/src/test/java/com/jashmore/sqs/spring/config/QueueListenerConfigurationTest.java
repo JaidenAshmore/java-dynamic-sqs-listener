@@ -13,12 +13,12 @@ import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolve
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
-import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.DefaultQueueContainerService;
-import com.jashmore.sqs.spring.QueueContainerService;
+import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.container.basic.QueueListenerWrapper;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerWrapper;
+import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.junit.MockitoJUnit;
@@ -202,73 +202,73 @@ public class QueueListenerConfigurationTest {
     }
 
     @Test
-    public void defaultQueueContainerServiceIsUsedIfUserContextDoesNotDefineItsOwn() {
+    public void defaultMessageListenerContainerCoordinatorIsUsedIfUserContextDoesNotDefineItsOwn() {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    assertThat(context).hasSingleBean(QueueContainerService.class);
-                    assertThat(context.getBean(QueueContainerService.class)).isInstanceOf(DefaultQueueContainerService.class);
+                    assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
+                    assertThat(context.getBean(MessageListenerContainerCoordinator.class)).isInstanceOf(DefaultMessageListenerContainerCoordinator.class);
                 });
     }
 
     @Test
-    public void allCoreDefinedQueueWrappersAreIncludedInContext() {
+    public void allCoreDefinedMessageListenerContainerFactoriesAreIncludedInContext() {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    final Collection<Class<? extends QueueWrapper>> queueWrapperClasses = context.getBeansOfType(QueueWrapper.class).values().stream()
-                            .map(QueueWrapper::getClass)
+                    final Collection<Class<? extends MessageListenerContainerFactory>> MessageListenerContainerFactoryClasses = context.getBeansOfType(MessageListenerContainerFactory.class).values().stream()
+                            .map(MessageListenerContainerFactory::getClass)
                             .collect(toSet());
 
-                    assertThat(queueWrapperClasses).containsExactlyInAnyOrder(QueueListenerWrapper.class, PrefetchingQueueListenerWrapper.class);
+                    assertThat(MessageListenerContainerFactoryClasses).containsExactlyInAnyOrder(BasicMessageListenerContainerFactory.class, PrefetchingMessageListenerContainerFactory.class);
                 });
     }
 
     @Test
-    public void allDefinedQueueWrappersAreIncludedInDefaultQueueContainerService() {
+    public void allDefinedMessageListenerContainerFactoriesAreIncludedInDefaultMessageListenerContainerCoordinator() {
         this.contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run((context) -> {
-                    final Collection<QueueWrapper> queueWrappers = context.getBeansOfType(QueueWrapper.class).values();
-                    final DefaultQueueContainerService service = (DefaultQueueContainerService) context.getBean(QueueContainerService.class);
-                    final Field argumentResolversField = DefaultQueueContainerService.class.getDeclaredField("queueWrappers");
+                    final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                    final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                     argumentResolversField.setAccessible(true);
-                    assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
-                            .containsExactlyElementsOf(queueWrappers);
+                    assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
+                            .containsExactlyElementsOf(messageListenerContainerFactories);
                 });
     }
 
     @Test
-    public void userDefinedQueueWrapperIsIncludedInDefaultQueueContainerService() {
+    public void userDefinedMessageListenerContainerFactoryIsIncludedInDefaultMessageListenerContainerCoordinator() {
         this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomQueueWrapper.class)
+                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerFactory.class)
                 .run((context) -> {
-                    final Collection<QueueWrapper> queueWrappers = context.getBeansOfType(QueueWrapper.class).values();
-                    final DefaultQueueContainerService service = (DefaultQueueContainerService) context.getBean(QueueContainerService.class);
-                    final Field argumentResolversField = DefaultQueueContainerService.class.getDeclaredField("queueWrappers");
+                    final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                    final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                     argumentResolversField.setAccessible(true);
-                    assertThat(((List<QueueWrapper>) argumentResolversField.get(service)))
-                            .containsExactlyElementsOf(queueWrappers);
-                    assertThat(queueWrappers).hasSize(3);
+                    assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
+                            .containsExactlyElementsOf(messageListenerContainerFactories);
+                    assertThat(messageListenerContainerFactories).hasSize(3);
                 });
     }
 
     @Test
-    public void userDefinedQueueContainerServiceWillNotUseDefaultService() {
+    public void userDefinedMessageListenerContainerCoordinatorWillNotUseDefaultService() {
         this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomQueueContainerService.class)
+                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
                 .run((context) -> {
-                    assertThat(context).hasSingleBean(QueueContainerService.class);
-                    assertThat(context.getBean(QueueContainerService.class))
-                            .isSameAs(context.getBean(UserConfigurationWithCustomQueueContainerService.class).customQueueContainerService());
+                    assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
+                    assertThat(context.getBean(MessageListenerContainerCoordinator.class))
+                            .isSameAs(context.getBean(UserConfigurationWithCustomMessageListenerContainerCoordinator.class).customMessageListenerContainerCoordinator());
                 });
     }
 
     @Test
-    public void userDefinedQueueContainerServiceWillResultInNoCoreQueueWrappersInContext() {
+    public void userDefinedMessageListenerContainerCoordinatorWillResultInNoCoreMessageListenerContainerFactoriesInContext() {
         this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomQueueContainerService.class)
-                .run((context) -> assertThat(context).doesNotHaveBean(QueueWrapper.class));
+                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
+                .run((context) -> assertThat(context).doesNotHaveBean(MessageListenerContainerFactory.class));
     }
 
     @Test
@@ -376,19 +376,19 @@ public class QueueListenerConfigurationTest {
 
     @Import(UserConfigurationWithSqsClient.class)
     @Configuration
-    static class UserConfigurationWithCustomQueueContainerService {
+    static class UserConfigurationWithCustomMessageListenerContainerCoordinator {
         @Bean
-        public QueueContainerService customQueueContainerService() {
-            return mock(QueueContainerService.class);
+        public MessageListenerContainerCoordinator customMessageListenerContainerCoordinator() {
+            return mock(MessageListenerContainerCoordinator.class);
         }
     }
 
     @Import(UserConfigurationWithSqsClient.class)
     @Configuration
-    static class UserConfigurationWithCustomQueueWrapper {
+    static class UserConfigurationWithCustomMessageListenerContainerFactory {
         @Bean
-        public QueueWrapper customQueueWrapper() {
-            return mock(QueueWrapper.class);
+        public MessageListenerContainerFactory customMessageListenerContainerFactory() {
+            return mock(MessageListenerContainerFactory.class);
         }
     }
 

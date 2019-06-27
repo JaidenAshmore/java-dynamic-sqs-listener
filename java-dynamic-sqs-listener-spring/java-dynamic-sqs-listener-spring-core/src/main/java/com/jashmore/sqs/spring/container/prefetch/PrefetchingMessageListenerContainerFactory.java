@@ -1,13 +1,12 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.processor.DefaultMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -17,12 +16,11 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.AbstractQueueAnnotationWrapper;
-import com.jashmore.sqs.spring.IdentifiableMessageListenerContainer;
-import com.jashmore.sqs.spring.QueueWrapper;
-import com.jashmore.sqs.spring.QueueWrapperInitialisationException;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.queue.QueueResolverService;
+import com.jashmore.sqs.spring.container.AbstractAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,15 +31,15 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import java.lang.reflect.Method;
 
 /**
- * {@link QueueWrapper} that will wrap methods annotated with {@link PrefetchingQueueListener @PrefetchingQueueListener} with some predefined
- * implementations of the framework.
+ * {@link MessageListenerContainerFactory} that will wrap methods annotated with {@link PrefetchingQueueListener @PrefetchingQueueListener} with
+ * some predefined implementations of the framework.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrapper<PrefetchingQueueListener> {
+public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<PrefetchingQueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
-    private final QueueResolverService queueResolverService;
+    private final QueueResolver queueResolver;
     private final Environment environment;
 
     @Override
@@ -50,13 +48,13 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
     }
 
     @Override
-    protected IdentifiableMessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
-                                                                                  final PrefetchingQueueListener annotation) {
+    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
+                                                                      final PrefetchingQueueListener annotation) {
         final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation.sqsClient());
 
         final QueueProperties queueProperties = QueueProperties
                 .builder()
-                .queueUrl(queueResolverService.resolveQueueUrl(sqsAsyncClient, annotation.value()))
+                .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
                 .build();
 
         final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, sqsAsyncClient);
@@ -81,10 +79,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
                         .build()
         );
 
-        return IdentifiableMessageListenerContainer.builder()
-                .identifier(identifier)
-                .container(new SimpleMessageListenerContainer(messageRetriever, messageBroker, messageResolver))
-                .build();
+        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker, messageResolver);
     }
 
     private int getConcurrencyLevel(final PrefetchingQueueListener annotation) {
@@ -124,8 +119,7 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
         return StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
                 .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
-                .visibilityTimeoutForMessagesInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
-                .maxWaitTimeInSecondsToObtainMessagesFromServer(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+                .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
                 .build();
     }
 
@@ -138,10 +132,10 @@ public class PrefetchingQueueListenerWrapper extends AbstractQueueAnnotationWrap
     private SqsAsyncClient getSqsAsyncClient(final String sqsClient) {
         if (StringUtils.isEmpty(sqsClient)) {
             return sqsAsyncClientProvider.getDefaultClient()
-                    .orElseThrow(() -> new QueueWrapperInitialisationException("Expected the default SQS Client but there is none"));
+                    .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none"));
         }
 
         return sqsAsyncClientProvider.getClient(sqsClient)
-                .orElseThrow(() -> new QueueWrapperInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
+                .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
     }
 }

@@ -92,7 +92,7 @@ public class VisibilityExtenderIntegrationTest {
                         .build()
         );
         final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                messageRetriever, messageBroker, messageResolver
+                "id", messageRetriever, messageBroker, messageResolver
         );
         simpleMessageListenerContainer.start();
 

@@ -1,5 +1,5 @@
 # Spring - How to add your own Queue Listener
-The [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java) is
+The [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/MessageListenerContainerFactory.java) is
 used to process bean methods to determine whether they should be used to process SQS messages. The most common way to define whether a method should be wrapped
 is via an annotation, for example the following method indicates that it should be wrapped in a basic queue listener:
 
@@ -10,7 +10,7 @@ public void messageConsumer(@Payload final String messagePayload) {
 }
 ```
 
-There are only a few core [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)s
+There are only a few core [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)s
 that are provided and therefore may not cover the use cases that is desired. Therefore, consumers can define their own wrapper that will be used with the
 core ones provided.
 
@@ -19,10 +19,10 @@ An application wants to provide a custom annotation to wrap methods with some me
 example, the `SleepingMessageRetriever` built in the [how to implement a custom message retrieval](../core/core-how-to-implement-a-custom-message-retrieval.md).
 
 ## Prerequisites
-1. This relies on no [QueueContainerService](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueContainerService.java)
+1. This relies on no [MessageListenerContainerCoordinator](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java)
 being provided by the consumer of this framework and therefore the default will be used. See
-[QueueListenerAutoConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
-for more information about how the [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)
+[QueueListenerAutoConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
+for more information about how the [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
 are collected.
 
 ## Steps
@@ -46,20 +46,20 @@ we wrote (see [Core - How to implement a custom message retrieval](../core/core-
            Long sleepPeriodInMs();
     }
     ```
-1. Implement the [QueueWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/QueueWrapper.java)
+1. Implement the [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
 interface with the custom implementation. As we are using annotations to indicate the method to wrap, we can extend the
-[AbstractQueueAnnotationWrapper](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/AbstractQueueAnnotationWrapper.java)
+[AbstractAnnotationMessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/AbstractAnnotationMessageListenerContainerFactory.java)
 to make matching on annotations easier. At this point whenever we enter `wrapMethodContainingAnnotation` we have found a bean with a method
 annotated with `SleepingQueueListener` and now we need to create a
-[MessageListenerContainer](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainer.java)
+[MessageListenerContainer](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java)
 that has the responsibility of handling the spring lifecycle of this queue listener. The
-[SimpleMessageListenerContainer](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/container/SimpleMessageListenerContainer.java)
+[SimpleMessageListenerContainer](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/container/SimpleMessageListenerContainer.java)
 is the simplest (and currently only) implementation of this and is the most likely one that would be used.
     ```java
-    public class MySleepingQueueWrapper extends AbstractQueueAnnotationWrapper<SleepingQueueListener> {
+    public class MySleepingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
         private final ArgumentResolverService argumentResolverService;
      
-        public MySleepingQueueWrapper(final ArgumentResolverService argumentResolverService) {   
+        public MySleepingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService) {   
             this.argumentResolverService = argumentResolverService;
         }
      
@@ -72,7 +72,7 @@ is the simplest (and currently only) implementation of this and is the most like
         protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final SleepingQueueListener annotation) {
             final QueueProperties queueProperties = QueueProperties
                    .builder()
-                   .queueUrl( queueResolverService.resolveQueueUrl(annotation.value()))
+                   .queueUrl( queueResolver.resolveQueueUrl(annotation.value()))
                    .build();
     
             final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
@@ -94,8 +94,8 @@ is the simplest (and currently only) implementation of this and is the most like
      @Configuration
      public class MyConfiguration {
         @Bean
-        public QueueWrapper mySleepingQueueWrapper(final ArgumentResolverService argumentResolverService) {
-            return new MySleepingQueueWrapper(argumentResolverService); 
+        public MessageListenerContainerFactory mySleepingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService) {
+            return new MySleepingMessageListenerContainerFactory(argumentResolverService); 
         }
      }
      ``` 

@@ -1,5 +1,6 @@
 package com.jashmore.sqs.retriever.batching;
 
+import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BACKOFF_TIME_IN_MS;
 import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BATCHING_TRIGGER;
 
@@ -11,7 +12,6 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.retriever.AsyncMessageRetriever;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import com.jashmore.sqs.util.retriever.RetrieverUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -75,8 +75,6 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
     public Message retrieveMessage() throws InterruptedException {
         try {
             incrementWaitingCountAndNotify();
-
-            log.trace("Waiting for message");
             return messagesDownloaded.take();
         } finally {
             numberWaitingForMessages.decrementAndGet();
@@ -92,7 +90,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
             final int currentThreads = numberWaitingForMessages.incrementAndGet();
             final int numberOfThreadsWaitingTrigger = getNumberOfThreadsWaitingTrigger();
             if (currentThreads >= numberOfThreadsWaitingTrigger) {
-                log.debug("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
+                log.trace("Maximum number of threads({}) waiting has arrived requesting any sleeping threads to wake up to process",
                         numberOfThreadsWaitingTrigger);
                 // notify that we should grab a message
                 shouldObtainMessagesLock.notifyAll();
@@ -102,7 +100,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
 
     @Override
     public void run() {
-        log.debug("Started background thread");
+        log.info("Started BatchingMessageRetriever background thread");
         while (true) {
             try {
                 final int numberOfMessagesToObtain;
@@ -159,7 +157,6 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                     }
                 }
 
-                log.error("Exception thrown when retrieving messages", exception);
                 try {
                     final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
                     log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, exception);
@@ -170,6 +167,7 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 }
             }
         }
+        log.info("BatchingMessageRetriever background thread has been successfully stopped");
     }
 
     @SuppressFBWarnings("WA_NOT_IN_LOOP") // Suppressed because it is actually in a loop this is just for testing purposes
@@ -222,11 +220,11 @@ public class BatchingMessageRetriever implements AsyncMessageRetriever {
                 .attributeNames(QueueAttributeName.ALL)
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .maxNumberOfMessages(numberOfMessagesToObtain)
-                .waitTimeSeconds(RetrieverUtils.safelyGetWaitTimeInSeconds(properties::getMessageWaitTimeInSeconds));
+                .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
 
-        final Integer visibilityTimeoutInSeconds = properties.getVisibilityTimeoutInSeconds();
+        final Integer visibilityTimeoutInSeconds = properties.getMessageVisibilityTimeoutInSeconds();
         if (visibilityTimeoutInSeconds != null) {
-            if (visibilityTimeoutInSeconds < 0) {
+            if (visibilityTimeoutInSeconds <= 0) {
                 log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
             } else {
                 requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);

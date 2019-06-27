@@ -9,7 +9,7 @@
 
     <artifactId>multiple-aws-account-example</artifactId>
 
-    <name>Java Dynamic SQS Listener - Multiple AWS Accounts Example</name>
+    <name>Java Dynamic SQS Listener - Spring Starter - Multiple AWS Accounts Example</name>
     <description>Contains examples for listening to SQS queues on multiple AWS Accounts</description>
 
     <properties>

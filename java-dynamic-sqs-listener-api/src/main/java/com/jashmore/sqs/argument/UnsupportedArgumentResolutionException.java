@@ -9,7 +9,7 @@ public class UnsupportedArgumentResolutionException extends RuntimeException {
     }
 
     public UnsupportedArgumentResolutionException(final MethodParameter methodParameter) {
-        super(String.format("No known for parameter[%d] for method: %s",
+        super(String.format("No eligible ArgumentResolver for parameter[%d] for method: %s",
                 methodParameter.getParameterIndex(),
                 methodParameter.getMethod().getDeclaringClass().getName() + "#" + methodParameter.getMethod().getName())
         );
