@@ -8,7 +8,7 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 /**
  * Wrap a method with a {@link MessageListenerContainer} that will execute the method whenever a message is received on the provided queue.
  *
- * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link DefaultMessageProcessor}
+ * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link CoreMessageProcessor}
  * for the implementations of the framework. Not all of the properties for each implementation are available to simplify this usage.
  *
  * @see PrefetchingMessageListenerContainerFactory for what processes this annotation

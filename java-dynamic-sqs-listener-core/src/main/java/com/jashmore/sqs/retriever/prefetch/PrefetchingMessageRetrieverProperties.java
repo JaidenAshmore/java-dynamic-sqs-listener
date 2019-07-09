@@ -8,7 +8,7 @@ import javax.validation.constraints.PositiveOrZero;
 
 public interface PrefetchingMessageRetrieverProperties {
     /**
-     * The minimum number of messages that should be queued before it will stopWithChildrenThreadsInterrupted requesting more messages.
+     * The minimum number of messages that should be in the queue before it will request more messages.
      *
      * <p>For example if the desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10 and the current prefetched messages is 6 it will not call out to AWS
      * for more messages. However, once the current prefetched messages goes below 5 it will request more messages.
@@ -19,8 +19,8 @@ public interface PrefetchingMessageRetrieverProperties {
      *
      * <p>Constraints on this field include:
      * <ul>
-     *     <li>This value must be greater than 0</li>
-     *     <li>This value must be less than {@link #getMaxPrefetchedMessages()}</li>
+     *     <li>this value must be greater than 0</li>
+     *     <li>this value must be less than {@link #getMaxPrefetchedMessages()}</li>
      * </ul>
      *
      * @return the minimum number of prefetched messages
@@ -37,8 +37,8 @@ public interface PrefetchingMessageRetrieverProperties {
      *
      * <p>Constraints on this field include:
      * <ul>
-     *     <li>This value must be greater than 0</li>
-     *     <li>This value must be greater than than {@link #getDesiredMinPrefetchedMessages()}</li>
+     *     <li>this value must be greater than 0</li>
+     *     <li>this value must be greater than than {@link #getDesiredMinPrefetchedMessages()}</li>
      * </ul>
      *
      * @return the maximum number of prefetched messages
@@ -50,6 +50,8 @@ public interface PrefetchingMessageRetrieverProperties {
      * The visibility timeout for the message.
      *
      * <p>E.g. the number of seconds that a message can be kept before it is assumed that it wasn't completed and will be put back onto the queue
+     *
+     * <p>If this value is null, no visibility timeout will be set on the message retrieval.
      *
      * @return the visibility timeout for messages where null means to use the SQS default visibility timeout
      * @see ReceiveMessageRequest#visibilityTimeout() for where this is applied against

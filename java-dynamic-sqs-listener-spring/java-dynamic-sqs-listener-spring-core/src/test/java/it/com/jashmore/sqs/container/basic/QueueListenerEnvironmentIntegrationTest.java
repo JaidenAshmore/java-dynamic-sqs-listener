@@ -81,7 +81,11 @@ public class QueueListenerEnvironmentIntegrationTest {
     public void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i));
+                .forEach(i -> {
+                    final String messageBody = "message: " + i;
+                    log.info("Sent message: {}", messageBody);
+                    localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, messageBody);
+                });
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

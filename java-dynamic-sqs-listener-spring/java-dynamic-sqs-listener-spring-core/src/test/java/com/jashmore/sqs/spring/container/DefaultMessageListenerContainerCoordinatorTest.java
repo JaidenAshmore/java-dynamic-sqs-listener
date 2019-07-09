@@ -23,6 +23,7 @@ import org.mockito.junit.MockitoRule;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class DefaultMessageListenerContainerCoordinatorTest {

@@ -11,11 +11,10 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.PositiveOrZero;
 
 /**
- * Implementation that will cache the values as the methods to retrieve the values may be costly.
+ * Implementation that will provided {@link ConcurrentMessageBrokerProperties} via a cache to reduce the amount of time that it is calculated.
  *
- * <p>For example, an outbound call is needed to get this value and it is costly to do this every time a message has been processed.
- *
- * <p>This implementation is thread safe even though it is not required to be due to the thread safety of the {@link LoadingCache}.
+ * <p>This is useful if it is costly to determine the values, e.g. by making an outbound call to determine the value, and therefore a cached value should
+ * be used instead.
  */
 @ThreadSafe
 public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
@@ -27,9 +26,6 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel;
     private final LoadingCache<Boolean, Long> cachedPreferredConcurrencyPollingRateInSeconds;
     private final LoadingCache<Boolean, Long> cachedErrorBackoffTimeInMilliseconds;
-    private final String threadNameFormat;
-    private final LoadingCache<Boolean, Long> cachedShutdownTimeoutInSeconds;
-    private final LoadingCache<Boolean, Boolean> interruptThreadsProcessingMessagesOnShutdownCache;
 
     /**
      * Constructor.
@@ -45,39 +41,23 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
 
         this.cachedPreferredConcurrencyPollingRateInSeconds = CacheBuilder.newBuilder()
                 .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
-                .build(CacheLoader.from(delegateProperties::getPreferredConcurrencyPollingRateInMilliseconds));
+                .build(CacheLoader.from(delegateProperties::getConcurrencyPollingRateInMilliseconds));
 
         this.cachedErrorBackoffTimeInMilliseconds = CacheBuilder.newBuilder()
                 .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
                 .build(CacheLoader.from(delegateProperties::getErrorBackoffTimeInMilliseconds));
-
-        this.threadNameFormat = delegateProperties.getThreadNameFormat();
-
-        this.cachedShutdownTimeoutInSeconds = CacheBuilder.newBuilder()
-                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
-                .build(CacheLoader.from(delegateProperties::getShutdownTimeoutInSeconds));
-
-        this.interruptThreadsProcessingMessagesOnShutdownCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
-                .build(CacheLoader.from(delegateProperties::shouldInterruptThreadsProcessingMessagesOnShutdown));
     }
 
     @PositiveOrZero
     @Override
-    public Integer getConcurrencyLevel() {
+    public int getConcurrencyLevel() {
         return cachedConcurrencyLevel.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 
     @PositiveOrZero
     @Override
-    public Long getPreferredConcurrencyPollingRateInMilliseconds() {
+    public Long getConcurrencyPollingRateInMilliseconds() {
         return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
-    }
-
-    @Nullable
-    @Override
-    public String getThreadNameFormat() {
-        return threadNameFormat;
     }
 
     @Nullable
@@ -85,16 +65,5 @@ public class CachingConcurrentMessageBrokerProperties implements ConcurrentMessa
     @Override
     public Long getErrorBackoffTimeInMilliseconds() {
         return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
-    }
-
-    @Nullable
-    @Override
-    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
-        return cachedShutdownTimeoutInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
-    }
-
-    @Override
-    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
-        return interruptThreadsProcessingMessagesOnShutdownCache.getUnchecked(SINGLE_CACHE_VALUE_KEY);
     }
 }

@@ -12,22 +12,18 @@ import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
-import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
-import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
-import com.jashmore.sqs.retriever.AsyncMessageRetriever;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
-import it.com.jashmore.sqs.listener.util.SqsIntegrationTestUtils;
+import it.com.jashmore.sqs.util.SqsIntegrationTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,7 +31,6 @@ import org.junit.Test;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ConcurrentMessageBrokerIntegrationTest {
@@ -62,44 +57,43 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
         final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
-        final MessageRetriever messageRetriever = new IndividualMessageRetriever(
-                sqsAsyncClient,
+        final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
-                StaticIndividualMessageRetrieverProperties.builder()
-                        .visibilityTimeoutForMessagesInSeconds(30)
-                        .build()
+                sqsAsyncClient,
+                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
                 sqsAsyncClient,
-                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
         SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
-        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                "id", messageRetriever, messageBroker, messageResolver
+        final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
+                "id",
+                () -> messageBroker,
+                () -> messageRetriever,
+                () -> messageProcessor,
+                () -> messageResolver
         );
 
         // act
-        simpleMessageListenerContainer.start();
+        coreMessageListenerContainer.start();
 
         // assert
         messageReceivedLatch.await(60, SECONDS);
 
         // cleanup
-        simpleMessageListenerContainer.stop();
+        coreMessageListenerContainer.stop();
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
@@ -109,7 +103,7 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
         final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
-        final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
+        final MessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
                 StaticPrefetchingMessageRetrieverProperties
@@ -121,36 +115,37 @@ public class ConcurrentMessageBrokerIntegrationTest {
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
                 sqsAsyncClient,
-                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                "id", messageRetriever, messageBroker, messageResolver
+        final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
+                "id",
+                () -> messageBroker,
+                () -> messageRetriever,
+                () -> messageProcessor,
+                () -> messageResolver
         );
 
         SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
-        simpleMessageListenerContainer.start();
+        coreMessageListenerContainer.start();
 
         // assert
         messageReceivedLatch.await(1, MINUTES);
 
         // cleanup
-        simpleMessageListenerContainer.stop();
+        coreMessageListenerContainer.stop();
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
@@ -161,47 +156,48 @@ public class ConcurrentMessageBrokerIntegrationTest {
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
         final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
-        final AsyncMessageRetriever messageRetriever = new BatchingMessageRetriever(
+        final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
                 sqsAsyncClient,
                 StaticBatchingMessageRetrieverProperties.builder()
-                        .numberOfThreadsWaitingTrigger(10)
-                        .messageRetrievalPollingPeriodInMs(3000L)
+                        .batchSize(10)
+                        .batchingPeriodInMs(3000L)
                         .messageVisibilityTimeoutInSeconds(60)
                         .build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
                 sqsAsyncClient,
-                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                "id", messageRetriever, messageBroker, messageResolver
+        final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
+                "id",
+                () -> messageBroker,
+                () -> messageRetriever,
+                () -> messageProcessor,
+                () -> messageResolver
         );
 
         SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
-        simpleMessageListenerContainer.start();
+        coreMessageListenerContainer.start();
 
         // assert
         messageReceivedLatch.await(1, MINUTES);
 
         // cleanup
-        simpleMessageListenerContainer.stop();
+        coreMessageListenerContainer.stop();
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 

@@ -9,7 +9,7 @@
 
     <artifactId>sqs-listener-library-comparison</artifactId>
 
-    <name>Java Dynamic SQS Listener - Spring Starter - Examples</name>
+    <name>Java Dynamic SQS Listener - SQS Listener Comparison</name>
     <description>Contains examples for using the Spring Starter implementation of the framework.</description>
 
     <properties>

@@ -9,7 +9,7 @@ import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 /**
  * Wrap a method with a {@link MessageListenerContainer} that will execute the method whenever a message is received on the provided queue.
  *
- * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link BatchingMessageRetriever} and {@link DefaultMessageProcessor}
+ * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link BatchingMessageRetriever} and {@link CoreMessageProcessor}
  * for the implementations of the framework. Not all of the properties for each implementation are available to simplify this usage.
  *
  * @see BasicMessageListenerContainerFactory for what processes this annotation
@@ -106,7 +106,7 @@ public @interface QueueListener {
      * greater than what AWS can provide.
      *
      * @return the total number of threads requesting messages for trigger a batch of messages to be retrieved
-     * @see BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger() for more details about this parameter
+     * @see BatchingMessageRetrieverProperties#getBatchSize() for more details about this parameter
      */
     int batchSize() default 5;
 
@@ -120,7 +120,7 @@ public @interface QueueListener {
      * <pre>batchSizeString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #batchSize()}.
      *
      * @return the total number of threads requesting messages for trigger a batch of messages to be retrieved
-     * @see BatchingMessageRetrieverProperties#getNumberOfThreadsWaitingTrigger() for more details about this parameter
+     * @see BatchingMessageRetrieverProperties#getBatchSize() for more details about this parameter
      */
     String batchSizeString() default "";
 
@@ -132,22 +132,22 @@ public @interface QueueListener {
      * timeout the current threads waiting for messages will have messages requested for them
      *
      * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs() for more details
+     * @see BatchingMessageRetrieverProperties#getBatchingPeriodInMs() for more details
      */
-    long maxPeriodBetweenBatchesInMs() default 2000L;
+    long batchingPeriodInMs() default 2000L;
 
     /**
      * The maximum period of time that the {@link BatchingMessageRetriever} will wait for all threads to be ready before retrieving messages converted
      * from a string representation.
      *
      * <p>This can be used when you need to load the value from Spring properties for example
-     * <pre>maxPeriodBetweenBatchesInMsString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #maxPeriodBetweenBatchesInMs()}.
+     * <pre>batchingPeriodInMsString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #batchingPeriodInMs()}.
      *
      * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingMessageRetrieverProperties#getMessageRetrievalPollingPeriodInMs() for more details
-     * @see #maxPeriodBetweenBatchesInMs() for more information about this field
+     * @see BatchingMessageRetrieverProperties#getBatchingPeriodInMs() for more details
+     * @see #batchingPeriodInMs() for more information about this field
      */
-    String maxPeriodBetweenBatchesInMsString() default "";
+    String batchingPeriodInMsString() default "";
 
     /**
      * The message visibility that will be used for messages obtained from the queue.

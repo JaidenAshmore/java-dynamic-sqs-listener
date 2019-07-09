@@ -13,16 +13,15 @@ import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.resolver.MessageResolver;
-import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
-import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
+import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.AllArgsConstructor;
@@ -41,7 +40,7 @@ public class VisibilityExtenderIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
     private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
-    private static final int ORIGINAL_MESSAGE_VISIBILITY = 5;
+    private static final int ORIGINAL_MESSAGE_VISIBILITY = 2;
 
     @Rule
     public LocalSqsRule localSqsRule = new LocalSqsRule(ImmutableList.of(
@@ -65,36 +64,35 @@ public class VisibilityExtenderIntegrationTest {
     public void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
         // arrange
         final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
-        final MessageRetriever messageRetriever = new IndividualMessageRetriever(
-                sqsAsyncClient,
+        final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
-                StaticIndividualMessageRetrieverProperties.builder()
-                        .visibilityTimeoutForMessagesInSeconds(ORIGINAL_MESSAGE_VISIBILITY)
-                        .build()
+                sqsAsyncClient,
+                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        final AtomicInteger numberTimesMessageProcesed = new AtomicInteger(0);
-        final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, numberTimesMessageProcesed);
-        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+        final AtomicInteger numberTimesMessageProcessed = new AtomicInteger(0);
+        final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, numberTimesMessageProcessed);
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 ARGUMENT_RESOLVER_SERVICE,
                 queueProperties,
                 sqsAsyncClient,
-                messageResolver,
                 MessageConsumer.class.getMethod("consume", VisibilityExtender.class),
                 messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
                 StaticConcurrentMessageBrokerProperties.builder()
-                        .concurrencyLevel(2)
+                        .concurrencyLevel(1)
                         .build()
         );
-        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                "id", messageRetriever, messageBroker, messageResolver
+        final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
+                "id",
+                () -> messageBroker,
+                () -> messageRetriever,
+                () -> messageProcessor,
+                () -> messageResolver
         );
-        simpleMessageListenerContainer.start();
+        coreMessageListenerContainer.start();
 
         // act
         sqsAsyncClient.sendMessage(SendMessageRequest.builder()
@@ -104,10 +102,10 @@ public class VisibilityExtenderIntegrationTest {
                 .get(2, SECONDS);
 
         assertThat(messageProcessedLatch.await(ORIGINAL_MESSAGE_VISIBILITY * 3, SECONDS)).isTrue();
-        simpleMessageListenerContainer.stop();
+        coreMessageListenerContainer.stop();
 
         // assert
-        assertThat(numberTimesMessageProcesed).hasValue(1);
+        assertThat(numberTimesMessageProcessed).hasValue(1);
     }
 
     @AllArgsConstructor

@@ -15,15 +15,14 @@ import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
-import com.jashmore.sqs.resolver.blocking.BlockingMessageResolver;
-import com.jashmore.sqs.resolver.individual.IndividualMessageResolver;
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.retriever.individual.IndividualMessageRetriever;
-import com.jashmore.sqs.retriever.individual.StaticIndividualMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
+import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.test.LocalSqsRule;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,36 +58,35 @@ public class MessageAttributeIntegrationTest {
     public void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
         // arrange
         final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
-        final MessageRetriever messageRetriever = new IndividualMessageRetriever(
-                sqsAsyncClient,
+        final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
-                StaticIndividualMessageRetrieverProperties.builder()
-                        .visibilityTimeoutForMessagesInSeconds(30)
-                        .build()
+                sqsAsyncClient,
+                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
         final AtomicReference<String> messageAttributeReference = new AtomicReference<>();
         final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, messageAttributeReference);
-        final MessageResolver messageResolver = new BlockingMessageResolver(new IndividualMessageResolver(queueProperties, sqsAsyncClient));
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
+        final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 ARGUMENT_RESOLVER_SERVICE,
                 queueProperties,
                 sqsAsyncClient,
-                messageResolver,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
                 StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(1)
                         .build()
         );
-        final SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(
-                "id", messageRetriever, messageBroker, messageResolver
+        final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
+                "id",
+                () -> messageBroker,
+                () -> messageRetriever,
+                () -> messageProcessor,
+                () -> messageResolver
         );
-        simpleMessageListenerContainer.start();
+        coreMessageListenerContainer.start();
 
         // act
         sqsAsyncClient.sendMessage(SendMessageRequest.builder()
@@ -105,7 +103,7 @@ public class MessageAttributeIntegrationTest {
                 .get(2, SECONDS);
 
         assertThat(messageProcessedLatch.await(5, SECONDS)).isTrue();
-        simpleMessageListenerContainer.stop();
+        coreMessageListenerContainer.stop();
 
         // assert
         assertThat(messageAttributeReference).hasValue("expected value");

@@ -14,15 +14,27 @@ public class IdentifierUtilsTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Test
-    public void identifierCanBeBuiltFromClassAndMethod() throws Exception {
+    public void whenIdentifierEmptyCanBeBuiltFromClassAndMethod() throws Exception {
         // arrange
         final Method method = IdentifierUtilsTest.class.getMethod("method");
 
         // act
-        final String identifier = IdentifierUtils.buildIdentifierForMethod(IdentifierUtilsTest.class, method);
+        final String identifier = IdentifierUtils.buildIdentifierForMethod("", IdentifierUtilsTest.class, method);
 
         // assert
         assertThat(identifier).isEqualTo("identifier-utils-test-method");
+    }
+
+    @Test
+    public void whenIdentifierNotEmptyStringItIsReturnedAfterBeingTrimmed() throws Exception {
+        // arrange
+        final Method method = IdentifierUtilsTest.class.getMethod("method");
+
+        // act
+        final String identifier = IdentifierUtils.buildIdentifierForMethod(" test ", IdentifierUtilsTest.class, method);
+
+        // assert
+        assertThat(identifier).isEqualTo("test");
     }
 
     @SuppressWarnings("WeakerAccess")

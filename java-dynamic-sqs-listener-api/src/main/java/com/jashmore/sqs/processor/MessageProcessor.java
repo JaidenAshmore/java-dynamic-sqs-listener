@@ -13,20 +13,10 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Processor that has the responsibility of taking a message and processing it via the required message consumer (Java method).
  *
- * <p>This would therefore need to know what message consumer (method) should be executed for this message and how to execute it. The default
- * behaviour of the processor should be if the method processing the method completes without an exception, the message should be resolved by
- * a {@link MessageResolver}.  However, if the method throws an exception the message processing will be considered a failure and will not be resolved.
- *
- * <p>Instead of the approach above of using an exception to consider failures you can have the Java method return a {@link CompletableFuture} and
- * if that is resolved the message should be considered completed successfully and should be resolved. However, if the {@link CompletableFuture}
- * is rejected the message should not be resolved, just the same as if an exception was thrown.
- *
- * <p>However, if an {@link Acknowledge} parameter is included in the method signature, neither scenarios above should resolve the message and only
- * calls to {@link Acknowledge#acknowledgeSuccessful()} should resolve the message.
- *
- * <p>The parameters of the function will need to extract data out of the message and the implementations of this {@link MessageProcessor} should use
- * the {@link ArgumentResolverService}. For example, an argument may require a parameter to contain the message id of the message
- * and therefore this would handle populating the argument for this parameter with this value.
+ * <p>This wraps a Java method that should be executed for each message received. The parameters of the function will need to extract data out
+ * of the message and the implementations of this {@link MessageProcessor} should use the {@link ArgumentResolverService}. For example, an argument
+ * may require a parameter to contain the message id of the message and therefore this would handle populating the argument for this parameter with
+ * this value.
  *
  * <p>Most arguments would be able to be resolved via the {@link ArgumentResolverService}, however, the following arguments must be resolved via
  * this {@link MessageProcessor}:
@@ -36,6 +26,13 @@ import javax.annotation.concurrent.ThreadSafe;
  *     queue.  If no {@link Acknowledge} argument is included in the argument list of the method, the message will be deleted from the queue if the
  *     method processing the message completes without an exception being thrown.</li>
  *     <li>{@link VisibilityExtender}: this argument can be used to extend the visibility of a message if it is taking a long time to process.</li>
+ * </ul>
+ *
+ * <p>A message can be considered a success and therefore deleted from the queue, see {@link MessageResolver}, if one of these scenarios occurs:
+ * <ul>
+ *     <li>the method has an {@link Acknowledge} field as a parameter and {@link Acknowledge#acknowledgeSuccessful()} is called in the method</li>
+ *     <li>or the method returns a {@link CompletableFuture} which eventually is resolved</li>
+ *     <li>or the method executes without throwing an exception</li>
  * </ul>
  *
  * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the subscriber in that it will take messages provided
@@ -48,8 +45,12 @@ public interface MessageProcessor {
     /**
      * Process the message received on the queue.
      *
-     * @param message the message to process
+     * <p>This method should return a {@link CompletableFuture} that is either resolved or rejected when the message is finished processing.
+     *
+     * @param message                the message to process
+     * @param resolveMessageCallback the callback that should be run when the message was processed successfully
+     * @return future that is resolved when the message was processed and another thread can be picked up, it should not return a rejected future
      * @throws MessageProcessingException if there was an error processing the message, e.g. an exception was thrown by the delegate method
      */
-    void processMessage(Message message) throws MessageProcessingException;
+    CompletableFuture<?> processMessage(Message message, Runnable resolveMessageCallback) throws MessageProcessingException;
 }

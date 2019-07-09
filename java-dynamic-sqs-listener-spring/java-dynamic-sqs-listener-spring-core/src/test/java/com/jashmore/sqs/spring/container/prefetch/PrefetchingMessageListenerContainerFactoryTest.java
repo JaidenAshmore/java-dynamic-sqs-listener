@@ -7,8 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
@@ -74,7 +74,7 @@ public class PrefetchingMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(SimpleMessageListenerContainer.class);
+        assertThat(messageListenerContainer).isInstanceOf(CoreMessageListenerContainer.class);
     }
 
     @Test

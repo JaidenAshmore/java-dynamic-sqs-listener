@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-import java.util.IllegalFormatException;
-
 public class StaticConcurrentMessageBrokerPropertiesTest {
     @Test
     public void concurrencyLevelReturnedFromConstructor() {
@@ -29,18 +27,6 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test
-    public void noFieldsSetUsesDefaults() {
-        // act
-        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
-                .builder()
-                .build();
-
-        // assert
-        assertThat(retriever.getPreferredConcurrencyPollingRateInMilliseconds()).isEqualTo(60_000);
-        assertThat(retriever.getConcurrencyLevel()).isEqualTo(0);
-    }
-
-    @Test
     public void concurrencyPollingLevelReturnedFromConstructor() {
         // act
         final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
@@ -50,7 +36,7 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
                 .build();
 
         // assert
-        assertThat(retriever.getPreferredConcurrencyPollingRateInMilliseconds()).isEqualTo(1);
+        assertThat(retriever.getConcurrencyPollingRateInMilliseconds()).isEqualTo(1);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -60,34 +46,5 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
                 .builder()
                 .preferredConcurrencyPollingRateInMilliseconds(-1L)
                 .build();
-    }
-
-    @Test(expected = IllegalFormatException.class)
-    public void invalidThreadNameFormatThrowsException() {
-        // act
-        StaticConcurrentMessageBrokerProperties
-                .builder()
-                .threadNameFormat("invalid-%s-format-%d")
-                .build();
-    }
-
-    @Test
-    public void shouldInterruptThreadsProcessingMessagesOnShutdownShouldBeFalseIfNothingSet() {
-        // act
-        final StaticConcurrentMessageBrokerProperties properties = StaticConcurrentMessageBrokerProperties.builder().build();
-
-        // assert
-        assertThat(properties.shouldInterruptThreadsProcessingMessagesOnShutdown()).isFalse();
-    }
-
-    @Test
-    public void shouldInterruptThreadsProcessingMessagesOnShutdownShouldBeTrueIfSet() {
-        // act
-        final StaticConcurrentMessageBrokerProperties properties = StaticConcurrentMessageBrokerProperties.builder()
-                .interruptThreadsProcessingMessagesOnShutdown(true)
-                .build();
-
-        // assert
-        assertThat(properties.shouldInterruptThreadsProcessingMessagesOnShutdown()).isTrue();
     }
 }

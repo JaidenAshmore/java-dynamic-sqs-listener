@@ -3,6 +3,7 @@ package com.jashmore.sqs.examples;
 import akka.http.scaladsl.Http;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,10 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * This example creates two queues using a local in-memory ElasticMQ server which are listened again by the {@link MessageListeners} class. Two examples
  * of setting up message listeners are provided:
  * <ul>
- *     <li>{@link MessageListeners#method(String)} uses a {@link QueueListener @QueueListener} to listen to messages concurrently with prefetching enabled</li>
+ *     <li>{@link MessageListeners#batching(String)} uses a {@link QueueListener @QueueListener} to listen to messages concurrently and retrieving
+ *     messages in batches</li>
+ *     <li>{@link MessageListeners#prefetching(String)} uses a {@link PrefetchingQueueListener @PrefetchingQueueListener} to listen to messages concurrently
+ *     and retrieving messages by prefetching them before they are needed</li>
  * </ul>
  */
 @SpringBootApplication

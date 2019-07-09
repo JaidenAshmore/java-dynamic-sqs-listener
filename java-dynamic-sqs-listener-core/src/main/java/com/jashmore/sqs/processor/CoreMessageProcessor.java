@@ -10,8 +10,7 @@ import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
-import com.jashmore.sqs.resolver.MessageResolver;
-import lombok.AllArgsConstructor;
+import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -21,7 +20,6 @@ import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -30,68 +28,60 @@ import javax.annotation.concurrent.ThreadSafe;
  * message from the queue if it was completed successfully.
  */
 @ThreadSafe
-@AllArgsConstructor
-public class DefaultMessageProcessor implements MessageProcessor {
+public class CoreMessageProcessor implements MessageProcessor {
     private final QueueProperties queueProperties;
     private final SqsAsyncClient sqsAsyncClient;
-    private final MessageResolver messageResolver;
     private final Method messageConsumerMethod;
     private final Object messageConsumerBean;
-    private final Class<?> returnType;
+
+    // These are calculated in the constructor so that it is not recalculated each time a message is processed
     private final List<InternalArgumentResolver> methodArgumentResolvers;
+    private final Class<?> returnType;
     private final boolean hasAcknowledgeParameter;
 
-    public DefaultMessageProcessor(final ArgumentResolverService argumentResolverService,
-                                   final QueueProperties queueProperties,
-                                   final SqsAsyncClient sqsAsyncClient,
-                                   final MessageResolver messageResolver,
-                                   final Method messageConsumerMethod,
-                                   final Object messageConsumerBean) {
+    public CoreMessageProcessor(final ArgumentResolverService argumentResolverService,
+                                final QueueProperties queueProperties,
+                                final SqsAsyncClient sqsAsyncClient,
+                                final Method messageConsumerMethod,
+                                final Object messageConsumerBean) {
         this.queueProperties = queueProperties;
         this.sqsAsyncClient = sqsAsyncClient;
-        this.messageResolver = messageResolver;
         this.messageConsumerMethod = messageConsumerMethod;
         this.messageConsumerBean = messageConsumerBean;
+
+        this.methodArgumentResolvers = getArgumentResolvers(argumentResolverService);
         this.hasAcknowledgeParameter = hasAcknowledgeParameter();
         this.returnType = messageConsumerMethod.getReturnType();
-        this.methodArgumentResolvers = getArgumentResolvers(argumentResolverService);
     }
 
     @Override
-    public void processMessage(final Message message) throws MessageProcessingException {
-        final Object[] arguments = getArguments(message);
+    public CompletableFuture<?> processMessage(final Message message, final Runnable resolveMessageCallback) throws MessageProcessingException {
+        final Object[] arguments = getArguments(message, resolveMessageCallback);
 
         final Object result;
         try {
             result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
         } catch (final InvocationTargetException | IllegalAccessException | RuntimeException exception) {
-            throw new MessageProcessingException("Error processing message", exception);
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Error processing message", exception));
         }
 
         if (hasAcknowledgeParameter) {
             // If the method has the Acknowledge parameter it is up to them to resolve the message
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         if (CompletableFuture.class.isAssignableFrom(returnType)) {
             final CompletableFuture<?> resultCompletableFuture = (CompletableFuture) result;
 
             if (resultCompletableFuture == null) {
-                throw new MessageProcessingException("Method returns CompletableFuture but null was returned");
+                return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Method returns CompletableFuture but null was returned"));
             }
 
-            try {
-                resultCompletableFuture
-                        .thenAccept((ignored) -> messageResolver.resolveMessage(message))
-                        .get();
-            } catch (final InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw new MessageProcessingException("Thread interrupted while processing message");
-            } catch (final ExecutionException executionException) {
-                throw new MessageProcessingException("Error processing message", executionException.getCause());
-            }
+            return resultCompletableFuture
+                    .thenAccept((ignored) -> resolveMessageCallback.run());
         } else {
-            messageResolver.resolveMessage(message);
+            resolveMessageCallback.run();
+            return CompletableFuture.completedFuture(null);
         }
     }
 
@@ -101,9 +91,9 @@ public class DefaultMessageProcessor implements MessageProcessor {
      * @param message     the message to populate the arguments from
      * @return the array of arguments to call the method with
      */
-    private Object[] getArguments(final Message message) {
+    private Object[] getArguments(final Message message, final Runnable resolveMessageCallback) {
         return methodArgumentResolvers.stream()
-                .map(resolver -> resolver.resolveArgument(message))
+                .map(resolver -> resolver.resolveArgument(message, resolveMessageCallback))
                 .toArray(Object[]::new);
     }
 
@@ -120,22 +110,22 @@ public class DefaultMessageProcessor implements MessageProcessor {
                             .build();
 
                     if (isAcknowledgeParameter(parameter)) {
-                        return message -> (Acknowledge) () -> messageResolver.resolveMessage(message);
+                        return (message, resolveMessageCallback) -> (Acknowledge) resolveMessageCallback::run;
                     }
 
                     if (isVisibilityExtenderParameter(parameter)) {
-                        return message -> new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
+                        return (message, resolveMessageCallback) -> new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
                     }
 
                     final ArgumentResolver<?> argumentResolver = argumentResolverService.getArgumentResolver(methodParameter);
-                    return message -> argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
+                    return (message, resolveMessageCallback) -> argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
                 })
                 .collect(toList());
     }
 
     private boolean hasAcknowledgeParameter() {
         return Arrays.stream(messageConsumerMethod.getParameters())
-                .anyMatch(DefaultMessageProcessor::isAcknowledgeParameter);
+                .anyMatch(CoreMessageProcessor::isAcknowledgeParameter);
     }
 
     private static boolean isAcknowledgeParameter(final Parameter parameter) {
@@ -155,8 +145,9 @@ public class DefaultMessageProcessor implements MessageProcessor {
          * Resolve the argument of the method.
          *
          * @param message the message that is being processed
+         * @param resolveMessageCallback the callback that should be executed when the message has successfully been processed
          * @return the argument that should be used for the corresponding parameter
          */
-        Object resolveArgument(final Message message);
+        Object resolveArgument(final Message message, final Runnable resolveMessageCallback);
     }
 }

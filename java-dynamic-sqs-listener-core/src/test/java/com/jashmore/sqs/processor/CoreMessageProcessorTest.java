@@ -1,7 +1,6 @@
 package com.jashmore.sqs.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -19,7 +18,8 @@ import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.UnsupportedArgumentResolutionException;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import com.jashmore.sqs.resolver.MessageResolver;
+import com.jashmore.sqs.processor.argument.VisibilityExtender;
+import org.hamcrest.core.Is;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -32,16 +32,15 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutionException;
 
-@SuppressWarnings( {"WeakerAccess", "unused"})
-public class DefaultMessageProcessorTest {
+public class CoreMessageProcessorTest {
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties
             .builder()
             .queueUrl("queueUrl")
             .build();
-    private static final DefaultMessageProcessorTest BEAN = new DefaultMessageProcessorTest();
+    private static final CoreMessageProcessorTest BEAN = new CoreMessageProcessorTest();
+    private static final Runnable NO_OP = () -> {};
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -51,9 +50,6 @@ public class DefaultMessageProcessorTest {
 
     @Mock
     private ArgumentResolverService argumentResolverService;
-
-    @Mock
-    private MessageResolver messageResolver;
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;
@@ -70,11 +66,11 @@ public class DefaultMessageProcessorTest {
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
 
         // act
-        processor.processMessage(message);
+        processor.processMessage(message, NO_OP);
 
         // assert
         verify(argumentResolverService, times(2)).getArgumentResolver(any(MethodParameter.class));
@@ -89,27 +85,43 @@ public class DefaultMessageProcessorTest {
         expectedException.expect(UnsupportedArgumentResolutionException.class);
 
         // act
-        new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, messageResolver, method, BEAN);
+        new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, BEAN);
     }
 
     @Test
     public void methodWillBeInvokedWithArgumentsResolved() {
         // arrange
         final Method method = getMethodWithAcknowledge();
-        final DefaultMessageProcessorTest mockProcessor = mock(DefaultMessageProcessorTest.class);
+        final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
         final Message message = Message.builder().build();
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload")
                 .thenReturn("payload2");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, mockProcessor);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, mockProcessor);
 
         // act
-        processor.processMessage(message);
+        processor.processMessage(message, NO_OP);
 
         // assert
         verify(mockProcessor).methodWithAcknowledge(ArgumentMatchers.isA(Acknowledge.class), eq("payload"), eq("payload2"));
+    }
+
+    @Test
+    public void methodWithVisibilityExtenderWillBeCorrectlyResolved() {
+        // arrange
+        final Method method = getMethodWithVisibiltyExtender();
+        final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, mockProcessor);
+        final Message message = Message.builder().build();
+
+        // act
+        processor.processMessage(message, NO_OP);
+
+        // assert
+        verify(mockProcessor).methodWithVisibilityExtender(any(VisibilityExtender.class));
     }
 
     @Test
@@ -120,153 +132,138 @@ public class DefaultMessageProcessorTest {
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        final Runnable messageResolvedRunnable = mock(Runnable.class);
 
         // act
-        processor.processMessage(message);
+        processor.processMessage(message, messageResolvedRunnable);
 
         // assert
-        verify(messageResolver, never()).resolveMessage(message);
+        verify(messageResolvedRunnable, never()).run();
     }
 
     @Test
-    public void methodWithoutAcknowledgeParameterWillDeleteMessageOnSuccess() {
+    public void methodWithoutAcknowledgeParameterWillResolveMessageOnExecutionWithoutException() {
         // arrange
         final Method method = getMethodWithNoAcknowledge();
         final Message message = Message.builder().receiptHandle("handle").build();
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        final Runnable messageResolvedRunnable = mock(Runnable.class);
 
         // act
-        processor.processMessage(message);
+        processor.processMessage(message, messageResolvedRunnable);
 
         // assert
-        verify(messageResolver).resolveMessage(message);
+        verify(messageResolvedRunnable).run();
     }
 
-
     @Test
-    public void methodWithoutAcknowledgeThatThrowsExceptionDoesNotDeleteMessage() {
+    public void methodWithoutAcknowledgeThatThrowsExceptionDoesNotResolveMessage() {
         // arrange
         final Method method = getMethodThatThrowsException();
         final Message message = Message.builder().receiptHandle("handle").build();
         doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
         when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
                 .thenReturn("payload");
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        final Runnable messageResolvedRunnable = mock(Runnable.class);
 
         // act
-        try {
-            processor.processMessage(message);
-            fail("Should have thrown exception");
-        } catch (final MessageProcessingException exception) {
-            // assert
-            verify(messageResolver, never()).resolveMessage(message);
-        }
+        final CompletableFuture<?> result = processor.processMessage(message, messageResolvedRunnable);
+
+        // arrange
+        assertThat(result).isCompletedExceptionally();
+        verify(messageResolvedRunnable, never()).run();
     }
 
     @Test
     public void methodReturningCompletableFutureWillResolveMessageWhenFutureResolved() throws Exception {
         // arrange
-        final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
+        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
         doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         final CompletableFuture<Object> future = new CompletableFuture<>();
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        final Runnable messageResolvedRunnable = mock(Runnable.class);
 
         // act
-        CompletableFuture.runAsync(() -> processor.processMessage(message));
+        CompletableFuture.runAsync(() -> processor.processMessage(message, messageResolvedRunnable));
 
         // assert
-        verify(messageResolver, never()).resolveMessage(message);
+        verify(messageResolvedRunnable, never()).run();
         future.complete("value");
-        verify(messageResolver, timeout(100)).resolveMessage(message);
+        verify(messageResolvedRunnable, timeout(100)).run();
     }
 
     @Test
     public void methodReturningCompletableFutureWillNotResolveMessageWhenFutureRejected() throws Exception {
         // arrange
-        final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
+        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
         doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         final CompletableFuture<Object> future = new CompletableFuture<>();
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        final Runnable messageResolvedRunnable = mock(Runnable.class);
+        future.completeExceptionally(new RuntimeException("Excepted Exception"));
 
         // act
-        CompletableFuture.runAsync(() -> processor.processMessage(message));
-        future.completeExceptionally(new RuntimeException("Excepted Exception"));
-        Thread.sleep(100); // make sure it doesn't resolve
+        final CompletableFuture<?> result = processor.processMessage(message, messageResolvedRunnable);
 
         // assert
-        verify(messageResolver, never()).resolveMessage(message);
+        assertThat(result).isCompletedExceptionally();
+        verify(messageResolvedRunnable, never()).run();
     }
 
     @Test
     public void methodReturningCompletableFutureThatReturnsNullWillThrowMessageProcessingException() throws Exception {
         // arrange
-        final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
+        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
         doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
         when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
                 .thenReturn(null);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
-        expectedException.expect(MessageProcessingException.class);
+        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                sqsAsyncClient, method, BEAN);
+        expectedException.expect(ExecutionException.class);
+        expectedException.expectCause(Is.isA(MessageProcessingException.class));
 
         // act
-        processor.processMessage(message);
+        processor.processMessage(message, NO_OP).get();
     }
 
-    @Test
-    public void threadInterruptedWhileGettingMessageWillThrowException() throws Exception {
-        // arrange
-        final Method method = DefaultMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
-        final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenReturn(future);
-        final MessageProcessor processor = new DefaultMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, messageResolver, method, BEAN);
-
-        // act
-        final AtomicBoolean exceptionThrown = new AtomicBoolean(false);
-        CompletableFuture.runAsync(() -> {
-            try {
-                Thread.currentThread().interrupt(); // interrupt the thread so the InterruptedException will be thrown while blocking on the future
-                processor.processMessage(message);
-            } catch (final MessageProcessingException messageProcessingException) {
-                exceptionThrown.set(true);
-            }
-        }).get(1, TimeUnit.SECONDS);
-
-        // assert
-        assertThat(exceptionThrown).isTrue();
-    }
-
+    @SuppressWarnings("unused")
     public void methodWithNoAcknowledge(@Payload String payload, @Payload String payloadTwo) {
 
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void methodWithAcknowledge(Acknowledge acknowledge, @Payload String payload, @Payload String payloadTwo) {
 
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
+    public void methodWithVisibilityExtender(VisibilityExtender visibilityExtender) {
+
+    }
+
+    @SuppressWarnings("WeakerAccess")
     public CompletableFuture<?> methodReturningCompletableFuture(CompletableFuture<?> futureToReturn) {
         return futureToReturn;
     }
 
+    @SuppressWarnings("unused")
     public void methodThatThrowsException(@Payload String payload) {
         throw new RuntimeException("error");
     }
@@ -283,9 +280,13 @@ public class DefaultMessageProcessorTest {
         return getTestingMethod("methodThatThrowsException", String.class);
     }
 
+    private static Method getMethodWithVisibiltyExtender() {
+        return getTestingMethod("methodWithVisibilityExtender", VisibilityExtender.class);
+    }
+
     private static Method getTestingMethod(final String methodName, final Class<?>... parameterClasses) {
         try {
-            return DefaultMessageProcessorTest.class.getMethod(methodName, parameterClasses);
+            return CoreMessageProcessorTest.class.getMethod(methodName, parameterClasses);
         } catch (final NoSuchMethodException exception) {
             throw new RuntimeException("Unable to find method for testing against", exception);
         }

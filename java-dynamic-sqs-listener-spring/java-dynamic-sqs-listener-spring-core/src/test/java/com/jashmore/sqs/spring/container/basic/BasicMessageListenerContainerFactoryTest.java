@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
@@ -74,7 +74,7 @@ public class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(SimpleMessageListenerContainer.class);
+        assertThat(messageListenerContainer).isInstanceOf(CoreMessageListenerContainer.class);
     }
 
     @Test
@@ -184,8 +184,8 @@ public class BasicMessageListenerContainerFactoryTest {
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .messageVisibilityTimeoutInSeconds(300)
-                .messageRetrievalPollingPeriodInMs(40L)
-                .numberOfThreadsWaitingTrigger(10)
+                .batchingPeriodInMs(40L)
+                .batchSize(10)
                 .build()
         );
     }
@@ -206,8 +206,8 @@ public class BasicMessageListenerContainerFactoryTest {
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
                 .messageVisibilityTimeoutInSeconds(40)
-                .messageRetrievalPollingPeriodInMs(30L)
-                .numberOfThreadsWaitingTrigger(8)
+                .batchingPeriodInMs(30L)
+                .batchSize(8)
                 .build()
         );
     }
@@ -263,12 +263,12 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}", batchSizeString = "${prop.batchSize}",
-            messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPeriodBetweenBatchesInMsString = "${prop.period}")
+            messageVisibilityTimeoutInSecondsString = "${prop.visibility}", batchingPeriodInMsString = "${prop.period}")
     public void methodWithFieldsUsingEnvironmentProperties() {
 
     }
 
-    @QueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, maxPeriodBetweenBatchesInMs = 40)
+    @QueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, batchingPeriodInMs = 40)
     public void methodWithFields() {
 
     }
