@@ -48,15 +48,18 @@ public class ConcurrentMessageBrokerTest {
     private Supplier<CompletableFuture<Message>> messageSupplier;
 
     private ExecutorService brokerExecutorService;
+    private ExecutorService messageExecutingExecutorService;
 
     @Before
     public void setUp() {
         brokerExecutorService = Executors.newCachedThreadPool();
+        messageExecutingExecutorService = Executors.newCachedThreadPool();
     }
 
     @After
     public void tearDown() {
         brokerExecutorService.shutdownNow();
+        messageExecutingExecutorService.shutdownNow();
     }
 
     @Test
@@ -284,6 +287,6 @@ public class ConcurrentMessageBrokerTest {
             } catch (final InterruptedException interruptedException) {
                 //expected
             }
-        });
+        }, messageExecutingExecutorService);
     }
 }
