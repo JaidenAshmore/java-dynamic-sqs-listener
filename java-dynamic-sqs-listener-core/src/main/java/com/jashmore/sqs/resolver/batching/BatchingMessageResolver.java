@@ -99,7 +99,7 @@ public class BatchingMessageResolver implements MessageResolver {
             try {
                 final int batchSize = getBatchSize();
                 final long bufferingTimeInMs = getBufferingTimeInMs();
-                log.debug("Waiting {}ms for {} messages to be submitted for deletion", bufferingTimeInMs, batchSize);
+                log.trace("Waiting {}ms for {} messages to be submitted for deletion", bufferingTimeInMs, batchSize);
                 Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, batchSize, bufferingTimeInMs, TimeUnit.MILLISECONDS);
             } catch (final InterruptedException interruptedException) {
                 log.info("Shutting down MessageResolver");
