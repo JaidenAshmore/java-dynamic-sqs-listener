@@ -21,7 +21,7 @@ public class ThreadTestUtils {
 
     public static void waitUntilThreadInState(Thread thread, Thread.State expectedState) throws InterruptedException {
         int numberOfTimesCompleted = 0;
-        while (thread.getState() != expectedState && numberOfTimesCompleted < 5) {
+        while (thread.getState() != expectedState && numberOfTimesCompleted < 30) {
             Thread.sleep(100);
             numberOfTimesCompleted++;
         }
