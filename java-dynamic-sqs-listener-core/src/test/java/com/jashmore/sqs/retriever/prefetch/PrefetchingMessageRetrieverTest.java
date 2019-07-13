@@ -522,10 +522,10 @@ public class PrefetchingMessageRetrieverTest {
     private List<Message> runRetrieverUntilLatch(final PrefetchingMessageRetriever retriever, final CountDownLatch latch) {
         try {
             final CompletableFuture<List<Message>> future = CompletableFuture.supplyAsync(retriever::run, executorService);
-            assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
             executorService.shutdownNow();
-            executorService.awaitTermination(1, TimeUnit.SECONDS);
-            return future.get(1, TimeUnit.SECONDS);
+            executorService.awaitTermination(30, TimeUnit.SECONDS);
+            return future.get(30, TimeUnit.SECONDS);
         } catch (final Exception exception) {
             throw new RuntimeException(exception);
         }

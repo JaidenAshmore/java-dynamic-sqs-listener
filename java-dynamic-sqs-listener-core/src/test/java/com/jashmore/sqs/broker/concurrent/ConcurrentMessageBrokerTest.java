@@ -77,7 +77,7 @@ public class ConcurrentMessageBrokerTest {
         );
 
         // assert
-        assertThat(messagesProcessingLatch.await(1, SECONDS)).isTrue();
+        assertThat(messagesProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ConcurrentMessageBrokerTest {
 
         // act
         final Future<?> future = runBrokerProcessMessageOnThread(broker, () -> false, messageSupplier, processingMessageWillBlockUntilInterrupted());
-        future.get(1, SECONDS);
+        future.get(30, SECONDS);
 
         // assert
         verify(messageSupplier, never()).get();
@@ -149,7 +149,7 @@ public class ConcurrentMessageBrokerTest {
         runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
 
         // assert
-        assertThat(messageProcessingLatch.await(1, SECONDS)).isTrue();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
@@ -165,7 +165,7 @@ public class ConcurrentMessageBrokerTest {
         runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
 
         // assert
-        assertThat(messageProcessingLatch.await(1, SECONDS)).isTrue();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
@@ -185,7 +185,7 @@ public class ConcurrentMessageBrokerTest {
         runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
 
         // assert
-        assertThat(messageProcessingLatch.await(1, SECONDS)).isTrue();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
@@ -207,7 +207,7 @@ public class ConcurrentMessageBrokerTest {
         runBrokerProcessMessageOnThread(broker, messageSupplier, messageConsumer);
 
         // assert
-        assertThat(messageProcessingLatch.await(1, SECONDS)).isTrue();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
@@ -228,7 +228,7 @@ public class ConcurrentMessageBrokerTest {
 
         // act
         final Future<?> brokerFuture = runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP);
-        assertThat(enteredBackoffSection.await(1, SECONDS)).isTrue();
+        assertThat(enteredBackoffSection.await(30, SECONDS)).isTrue();
         brokerExecutorService.shutdownNow();
 
         // assert
