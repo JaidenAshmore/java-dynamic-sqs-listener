@@ -239,10 +239,11 @@ public class ConcurrentMessageBrokerTest {
                                                       final Supplier<CompletableFuture<Message>> messageRetriever,
                                                       final Function<Message, CompletableFuture<?>> messageConsumer) {
         return brokerExecutorService.submit(() -> {
+            final ExecutorService executorService = Executors.newCachedThreadPool();
             try {
-                broker.processMessages(Executors.newCachedThreadPool(), messageRetriever, messageConsumer);
+                broker.processMessages(executorService, messageRetriever, messageConsumer);
             } catch (InterruptedException e) {
-                //ignore
+                executorService.shutdownNow();
             }
         });
     }
@@ -252,10 +253,11 @@ public class ConcurrentMessageBrokerTest {
                                                       final Supplier<CompletableFuture<Message>> messageRetriever,
                                                       final Function<Message, CompletableFuture<?>> messageConsumer) {
         return brokerExecutorService.submit(() -> {
+            final ExecutorService executorService = Executors.newCachedThreadPool();
             try {
-                broker.processMessages(Executors.newCachedThreadPool(), keepProcessingMessages, messageRetriever, messageConsumer);
+                broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
             } catch (InterruptedException e) {
-                //ignore
+                executorService.shutdownNow();
             }
         });
     }

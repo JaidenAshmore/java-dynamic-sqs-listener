@@ -210,7 +210,7 @@ public class PrefetchingMessageRetrieverTest {
         final Message firstMessage = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, firstMessage))
-                .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested,  Message.builder().build()));
+                .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .desiredMinPrefetchedMessages(1)
                 .maxPrefetchedMessages(2)
@@ -223,7 +223,7 @@ public class PrefetchingMessageRetrieverTest {
             retriever.retrieveMessage();
 
             // assert
-            assertThat(receiveMessageRequested.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(receiveMessageRequested.await(30, TimeUnit.SECONDS)).isTrue();
         });
     }
 
@@ -246,7 +246,7 @@ public class PrefetchingMessageRetrieverTest {
             waitUntilThreadInState(thread, Thread.State.WAITING);
 
             // assert
-            assertThat(receiveMessageRequested.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(receiveMessageRequested.await(30, TimeUnit.SECONDS)).isTrue();
             verify(sqsAsyncClient).receiveMessage(any(ReceiveMessageRequest.class));
         });
     }
@@ -277,7 +277,7 @@ public class PrefetchingMessageRetrieverTest {
             retriever.retrieveMessage();
 
             // assert
-            assertThat(receiveMessageRequested.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(receiveMessageRequested.await(30, TimeUnit.SECONDS)).isTrue();
             verify(sqsAsyncClient, times(2)).receiveMessage(any(ReceiveMessageRequest.class));
         });
     }
@@ -427,7 +427,7 @@ public class PrefetchingMessageRetrieverTest {
 
         startRunnableInThread(retriever::run, thread -> {
             // act
-            receiveMessageRequested.await(1, TimeUnit.SECONDS);
+            receiveMessageRequested.await(30, TimeUnit.SECONDS);
             waitUntilThreadInState(thread, Thread.State.WAITING);
             thread.interrupt();
 

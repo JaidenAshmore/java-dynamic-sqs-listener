@@ -201,7 +201,7 @@ public class CoreMessageProcessorTest {
         // assert
         verify(messageResolvedRunnable, never()).run();
         future.complete("value");
-        verify(messageResolvedRunnable, timeout(100)).run();
+        verify(messageResolvedRunnable, timeout(5000)).run();
     }
 
     @Test
