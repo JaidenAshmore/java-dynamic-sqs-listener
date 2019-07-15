@@ -3,7 +3,7 @@
     <parent>
         <artifactId>java-dynamic-sqs-listener-spring</artifactId>
         <groupId>com.jashmore</groupId>
-        <version>3.0.0-M3-SNAPSHOT</version>
+        <version>3.0.0-M3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

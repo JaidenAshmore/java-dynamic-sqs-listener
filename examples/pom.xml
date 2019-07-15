@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.jashmore</groupId>
         <artifactId>java-dynamic-sqs-listener-parent</artifactId>
-        <version>3.0.0-M3-SNAPSHOT</version>
+        <version>3.0.0-M3</version>
     </parent>
 
     <artifactId>examples</artifactId>
