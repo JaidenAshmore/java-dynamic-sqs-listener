@@ -35,19 +35,19 @@ public class MyClass {
 ```java
 @Service
 public class MyService {
-    private final MessageListenerContainerCoordinator queueContainerService;
+    private final MessageListenerContainerCoordinator messageListenerContainerCoordinator;
     
     @Autowired
-    public MyService(final MessageListenerContainerCoordinator queueContainerService) {
-        this.queueContainerService = queueContainerService;    
+    public MyService(final MessageListenerContainerCoordinator messageListenerContainerCoordinator) {
+        this.messageListenerContainerCoordinator = messageListenerContainerCoordinator;    
     }
 
     public void someMethod() {
-        queueContainerService.stopContainer("my-identifier");
+        messageListenerContainerCoordinator.stopContainer("my-identifier");
         
         Thread.sleep(1000);
         
-        queueContainerService.startContainer("my-identifier");
+        messageListenerContainerCoordinator.startContainer("my-identifier");
     }
 }
 ```
@@ -57,19 +57,19 @@ public class MyService {
 ```java
 @Service
 public class MyService {
-    private final MessageListenerContainerCoordinator queueContainerService;
+    private final MessageListenerContainerCoordinator messageListenerContainerCoordinator;
     
     @Autowired
-    public MyService(final MessageListenerContainerCoordinator queueContainerService) {
-        this.queueContainerService = queueContainerService;    
+    public MyService(final MessageListenerContainerCoordinator messageListenerContainerCoordinator) {
+        this.messageListenerContainerCoordinator = messageListenerContainerCoordinator;    
     }
 
     public void someMethod() {
-        queueContainerService.startAllContainers();
+        messageListenerContainerCoordinator.startAllContainers();
         
         Thread.sleep(1000);
         
-        queueContainerService.stopAllContainers();
+        messageListenerContainerCoordinator.stopAllContainers();
     }
 }
 ```

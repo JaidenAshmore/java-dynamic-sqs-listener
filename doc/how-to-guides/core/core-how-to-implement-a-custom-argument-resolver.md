@@ -1,10 +1,21 @@
 # Core - How to implement a custom Argument Resolver
 When the framework executes the methods for a SQS message, the
-[ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used to map the
-message to each of the arguments of the method.  The main implementation, the
-[DelegatingArgumentResolverService](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java)
+[ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used to build
+the arguments for the method execution from the message being processed.  The default core implementation, the
+[DelegatingArgumentResolverService](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java),
 uses [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s under the hood to resolve
 each type of argument. Users of the framework may get to a point where the default argument types are insufficient and therefore want to provide their own.
+
+To do this, when building your [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
+with the [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s make sure to add your
+custom resolver.
+    ```java
+    new DelegatingArgumentResolverService(ImmutableSet.of(
+         new MessageIdArgumentResolver(),
+         ...
+         new MyCustomArgumentResolver()
+   ));
+    ```
 
 ## Example Use Case
 The payload in a SQS message is deeply nested and it is desirable to only provide the field that is needed instead of passing the entire
@@ -54,7 +65,7 @@ interface that will be able to resolve these arguments with those annotations.
         }
     
         @Override
-        public Object resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
+        public Object resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message) throws ArgumentResolutionException {
             try {
                 // You could build an actual POJO instead of using this JsonNode
                 final JsonNode node = objectMapper.readTree(message.body());
@@ -80,6 +91,7 @@ interface that will be able to resolve these arguments with those annotations.
 this [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
     ```java
     new DelegatingArgumentResolverService(ImmutableSet.of(
+         // other ArgumentResolvers here
          new UserGroupArgumentResolver()
    ));
     ```

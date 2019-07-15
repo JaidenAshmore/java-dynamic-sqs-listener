@@ -13,20 +13,20 @@ import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
+import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.resolver.AsyncMessageResolver;
+import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverProperties;
-import com.jashmore.sqs.retriever.AsyncMessageRetriever;
+import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +43,9 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import javax.annotation.Nullable;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -78,7 +75,6 @@ public class ConcurrentBrokerExample {
      * @param args unused args
      * @throws Exception if there was a problem running the program
      */
-    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     public static void main(final String[] args) throws Exception {
         // Sets up the SQS that will be used
         final SqsAsyncClient sqsAsyncClient = startElasticMqServer();
@@ -88,85 +84,18 @@ public class ConcurrentBrokerExample {
                 .queueUrl(queueUrl)
                 .build();
 
-        final ExecutorService executorService = Executors.newCachedThreadPool();
-
-        // Creates the class that will actually perform the logic for retrieving messages from the queue
-        final AsyncMessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                sqsAsyncClient,
-                queueProperties,
-                StaticPrefetchingMessageRetrieverProperties.builder()
-                        .desiredMinPrefetchedMessages(10)
-                        .maxPrefetchedMessages(20)
-                        .build()
+        final MessageListenerContainer messageListenerContainer = new CoreMessageListenerContainer(
+                "core-example-container",
+                ConcurrentBrokerExample::buildBroker,
+                () -> buildMessageRetriever(queueProperties, sqsAsyncClient),
+                () -> buildMessageProcessor(queueProperties, sqsAsyncClient),
+                () -> buildMessageResolver(queueProperties, sqsAsyncClient)
         );
-
-        // Creates the class that will deal with taking messages and getting them processed by the message consumer
-        final MessageConsumer messageConsumer = new MessageConsumer();
-        final Method messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
-        final AsyncMessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient,
-                StaticBatchingMessageResolverProperties.builder()
-                        .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
-                        .bufferingTimeInMs(5000)
-                        .build());
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(
-                argumentResolverService(),
-                queueProperties,
-                sqsAsyncClient,
-                messageResolver,
-                messageReceivedMethod,
-                messageConsumer
-        );
-
-        // Build a container that will glue the retrieval and processing of the messages over multiple threads concurrently
-        final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
-                // Represents a concurrent implementation that will fluctuate between 0 and 10 threads all processing messages
-                new CachingConcurrentMessageBrokerProperties(10000, new ConcurrentMessageBrokerProperties() {
-                    private final Random random = new Random(1);
-
-                    @Override
-                    public Integer getConcurrencyLevel() {
-                        return random.nextInt(CONCURRENCY_LEVEL_LIMIT);
-                    }
-
-                    @Override
-                    public @Min(0) Long getPreferredConcurrencyPollingRateInMilliseconds() {
-                        return CONCURRENCY_LEVEL_PERIOD_IN_MS;
-                    }
-
-                    @Override
-                    public String getThreadNameFormat() {
-                        return "my-message-listener-thread-%d";
-                    }
-
-                    @Override
-                    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
-                        return 0L;
-                    }
-
-                    @Nullable
-                    @Override
-                    public @PositiveOrZero Long getShutdownTimeoutInSeconds() {
-                        return null;
-                    }
-
-                    @Override
-                    public boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
-                        return false;
-                    }
-                })
-        );
-
-        final MessageListenerContainer messageListenerContainer
-                = new SimpleMessageListenerContainer("core-example-container", messageRetriever, concurrentMessageBroker, messageResolver);
         messageListenerContainer.start();
 
-        // Create some producers of messages
-        final Future<?> producerFuture = executorService.submit(new Producer(sqsAsyncClient, queueUrl));
-
-        // Wait until the first producer is done, this should never resolve
-        producerFuture.get();
+        log.info("Starting producing");
+        Executors.newSingleThreadExecutor().submit(new Producer(sqsAsyncClient, queueUrl))
+                .get();
     }
 
     /**
@@ -190,6 +119,71 @@ public class ConcurrentBrokerExample {
                 .endpointOverride(new URI("http://localhost:" + serverBinding.localAddress().getPort()))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("accessKeyId", "secretAccessKey")))
                 .build();
+    }
+
+    private static MessageBroker buildBroker() {
+        return new ConcurrentMessageBroker(
+                // Represents a concurrent implementation that will fluctuate between 0 and 10 threads all processing messages
+                new CachingConcurrentMessageBrokerProperties(10000, new ConcurrentMessageBrokerProperties() {
+                    private final Random random = new Random(1);
+
+                    @Override
+                    public int getConcurrencyLevel() {
+                        return random.nextInt(CONCURRENCY_LEVEL_LIMIT);
+                    }
+
+                    @Override
+                    public @Min(0) Long getConcurrencyPollingRateInMilliseconds() {
+                        return CONCURRENCY_LEVEL_PERIOD_IN_MS;
+                    }
+
+                    @Override
+                    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
+                        return 500L;
+                    }
+                })
+        );
+    }
+
+    private static MessageProcessor buildMessageProcessor(final QueueProperties queueProperties,
+                                                          final SqsAsyncClient sqsAsyncClient) {
+        final MessageConsumer messageConsumer = new MessageConsumer();
+        final Method messageReceivedMethod;
+        try {
+            messageReceivedMethod = MessageConsumer.class.getMethod("method", Request.class, String.class);
+        } catch (final NoSuchMethodException exception) {
+            throw new RuntimeException(exception);
+        }
+
+        return new CoreMessageProcessor(
+                argumentResolverService(),
+                queueProperties,
+                sqsAsyncClient,
+                messageReceivedMethod,
+                messageConsumer
+        );
+    }
+
+    private static MessageResolver buildMessageResolver(final QueueProperties queueProperties,
+                                                        final SqsAsyncClient sqsAsyncClient) {
+        return new BatchingMessageResolver(queueProperties, sqsAsyncClient,
+                StaticBatchingMessageResolverProperties.builder()
+                        .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
+                        .bufferingTimeInMs(5000)
+                        .build());
+
+    }
+
+    private static MessageRetriever buildMessageRetriever(final QueueProperties queueProperties,
+                                                          final SqsAsyncClient sqsAsyncClient) {
+        return new PrefetchingMessageRetriever(
+                sqsAsyncClient,
+                queueProperties,
+                StaticPrefetchingMessageRetrieverProperties.builder()
+                        .desiredMinPrefetchedMessages(10)
+                        .maxPrefetchedMessages(20)
+                        .build()
+        );
     }
 
     /**
@@ -236,7 +230,7 @@ public class ConcurrentBrokerExample {
                             .collect(toSet()));
                     log.info("Put 10 messages onto queue");
                     async.sendMessageBatch(batchRequestBuilder.build());
-                    Thread.sleep(2000);
+                    Thread.sleep(500);
                 } catch (final InterruptedException interruptedException) {
                     log.info("Producer Thread has been interrupted");
                     shouldStop = true;

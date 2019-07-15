@@ -24,7 +24,7 @@ public interface BatchingMessageRetrieverProperties {
      * <p>This limit will be checked every time a new thread requests a message so it should be implemented in a performant manner, either by being non
      * CPU or IO intensive or by implementing caching.
      *
-     * <p>Note that this trigger size may not be reached due to the the waiting time going higher than {@link #getMessageRetrievalPollingPeriodInMs()}, in
+     * <p>Note that this trigger size may not be reached due to the the waiting time going higher than {@link #getBatchingPeriodInMs()}, in
      * this case it will just request as many messages as threads requesting messages.
      *
      * <p>This number should be smaller than the maximum number of messages that can be downloaded from AWS as it doesn't make much sense to have a batch size
@@ -34,24 +34,24 @@ public interface BatchingMessageRetrieverProperties {
      */
     @Positive
     @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS)
-    int getNumberOfThreadsWaitingTrigger();
+    int getBatchSize();
 
     /**
      * The maximum period of time that the background thread will wait for the number of threads waiting for messages to reach
-     * {@link #getNumberOfThreadsWaitingTrigger()} before requesting messages regardless of this count.
+     * {@link #getBatchSize()} before requesting messages regardless of this count.
      *
      * <p>Note that the background thread threads will ignore this period if the current number of threads requesting messages goes over
-     * the {@link #getNumberOfThreadsWaitingTrigger()} limit.
+     * the {@link #getBatchSize()} limit.
      *
      * <p>If this number is zero, there will be no polling period and the background thread will wait indefinitely for the
-     * {@link #getNumberOfThreadsWaitingTrigger()} to be reached. If this value is null, the value will defaulted to zero and a warning will be logged
+     * {@link #getBatchSize()} to be reached. If this value is null, the value will defaulted to zero and a warning will be logged
      * indicating that this value should be specifically set.
      *
      * @return the polling period in milliseconds between attempts to get messages
      */
     @Nullable
     @PositiveOrZero
-    Long getMessageRetrievalPollingPeriodInMs();
+    Long getBatchingPeriodInMs();
 
     /**
      * Represents the time that messages received from the SQS queue should be invisible from other consumers of the queue before it is considered a failure

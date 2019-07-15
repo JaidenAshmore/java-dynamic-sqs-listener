@@ -4,11 +4,13 @@ import com.google.common.annotations.VisibleForTesting;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
+import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.SimpleMessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.container.StaticCoreMessageListenerContainerProperties;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
@@ -30,6 +32,7 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 /**
  * {@link com.jashmore.sqs.spring.container.MessageListenerContainerFactory} that will wrap methods annotated with
@@ -48,6 +51,7 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
         return QueueListener.class;
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final QueueListener annotation) {
         final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation.sqsClient());
@@ -56,63 +60,59 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
                 .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
                 .build();
 
-        final int concurrencyLevel = getConcurrencyLevel(annotation);
 
-        final MessageRetriever messageRetriever = buildMessageRetriever(annotation, queueProperties, sqsAsyncClient);
-
-        final MessageResolver messageResolver = buildMessageResolver(annotation, queueProperties, sqsAsyncClient);
-
-        final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient,
-                messageResolver, method, bean);
-
-        final String identifier;
-        if (StringUtils.isEmpty(annotation.identifier().trim())) {
-            identifier = IdentifierUtils.buildIdentifierForMethod(bean.getClass(), method);
-        } else {
-            identifier = annotation.identifier().trim();
-        }
-
-        final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                messageRetriever,
-                messageProcessor,
-                StaticConcurrentMessageBrokerProperties.builder()
-                        .concurrencyLevel(concurrencyLevel)
-                        .threadNameFormat(identifier + "-%d")
+        return new CoreMessageListenerContainer(
+                IdentifierUtils.buildIdentifierForMethod(annotation.identifier(), bean.getClass(), method),
+                buildMessageBrokerSupplier(annotation),
+                buildMessageRetrieverSupplier(annotation, queueProperties, sqsAsyncClient),
+                buildProcessorSupplier(queueProperties, sqsAsyncClient, bean, method),
+                buildMessageResolver(annotation, queueProperties, sqsAsyncClient),
+                StaticCoreMessageListenerContainerProperties.builder()
+                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
+                        .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
                         .build()
         );
-
-        return new SimpleMessageListenerContainer(identifier, messageRetriever, messageBroker, messageResolver);
     }
 
-    private MessageRetriever buildMessageRetriever(final QueueListener annotation,
-                                                   final QueueProperties queueProperties,
-                                                   final SqsAsyncClient sqsAsyncClient) {
-        return new BatchingMessageRetriever(queueProperties, sqsAsyncClient, batchingMessageRetrieverProperties(annotation));
+    private Supplier<MessageBroker> buildMessageBrokerSupplier(final QueueListener annotation) {
+        final int concurrencyLevel = getConcurrencyLevel(annotation);
+        return () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder()
+                .concurrencyLevel(concurrencyLevel)
+                .build());
+    }
+
+    private Supplier<MessageProcessor> buildProcessorSupplier(final QueueProperties queueProperties,
+                                                              final SqsAsyncClient sqsAsyncClient,
+                                                              final Object bean,
+                                                              final Method method) {
+        return () -> new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
+    }
+
+    private Supplier<MessageRetriever> buildMessageRetrieverSupplier(final QueueListener annotation,
+                                                                     final QueueProperties queueProperties,
+                                                                     final SqsAsyncClient sqsAsyncClient) {
+        final BatchingMessageRetrieverProperties properties = batchingMessageRetrieverProperties(annotation);
+        return () -> new BatchingMessageRetriever(queueProperties, sqsAsyncClient, properties);
     }
 
     @VisibleForTesting
     BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation) {
         return StaticBatchingMessageRetrieverProperties.builder()
                 .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
-                .messageRetrievalPollingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
-                .numberOfThreadsWaitingTrigger(getBatchSize(annotation))
+                .batchingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
+                .batchSize(getBatchSize(annotation))
                 .build();
     }
 
-    private MessageResolver buildMessageResolver(final QueueListener annotation,
-                                                 final QueueProperties queueProperties,
-                                                 final SqsAsyncClient sqsAsyncClient) {
-        final BatchingMessageResolverProperties batchingMessageResolverProperties = batchingMessageResolverProperties(annotation);
-
-        return new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
-    }
-
-    @VisibleForTesting
-    BatchingMessageResolverProperties batchingMessageResolverProperties(final QueueListener annotation) {
-        return StaticBatchingMessageResolverProperties.builder()
+    private Supplier<MessageResolver> buildMessageResolver(final QueueListener annotation,
+                                                           final QueueProperties queueProperties,
+                                                           final SqsAsyncClient sqsAsyncClient) {
+        final BatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
                 .bufferingSizeLimit(getBatchSize(annotation))
                 .bufferingTimeInMs(getMaxPeriodBetweenBatchesInMs(annotation))
                 .build();
+
+        return () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
     }
 
     private int getConcurrencyLevel(final QueueListener annotation) {
@@ -131,13 +131,12 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
         return Integer.parseInt(environment.resolvePlaceholders(annotation.batchSizeString()));
     }
 
-
     private long getMaxPeriodBetweenBatchesInMs(final QueueListener annotation) {
-        if (StringUtils.isEmpty(annotation.maxPeriodBetweenBatchesInMsString())) {
-            return annotation.maxPeriodBetweenBatchesInMs();
+        if (StringUtils.isEmpty(annotation.batchingPeriodInMsString())) {
+            return annotation.batchingPeriodInMs();
         }
 
-        return Long.parseLong(environment.resolvePlaceholders(annotation.maxPeriodBetweenBatchesInMsString()));
+        return Long.parseLong(environment.resolvePlaceholders(annotation.batchingPeriodInMsString()));
     }
 
     private int getMessageVisibilityTimeoutInSeconds(final QueueListener annotation) {

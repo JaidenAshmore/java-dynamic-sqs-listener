@@ -8,7 +8,7 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.processor.DefaultMessageProcessor;
+import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 /**
  * Wrap a method with a {@link MessageListenerContainer} that will execute the method whenever a message is received on the provided queue.
  *
- * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link DefaultMessageProcessor}
+ * <p>This is a simplified annotation that uses the {@link ConcurrentMessageBroker}, {@link PrefetchingMessageRetriever} and {@link CoreMessageProcessor}
  * for the implementations of the framework. Not all of the properties for each implementation are available to simplify this usage.
  *
  * @see PrefetchingMessageListenerContainerFactory for what processes this annotation
@@ -157,4 +157,20 @@ public @interface PrefetchingQueueListener {
      * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
      */
     String messageVisibilityTimeoutInSecondsString() default "";
+
+    /**
+     * Determines whether any extra messages that may have been downloaded but not yet processed should be processed before shutting down the container.
+     *
+     * <p>The shutdown time for the container will be dependent on the time it takes to process these extra messages.
+     *
+     * @return if any extra messages should be processed on shutdown
+     */
+    boolean processAnyExtraRetrievedMessagesOnShutdown() default true;
+
+    /**
+     * Determines whether the threads that are processing messages should be interrupted during shutdown.
+     *
+     * @return whether to interrupt message processing threads on shutdown
+     */
+    boolean interruptThreadsProcessingMessagesOnShutdown() default false;
 }

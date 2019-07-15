@@ -3,421 +3,290 @@ package com.jashmore.sqs.broker.concurrent;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessingException;
-import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.retriever.MessageRetriever;
-import org.assertj.core.data.Offset;
+import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+@Slf4j
 public class ConcurrentMessageBrokerTest {
+    private static final Function<Message, CompletableFuture<?>> MESSAGE_NO_OP = message -> CompletableFuture.completedFuture(null);
     private static final StaticConcurrentMessageBrokerProperties DEFAULT_PROPERTIES = StaticConcurrentMessageBrokerProperties.builder()
-            .concurrencyLevel(2)
+            .concurrencyLevel(1)
             .preferredConcurrencyPollingRateInMilliseconds(100L)
+            .errorBackoffTimeInMilliseconds(0L)
             .build();
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    private MessageRetriever messageRetriever;
+    private Supplier<CompletableFuture<Message>> messageSupplier;
 
-    @Mock
-    private MessageProcessor messageProcessor;
-
-    @Mock
-    private ConcurrentMessageBrokerProperties concurrentMessageBrokerProperties;
-
-    private ExecutorService executorService;
+    private ExecutorService brokerExecutorService;
+    private ExecutorService messageExecutingExecutorService;
 
     @Before
     public void setUp() {
-        executorService = Executors.newCachedThreadPool();
+        brokerExecutorService = Executors.newCachedThreadPool();
+        messageExecutingExecutorService = Executors.newCachedThreadPool();
     }
 
     @After
     public void tearDown() {
-        executorService.shutdownNow();
+        brokerExecutorService.shutdownNow();
+        messageExecutingExecutorService.shutdownNow();
     }
 
     @Test
-    public void shouldBeAbleToRunMultipleThreadsConcurrentlyForProcessingMessages() throws InterruptedException {
+    public void shouldBeAbleToProcessMultipleMessagesConcurrently() throws InterruptedException {
         // arrange
         final int concurrencyLevel = 5;
         final ConcurrentMessageBrokerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .concurrencyLevel(concurrencyLevel)
                 .build();
-        final ConcurrentMessageBroker controller = new ConcurrentMessageBroker(messageRetriever, messageProcessor, properties);
-        final CountDownLatch threadsProcessingLatch = new CountDownLatch(concurrencyLevel);
-        final CountDownLatch continueProcessingLatch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            threadsProcessingLatch.countDown();
-            continueProcessingLatch.await();
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build());
+        final CountDownLatch messagesProcessingLatch = new CountDownLatch(concurrencyLevel);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        final Future<?> controllerFuture = executorService.submit(controller);
+        runBrokerProcessMessageOnThread(
+                broker,
+                () -> CompletableFuture.completedFuture(Message.builder().build()),
+                processingMessageWillBlockUntilInterrupted(messagesProcessingLatch)
+        );
 
         // assert
-        threadsProcessingLatch.await(1, SECONDS);
-        controllerFuture.cancel(true);
-        continueProcessingLatch.countDown();
+        assertThat(messagesProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
-    public void noPermitsWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException {
+    public void whenNoAvailableConcurrencyNoMessagesWillBeRequested() throws InterruptedException {
         // arrange
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build());
-        final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
-                messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 0;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
+        final long concurrencyPollingRateInMs = 100L;
+        final ConcurrentMessageBrokerProperties properties = DEFAULT_PROPERTIES.toBuilder()
+                .preferredConcurrencyPollingRateInMilliseconds(concurrencyPollingRateInMs)
+                .concurrencyLevel(0)
+                .build();
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        final Future<?> controllerFuture = executorService.submit(concurrentMessageBroker);
-        Thread.sleep(100 * 3);
-        controllerFuture.cancel(true);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP);
+        Thread.sleep(concurrencyPollingRateInMs * 3);
 
         // assert
-        verify(messageRetriever, never()).retrieveMessage();
+        verify(messageSupplier, never()).get();
     }
 
     @Test
-    public void allPermitsAcquiredWillKeepPollingUntilAcquiredOrTimeout() throws InterruptedException {
+    public void whenConcurrencyLimitReachedItWillSpinForChangesInConcurrencyWhileWaiting() throws Exception {
         // arrange
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build());
-        final ConcurrentMessageBroker controller = new ConcurrentMessageBroker(
-                messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            testFinishedLatch.await(1, SECONDS);
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
+        final long concurrencyPollingRateInMs = 100L;
+        final AtomicInteger numberTimesConcurrencyPolled = new AtomicInteger(0);
+        final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
+        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(concurrencyPollingRateInMs);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        when(properties.getConcurrencyLevel())
+                .thenAnswer((invocation) -> {
+                    if (numberTimesConcurrencyPolled.incrementAndGet() == 3) {
+                        countDownLatch.countDown();
+                    }
+
+                    return 0;
+                });
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
-        Thread.sleep(100 * 3);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted());
 
         // assert
-        verify(messageRetriever, times(1)).retrieveMessage();
-        verify(concurrentMessageBrokerProperties, times(4)).getConcurrencyLevel();
+        assertThat(countDownLatch.await(concurrencyPollingRateInMs * 3, MILLISECONDS)).isTrue();
+    }
 
-        // cleanup
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
+    @Test
+    public void willStopProcessingMessagesIfKeepProcessingMessagesReturnsFalse() throws Exception {
+        // arrange
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
+
+        // act
+        final Future<?> future = runBrokerProcessMessageOnThread(broker, () -> false, messageSupplier, processingMessageWillBlockUntilInterrupted());
+        future.get(30, SECONDS);
+
+        // assert
+        verify(messageSupplier, never()).get();
     }
 
     @Test
     public void exceptionThrownWhileRetrievingMessageWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
-        final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
-                messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            messageProcessedLatch.countDown();
-            testFinishedLatch.await(1, SECONDS);
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage())
+        when(messageSupplier.get())
                 .thenThrow(new RuntimeException("Expected Test Exception"))
-                .thenReturn(Message.builder().build());
+                .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
+        final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
         // act
-        final Future<?> controllerFuture = executorService.submit(concurrentMessageBroker);
-        messageProcessedLatch.await(1, SECONDS);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
 
         // assert
-        verify(messageRetriever, times(2)).retrieveMessage();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
+    }
 
-        // cleanup
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
+    @Test
+    public void messageRetrievalReturningExceptionalCompletableFutureStillAllowsMoreMessagesToBeProcessed() throws InterruptedException {
+        // arrange
+        when(messageSupplier.get())
+                .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")))
+                .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
+        final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
+
+        // act
+        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
+
+        // assert
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
     public void exceptionThrownWhileGettingPropertiesWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
-        final ConcurrentMessageBroker concurrentMessageBroker = new ConcurrentMessageBroker(
-                messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getErrorBackoffTimeInMilliseconds()).thenReturn(1L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel())
+        final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
+        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1L);
+        when(properties.getConcurrencyLevel())
                 .thenThrow(new RuntimeException("Expected Test Exception"))
-                .thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            messageProcessedLatch.countDown();
-            testFinishedLatch.await(1, SECONDS);
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build());
+                .thenReturn(1);
+        when(messageSupplier.get())
+                .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
+        final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        final Future<?> controllerFuture = executorService.submit(concurrentMessageBroker);
-        assertThat(messageProcessedLatch.await(1, SECONDS)).isTrue();
+        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
 
         // assert
-        verify(messageRetriever, times(1)).retrieveMessage();
-
-        // cleanup
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
-    public void exceptionThrownProcessingMessageDoesNotAffectOthers() throws InterruptedException {
+    public void exceptionThrownProcessingMessageDoesNotAffectOthersFromBeingRun() throws InterruptedException {
         // arrange
-        final ConcurrentMessageBroker controller = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
+        when(messageSupplier.get())
+                .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
+        final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
         final AtomicBoolean isFirst = new AtomicBoolean(true);
-        doAnswer(invocation -> {
+        final Function<Message, CompletableFuture<?>> messageConsumer = processingMessageWillBlockUntilInterrupted(messageProcessingLatch, () -> {
             if (isFirst.get()) {
                 isFirst.set(false);
-                throw new MessageProcessingException("error");
+                throw new MessageProcessingException("Expected Test Exception");
             }
-
-            messageProcessedLatch.countDown();
-            testFinishedLatch.await(1, SECONDS);
-
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build())
-                .thenReturn(Message.builder().build());
-
-        // act
-        final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
-        messageProcessedLatch.await(1, SECONDS);
-
-        // assert
-        verify(messageRetriever, times(2)).retrieveMessage();
-
-        // cleanup
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
-    }
-
-    @Test
-    public void stoppingBrokerWithInterruptsWillStopRunningThreads() throws InterruptedException {
-        // arrange
-        final ConcurrentMessageBroker controller = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final int concurrencyLevel = 1;
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(100L);
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(concurrencyLevel);
-        final CountDownLatch testFinishedLatch = new CountDownLatch(1);
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        final AtomicBoolean messageProcessed = new AtomicBoolean(false);
-        final Semaphore semaphore = new Semaphore(0);
-        doAnswer(invocation -> {
-            messageProcessedLatch.countDown();
-            semaphore.acquire();
-            messageProcessed.set(true);
-            return null;
-        }).when(messageProcessor).processMessage(any(Message.class));
-        when(messageRetriever.retrieveMessage())
-                .thenReturn(Message.builder().build());
-
-        // act
-        final Future<?> controllerFuture = Executors.newSingleThreadExecutor().submit(controller);
-        messageProcessedLatch.await(1, SECONDS);
-        controllerFuture.cancel(true);
-        testFinishedLatch.countDown();
-
-        // assert
-        assertThat(messageProcessed.get()).isFalse();
-    }
-
-    @Test
-    public void whenPropertiesContainThreadNameThreadsForProcessingMessagesShouldContainThatThreadName() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(1);
-        when(concurrentMessageBrokerProperties.getPreferredConcurrencyPollingRateInMilliseconds()).thenReturn(10_000L);
-        when(concurrentMessageBrokerProperties.getThreadNameFormat()).thenReturn("my-thread-%d");
-        final AtomicReference<String> actualMessageProcessingThreadName = new AtomicReference<>();
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        when(messageRetriever.retrieveMessage()).thenReturn(Message.builder().build());
-
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        doAnswer((invocation) -> {
-            actualMessageProcessingThreadName.set(Thread.currentThread().getName());
-            messageProcessedLatch.countDown();
-            testCompletedLatch.await();
-            return null;
-        }).when(messageProcessor).processMessage(any());
-
-        // act
-        final Future<?> brokerFuture = Executors.newSingleThreadExecutor().submit(broker);
-        messageProcessedLatch.await(1, SECONDS);
-        brokerFuture.cancel(true);
-        testCompletedLatch.countDown();
-
-        // assert
-        assertThat(actualMessageProcessingThreadName.get()).startsWith("my-thread-");
-    }
-
-    @Test
-    public void errorBuildingThreadNameWillUsedDefaultCachedExecutorServiceName() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.getConcurrencyLevel()).thenReturn(1);
-        when(concurrentMessageBrokerProperties.getThreadNameFormat()).thenAnswer((invocation) -> new RuntimeException("Expected Test Exception"));
-        final AtomicReference<String> actualMessageProcessingThreadName = new AtomicReference<>();
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        when(messageRetriever.retrieveMessage()).thenReturn(Message.builder().build());
-
-        final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
-        final CountDownLatch testCompletedLatch = new CountDownLatch(1);
-        doAnswer((invocation) -> {
-            actualMessageProcessingThreadName.set(Thread.currentThread().getName());
-            messageProcessedLatch.countDown();
-            testCompletedLatch.await();
-            return null;
-        }).when(messageProcessor).processMessage(any());
-
-        // act
-        final Future<?> brokerFuture = Executors.newSingleThreadExecutor().submit(broker);
-        messageProcessedLatch.await(1, SECONDS);
-        brokerFuture.cancel(true);
-        testCompletedLatch.countDown();
-
-        // assert
-        assertThat(actualMessageProcessingThreadName.get()).startsWith("pool-");
-    }
-
-    @Test
-    public void shuttingDownBrokerShouldNotInterruptMessageProcessingThreadsIfSetAsFalseInProperties() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(false);
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
-        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
-        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
-
-        // act
-        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
-
-        // assert
-        verify(messageProcessingExecutorService).shutdown();
-    }
-
-    @Test
-    public void shuttingDownBrokerShouldInterruptMessageProcessingThreadsIfSetAsTrueInProperties() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
-        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
-        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
-        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
-
-        // act
-        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
-
-        // assert
-        verify(messageProcessingExecutorService).shutdownNow();
-    }
-
-    @Test
-    public void shuttingDownBrokerWillWaitTheProvidedShutdownTimeInSecondsForConcurrentThreadsExecutorToTerminate() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
-        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
-        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
-        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
-        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
-
-        // act
-        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
-
-        // assert
-        verify(concurrentThreadsExecutor).awaitTermination(1000L, MILLISECONDS);
-    }
-
-    @Test
-    public void shuttingDownBrokerWillWaitAnyTimeLeftForShutdownDependingOnTheTimeWaitingForTheConcurrentThreadsExecutorToTerminate() throws Exception {
-        // arrange
-        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
-        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
-        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
-        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenAnswer((invocation) -> {
-            Thread.sleep(500);
-            return true;
         });
-        when(messageProcessingExecutorService.awaitTermination(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
         // act
-        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, messageConsumer);
 
         // assert
-        final ArgumentCaptor<Long> terminationTimeInSecondsArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(messageProcessingExecutorService).awaitTermination(terminationTimeInSecondsArgumentCaptor.capture(), eq(MILLISECONDS));
-        assertThat(terminationTimeInSecondsArgumentCaptor.getValue()).isCloseTo(500L, Offset.offset(5L));
+        assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
     }
 
     @Test
-    public void shuttingDownBrokerThatIsInterruptedWillInterruptThread() throws Exception {
+    public void threadInterruptedDuringBackoffShouldStopBroker() throws Exception {
         // arrange
-        when(concurrentMessageBrokerProperties.shouldInterruptThreadsProcessingMessagesOnShutdown()).thenReturn(true);
-        when(concurrentMessageBrokerProperties.getShutdownTimeoutInSeconds()).thenReturn(1L);
-        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(messageRetriever, messageProcessor, concurrentMessageBrokerProperties);
-        final ExecutorService concurrentThreadsExecutor = mock(ExecutorService.class);
-        final ExecutorService messageProcessingExecutorService = mock(ExecutorService.class);
-        when(concurrentThreadsExecutor.awaitTermination(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
+        final long backoffTimeInMs = 6000L;
+        final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
+        when(properties.getConcurrencyLevel()).thenReturn(2);
+        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1000L);
+        final CountDownLatch enteredBackoffSection = new CountDownLatch(1);
+        when(properties.getErrorBackoffTimeInMilliseconds())
+                .thenAnswer((invocation) -> {
+                    enteredBackoffSection.countDown();
+                    return backoffTimeInMs;
+                });
+        when(messageSupplier.get()).thenThrow(new RuntimeException("Expected Test Exception"));
+        final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        broker.shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingExecutorService);
+        final Future<?> brokerFuture = runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP);
+        assertThat(enteredBackoffSection.await(30, SECONDS)).isTrue();
+        brokerExecutorService.shutdownNow();
 
         // assert
-        assertThat(Thread.interrupted()).isTrue();
+        brokerFuture.get(backoffTimeInMs / 2, MILLISECONDS);
+    }
+
+    private Future<?> runBrokerProcessMessageOnThread(final MessageBroker broker,
+                                                      final Supplier<CompletableFuture<Message>> messageRetriever,
+                                                      final Function<Message, CompletableFuture<?>> messageConsumer) {
+        return brokerExecutorService.submit(() -> {
+            final ExecutorService executorService = Executors.newCachedThreadPool();
+            try {
+                broker.processMessages(executorService, messageRetriever, messageConsumer);
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
+        });
+    }
+
+    private Future<?> runBrokerProcessMessageOnThread(final MessageBroker broker,
+                                                      final BooleanSupplier keepProcessingMessages,
+                                                      final Supplier<CompletableFuture<Message>> messageRetriever,
+                                                      final Function<Message, CompletableFuture<?>> messageConsumer) {
+        return brokerExecutorService.submit(() -> {
+            final ExecutorService executorService = Executors.newCachedThreadPool();
+            try {
+                broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
+        });
+    }
+
+    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted() {
+        return processingMessageWillBlockUntilInterrupted(null);
+    }
+
+    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted(final CountDownLatch messageProcessingLatch) {
+        return processingMessageWillBlockUntilInterrupted(messageProcessingLatch, () -> {
+        });
+    }
+
+    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted(final CountDownLatch messageProcessingLatch,
+                                                                                               final Runnable runnableCalledOnMessageProcessing) {
+
+        return (message) -> CompletableFuture.runAsync(() -> {
+            runnableCalledOnMessageProcessing.run();
+            if (messageProcessingLatch != null) {
+                messageProcessingLatch.countDown();
+            }
+            try {
+                Thread.sleep(Long.MAX_VALUE);
+            } catch (final InterruptedException interruptedException) {
+                //expected
+            }
+        }, messageExecutingExecutorService);
     }
 }

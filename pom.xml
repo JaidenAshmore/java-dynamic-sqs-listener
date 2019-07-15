@@ -298,6 +298,12 @@
                     <jvmArgs>
                         <value>-Dslf4jtest.print.level=ERROR</value>
                     </jvmArgs>
+                    <excludedClasses>
+                        <!-- These classes are difficult to unit test considering it is building the classes so
+                        they are being ignored -->
+                        <param>com.jashmore.sqs.spring.container.basic.*</param>
+                        <param>com.jashmore.sqs.spring.container.prefetch.*</param>
+                    </excludedClasses>
                 </configuration>
             </plugin>
             <plugin>

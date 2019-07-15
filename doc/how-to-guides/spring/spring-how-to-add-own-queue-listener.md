@@ -1,5 +1,5 @@
 # Spring - How to add your own Queue Listener
-The [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/MessageListenerContainerFactory.java) is
+The [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java) is
 used to process bean methods to determine whether they should be used to process SQS messages. The most common way to define whether a method should be wrapped
 is via an annotation, for example the following method indicates that it should be wrapped in a basic queue listener:
 
@@ -10,13 +10,11 @@ public void messageConsumer(@Payload final String messagePayload) {
 }
 ```
 
-There are only a few core [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)s
-that are provided and therefore may not cover the use cases that is desired. Therefore, consumers can define their own wrapper that will be used with the
-core ones provided.
+There are only a few core implementations of the [MessageListenerContainerFactory](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
+and therefore there may be use cases that are not covered. Consumers can define their own wrapper that will be used alongside the core ones provided.
 
 ## Example Use Case
-An application wants to provide a custom annotation to wrap methods with some message listening logic that does not align with the core wrappers provided. For
-example, the `SleepingMessageRetriever` built in the [how to implement a custom message retrieval](../core/core-how-to-implement-a-custom-message-retrieval.md).
+An application wants to provide a custom annotation to wrap methods with some message listening logic that does not align with the core wrappers provided.
 
 ## Prerequisites
 1. This relies on no [MessageListenerContainerCoordinator](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java)
@@ -28,7 +26,7 @@ are collected.
 ## Steps
 For this example, we want to be able to wrap a method in the annotation `SleepingQueueListener` that will use the components of the framework that we have written
 our self. This could be our own [MessageRetriever](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) that
-we wrote (see [Core - How to implement a custom message retrieval](../core/core-how-to-implement-a-custom-message-retrieval.md)).
+we wrote.
 
 1. Create the annotation that will be used to indicate the methods using this queue wrapper.
     ```java
@@ -53,14 +51,17 @@ to make matching on annotations easier. At this point whenever we enter `wrapMet
 annotated with `SleepingQueueListener` and now we need to create a
 [MessageListenerContainer](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java)
 that has the responsibility of handling the spring lifecycle of this queue listener. The
-[SimpleMessageListenerContainer](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/container/SimpleMessageListenerContainer.java)
+[CoreMessageListenerContainer](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/container/CoreMessageListenerContainer.java)
 is the simplest (and currently only) implementation of this and is the most likely one that would be used.
     ```java
     public class MySleepingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
         private final ArgumentResolverService argumentResolverService;
+        private final SqsAsyncClientProvider sqsAsyncClientProvider;
      
-        public MySleepingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService) {   
+        public MySleepingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
+                                                         final SqsAsyncClientProvider sqsAsyncClientProvider) {   
             this.argumentResolverService = argumentResolverService;
+            this.sqsAsyncClientProvider = sqsAsyncClientProvider;
         }
      
         @Override
@@ -70,22 +71,11 @@ is the simplest (and currently only) implementation of this and is the most like
      
         @Override
         protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final SleepingQueueListener annotation) {
-            final QueueProperties queueProperties = QueueProperties
-                   .builder()
-                   .queueUrl( queueResolver.resolveQueueUrl(annotation.value()))
-                   .build();
-    
-            final MessageProcessor messageProcessor = new DefaultMessageProcessor(argumentResolverService, queueProperties,
-                    sqsAsyncClient, method, bean);
-            
-            final MessageRetriever messageRetriever = new SleepingMessageRetriever(sqsAsyncClient, queueProperties, annotation.sleepPeriodInMs())
-    
-            final SingleThreadedMessageBroker singleThreadedMessageBroker = new SingleThreadedMessageBroker(messageRetriever, messageProcessor);
-            
-            return new SimpleMessageListenerContainer(
-                    bean.getClass().getName() + "#" + method.getName(),
-                    singleThreadedMessageBroker
-            );      
+         
+            // build your container here
+            return new CoreMessageListenerContainer(
+                            // components in here
+            );
         }
     }
     ```
@@ -98,4 +88,7 @@ is the simplest (and currently only) implementation of this and is the most like
             return new MySleepingMessageListenerContainerFactory(argumentResolverService); 
         }
      }
-     ``` 
+     ```
+     
+To see how the containers fully get built, take a look at the
+[Spring Core implementations](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container). 

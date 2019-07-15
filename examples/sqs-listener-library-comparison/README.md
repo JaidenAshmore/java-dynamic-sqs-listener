@@ -15,13 +15,13 @@ The results that I ran on my local machine (which is not the greatest environmen
 *Ordered from fastest to slowest*
 
 | Method | Concurrency | Time 1000 messages (ms) |
-| JMS | 30 | 4889 |
-| Java Dynamic SQS Listener (PrefetchingQueueListener) | 30 | 10550 |
-| Java Dynamic SQS Listener (PrefetchingQueueListener) | 10 | 10560ms |
-| JMS | 10 | 10587 |
-| Spring Cloud | 10 | 20284 |
-| Java Dynamic SQS Listener (QueueListener) | 30 | 20385 |
-| Java Dynamic SQS Listener (QueueListener) | 10 | 20399 |
+| JMS | 30 | 19997 |
+| Java Dynamic SQS Listener (PrefetchingQueueListener) | 30 | 21087ms |
+| Java Dynamic SQS Listener (QueueListener) | 30 | 41484ms |
+| Java Dynamic SQS Listener (PrefetchingQueueListener) | 10 | 50049ms |
+| JMS | 10 | 51354ms |
+| Spring Cloud | 10 | 70558ms |
+| Java Dynamic SQS Listener (QueueListener) | 10 | 70640ms |
 
 ### Configuration
 - Message latency = 100ms
@@ -31,98 +31,127 @@ The results that I ran on my local machine (which is not the greatest environmen
 ### Raw Results
 #### JMS (concurrency = 10)
 ```
-23:44:54.720 [DefaultMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 1454ms
-23:44:55.738 [DefaultMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 2472ms
-23:44:56.754 [DefaultMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 3488ms
-23:44:57.765 [DefaultMessageListenerContainer-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 4499ms
-23:44:58.779 [DefaultMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 5513ms
-23:44:59.788 [DefaultMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 6522ms
-23:45:00.798 [DefaultMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 7532ms
-23:45:01.812 [DefaultMessageListenerContainer-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 8546ms
-23:45:02.834 [DefaultMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 9568ms
-23:45:03.853 [DefaultMessageListenerContainer-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 10587ms
+21:17:17.677 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 6205ms
+21:17:22.701 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 11229ms
+21:17:27.722 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 16250ms
+21:17:32.736 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 21264ms
+21:17:37.751 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 26279ms
+21:17:42.766 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 31294ms
+21:17:47.780 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 36308ms
+21:17:52.794 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 41322ms
+21:17:57.808 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 46336ms
+21:18:02.826 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 51354ms
 ```
 
 #### JMS (concurrency = 30)
 ```
-23:45:56.165 [DefaultMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 1388ms
-23:45:56.779 [DefaultMessageListenerContainer-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 2002ms
-23:45:57.239 [DefaultMessageListenerContainer-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 2462ms
-23:45:57.637 [DefaultMessageListenerContainer-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 2860ms
-23:45:57.972 [DefaultMessageListenerContainer-28] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 3195ms
-23:45:58.317 [DefaultMessageListenerContainer-15] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 3540ms
-23:45:58.652 [DefaultMessageListenerContainer-22] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 3875ms
-23:45:58.978 [DefaultMessageListenerContainer-28] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 4201ms
-23:45:59.331 [DefaultMessageListenerContainer-12] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 4554ms
-23:45:59.666 [DefaultMessageListenerContainer-21] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 4889ms
+21:15:48.707 [DefaultMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 4731ms
+21:15:50.601 [DefaultMessageListenerContainer-23] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 6625ms
+21:15:52.277 [DefaultMessageListenerContainer-19] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 8301ms
+21:15:53.945 [DefaultMessageListenerContainer-15] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 9969ms
+21:15:55.620 [DefaultMessageListenerContainer-23] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 11644ms
+21:15:57.296 [DefaultMessageListenerContainer-19] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 13320ms
+21:15:58.959 [DefaultMessageListenerContainer-27] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14983ms
+21:16:00.636 [DefaultMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16660ms
+21:16:02.310 [DefaultMessageListenerContainer-19] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 18334ms
+21:16:03.973 [DefaultMessageListenerContainer-27] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 19997ms
 ```
 
+#### JMS (concurrency = 100)
+No idea why this suddenly slows down between 700 and 800 messages.
+```
+21:31:33.101 [DefaultMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 4729ms
+21:31:34.995 [DefaultMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 6623ms
+21:31:36.453 [DefaultMessageListenerContainer-18] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 8081ms
+21:31:37.671 [DefaultMessageListenerContainer-19] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 9299ms
+21:31:38.750 [DefaultMessageListenerContainer-17] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10378ms
+21:31:39.739 [DefaultMessageListenerContainer-41] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 11367ms
+21:31:40.634 [DefaultMessageListenerContainer-26] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 12262ms
+21:32:01.027 [DefaultMessageListenerContainer-48] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 32655ms
+21:32:09.217 [DefaultMessageListenerContainer-51] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 40845ms
+21:32:10.272 [DefaultMessageListenerContainer-32] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 41900ms
+
+```
 #### Spring Cloud (concurrency = 10, this is the max)
 ```
-23:48:11.143 [simpleMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 1860ms
-23:48:13.201 [simpleMessageListenerContainer-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 3918ms
-23:48:15.265 [simpleMessageListenerContainer-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 5982ms
-23:48:17.316 [simpleMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 8033ms
-23:48:19.363 [simpleMessageListenerContainer-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10080ms
-23:48:21.408 [simpleMessageListenerContainer-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 12125ms
-23:48:23.452 [simpleMessageListenerContainer-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14169ms
-23:48:25.491 [simpleMessageListenerContainer-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16208ms
-23:48:27.530 [simpleMessageListenerContainer-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 18247ms
-23:48:29.567 [simpleMessageListenerContainer-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 20284ms
+21:18:52.214 [simpleMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 6897ms
+21:18:59.314 [simpleMessageListenerContainer-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 13997ms
+21:19:06.415 [simpleMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 21098ms
+21:19:13.495 [simpleMessageListenerContainer-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 28178ms
+21:19:20.572 [simpleMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 35255ms
+21:19:27.642 [simpleMessageListenerContainer-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 42325ms
+21:19:34.708 [simpleMessageListenerContainer-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 49391ms
+21:19:41.773 [simpleMessageListenerContainer-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 56456ms
+21:19:48.826 [simpleMessageListenerContainer-11] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 63509ms
+21:19:55.875 [simpleMessageListenerContainer-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 70558ms
 ```
 
 #### Jashmore Prefetching (concurrency = 10)
 ```
-23:39:25.302 [message-listeners-prefetching-concurrency10-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 989ms
-23:39:26.378 [message-listeners-prefetching-concurrency10-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 2065ms
-23:39:27.446 [message-listeners-prefetching-concurrency10-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 3133ms
-23:39:28.517 [message-listeners-prefetching-concurrency10-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 4204ms
-23:39:29.592 [message-listeners-prefetching-concurrency10-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 5279ms
-23:39:30.652 [message-listeners-prefetching-concurrency10-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 6339ms
-23:39:31.712 [message-listeners-prefetching-concurrency10-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 7399ms
-23:39:32.769 [message-listeners-prefetching-concurrency10-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 8456ms
-23:39:33.821 [message-listeners-prefetching-concurrency10-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 9508ms
-23:39:34.873 [message-listeners-prefetching-concurrency10-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 10560ms
+21:21:18.084 [message-listeners-prefetching-concurrency10-message-processing-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 5011ms
+21:21:23.088 [message-listeners-prefetching-concurrency10-message-processing-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 10015ms
+21:21:28.092 [message-listeners-prefetching-concurrency10-message-processing-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 15019ms
+21:21:33.097 [message-listeners-prefetching-concurrency10-message-processing-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 20024ms
+21:21:38.102 [message-listeners-prefetching-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 25029ms
+21:21:43.105 [message-listeners-prefetching-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 30032ms
+21:21:48.108 [message-listeners-prefetching-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 35035ms
+21:21:53.113 [message-listeners-prefetching-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 40040ms
+21:21:58.118 [message-listeners-prefetching-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 45045ms
+21:22:03.122 [message-listeners-prefetching-concurrency10-message-processing-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 50049ms
 ```
 
 ####  Jashmore Prefetching (concurrency = 30)
 ```
-23:38:28.696 [message-listeners-prefetching-concurrency30-12] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 972ms
-23:38:29.772 [message-listeners-prefetching-concurrency30-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 2048ms
-23:38:30.847 [message-listeners-prefetching-concurrency30-15] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 3123ms
-23:38:31.926 [message-listeners-prefetching-concurrency30-13] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 4202ms
-23:38:32.990 [message-listeners-prefetching-concurrency30-17] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 5266ms
-23:38:34.056 [message-listeners-prefetching-concurrency30-17] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 6332ms
-23:38:35.119 [message-listeners-prefetching-concurrency30-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 7395ms
-23:38:36.174 [message-listeners-prefetching-concurrency30-12] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 8450ms
-23:38:37.225 [message-listeners-prefetching-concurrency30-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 9501ms
-23:38:38.274 [message-listeners-prefetching-concurrency30-14] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 10550ms
+21:22:48.267 [message-listeners-prefetching-concurrency30-message-processing-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 2403ms
+21:22:50.374 [message-listeners-prefetching-concurrency30-message-processing-10] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 4510ms
+21:22:52.466 [message-listeners-prefetching-concurrency30-message-processing-22] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 6602ms
+21:22:54.553 [message-listeners-prefetching-concurrency30-message-processing-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 8689ms
+21:22:56.635 [message-listeners-prefetching-concurrency30-message-processing-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10771ms
+21:22:58.712 [message-listeners-prefetching-concurrency30-message-processing-22] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 12848ms
+21:23:00.782 [message-listeners-prefetching-concurrency30-message-processing-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14918ms
+21:23:02.845 [message-listeners-prefetching-concurrency30-message-processing-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16981ms
+21:23:04.900 [message-listeners-prefetching-concurrency30-message-processing-27] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 19036ms
+21:23:06.951 [message-listeners-prefetching-concurrency30-message-processing-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 21087ms
+```
+
+####  Jashmore Prefetching (concurrency = 100)
+```
+21:33:07.007 [message-listeners-prefetching-concurrency30-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 2403ms
+21:33:09.114 [message-listeners-prefetching-concurrency30-message-processing-12] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 4510ms
+21:33:11.206 [message-listeners-prefetching-concurrency30-message-processing-25] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 6602ms
+21:33:13.290 [message-listeners-prefetching-concurrency30-message-processing-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 8686ms
+21:33:15.371 [message-listeners-prefetching-concurrency30-message-processing-16] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10767ms
+21:33:17.454 [message-listeners-prefetching-concurrency30-message-processing-25] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 12850ms
+21:33:19.526 [message-listeners-prefetching-concurrency30-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14922ms
+21:33:21.587 [message-listeners-prefetching-concurrency30-message-processing-17] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16983ms
+21:33:23.641 [message-listeners-prefetching-concurrency30-message-processing-27] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 19037ms
+21:33:25.693 [message-listeners-prefetching-concurrency30-message-processing-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 21089ms
 ```
 
 #### Jashmore QueueListener (concurrency = 10)
 ```
-23:40:36.464 [message-listeners-queue-listener-method-concurrency10-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 1889ms
-23:40:38.536 [message-listeners-queue-listener-method-concurrency10-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 3961ms
-23:40:40.597 [message-listeners-queue-listener-method-concurrency10-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 6022ms
-23:40:42.658 [message-listeners-queue-listener-method-concurrency10-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 8083ms
-23:40:44.725 [message-listeners-queue-listener-method-concurrency10-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10150ms
-23:40:46.778 [message-listeners-queue-listener-method-concurrency10-9] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 12203ms
-23:40:48.830 [message-listeners-queue-listener-method-concurrency10-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14255ms
-23:40:50.879 [message-listeners-queue-listener-method-concurrency10-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16304ms
-23:40:52.928 [message-listeners-queue-listener-method-concurrency10-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 18353ms
-23:40:54.974 [message-listeners-queue-listener-method-concurrency10-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 20399ms
+21:23:55.674 [message-listeners-queue-listener-method-concurrency10-message-processing-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 7086ms
+21:24:02.761 [message-listeners-queue-listener-method-concurrency10-message-processing-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 14173ms
+21:24:09.830 [message-listeners-queue-listener-method-concurrency10-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 21242ms
+21:24:16.897 [message-listeners-queue-listener-method-concurrency10-message-processing-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 28309ms
+21:24:23.958 [message-listeners-queue-listener-method-concurrency10-message-processing-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 35370ms
+21:24:31.018 [message-listeners-queue-listener-method-concurrency10-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 42430ms
+21:24:38.078 [message-listeners-queue-listener-method-concurrency10-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 49490ms
+21:24:45.131 [message-listeners-queue-listener-method-concurrency10-message-processing-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 56543ms
+21:24:52.181 [message-listeners-queue-listener-method-concurrency10-message-processing-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 63593ms
+21:24:59.228 [message-listeners-queue-listener-method-concurrency10-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 70640ms
 ```
 
 #### Jashmore QueueListener (concurrency = 30)
 ```
-23:41:39.507 [message-listeners-queue-listener-method-concurrency30-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 1875ms
-23:41:41.578 [message-listeners-queue-listener-method-concurrency30-4] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 3946ms
-23:41:43.639 [message-listeners-queue-listener-method-concurrency30-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 6007ms
-23:41:45.705 [message-listeners-queue-listener-method-concurrency30-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 8073ms
-23:41:47.768 [message-listeners-queue-listener-method-concurrency30-7] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 10136ms
-23:41:49.823 [message-listeners-queue-listener-method-concurrency30-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 12191ms
-23:41:51.874 [message-listeners-queue-listener-method-concurrency30-1] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 14242ms
-23:41:53.923 [message-listeners-queue-listener-method-concurrency30-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 16291ms
-23:41:55.971 [message-listeners-queue-listener-method-concurrency30-8] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 18339ms
-23:41:58.017 [message-listeners-queue-listener-method-concurrency30-2] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 20385ms
+21:25:37.364 [message-listeners-queue-listener-method-concurrency30-message-processing-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 100 messages is 4445ms
+21:25:41.507 [message-listeners-queue-listener-method-concurrency30-message-processing-3] INFO  c.j.sqs.examples.MessageListeners - Time for processing 200 messages is 8588ms
+21:25:45.642 [message-listeners-queue-listener-method-concurrency30-message-processing-14] INFO  c.j.sqs.examples.MessageListeners - Time for processing 300 messages is 12723ms
+21:25:49.769 [message-listeners-queue-listener-method-concurrency30-message-processing-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 400 messages is 16850ms
+21:25:53.884 [message-listeners-queue-listener-method-concurrency30-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 500 messages is 20965ms
+21:25:57.995 [message-listeners-queue-listener-method-concurrency30-message-processing-13] INFO  c.j.sqs.examples.MessageListeners - Time for processing 600 messages is 25076ms
+21:26:02.102 [message-listeners-queue-listener-method-concurrency30-message-processing-6] INFO  c.j.sqs.examples.MessageListeners - Time for processing 700 messages is 29183ms
+21:26:06.205 [message-listeners-queue-listener-method-concurrency30-message-processing-0] INFO  c.j.sqs.examples.MessageListeners - Time for processing 800 messages is 33286ms
+21:26:10.312 [message-listeners-queue-listener-method-concurrency30-message-processing-14] INFO  c.j.sqs.examples.MessageListeners - Time for processing 900 messages is 37393ms
+21:26:14.403 [message-listeners-queue-listener-method-concurrency30-message-processing-5] INFO  c.j.sqs.examples.MessageListeners - Time for processing 1000 messages is 41484ms
 ```

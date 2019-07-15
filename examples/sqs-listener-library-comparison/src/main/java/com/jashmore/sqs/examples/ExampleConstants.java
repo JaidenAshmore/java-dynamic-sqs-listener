@@ -9,12 +9,12 @@ public class ExampleConstants {
     /**
      * The number of messages to place onto the queue before beginning to process the messages.
      */
-    public static final int NUMBER_OF_MESSAGES = 1_000;
+    static final int NUMBER_OF_MESSAGES = 1_000;
 
     /**
      * The amount of time that the thread will be slept while processing the message. This will represent IO.
      */
-    public static final long MESSAGE_IO_TIME_IN_MS = 500;
+    static final long MESSAGE_IO_TIME_IN_MS = 500;
 
     /**
      * The amount of time it takes to get a message from the remote SQS queue.
@@ -24,5 +24,5 @@ public class ExampleConstants {
     /**
      * The actual queue that messages will be placed onto during the test.
      */
-    public static final String QUEUE_TO_TEST = PREFETCHING_30_QUEUE_NAME;
+    static final String QUEUE_TO_TEST = PREFETCHING_30_QUEUE_NAME;
 }

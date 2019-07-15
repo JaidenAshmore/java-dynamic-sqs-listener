@@ -39,7 +39,7 @@ that are using this `ObjectMapper`, which is the
     
        @Bean
        public MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
-           return new MessageAttributeArgumentResolver(objectMapper);
+           return new MessageAttributeArgumentResolver(MY_OBJECT_MAPPER_FOR_SQS);
        }
     }
     ```

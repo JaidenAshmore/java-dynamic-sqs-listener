@@ -1,4 +1,4 @@
-package it.com.jashmore.sqs.listener.util;
+package it.com.jashmore.sqs.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;

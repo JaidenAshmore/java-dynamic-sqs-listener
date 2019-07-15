@@ -11,7 +11,7 @@
     <logger name="akka" level="OFF" />
     <logger name="io.netty" level="ERROR" />
 
-    <logger name="com.jashmore.sqs.broker" level="DEBUG" />
+    <logger name="com.jashmore" level="INFO" />
 
     <root level="info">
         <appender-ref ref="STDOUT" />

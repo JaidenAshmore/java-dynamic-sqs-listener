@@ -1,105 +1,100 @@
 package com.jashmore.sqs.broker.concurrent;
 
 import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_BACKOFF_TIME_IN_MS;
-import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_SHUTDOWN_TIME_IN_SECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.ResizableSemaphore;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * Handles the processing of messages across a number of threads that can dynamically change during processing.
+ * Broker that will allow for messages to be processed concurrently up to a certain limit that can change dynamically.
+ *
+ * <p>The concurrency rate will be recalculated on each cycle which will increase decrease the number of available threads for processing. For example,
+ * if the current concurrency rate is 5 and when it recalculates the concurrency it is now 6 it will allow another thread to process messages. However,
+ * if the rate of concurrency decreases it will wait until a certain number of messages finishes processing messages before requesting more messages.
+ *
+ * <p>The current and max rate of concurrency is maintained via a {@link ResizableSemaphore} and this will be used to block the broker from processing
+ * more messages than is desirable.  This rate is maintained over multiple calls to the process messages methods and therefore should not exceed the
+ * desired concurrency rate even when calling {@link #processMessages(ExecutorService, BooleanSupplier, Supplier, Function)} multiple times sequentially.
+ *
+ * <p>Note that it may take a while for the concurrency rate to change based on whether all of the permits are currently being used, it will only recheck
+ * the concurrency rate once another message is being used. The other way that the concurrency rate can be changed is if the request for a permit goes
+ * over the desired length it will recalculate the concurrency and try again.
+ *
+ * @see ConcurrentMessageBrokerProperties for how to configure this broker
  */
 @Slf4j
 public class ConcurrentMessageBroker implements MessageBroker {
-    private final MessageRetriever messageRetriever;
-    private final MessageProcessor messageProcessor;
     private final ConcurrentMessageBrokerProperties properties;
+    private final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore;
 
-    public ConcurrentMessageBroker(final MessageRetriever messageRetriever,
-                                   final MessageProcessor messageProcessor,
-                                   final ConcurrentMessageBrokerProperties properties) {
-        this.messageRetriever = messageRetriever;
-        this.messageProcessor = messageProcessor;
+    public ConcurrentMessageBroker(final ConcurrentMessageBrokerProperties properties) {
         this.properties = properties;
+        this.concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
     }
 
-    /**
-     * RV_RETURN_VALUE_IGNORED_BAD_PRACTICE is ignored because we don't actually care about the return future for submitting a thread to process a message.
-     * Instead the {@link ResizableSemaphore} is used to control the number of concurrent threads and when we should down we
-     * wait for the whole {@link ExecutorService} to finish and therefore we don't care about an individual thread.
-     */
     @Override
-    @SuppressFBWarnings( {"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"})
-    public void run() {
-        log.info("Started ConcurrentMessageBroker background thread");
-        final ExecutorService concurrentThreadsExecutor = Executors.newCachedThreadPool();
-        final ExecutorService messageProcessingThreadsExecutor = buildMessageProcessingExecutorService();
-        final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore = new ResizableSemaphore(0);
-
-        while (true) {
+    public void processMessages(final ExecutorService messageProcessingExecutorService,
+                                final BooleanSupplier keepProcessingMessages,
+                                final Supplier<CompletableFuture<Message>> messageSupplier,
+                                final Function<Message, CompletableFuture<?>> messageProcessor) throws InterruptedException {
+        log.debug("Beginning processing of messages");
+        while (!Thread.currentThread().isInterrupted() && keepProcessingMessages.getAsBoolean()) {
             try {
                 updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
 
                 final long numberOfMillisecondsToObtainPermit = getNumberOfMillisecondsToObtainPermit();
-                try {
-                    final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
-                    if (!obtainedPermit) {
-                        continue;
-                    }
-                } catch (final InterruptedException interruptedException) {
-                    log.debug("Interrupted exception caught while adding more listeners, shutting down!");
-                    break;
+                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
+                if (!obtainedPermit) {
+                    continue;
                 }
 
-                CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return messageRetriever.retrieveMessage();
-                    } catch (final InterruptedException exception) {
-                        log.trace("Thread interrupted waiting for a message");
-                        throw new BrokerStoppedWhileRetrievingMessageException();
-                    }
-                }, concurrentThreadsExecutor)
-                        .thenAcceptAsync(messageProcessor::processMessage, messageProcessingThreadsExecutor)
-                        .whenComplete((ignoredResult, throwable) -> {
-                            if (throwable != null && !(throwable.getCause() instanceof BrokerStoppedWhileRetrievingMessageException)) {
-                                log.error("Error processing message", throwable.getCause());
-                            }
-                            concurrentMessagesBeingProcessedSemaphore.release();
-                        });
-            } catch (final Throwable throwable) {
                 try {
-                    final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
-                    log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds, throwable);
-                    Thread.sleep(errorBackoffTimeInMilliseconds);
-                } catch (final InterruptedException interruptedException) {
-                    log.debug("Thread interrupted during backoff period");
-                    break;
+                    messageSupplier.get()
+                            .thenComposeAsync(messageProcessor::apply, messageProcessingExecutorService)
+                            .whenComplete((ignoredResult, throwable) -> {
+                                if (throwable != null && !(throwable.getCause() instanceof CancellationException)) {
+                                    log.error("Error processing message", throwable.getCause());
+                                }
+                                concurrentMessagesBeingProcessedSemaphore.release();
+                            });
+                } catch (final RuntimeException runtimeException) {
+                    concurrentMessagesBeingProcessedSemaphore.release();
+                    // bubble the exception to deal with backing off, as we don't want to duplicate that code
+                    throw runtimeException;
                 }
+            } catch (final RuntimeException runtimeException) {
+                final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
+                log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds,
+                        runtimeException);
+                Thread.sleep(errorBackoffTimeInMilliseconds);
             }
         }
+        log.debug("Ending processing of messages");
+    }
 
-        log.info("ConcurrentMessageBroker background thread shutting down...");
-        try {
-            shutdownConcurrentThreads(concurrentThreadsExecutor, messageProcessingThreadsExecutor);
-            log.info("ConcurrentMessageBroker background thread successfully stopped");
-        } catch (final RuntimeException runtimeException) {
-            log.error("Exception thrown while waiting for broker to shutdown", runtimeException);
-        }
+    /**
+     * Safely get the number of milliseconds that should wait to get a permit for creating a new thread.
+     *
+     * @return the number of milliseconds to wait
+     * @see ConcurrentMessageBrokerProperties#getConcurrencyPollingRateInMilliseconds() for more information
+     */
+    private long getNumberOfMillisecondsToObtainPermit() {
+        return PropertyUtils.safelyGetPositiveLongValue(
+                "numberOfMillisecondsToObtainPermit",
+                properties::getConcurrencyPollingRateInMilliseconds,
+                DEFAULT_BACKOFF_TIME_IN_MS
+        );
     }
 
     /**
@@ -108,70 +103,25 @@ public class ConcurrentMessageBroker implements MessageBroker {
      * <p>If the concurrency level decreases any threads running currently will keep running.
      */
     private void updateConcurrencyLevelIfChanged(final ResizableSemaphore resizableSemaphore) {
-        final int newConcurrencyLevel = properties.getConcurrencyLevel();
-        Preconditions.checkArgument(newConcurrencyLevel >= 0, "concurrencyLevel should be non-negative");
+        final int newConcurrencyLevel = getConcurrencyLevel();
 
         if (resizableSemaphore.getMaximumPermits() != newConcurrencyLevel) {
-            log.debug("Changing concurrency from {} to {}", resizableSemaphore.getMaximumPermits(), newConcurrencyLevel);
+            log.info("Changing concurrency from {} to {}", resizableSemaphore.getMaximumPermits(), newConcurrencyLevel);
             resizableSemaphore.changePermitSize(newConcurrencyLevel);
         }
     }
 
     /**
-     * Shutdown all of the concurrent threads for retrieving messages by interrupting it but let any threads processing messages gracefully shutdown.
+     * Determine the concurrency level safely, returning zero if there was an error or the value was negative.
      *
-     * <p>This method is visible for testing due to the difficulty in testing this.
-     *
-     * @param concurrentThreadsExecutor        the executor for retrieving messages
-     * @param messageProcessingThreadsExecutor the executor processing messages downloaded
+     * @return the expected concurrency level
      */
-    @VisibleForTesting
-    void shutdownConcurrentThreads(final ExecutorService concurrentThreadsExecutor,
-                                   final ExecutorService messageProcessingThreadsExecutor) {
-        concurrentThreadsExecutor.shutdownNow();
-        if (properties.shouldInterruptThreadsProcessingMessagesOnShutdown()) {
-            messageProcessingThreadsExecutor.shutdownNow();
-        } else {
-            messageProcessingThreadsExecutor.shutdown();
-        }
-        log.debug("Waiting for all threads to finish...");
-        try {
-            final long shutdownTimeoutInSeconds = getShutdownTimeoutInSeconds();
-            final long timeNow = System.currentTimeMillis();
-            final boolean concurrentThreadsShutdown = concurrentThreadsExecutor.awaitTermination(SECONDS.toMillis(shutdownTimeoutInSeconds), MILLISECONDS);
-            final long leftOverShutdownTimeoutInMilliseconds = System.currentTimeMillis() - timeNow;
-            final boolean messageProcessingThreadsShutdown = messageProcessingThreadsExecutor.awaitTermination(
-                    leftOverShutdownTimeoutInMilliseconds, MILLISECONDS);
-            if (!concurrentThreadsShutdown || !messageProcessingThreadsShutdown) {
-                log.error("Message processing threads did not shutdown within {} seconds", shutdownTimeoutInSeconds);
-            }
-        } catch (final InterruptedException interruptedException) {
-            log.warn("Interrupted while waiting for all messages to shutdown, some threads may still be running");
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * Build the {@link ExecutorService} that will be used for the threads that are processing the messages.
-     *
-     * <p>This will provide the logic to name the threads to make it easier to debug multiple different message listeners in the system.
-     *
-     * @return the executor service that will be used for processing messages
-     */
-    private ExecutorService buildMessageProcessingExecutorService() {
-        try {
-            final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
-
-            final String threadNameFormat = properties.getThreadNameFormat();
-            if (threadNameFormat != null) {
-                threadFactoryBuilder.setNameFormat(threadNameFormat);
-            }
-
-            return Executors.newCachedThreadPool(threadFactoryBuilder.build());
-        } catch (final Throwable throwable) {
-            log.error("Error thrown building message processing executor service, returning default");
-            return Executors.newCachedThreadPool();
-        }
+    private int getConcurrencyLevel() {
+        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
+                "concurrencyLevel",
+                properties::getConcurrencyLevel,
+                0
+        );
     }
 
     /**
@@ -186,40 +136,5 @@ public class ConcurrentMessageBroker implements MessageBroker {
                 properties::getErrorBackoffTimeInMilliseconds,
                 DEFAULT_BACKOFF_TIME_IN_MS
         );
-    }
-
-    /**
-     * Get the amount of time in seconds that we should wait for the server to shutdown.
-     *
-     * @return the amount of time in seconds to wait for shutdown
-     */
-    private long getShutdownTimeoutInSeconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroLongValue(
-                "shutdownTimeoutInSeconds",
-                properties::getShutdownTimeoutInSeconds,
-                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
-        );
-    }
-
-    /**
-     * Safely get the number of milliseconds that should wait to get a permit for creating a new thread.
-     *
-     * @return the number of milliseconds to wait
-     * @see ConcurrentMessageBrokerProperties#getPreferredConcurrencyPollingRateInMilliseconds() for more information
-     */
-    private long getNumberOfMillisecondsToObtainPermit() {
-        return PropertyUtils.safelyGetPositiveLongValue(
-                "preferredConcurrencyPollingRateInMilliseconds",
-                properties::getPreferredConcurrencyPollingRateInMilliseconds,
-                DEFAULT_BACKOFF_TIME_IN_MS
-        );
-    }
-
-    /**
-     * Internal exception used to be thrown when the thread is interrupted while retrieving messages. This is because we don't want a
-     * error to be logged for this scenario but only when their was an actual exception processing the message.
-     */
-    private static class BrokerStoppedWhileRetrievingMessageException extends RuntimeException {
-
     }
 }

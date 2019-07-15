@@ -5,9 +5,9 @@ resolver easily. See [core-how-to-implement-custom-argument-resolver.md](../core
 to build an [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 
 ## Prerequisites
-- This relies on no custom [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
-being provided therefore the default will be used. See
-[QueueListenerConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-starter/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
+- This relies on the default [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
+being used and therefore it cannot be overridden with a custom implementation. See the
+[QueueListenerConfiguration](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
 for more information about how the [ArgumentResolvers](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 are collected.
 

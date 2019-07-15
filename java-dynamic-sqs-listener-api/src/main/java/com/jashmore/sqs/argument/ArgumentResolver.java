@@ -1,18 +1,12 @@
 package com.jashmore.sqs.argument;
 
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.processor.MessageProcessor;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Used to determine if it can fulfill resolving a method parameter from the content of a message.
- *
- * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the bus.  It polls for messages from the
- * remote queue and will pass them to the {@link MessageBroker} which will delegate it to the {@link MessageProcessor} that knows how to process
- * this message.
+ * Used to resolve an argument in the method processing a messages if it can resolve it.
  *
  * <p>As there could be multiple messages all being processed at once, and therefore resolving many arguments concurrently,
  * the implementations of this class must be thread safe.
