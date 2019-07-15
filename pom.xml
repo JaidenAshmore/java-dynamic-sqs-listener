@@ -4,7 +4,7 @@
 
     <groupId>com.jashmore</groupId>
     <artifactId>java-dynamic-sqs-listener-parent</artifactId>
-    <version>3.0.0-M3</version>
+    <version>3.0.0-M4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Java Dynamic SQS Listener</name>
@@ -32,7 +32,7 @@
         <developerConnection>scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git
         </developerConnection>
         <url>http://github.com/jaidenashmore/java-dynamic-sqs-listener</url>
-        <tag>v3.0.0-M3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <!-- See https://central.sonatype.org/pages/apache-maven.html for how this releasing was set up -->
