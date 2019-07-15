@@ -157,4 +157,20 @@ public @interface PrefetchingQueueListener {
      * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
      */
     String messageVisibilityTimeoutInSecondsString() default "";
+
+    /**
+     * Determines whether any extra messages that may have been downloaded but not yet processed should be processed before shutting down the container.
+     *
+     * <p>The shutdown time for the container will be dependent on the time it takes to process these extra messages.
+     *
+     * @return if any extra messages should be processed on shutdown
+     */
+    boolean processAnyExtraRetrievedMessagesOnShutdown() default true;
+
+    /**
+     * Determines whether the threads that are processing messages should be interrupted during shutdown.
+     *
+     * @return whether to interrupt message processing threads on shutdown
+     */
+    boolean interruptThreadsProcessingMessagesOnShutdown() default false;
 }

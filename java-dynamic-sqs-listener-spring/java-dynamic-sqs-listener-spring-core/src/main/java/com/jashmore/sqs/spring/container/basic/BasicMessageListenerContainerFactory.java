@@ -68,8 +68,8 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
                 buildProcessorSupplier(queueProperties, sqsAsyncClient, bean, method),
                 buildMessageResolver(annotation, queueProperties, sqsAsyncClient),
                 StaticCoreMessageListenerContainerProperties.builder()
-                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
-                        .shouldInterruptThreadsProcessingMessagesOnShutdown(false)
+                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
+                        .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
                         .build()
         );
     }

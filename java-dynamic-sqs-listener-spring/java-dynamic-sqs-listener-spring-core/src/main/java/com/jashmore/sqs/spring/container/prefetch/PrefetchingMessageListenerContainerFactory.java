@@ -68,8 +68,8 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
                 buildProcessorSupplier(queueProperties, sqsAsyncClient, bean, method),
                 buildMessageResolverSupplier(queueProperties, sqsAsyncClient),
                 StaticCoreMessageListenerContainerProperties.builder()
-                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
-                        .shouldInterruptThreadsProcessingMessagesOnShutdown(false)
+                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
+                        .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
                         .build()
         );
     }
