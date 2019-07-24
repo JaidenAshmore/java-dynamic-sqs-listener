@@ -1,26 +1,25 @@
 package com.jashmore.sqs.spring.container.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -32,13 +31,8 @@ import java.util.Optional;
  * without building unnecessary classes.
  */
 @SuppressWarnings("WeakerAccess")
-public class BasicMessageListenerContainerFactoryTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class BasicMessageListenerContainerFactoryTest {
     @Mock
     private ArgumentResolverService argumentResolverService;
 
@@ -56,16 +50,15 @@ public class BasicMessageListenerContainerFactoryTest {
 
     private BasicMessageListenerContainerFactory queueListenerWrapper;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         queueListenerWrapper = new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
-
-        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
     }
 
     @Test
-    public void queueListenerWrapperCanBuildMessageListenerContainer() throws NoSuchMethodException {
+    void queueListenerWrapperCanBuildMessageListenerContainer() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -78,8 +71,9 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
+    void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -92,8 +86,9 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
+    void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethodWithIdentifier");
 
@@ -106,8 +101,9 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
+    void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -119,47 +115,48 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void invalidConcurrencyLevelStringFailsToWrapMessageListener() throws Exception {
+    void invalidConcurrencyLevelStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.concurrency}")).thenReturn("Test Invalid");
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> queueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void invalidMessageVisibilityTimeoutInSecondsStringFailsToWrapMessageListener() throws Exception {
+    void invalidMessageVisibilityTimeoutInSecondsStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("Test Invalid");
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> queueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void invalidMaxPeriodBetweenBatchesInMsStringFailsToWrapMessageListener() throws Exception {
+    void invalidMaxPeriodBetweenBatchesInMsStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.period}")).thenReturn("Test Invalid");
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        queueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> queueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
+    void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
@@ -172,7 +169,7 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
+    void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
         // arrange
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFields");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
@@ -191,7 +188,7 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
+    void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
         // arrange
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
@@ -213,33 +210,36 @@ public class BasicMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
+    void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
         // arrange
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
-        expectedException.expect(MessageListenerContainerInitialisationException.class);
-        expectedException.expectMessage("Expected the default SQS Client but there is none");
 
         // act
-        queueListenerWrapper.buildContainer(bean, method);
+        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class, () -> queueListenerWrapper.buildContainer(bean, method));
+
+        // assert
+        assertThat(exception.getMessage()).isEqualTo("Expected the default SQS Client but there is none");
     }
 
     @Test
-    public void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
+    void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
         // arrange
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
-        expectedException.expect(MessageListenerContainerInitialisationException.class);
-        expectedException.expectMessage("Expected a client with id 'clientId' but none were found");
 
         // act
-        queueListenerWrapper.buildContainer(bean, method);
+        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
+                () -> queueListenerWrapper.buildContainer(bean, method));
+
+        // assert
+        assertThat(exception.getMessage()).isEqualTo("Expected a client with id 'clientId' but none were found");
     }
 
     @Test
-    public void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
+    void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
         // arrange
         final Object bean = new BasicMessageListenerContainerFactoryTest();
         final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");

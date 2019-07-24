@@ -1,34 +1,21 @@
 package com.jashmore.sqs.retriever.prefetch;
 
-import static org.hamcrest.core.Is.isA;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
-public class StaticPrefetchingMessageRetrieverPropertiesTest {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+class StaticPrefetchingMessageRetrieverPropertiesTest {
     @Test
-    public void maxPrefetchedMessagesIsRequired() {
-        // arrange
-        expectedException.expect(isA(NullPointerException.class));
-
-        // act
-        StaticPrefetchingMessageRetrieverProperties.builder()
+    void maxPrefetchedMessagesIsRequired() {
+        assertThrows(NullPointerException.class, () -> StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(10)
-                .build();
+                .build());
     }
 
     @Test
-    public void desiredMinMessagePrefetchedMessagesFailsWhenLessThanZero() {
-        // arrange
-        expectedException.expect(isA(NullPointerException.class));
-
-        // act
-        StaticPrefetchingMessageRetrieverProperties.builder()
+    void desiredMinMessagePrefetchedMessagesFailsWhenLessThanZero() {
+        assertThrows(NullPointerException.class, () -> StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(-1)
-                .build();
+                .build());
     }
 }

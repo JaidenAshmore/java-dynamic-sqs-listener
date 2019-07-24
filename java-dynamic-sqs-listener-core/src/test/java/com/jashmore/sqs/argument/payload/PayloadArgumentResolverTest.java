@@ -1,7 +1,7 @@
 package com.jashmore.sqs.argument.payload;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.Is.isA;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
@@ -10,25 +10,17 @@ import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMappingException;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 
-public class PayloadArgumentResolverTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class PayloadArgumentResolverTest {
     @Mock
     private PayloadMapper payloadMapper;
 
@@ -37,13 +29,13 @@ public class PayloadArgumentResolverTest {
 
     private PayloadArgumentResolver payloadArgumentResolver;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         payloadArgumentResolver = new PayloadArgumentResolver(payloadMapper);
     }
 
     @Test
-    public void parameterWithNoPayloadAnnotationCannotBeHandled() {
+    void parameterWithNoPayloadAnnotationCannotBeHandled() {
         // arrange
         final MethodParameter numberParameter = getParameter(2);
 
@@ -55,7 +47,7 @@ public class PayloadArgumentResolverTest {
     }
 
     @Test
-    public void parameterWithPayloadAnnotationCanBeHandled() {
+    void parameterWithPayloadAnnotationCanBeHandled() {
         // arrange
         final MethodParameter stringParameter = getParameter(0);
 
@@ -67,20 +59,22 @@ public class PayloadArgumentResolverTest {
     }
 
     @Test
-    public void payloadThatFailsToBeBuiltThrowsArgumentResolutionException() {
+    void payloadThatFailsToBeBuiltThrowsArgumentResolutionException() {
         // arrange
         final MethodParameter stringParameter = getParameter(1);
         final Message message = Message.builder().build();
         when(payloadMapper.map(message, Pojo.class)).thenThrow(new PayloadMappingException("Error"));
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectCause(isA(PayloadMappingException.class));
 
         // act
-        payloadArgumentResolver.resolveArgumentForParameter(queueProperties, stringParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> payloadArgumentResolver.resolveArgumentForParameter(queueProperties, stringParameter, message));
+
+        // assert
+        assertThat(exception.getCause()).isInstanceOf(PayloadMappingException.class);
     }
 
     @Test
-    public void payloadThatIsSuccessfullyBuiltIsReturnedInResolution() {
+    void payloadThatIsSuccessfullyBuiltIsReturnedInResolution() {
         final MethodParameter parameter = getParameter(1);
         final Message message = Message.builder().build();
         final Pojo parsedObject = new Pojo("test");
@@ -93,7 +87,7 @@ public class PayloadArgumentResolverTest {
         assertThat(argument).isEqualTo(parsedObject);
     }
 
-    @SuppressWarnings( {"WeakerAccess", "unused"})
+    @SuppressWarnings( {"unused"})
     public void method(@Payload final String payloadString, @Payload final Pojo payloadPojo, final String parameterWithNoPayloadAnnotation) {
 
     }
@@ -111,7 +105,7 @@ public class PayloadArgumentResolverTest {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings( {"WeakerAccess", "unused"})
     public static class Pojo {
         private final String field;
 

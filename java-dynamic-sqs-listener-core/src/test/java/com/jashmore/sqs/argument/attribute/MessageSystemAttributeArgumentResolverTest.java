@@ -1,6 +1,7 @@
 package com.jashmore.sqs.argument.attribute;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SENDER_ID;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SENT_TIMESTAMP;
@@ -11,10 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
-import org.hamcrest.core.Is;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
@@ -24,9 +22,6 @@ import java.util.Calendar;
 
 @SuppressWarnings( {"unused", "WeakerAccess"})
 public class MessageSystemAttributeArgumentResolverTest {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     private MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver = new MessageSystemAttributeArgumentResolver();
 
     @Test
@@ -59,11 +54,13 @@ public class MessageSystemAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Missing system attribute with name: " + SENDER_ID.toString());
 
         // act
-        messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Missing system attribute with name: " + SENDER_ID.toString());
     }
 
     @Test
@@ -143,11 +140,13 @@ public class MessageSystemAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectCause(Is.isA(NumberFormatException.class));
 
         // act
-        messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception.getCause()).isInstanceOf(NumberFormatException.class);
     }
 
     @Test
@@ -205,11 +204,13 @@ public class MessageSystemAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectCause(Is.isA(NumberFormatException.class));
 
         // act
-        messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception.getCause()).isInstanceOf(NumberFormatException.class);
     }
 
     @Test
@@ -267,11 +268,13 @@ public class MessageSystemAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Unsupported parameter type java.lang.Float for system attribute SequenceNumber");
 
         // act
-        messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Unsupported parameter type java.lang.Float for system attribute SequenceNumber");
     }
 
     @Test
@@ -288,11 +291,13 @@ public class MessageSystemAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Unsupported parameter type java.util.Calendar for system attribute ApproximateFirstReceiveTimestamp");
 
         // act
-        messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
+                () -> messageSystemAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Unsupported parameter type java.util.Calendar for system attribute ApproximateFirstReceiveTimestamp");
     }
 
     @Test

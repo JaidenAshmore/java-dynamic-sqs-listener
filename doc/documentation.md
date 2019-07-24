@@ -24,8 +24,10 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
         `ObjectMapper` that is used to serialise the message body and attributes
         1. [How to add your own queue listener](how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for
         queue listening without the verbosity of the custom queue listener
-        1. [How to write Spring Integration Tests](how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
+        1. [How to write Spring JUnit 4 Integration Tests](how-to-guides/spring/spring-how-to-write-junit4-integration-tests.md): you actually want to test what you are
         writing right?
+        1. [How to write Spring JUnit 5 Integration Tests](how-to-guides/spring/spring-how-to-write-junit5-integration-tests.md): guide for testing the
+        application with Junit 5.
         1. [How to Start/Stop Queue Listeners](how-to-guides/spring/spring-how-to-start-stop-queue-listeners.md): guide for starting and stopping the
         processing of messages for specific queue listeners
         1. [How to connect to multiple AWS Accounts](how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues

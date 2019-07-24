@@ -5,11 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import akka.http.scaladsl.Http;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.ListQueuesResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -17,14 +14,11 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.concurrent.TimeUnit;
 
-public class LocalSqsAsyncClientTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
+class LocalSqsAsyncClientTest {
     private String queueServerUrl;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         final SQSRestServer sqsRestServer = SQSRestServerBuilder
                 .withInterface("localhost")
                 .withDynamicPort()
@@ -35,7 +29,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void whenBuildingLocalSqsAsyncClientQueuesAndDlqsWillBeCreatedAutomatically() throws Exception {
+    void whenBuildingLocalSqsAsyncClientQueuesAndDlqsWillBeCreatedAutomatically() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -59,7 +53,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void whenDeadLetterQueueIsBuiltItIsLinkedToCorrespondingQueue() throws Exception {
+    void whenDeadLetterQueueIsBuiltItIsLinkedToCorrespondingQueue() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -84,7 +78,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void whenMaxReceiveCountUsedAndNoDeadLetterQueueNameIsIncludedTheDefaultNameIsused() throws Exception {
+    void whenMaxReceiveCountUsedAndNoDeadLetterQueueNameIsIncludedTheDefaultNameIsused() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -105,7 +99,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void maxReceiveCountIsIncludedInQueue() throws Exception {
+    void maxReceiveCountIsIncludedInQueue() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -130,7 +124,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void visibilityTimeoutIsIncludedInQueueWhenBuilt() throws Exception {
+    void visibilityTimeoutIsIncludedInQueueWhenBuilt() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -155,7 +149,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void sendingMessagesToLocalQueueViaNameWillSendMessagesToCorrectQueue() throws Exception {
+    void sendingMessagesToLocalQueueViaNameWillSendMessagesToCorrectQueue() throws Exception {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)
@@ -170,7 +164,7 @@ public class LocalSqsAsyncClientTest {
         // act
         sqsAsyncClient.sendMessageToLocalQueue("queueName", SendMessageRequest.builder().messageBody("payload").build()).get(30, TimeUnit.SECONDS);
         sqsAsyncClient.sendMessageToLocalQueue("queueName", "payload2").get(30, TimeUnit.SECONDS);
-        sqsAsyncClient.sendMessageToLocalQueue("queueName",  (builder) -> builder.messageBody("payload3")).get(30, TimeUnit.SECONDS);
+        sqsAsyncClient.sendMessageToLocalQueue("queueName", (builder) -> builder.messageBody("payload3")).get(30, TimeUnit.SECONDS);
 
         // assert
         final String approximateNumberOfMessages = sqsAsyncClient.getQueueAttributes(GetQueueAttributesRequest.builder()
@@ -183,7 +177,7 @@ public class LocalSqsAsyncClientTest {
     }
 
     @Test
-    public void queueNameCanBeUsedToGetQueueUrl() {
+    void queueNameCanBeUsedToGetQueueUrl() {
         // arrange
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl(queueServerUrl)

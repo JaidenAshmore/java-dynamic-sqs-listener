@@ -1,42 +1,35 @@
 package com.jashmore.sqs.argument.payload.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.Is.isA;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.io.IOException;
 
-public class JacksonPayloadMapperTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class JacksonPayloadMapperTest {
     @Mock
     private ObjectMapper objectMapper;
 
     private PayloadMapper payloadMapper;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         payloadMapper = new JacksonPayloadMapper(objectMapper);
     }
 
     @Test
-    public void stringPayloadParameterResolvesWithMessageBody() {
+    void stringPayloadParameterResolvesWithMessageBody() {
         // arrange
         final Message message = Message.builder().body("body").build();
 
@@ -48,7 +41,7 @@ public class JacksonPayloadMapperTest {
     }
 
     @Test
-    public void payloadContainerPojoCanBeMappedToObject() throws IOException {
+    void payloadContainerPojoCanBeMappedToObject() throws IOException {
         // arrange
         final Message message = Message.builder().body("body").build();
         final Pojo parsedObject = new Pojo("test");
@@ -62,15 +55,16 @@ public class JacksonPayloadMapperTest {
     }
 
     @Test
-    public void errorBuildingPayloadThrowsArgumentResolutionException() throws IOException {
+    void errorBuildingPayloadThrowsArgumentResolutionException() throws IOException {
         // arrange
         final Message message = Message.builder().body("test").build();
         when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenThrow(new IOException());
-        expectedException.expect(PayloadMappingException.class);
-        expectedException.expectCause(isA(IOException.class));
 
         // act
-        payloadMapper.map(message, Pojo.class);
+        final PayloadMappingException exception = assertThrows(PayloadMappingException.class, () -> payloadMapper.map(message, Pojo.class));
+
+        // assert
+        assertThat(exception.getCause()).isInstanceOf(IOException.class);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -82,7 +76,7 @@ public class JacksonPayloadMapperTest {
         }
 
         @SuppressWarnings("unused")
-        public String getField() {
+        String getField() {
             return field;
         }
     }

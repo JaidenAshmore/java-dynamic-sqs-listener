@@ -1,6 +1,7 @@
 package com.jashmore.sqs.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -19,14 +20,11 @@ import com.jashmore.sqs.argument.UnsupportedArgumentResolutionException;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
-import org.hamcrest.core.Is;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -34,19 +32,15 @@ import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class CoreMessageProcessorTest {
+@ExtendWith(MockitoExtension.class)
+class CoreMessageProcessorTest {
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties
             .builder()
             .queueUrl("queueUrl")
             .build();
     private static final CoreMessageProcessorTest BEAN = new CoreMessageProcessorTest();
-    private static final Runnable NO_OP = () -> {};
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+    private static final Runnable NO_OP = () -> {
+    };
 
     @Mock
     private ArgumentResolverService argumentResolverService;
@@ -61,7 +55,7 @@ public class CoreMessageProcessorTest {
     private ArgumentResolver<CompletableFuture<Object>> completableFutureArgumentResolver;
 
     @Test
-    public void forEachParameterInMethodTheArgumentIsResolved() {
+    void forEachParameterInMethodTheArgumentIsResolved() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
@@ -77,19 +71,19 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void anyParameterUnableToBeResolvedWillThrowAnError() {
+    void anyParameterUnableToBeResolvedWillThrowAnError() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         when(argumentResolverService.getArgumentResolver(any(MethodParameter.class)))
                 .thenThrow(new UnsupportedArgumentResolutionException());
-        expectedException.expect(UnsupportedArgumentResolutionException.class);
 
         // act
-        new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, BEAN);
+        assertThrows(UnsupportedArgumentResolutionException.class,
+                () -> new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, BEAN));
     }
 
     @Test
-    public void methodWillBeInvokedWithArgumentsResolved() {
+    void methodWillBeInvokedWithArgumentsResolved() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
@@ -109,7 +103,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodWithVisibilityExtenderWillBeCorrectlyResolved() {
+    void methodWithVisibilityExtenderWillBeCorrectlyResolved() {
         // arrange
         final Method method = getMethodWithVisibiltyExtender();
         final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
@@ -125,7 +119,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodWithAcknowledgeParameterWillNotDeleteMessageOnSuccess() {
+    void methodWithAcknowledgeParameterWillNotDeleteMessageOnSuccess() {
         // arrange
         final Method method = getMethodWithAcknowledge();
         final Message message = Message.builder().build();
@@ -144,7 +138,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodWithoutAcknowledgeParameterWillResolveMessageOnExecutionWithoutException() {
+    void methodWithoutAcknowledgeParameterWillResolveMessageOnExecutionWithoutException() {
         // arrange
         final Method method = getMethodWithNoAcknowledge();
         final Message message = Message.builder().receiptHandle("handle").build();
@@ -163,7 +157,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodWithoutAcknowledgeThatThrowsExceptionDoesNotResolveMessage() {
+    void methodWithoutAcknowledgeThatThrowsExceptionDoesNotResolveMessage() {
         // arrange
         final Method method = getMethodThatThrowsException();
         final Message message = Message.builder().receiptHandle("handle").build();
@@ -183,7 +177,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodReturningCompletableFutureWillResolveMessageWhenFutureResolved() throws Exception {
+    void methodReturningCompletableFutureWillResolveMessageWhenFutureResolved() throws Exception {
         // arrange
         final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
@@ -205,7 +199,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodReturningCompletableFutureWillNotResolveMessageWhenFutureRejected() throws Exception {
+    void methodReturningCompletableFutureWillNotResolveMessageWhenFutureRejected() throws Exception {
         // arrange
         final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
@@ -227,7 +221,7 @@ public class CoreMessageProcessorTest {
     }
 
     @Test
-    public void methodReturningCompletableFutureThatReturnsNullWillThrowMessageProcessingException() throws Exception {
+    void methodReturningCompletableFutureThatReturnsNullWillThrowMessageProcessingException() throws Exception {
         // arrange
         final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
         final Message message = Message.builder().receiptHandle("handle").build();
@@ -236,11 +230,12 @@ public class CoreMessageProcessorTest {
                 .thenReturn(null);
         final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                 sqsAsyncClient, method, BEAN);
-        expectedException.expect(ExecutionException.class);
-        expectedException.expectCause(Is.isA(MessageProcessingException.class));
 
         // act
-        processor.processMessage(message, NO_OP).get();
+        final ExecutionException exception = assertThrows(ExecutionException.class, () -> processor.processMessage(message, NO_OP).get());
+
+        // assert
+        assertThat(exception.getCause()).isInstanceOf(MessageProcessingException.class);
     }
 
     @SuppressWarnings("unused")

@@ -1,49 +1,48 @@
 package com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Set;
 
-public class DelegatingArgumentResolverServiceTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+@ExtendWith(MockitoExtension.class)
+class DelegatingArgumentResolverServiceTest {
 
     @Mock
     private MethodParameter methodParameter;
 
     @Test
-    public void whenNoResolversCanMatchParameterExceptionIsThrown() throws Exception {
+    void whenNoResolversCanMatchParameterExceptionIsThrown() throws Exception {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(any(MethodParameter.class))).thenReturn(false);
         final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
-        when(methodParameter.getMethod()).thenReturn(this.getClass().getMethod("whenNoResolversCanMatchParameterExceptionIsThrown"));
+        when(methodParameter.getMethod()).thenReturn(this.getClass().getMethod("someMethod"));
         when(methodParameter.getParameterIndex()).thenReturn(1);
-        expectedException.expect(UnsupportedArgumentResolutionException.class);
-        expectedException.expectMessage("No eligible ArgumentResolver for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#whenNoResolversCanMatchParameterExceptionIsThrown");
 
         // act
-        new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter);
+        final UnsupportedArgumentResolutionException exception = assertThrows(UnsupportedArgumentResolutionException.class,
+                () -> new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter));
+
+        // assert
+        assertThat(exception).hasMessage("No eligible ArgumentResolver for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#someMethod");
     }
 
     @Test
-    public void whenResolveCanMatchParameterThatIsReturned() {
+    void whenResolveCanMatchParameterThatIsReturned() {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(isNull())).thenReturn(true);
@@ -57,12 +56,11 @@ public class DelegatingArgumentResolverServiceTest {
     }
 
     @Test
-    public void whenMultipleResolversMatchParameterTheFirstIsReturned() {
+    void whenMultipleResolversMatchParameterTheFirstIsReturned() {
         // arrange
         final ArgumentResolver<?> firstResolver = mock(ArgumentResolver.class);
         when(firstResolver.canResolveParameter(isNull())).thenReturn(true);
         final ArgumentResolver<?> secondResolver = mock(ArgumentResolver.class);
-        when(secondResolver.canResolveParameter(isNull())).thenReturn(true);
         final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(firstResolver, secondResolver);
 
         // act
@@ -70,5 +68,11 @@ public class DelegatingArgumentResolverServiceTest {
 
         // assert
         assertThat(matchedResolver).isSameAs(firstResolver);
+        verify(secondResolver, never()).canResolveParameter(any());
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public void someMethod() {
+
     }
 }

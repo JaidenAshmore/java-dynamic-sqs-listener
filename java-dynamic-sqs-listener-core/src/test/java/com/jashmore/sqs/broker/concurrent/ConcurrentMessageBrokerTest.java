@@ -12,13 +12,12 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +32,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Slf4j
-public class ConcurrentMessageBrokerTest {
+@ExtendWith(MockitoExtension.class)
+class ConcurrentMessageBrokerTest {
     private static final Function<Message, CompletableFuture<?>> MESSAGE_NO_OP = message -> CompletableFuture.completedFuture(null);
     private static final StaticConcurrentMessageBrokerProperties DEFAULT_PROPERTIES = StaticConcurrentMessageBrokerProperties.builder()
             .concurrencyLevel(1)
@@ -41,29 +41,26 @@ public class ConcurrentMessageBrokerTest {
             .errorBackoffTimeInMilliseconds(0L)
             .build();
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     @Mock
     private Supplier<CompletableFuture<Message>> messageSupplier;
 
     private ExecutorService brokerExecutorService;
     private ExecutorService messageExecutingExecutorService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         brokerExecutorService = Executors.newCachedThreadPool();
         messageExecutingExecutorService = Executors.newCachedThreadPool();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         brokerExecutorService.shutdownNow();
         messageExecutingExecutorService.shutdownNow();
     }
 
     @Test
-    public void shouldBeAbleToProcessMultipleMessagesConcurrently() throws InterruptedException {
+    void shouldBeAbleToProcessMultipleMessagesConcurrently() throws InterruptedException {
         // arrange
         final int concurrencyLevel = 5;
         final ConcurrentMessageBrokerProperties properties = DEFAULT_PROPERTIES.toBuilder()
@@ -84,7 +81,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void whenNoAvailableConcurrencyNoMessagesWillBeRequested() throws InterruptedException {
+    void whenNoAvailableConcurrencyNoMessagesWillBeRequested() throws InterruptedException {
         // arrange
         final long concurrencyPollingRateInMs = 100L;
         final ConcurrentMessageBrokerProperties properties = DEFAULT_PROPERTIES.toBuilder()
@@ -102,7 +99,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void whenConcurrencyLimitReachedItWillSpinForChangesInConcurrencyWhileWaiting() throws Exception {
+    void whenConcurrencyLimitReachedItWillSpinForChangesInConcurrencyWhileWaiting() throws Exception {
         // arrange
         final long concurrencyPollingRateInMs = 100L;
         final AtomicInteger numberTimesConcurrencyPolled = new AtomicInteger(0);
@@ -127,7 +124,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void willStopProcessingMessagesIfKeepProcessingMessagesReturnsFalse() throws Exception {
+    void willStopProcessingMessagesIfKeepProcessingMessagesReturnsFalse() throws Exception {
         // arrange
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
@@ -140,7 +137,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void exceptionThrownWhileRetrievingMessageWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
+    void exceptionThrownWhileRetrievingMessageWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
         when(messageSupplier.get())
                 .thenThrow(new RuntimeException("Expected Test Exception"))
@@ -156,7 +153,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void messageRetrievalReturningExceptionalCompletableFutureStillAllowsMoreMessagesToBeProcessed() throws InterruptedException {
+    void messageRetrievalReturningExceptionalCompletableFutureStillAllowsMoreMessagesToBeProcessed() throws InterruptedException {
         // arrange
         when(messageSupplier.get())
                 .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")))
@@ -172,7 +169,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void exceptionThrownWhileGettingPropertiesWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
+    void exceptionThrownWhileGettingPropertiesWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
         when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1L);
@@ -192,7 +189,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void exceptionThrownProcessingMessageDoesNotAffectOthersFromBeingRun() throws InterruptedException {
+    void exceptionThrownProcessingMessageDoesNotAffectOthersFromBeingRun() throws InterruptedException {
         // arrange
         when(messageSupplier.get())
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
@@ -214,7 +211,7 @@ public class ConcurrentMessageBrokerTest {
     }
 
     @Test
-    public void threadInterruptedDuringBackoffShouldStopBroker() throws Exception {
+    void threadInterruptedDuringBackoffShouldStopBroker() throws Exception {
         // arrange
         final long backoffTimeInMs = 6000L;
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);

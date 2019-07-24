@@ -1,6 +1,7 @@
 package com.jashmore.sqs.spring.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -14,30 +15,22 @@ import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class DefaultMessageListenerContainerCoordinatorTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class DefaultMessageListenerContainerCoordinatorTest {
     @Mock
     private ApplicationContext applicationContext;
 
     @Test
-    public void whenNoMessageListenerContainerFactoriesPresentBeansAreNotProcessed() {
+    void whenNoMessageListenerContainerFactoriesPresentBeansAreNotProcessed() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
 
@@ -50,7 +43,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void settingApplicationContextTwiceDoesNothing() {
+    void settingApplicationContextTwiceDoesNothing() {
         // arrange
         final MessageListenerContainerFactory messageListenerContainerFactory = mock(MessageListenerContainerFactory.class);
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of(messageListenerContainerFactory));
@@ -66,7 +59,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void buildsMessageListenContainersForEachEligibleBeanMethod() throws NoSuchMethodException {
+    void buildsMessageListenContainersForEachEligibleBeanMethod() throws NoSuchMethodException {
         // arrange
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
@@ -88,7 +81,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void methodsThatAreNotEligibleForWrappingWillNotCreateMessageListeners() throws NoSuchMethodException {
+    void methodsThatAreNotEligibleForWrappingWillNotCreateMessageListeners() throws NoSuchMethodException {
         // arrange
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
@@ -107,7 +100,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void duplicateMessageListenerContainsThrowsExceptionWhenStarting() throws NoSuchMethodException {
+    void duplicateMessageListenerContainsThrowsExceptionWhenStarting() throws NoSuchMethodException {
         // arrange
         final BeanWithTwoMethods bean = new BeanWithTwoMethods();
         final Method methodOne = bean.getClass().getMethod("methodOne");
@@ -128,15 +121,14 @@ public class DefaultMessageListenerContainerCoordinatorTest {
 
         when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
-        expectedException.expect(IllegalStateException.class);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
 
         // act
-        defaultMessageListenerContainerCoordinator.startAllContainers();
+        assertThrows(IllegalStateException.class, defaultMessageListenerContainerCoordinator::startAllContainers);
     }
 
     @Test
-    public void startingContainersWillStartAllMessageListenerContainersBuilt() throws NoSuchMethodException {
+    void startingContainersWillStartAllMessageListenerContainersBuilt() throws NoSuchMethodException {
         // arrange
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
@@ -160,7 +152,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void stoppingAllContainersWillStopAllMessageListenerContainersBuilt() throws NoSuchMethodException {
+    void stoppingAllContainersWillStopAllMessageListenerContainersBuilt() throws NoSuchMethodException {
         // arrange
         log.debug("Starting stoppingAllContainersWillStopAllMessageListenerContainersBuilt");
         final Bean bean = new Bean();
@@ -190,18 +182,17 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void stoppingContainerThatDoesNotExistThrowsIllegalArgumentException() {
+    void stoppingContainerThatDoesNotExistThrowsIllegalArgumentException() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
-        expectedException.expect(IllegalArgumentException.class);
 
         // act
-        defaultMessageListenerContainerCoordinator.stopContainer("unknown");
+        assertThrows(IllegalArgumentException.class, () -> defaultMessageListenerContainerCoordinator.stopContainer("unknown"));
     }
 
     @Test
-    public void stoppingIndividualContainerWithIdentifierCallsStopOnContainer() throws NoSuchMethodException {
+    void stoppingIndividualContainerWithIdentifierCallsStopOnContainer() throws NoSuchMethodException {
         // arrange
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
@@ -224,18 +215,17 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void startingContainerThatDoesNotExistThrowsIllegalArgumentException() {
+    void startingContainerThatDoesNotExistThrowsIllegalArgumentException() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
-        expectedException.expect(IllegalArgumentException.class);
 
         // act
-        defaultMessageListenerContainerCoordinator.startContainer("unknown");
+        assertThrows(IllegalArgumentException.class, () -> defaultMessageListenerContainerCoordinator.startContainer("unknown"));
     }
 
     @Test
-    public void startingIndividualContainerWithIdentifierCallsStopOnContainer() throws NoSuchMethodException {
+    void startingIndividualContainerWithIdentifierCallsStopOnContainer() throws NoSuchMethodException {
         // arrange
         final Bean bean = new Bean();
         final Method method = bean.getClass().getMethod("method");
@@ -258,7 +248,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void autoStartsService() {
+    void autoStartsService() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
 
@@ -267,7 +257,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void startLifeCycleStartsAllContainers() {
+    void startLifeCycleStartsAllContainers() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = spy(new DefaultMessageListenerContainerCoordinator(ImmutableList.of()));
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -280,7 +270,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void stopLifeCycleStopsAllContainers() {
+    void stopLifeCycleStopsAllContainers() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = spy(new DefaultMessageListenerContainerCoordinator(ImmutableList.of()));
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -293,7 +283,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void stopLifeCycleWithCallbackStartsAllContainersAndRunsCallback() {
+    void stopLifeCycleWithCallbackStartsAllContainersAndRunsCallback() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = spy(new DefaultMessageListenerContainerCoordinator(ImmutableList.of()));
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -308,7 +298,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void beanIsNotRunningWhenStartIsNotCalled() {
+    void beanIsNotRunningWhenStartIsNotCalled() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
 
@@ -317,7 +307,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void startLifeCycleSetsBeanAsRunning() {
+    void startLifeCycleSetsBeanAsRunning() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -331,7 +321,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void stopLifeCycleSetsBeanAsNotRunning() {
+    void stopLifeCycleSetsBeanAsNotRunning() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -346,7 +336,7 @@ public class DefaultMessageListenerContainerCoordinatorTest {
     }
 
     @Test
-    public void beanShouldBeStartedLast() {
+    void beanShouldBeStartedLast() {
         // arrange
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of());
 

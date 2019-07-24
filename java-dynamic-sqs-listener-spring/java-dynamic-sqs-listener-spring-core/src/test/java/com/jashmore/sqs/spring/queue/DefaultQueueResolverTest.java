@@ -1,19 +1,15 @@
 package com.jashmore.sqs.spring.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
@@ -23,13 +19,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-public class DefaultQueueResolverTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class DefaultQueueResolverTest {
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
@@ -38,20 +29,13 @@ public class DefaultQueueResolverTest {
 
     private DefaultQueueResolver defaultQueueResolver;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         defaultQueueResolver = new DefaultQueueResolver(environment);
     }
 
-    @After
-    public void tearDown() {
-        // If the thread running the tests is interrupted it will break future tests. This will be fixed in release of JUnit 4.13 but until then
-        // we use this workaround. See https://github.com/junit-team/junit4/issues/1365
-        Thread.interrupted();
-    }
-
     @Test
-    public void resolvedValueThatIsAUrlIsReturned() {
+    void resolvedValueThatIsAUrlIsReturned() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("http://url");
 
@@ -63,7 +47,7 @@ public class DefaultQueueResolverTest {
     }
 
     @Test
-    public void resolvedValueThatIsNotAUrlCallsOutToAmazonForUrl() {
+    void resolvedValueThatIsNotAUrlCallsOutToAmazonForUrl() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
@@ -77,7 +61,7 @@ public class DefaultQueueResolverTest {
     }
 
     @Test
-    public void exceptionThrownWhileGettingQueueUrlBubblesException() {
+    void exceptionThrownWhileGettingQueueUrlBubblesException() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final RuntimeException exceptionCause = new RuntimeException("error");
@@ -88,15 +72,17 @@ public class DefaultQueueResolverTest {
                         throw new ExecutionException(exceptionCause);
                     }
                 });
-        expectedException.expect(instanceOf(QueueResolutionException.class));
-        expectedException.expectCause(equalTo(exceptionCause));
 
         // act
-        defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        final QueueResolutionException exception = assertThrows(QueueResolutionException.class,
+                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+
+        // assert
+        assertThat(exception).hasCause(exceptionCause);
     }
 
     @Test
-    public void interruptedThreadWhileGettingQueueUrlThrowsQueueResolutionException() {
+    void interruptedThreadWhileGettingQueueUrlThrowsQueueResolutionException() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final InterruptedException exceptionCause = new InterruptedException();
@@ -107,15 +93,17 @@ public class DefaultQueueResolverTest {
                         throw new ExecutionException(exceptionCause);
                     }
                 });
-        expectedException.expect(instanceOf(QueueResolutionException.class));
-        expectedException.expectCause(equalTo(exceptionCause));
 
         // act
-        defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
+        final QueueResolutionException exception = assertThrows(QueueResolutionException.class,
+                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+
+        // assert
+        assertThat(exception).hasCause(exceptionCause);
     }
 
     @Test
-    public void interruptedThreadWhileGettingQueueUrlShouldMaintainThreadInterruptedBoolean() {
+    void interruptedThreadWhileGettingQueueUrlShouldMaintainThreadInterruptedBoolean() {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final InterruptedException interruptedException = new InterruptedException();
@@ -128,11 +116,10 @@ public class DefaultQueueResolverTest {
                 });
 
         // act
-        try {
-            defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
-        } catch (final QueueResolutionException exception) {
-            // assert
-            assertThat(Thread.currentThread().isInterrupted()).isTrue();
-        }
+        assertThrows(QueueResolutionException.class,
+                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+
+        // assert
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
     }
 }

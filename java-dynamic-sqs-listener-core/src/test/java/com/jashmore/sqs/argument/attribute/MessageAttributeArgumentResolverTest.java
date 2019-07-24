@@ -12,9 +12,8 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Percentage;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
@@ -22,15 +21,11 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import java.lang.reflect.Method;
 
 @Slf4j
-@SuppressWarnings( {"unused", "WeakerAccess"})
-public class MessageAttributeArgumentResolverTest {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+class MessageAttributeArgumentResolverTest {
     private MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(new ObjectMapper());
 
     @Test
-    public void stringMessageAttributesCanBeObtainedFromMessage() throws Exception {
+    void stringMessageAttributesCanBeObtainedFromMessage() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "string", MessageAttributeValue.builder()
@@ -54,7 +49,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void unknownDataTypeWillThrowArgumentResolutionException() throws Exception {
+    void unknownDataTypeWillThrowArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "string", MessageAttributeValue.builder()
@@ -69,15 +64,17 @@ public class MessageAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Cannot parse message attribute due to unknown data type 'Unknown'");
 
         // act
-        messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
+                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Cannot parse message attribute due to unknown data type 'Unknown'");
     }
 
     @Test
-    public void missingMessageAttributeWillReturnNullWhenNotRequired() throws Exception {
+    void missingMessageAttributeWillReturnNullWhenNotRequired() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of())
                 .build();
@@ -96,7 +93,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void missingMessageAttributeWillThrowArgumentResolutionExceptionWhenRequired() throws Exception {
+    void missingMessageAttributeWillThrowArgumentResolutionExceptionWhenRequired() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of())
                 .build();
@@ -106,15 +103,17 @@ public class MessageAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Message Attribute 'string' is missing");
 
         // act
-        messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
+                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Required Message Attribute 'string' is missing from message");
     }
 
     @Test
-    public void floatCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void floatCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "float", MessageAttributeValue.builder()
@@ -139,7 +138,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void integerCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void integerCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "int", MessageAttributeValue.builder()
@@ -164,7 +163,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void longCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void longCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "long", MessageAttributeValue.builder()
@@ -189,7 +188,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void byteCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void byteCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "byte", MessageAttributeValue.builder()
@@ -215,7 +214,7 @@ public class MessageAttributeArgumentResolverTest {
 
 
     @Test
-    public void shortCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void shortCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "short", MessageAttributeValue.builder()
@@ -236,11 +235,11 @@ public class MessageAttributeArgumentResolverTest {
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
 
         // assert
-        assertThat(value).isEqualTo((short)1);
+        assertThat(value).isEqualTo((short) 1);
     }
 
     @Test
-    public void floatClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void floatClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "float", MessageAttributeValue.builder()
@@ -265,7 +264,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void integerClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void integerClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "int", MessageAttributeValue.builder()
@@ -290,7 +289,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void longClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void longClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "long", MessageAttributeValue.builder()
@@ -315,7 +314,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void byteClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void byteClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "byte", MessageAttributeValue.builder()
@@ -340,7 +339,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void shortClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
+    void shortClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         // arrange
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
@@ -366,7 +365,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void pojoCanBeDeserialisedFromMessageAttribute() throws Exception {
+    void pojoCanBeDeserialisedFromMessageAttribute() throws Exception {
         final MyPojo pojo = MyPojo.builder().name("name").build();
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
@@ -391,7 +390,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void attributeThatCannotBeProperlyParsedThrowsArgumentResolutionException() throws Exception {
+    void attributeThatCannotBeProperlyParsedThrowsArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "pojo", MessageAttributeValue.builder()
@@ -406,15 +405,17 @@ public class MessageAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Error parsing Message Attribute 'pojo'");
 
         // act
-        messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
+                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Error parsing Message Attribute 'pojo'");
     }
 
     @Test
-    public void canExtractBytesFromBinaryMessageAttribute() throws Exception {
+    void canExtractBytesFromBinaryMessageAttribute() throws Exception {
         final byte[] binaryBytes = "some string".getBytes();
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
@@ -439,7 +440,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void canParseStringFromBinaryMessageAttribute() throws Exception {
+    void canParseStringFromBinaryMessageAttribute() throws Exception {
         final String expectedString = "some string";
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
@@ -464,7 +465,7 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void canParseObjectFromBinaryMessageAttribute() throws Exception {
+    void canParseObjectFromBinaryMessageAttribute() throws Exception {
         final MyPojo myPojo = MyPojo.builder().name("name").build();
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
@@ -489,7 +490,8 @@ public class MessageAttributeArgumentResolverTest {
     }
 
     @Test
-    public void failureParseObjectFromBinaryMessageAttributeWillThrowArgumentResolutionException() throws Exception {
+    void failureParseObjectFromBinaryMessageAttributeWillThrowArgumentResolutionException() throws Exception {
+        // arrange
         final Message message = Message.builder()
                 .messageAttributes(ImmutableMap.of(
                         "pojo", MessageAttributeValue.builder()
@@ -504,19 +506,24 @@ public class MessageAttributeArgumentResolverTest {
                 .parameter(method.getParameters()[0])
                 .parameterIndex(0)
                 .build();
-        expectedException.expect(ArgumentResolutionException.class);
-        expectedException.expectMessage("Failure to parse binary bytes to '" + MyPojo.class.getName() + "'");
 
         // act
-        messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
+        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
+                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+
+        // assert
+        assertThat(exception).hasMessage("Failure to parse binary bytes to '" + MyPojo.class.getName() + "'");
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("string") final String messageAttribute) {
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consumeWithRequiredAttribute(@MessageAttribute(value = "string", required = true) final String messageAttribute) {
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consumeNumbers(@MessageAttribute("float") float f,
                                @MessageAttribute("int") int i,
                                @MessageAttribute("long") long l,
@@ -524,6 +531,7 @@ public class MessageAttributeArgumentResolverTest {
                                @MessageAttribute("short") short s) {
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consumeNumbers(@MessageAttribute("float") Float f,
                                @MessageAttribute("int") Integer i,
                                @MessageAttribute("long") Long l,
@@ -531,16 +539,19 @@ public class MessageAttributeArgumentResolverTest {
                                @MessageAttribute("short") Short s) {
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("pojo") final MyPojo pojo) {
 
     }
 
+    @SuppressWarnings( {"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("bytes") final byte[] b) {
 
     }
 
     @Value
     @Builder
+    @SuppressWarnings("WeakerAccess")
     public static class MyPojo {
         private final String name;
     }

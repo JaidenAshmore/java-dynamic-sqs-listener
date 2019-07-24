@@ -5,22 +5,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.util.ProxyMethodInterceptor;
-import net.sf.cglib.proxy.Enhancer;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Optional;
 
-public class AnnotationUtils_MethodAnnotationsTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
+class AnnotationUtils_MethodAnnotationsTest {
     @Test
-    public void methodAnnotationsCanBeFoundOnBaseClasses() throws Exception {
+    void methodAnnotationsCanBeFoundOnBaseClasses() throws Exception {
         // arrange
         final MyClass object = new MyClass();
 
@@ -33,7 +26,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsNotFoundOnBaseClassesReturnsEmptyOptional() throws Exception {
+    void methodAnnotationsNotFoundOnBaseClassesReturnsEmptyOptional() throws Exception {
         // arrange
         final MyClass object = new MyClass();
 
@@ -46,7 +39,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsForExtendedClassMethodCanBeFound() throws Exception {
+    void methodAnnotationsForExtendedClassMethodCanBeFound() throws Exception {
         // arrange
         final ExtendedMyClass object = new ExtendedMyClass();
 
@@ -59,7 +52,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsForExtendedClassMethodNotFoundOnBaseClassReturnsEmptyOptional() throws Exception {
+    void methodAnnotationsForExtendedClassMethodNotFoundOnBaseClassReturnsEmptyOptional() throws Exception {
         // arrange
         final ExtendedMyClass object = new ExtendedMyClass();
 
@@ -72,7 +65,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsForExtendedClassMethodWithAnnotationReturnsAnnotation() throws Exception {
+    void methodAnnotationsForExtendedClassMethodWithAnnotationReturnsAnnotation() throws Exception {
         // arrange
         final ExtendedMyClass object = new ExtendedMyClass();
 
@@ -85,7 +78,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationForExtendedClassMethodWillReturnEmptyOptionalIfWhenNoMethodAnnotation() throws Exception {
+    void methodAnnotationForExtendedClassMethodWillReturnEmptyOptionalIfWhenNoMethodAnnotation() throws Exception {
         // arrange
         final ExtendedMyClass object = new ExtendedMyClass();
 
@@ -98,7 +91,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsForExtendedClassWithOverriddenMethodCanBeFound() throws Exception {
+    void methodAnnotationsForExtendedClassWithOverriddenMethodCanBeFound() throws Exception {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
 
@@ -111,7 +104,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void methodAnnotationsForExtendedClassWithOverriddenMethodWithoutAnnotationReturnsEmptyOptional() throws Exception {
+    void methodAnnotationsForExtendedClassWithOverriddenMethodWithoutAnnotationReturnsEmptyOptional() throws Exception {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
 
@@ -124,7 +117,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void classExtendedByCgLibCanFindAnnotationOnBaseClass() throws Exception {
+    void classExtendedByCgLibCanFindAnnotationOnBaseClass() throws Exception {
         // arrange
         final MyClass object = new MyClass();
         final MyClass proxyObject = ProxyMethodInterceptor.wrapObject(object, MyClass.class);
@@ -138,7 +131,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void classExtendedByCgLibForBaseClassWithNoMethodAnnotationReturnsEmptyOptional() throws Exception {
+    void classExtendedByCgLibForBaseClassWithNoMethodAnnotationReturnsEmptyOptional() throws Exception {
         // arrange
         final MyClass object = new MyClass();
         final MyClass proxyObject = ProxyMethodInterceptor.wrapObject(object, MyClass.class);
@@ -152,7 +145,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void multipleLevelsOfProxyingCanStillFindOriginalClassesMethodAnnotations() throws Exception {
+    void multipleLevelsOfProxyingCanStillFindOriginalClassesMethodAnnotations() throws Exception {
         // arrange
         final MyClass object = new MyClass();
         final MyClass proxyObject = ProxyMethodInterceptor.wrapObject(object, MyClass.class);
@@ -168,7 +161,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
 
 
     @Test
-    public void multipleLevelsOfProxyingForMethodWithNoAnnotationReturnsEmptyOptional() throws Exception {
+    void multipleLevelsOfProxyingForMethodWithNoAnnotationReturnsEmptyOptional() throws Exception {
         // arrange
         final MyClass object = new MyClass();
         final MyClass proxyObject = ProxyMethodInterceptor.wrapObject(object, MyClass.class);
@@ -183,7 +176,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void multipleLevelsOfProxyingAndClassExtensionCanStillFindOriginalClassesMethodAnnotations() throws Exception {
+    void multipleLevelsOfProxyingAndClassExtensionCanStillFindOriginalClassesMethodAnnotations() throws Exception {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
@@ -198,7 +191,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
     }
 
     @Test
-    public void multipleLevelsOfProxyingAndClassExtensionForMethodWithoutAnnotationReturnsEmptyOptional() throws Exception {
+    void multipleLevelsOfProxyingAndClassExtensionForMethodWithoutAnnotationReturnsEmptyOptional() throws Exception {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
@@ -223,6 +216,7 @@ public class AnnotationUtils_MethodAnnotationsTest {
         }
     }
 
+    @SuppressWarnings( {"WeakerAccess", "unused"})
     private static class ExtendedMyClass extends MyClass {
         @MethodAnnotation
         public void otherMethodWithAnnotation(final String payload) {

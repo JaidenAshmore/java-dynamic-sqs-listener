@@ -23,12 +23,12 @@ import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
-import com.jashmore.sqs.test.LocalSqsRule;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
@@ -37,27 +37,27 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-public class MessageAttributeIntegrationTest {
+class MessageAttributeIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
     private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
 
-    @Rule
-    public LocalSqsRule localSqsRule = new LocalSqsRule();
+    @RegisterExtension
+    static LocalSqsExtension LOCAL_SQS = new LocalSqsExtension();
 
     private String queueUrl;
     private QueueProperties queueProperties;
 
-    @Before
-    public void setUp() {
-        queueUrl = localSqsRule.createRandomQueue();
+    @BeforeEach
+    void setUp() {
+        queueUrl = LOCAL_SQS.createRandomQueue();
         queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
     }
 
     @Test
-    public void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
+    void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
         // arrange
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
                 sqsAsyncClient,

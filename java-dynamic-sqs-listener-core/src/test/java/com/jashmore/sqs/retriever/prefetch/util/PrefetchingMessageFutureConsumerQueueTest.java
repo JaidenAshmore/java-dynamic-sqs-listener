@@ -11,12 +11,11 @@ import com.google.common.collect.Sets;
 
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.List;
@@ -29,17 +28,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 @Slf4j
-public class PrefetchingMessageFutureConsumerQueueTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
+@ExtendWith(MockitoExtension.class)
+class PrefetchingMessageFutureConsumerQueueTest {
     @Mock
     private CompletableFuture<Message> messageCompletableFuture;
 
     private Thread thread = null;
 
-    @After
-    public void setUp() {
+    @AfterEach
+    void setUp() {
         if (thread != null) {
             thread.interrupt();
         }
@@ -47,7 +44,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void whenMessagesInQueueHitsCapacityLimitFutureCallsAreBlocked() throws InterruptedException {
+    void whenMessagesInQueueHitsCapacityLimitFutureCallsAreBlocked() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
@@ -67,7 +64,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void whenMessagesInQueueHitsCapacityLimitItWillStopWaitingWhenACompletableFutureIsProvided() throws InterruptedException {
+    void whenMessagesInQueueHitsCapacityLimitItWillStopWaitingWhenACompletableFutureIsProvided() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
@@ -89,7 +86,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void addingCompletableFutureAndThenMessageWillCompleteFutureWithThatMessage() throws InterruptedException {
+    void addingCompletableFutureAndThenMessageWillCompleteFutureWithThatMessage() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         final Message message = Message.builder().build();
@@ -103,7 +100,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void addingMessageAndThenCompletableWillCompleteFutureWithThatMessage() throws InterruptedException {
+    void addingMessageAndThenCompletableWillCompleteFutureWithThatMessage() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         final Message message = Message.builder().build();
@@ -117,7 +114,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void allMessagesAndCompletableFuturesAreResolvedWhenSubmittingMany() throws Exception {
+    void allMessagesAndCompletableFuturesAreResolvedWhenSubmittingMany() throws Exception {
         // arrange
         final int totalMessages = 1000;
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(20);
@@ -168,7 +165,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void drainingQueueWhenExtraCompletableFuturesWillReturnThem() {
+    void drainingQueueWhenExtraCompletableFuturesWillReturnThem() {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         final CompletableFuture<Message> firstCompletableFuture = new CompletableFuture<>();
@@ -185,7 +182,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void drainingQueueWhenExtraMessagesWillReturnThem() throws InterruptedException {
+    void drainingQueueWhenExtraMessagesWillReturnThem() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(2);
         final Message firstMessage = Message.builder().body("first").build();
@@ -202,7 +199,7 @@ public class PrefetchingMessageFutureConsumerQueueTest {
     }
 
     @Test
-    public void gettingBatchSizeWillReturnNumberOfMessagesInTheQueue() throws InterruptedException {
+    void gettingBatchSizeWillReturnNumberOfMessagesInTheQueue() throws InterruptedException {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(2);
         final Message firstMessage = Message.builder().body("first").build();
