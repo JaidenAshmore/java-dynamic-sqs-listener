@@ -243,6 +243,8 @@ class ConcurrentMessageBrokerTest {
             try {
                 broker.processMessages(executorService, messageRetriever, messageConsumer);
             } catch (InterruptedException e) {
+                // do nothing
+            } finally {
                 executorService.shutdownNow();
             }
         });
@@ -257,6 +259,8 @@ class ConcurrentMessageBrokerTest {
             try {
                 broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
             } catch (InterruptedException e) {
+                // do nothing
+            } finally {
                 executorService.shutdownNow();
             }
         });
