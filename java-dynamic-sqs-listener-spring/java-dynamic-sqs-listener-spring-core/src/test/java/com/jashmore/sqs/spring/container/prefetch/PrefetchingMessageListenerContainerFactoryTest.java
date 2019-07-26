@@ -1,6 +1,7 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -11,16 +12,14 @@ import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -32,13 +31,8 @@ import java.util.Optional;
  * without building unnecessary classes.
  */
 @SuppressWarnings("WeakerAccess")
-public class PrefetchingMessageListenerContainerFactoryTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+@ExtendWith(MockitoExtension.class)
+class PrefetchingMessageListenerContainerFactoryTest {
     @Mock
     private ArgumentResolverService argumentResolverService;
 
@@ -56,16 +50,15 @@ public class PrefetchingMessageListenerContainerFactoryTest {
 
     private PrefetchingMessageListenerContainerFactory prefetchingQueueListenerWrapper;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         prefetchingQueueListenerWrapper = new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
-
-        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
     }
 
     @Test
-    public void canBuildMessageListenerContainer() throws NoSuchMethodException {
+    void canBuildMessageListenerContainer() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -78,8 +71,9 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
+    void queueListenerWrapperWithoutIdentifierWillConstructOneByDefault() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -93,8 +87,9 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
+    void queueListenerWrapperWithIdentifierWillUseThatForTheMessageListenerContainer() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethodWithIdentifier");
 
@@ -107,8 +102,9 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
+    void queueIsResolvedViaTheQueueResolver() throws NoSuchMethodException {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
@@ -120,60 +116,61 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void invalidConcurrencyLevelStringFailsToWrapMessageListener() throws Exception {
+    void invalidConcurrencyLevelStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.concurrency}")).thenReturn("Test Invalid");
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void invalidMessageVisibilityTimeoutInSecondsStringFailsToWrapMessageListener() throws Exception {
+    void invalidMessageVisibilityTimeoutInSecondsStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("Test Invalid");
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void invalidMaxPrefetchedMessagesStringFailsToWrapMessageListener() throws Exception {
+    void invalidMaxPrefetchedMessagesStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.maxPrefetched}")).thenReturn("Test Invalid");
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void invalidDesiredMinPrefetchedMessagesStringFailsToWrapMessageListener() throws Exception {
+    void invalidDesiredMinPrefetchedMessagesStringFailsToWrapMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         when(environment.resolvePlaceholders("${prop.desiredMinPrefetchedMessages}")).thenReturn("Test Invalid");
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        expectedException.expect(NumberFormatException.class);
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        assertThrows(NumberFormatException.class, () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
     }
 
     @Test
-    public void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
+    void validStringFieldsWillCorrectlyBuildMessageListener() throws Exception {
         // arrange
+        when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
@@ -186,7 +183,7 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void prefetchingQueueListenerCanBeBuiltFromStringProperties() throws Exception {
+    void prefetchingQueueListenerCanBeBuiltFromStringProperties() throws Exception {
         // arrange
         when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
@@ -208,9 +205,8 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void prefetchingQueueListenerCanBeBuiltFromProperties() throws Exception {
+    void prefetchingQueueListenerCanBeBuiltFromProperties() throws Exception {
         // arrange
-        when(environment.resolvePlaceholders(anyString())).thenReturn("1");
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingProperties");
         final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
 
@@ -227,33 +223,36 @@ public class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @Test
-    public void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
+    void whenNoDefaultSqsClientAvailableAndItIsRequestedTheListenerWillNotBeWrapped() throws Exception {
         // arrange
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
-        expectedException.expect(MessageListenerContainerInitialisationException.class);
-        expectedException.expectMessage("Expected the default SQS Client but there is none");
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
+                () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
+
+        // assert
+        assertThat(exception).hasMessage("Expected the default SQS Client but there is none");
     }
 
     @Test
-    public void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
+    void whenSpecificSqsClientRequestButNoneAvailableAnExceptionIsThrown() throws Exception {
         // arrange
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
-        expectedException.expect(MessageListenerContainerInitialisationException.class);
-        expectedException.expectMessage("Expected a client with id 'clientId' but none were found");
 
         // act
-        prefetchingQueueListenerWrapper.buildContainer(bean, method);
+        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
+                () -> prefetchingQueueListenerWrapper.buildContainer(bean, method));
+
+        assertThat(exception).hasMessage("Expected a client with id 'clientId' but none were found");
     }
 
     @Test
-    public void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
+    void whenSpecificSqsClientRequestWhichCanBeFoundTheContainerCanBeBuilt() throws Exception {
         // arrange
         final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodUsingSpecificSqsAsyncClient");

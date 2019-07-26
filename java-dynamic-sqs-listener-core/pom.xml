@@ -65,6 +65,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>local-sqs-test-utils-junit5</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
             <version>3.2.10</version>

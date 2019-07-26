@@ -23,7 +23,6 @@ import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerCont
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,9 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * AutoConfiguration that will be enabled if the {@link EnableAutoConfiguration @EnableAutoConfiguration} annotation has been applied to the application.
- *
- * <p>The configuration for the application has been designed to allow for replacements by the consumer so that they can extend the framework, integrate into
+ * The configuration for the application has been designed to allow for replacements by the consumer so that they can extend the framework, integrate into
  * existing beans in the application or replace implementations of the framework with their own.
  */
 @Configuration

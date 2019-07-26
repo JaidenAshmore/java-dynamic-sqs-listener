@@ -7,11 +7,11 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityResponse;
@@ -20,15 +20,13 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-public class DefaultVisibilityExtenderTest {
+@ExtendWith(MockitoExtension.class)
+class DefaultVisibilityExtenderTest {
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties
             .builder()
             .queueUrl("queueUrl")
             .build();
     private static final String RECEIPT_HANDLE = "receipt_handle";
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;
@@ -40,13 +38,13 @@ public class DefaultVisibilityExtenderTest {
 
     private DefaultVisibilityExtender defaultVisibilityExtender;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         defaultVisibilityExtender = new DefaultVisibilityExtender(sqsAsyncClient, QUEUE_PROPERTIES, message);
     }
 
     @Test
-    public void defaultExtendShouldIncreaseVisibilityByDefaultAmount() {
+    void defaultExtendShouldIncreaseVisibilityByDefaultAmount() {
         // act
         defaultVisibilityExtender.extend();
 
@@ -60,7 +58,7 @@ public class DefaultVisibilityExtenderTest {
     }
 
     @Test
-    public void extendShouldIncreaseVisibilityByAmountSet() {
+    void extendShouldIncreaseVisibilityByAmountSet() {
         // act
         defaultVisibilityExtender.extend(10);
 
@@ -74,7 +72,7 @@ public class DefaultVisibilityExtenderTest {
     }
 
     @Test
-    public void defaultExtendShouldReturnFutureFromAmazon() {
+    void defaultExtendShouldReturnFutureFromAmazon() {
         // arrange
         when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
                 .builder()
@@ -93,7 +91,7 @@ public class DefaultVisibilityExtenderTest {
 
 
     @Test
-    public void extendShouldReturnFutureFromAmazon() {
+    void extendShouldReturnFutureFromAmazon() {
         // arrange
         when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
                 .builder()

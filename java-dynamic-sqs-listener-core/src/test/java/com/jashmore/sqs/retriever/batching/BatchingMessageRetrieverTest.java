@@ -15,12 +15,11 @@ import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import com.jashmore.sqs.util.thread.ThreadTestUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
@@ -32,7 +31,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class BatchingMessageRetrieverTest {
+@ExtendWith(MockitoExtension.class)
+class BatchingMessageRetrieverTest {
     private static final String QUEUE_URL = "queueUrl";
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
             .queueUrl(QUEUE_URL)
@@ -45,14 +45,11 @@ public class BatchingMessageRetrieverTest {
             .batchingPeriodInMs(POLLING_PERIOD_IN_MS)
             .build();
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
     @Test
-    public void threadIsWaitingWhileItWaitsForMessagesToDownload() {
+    void threadIsWaitingWhileItWaitsForMessagesToDownload() {
         // arrange
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_PROPERTIES);
 
@@ -67,7 +64,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenThereAreMoreRequestsForMessagesThanTheThresholdItWillRequestMessagesStraightAway() {
+    void whenThereAreMoreRequestsForMessagesThanTheThresholdItWillRequestMessagesStraightAway() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(2)
@@ -92,7 +89,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenThePollingPeriodIsHitTheBackgroundThreadWillRequestAsManyMessagesAsThoseWaiting() {
+    void whenThePollingPeriodIsHitTheBackgroundThreadWillRequestAsManyMessagesAsThoseWaiting() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(2)
@@ -119,7 +116,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenNoVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
+    void whenNoVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -146,7 +143,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenNegativeVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
+    void whenNegativeVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -173,7 +170,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenZeroVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
+    void whenZeroVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -200,7 +197,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void whenValidVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeVisibilityTimeout() {
+    void whenValidVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -227,7 +224,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void requestsForBatchesOfMessagesWillNotBeExecutedConcurrently() {
+    void requestsForBatchesOfMessagesWillNotBeExecutedConcurrently() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(2)
@@ -265,7 +262,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void errorObtainingMessagesWillTryAgainAfterBackingOffPeriod() {
+    void errorObtainingMessagesWillTryAgainAfterBackingOffPeriod() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .errorBackoffTimeInMilliseconds(200L)
@@ -293,7 +290,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void interruptedExceptionThrownWhenBackingOffWillEndBackgroundThread() {
+    void interruptedExceptionThrownWhenBackingOffWillEndBackgroundThread() {
         // arrange
         final long errorBackoffTimeInMilliseconds = 200L;
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
@@ -316,7 +313,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void willNotExceedAwsMaxMessagesForRetrievalWhenRequestingMessages() {
+    void willNotExceedAwsMaxMessagesForRetrievalWhenRequestingMessages() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -349,7 +346,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void waitTimeForMessageRetrievalWillSqsMaximum() {
+    void waitTimeForMessageRetrievalWillSqsMaximum() {
         // arrange
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -375,7 +372,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void allMessageAttributesShouldBeDownloadedWhenRequestingMessages() {
+    void allMessageAttributesShouldBeDownloadedWhenRequestingMessages() {
         // arrange
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -401,7 +398,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void allMessageSystemAttributesShouldBeDownloadedWhenRequestingMessages() {
+    void allMessageSystemAttributesShouldBeDownloadedWhenRequestingMessages() {
         // arrange
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -427,7 +424,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void nullPollingPeriodWillStillAllowMessagesToBeReceivedWhenLimitReached() {
+    void nullPollingPeriodWillStillAllowMessagesToBeReceivedWhenLimitReached() {
         // arrange
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
@@ -451,7 +448,7 @@ public class BatchingMessageRetrieverTest {
     }
 
     @Test
-    public void errorGettingVisibilityTimeoutWillNotProvideOneInRequest() {
+    void errorGettingVisibilityTimeoutWillNotProvideOneInRequest() {
         // arrange
         final BatchingMessageRetrieverProperties retrieverProperties = mock(BatchingMessageRetrieverProperties.class);
         when(retrieverProperties.getBatchSize()).thenReturn(1);

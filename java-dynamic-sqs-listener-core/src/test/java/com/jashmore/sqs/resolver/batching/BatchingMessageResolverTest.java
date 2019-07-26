@@ -9,13 +9,12 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
@@ -33,7 +32,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class BatchingMessageResolverTest {
+@ExtendWith(MockitoExtension.class)
+class BatchingMessageResolverTest {
     private static final int BUFFERING_TIME_IN_MS = 1000;
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
             .queueUrl("queueUrl")
@@ -43,26 +43,24 @@ public class BatchingMessageResolverTest {
             .bufferingTimeInMs(BUFFERING_TIME_IN_MS)
             .bufferingSizeLimit(1)
             .build();
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
     private ExecutorService executorService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         executorService = Executors.newCachedThreadPool();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         executorService.shutdownNow();
     }
 
     @Test
-    public void messageShouldBeBufferedUntilTheTimeLimitIsHit() throws Exception {
+    void messageShouldBeBufferedUntilTheTimeLimitIsHit() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
@@ -94,7 +92,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void whenBatchingSizeLimitReachedTheMessagesAreImmediatelySent() throws Exception {
+    void whenBatchingSizeLimitReachedTheMessagesAreImmediatelySent() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100_000;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
@@ -122,7 +120,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void batchDeleteRequestShouldContainCorrectReceiptHandleForMessageRemoval() throws Exception {
+    void batchDeleteRequestShouldContainCorrectReceiptHandleForMessageRemoval() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100_000;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
@@ -154,7 +152,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void whenMessageIsSuccessfullyDeletedTheCompletableFutureIsResolved() throws Exception {
+    void whenMessageIsSuccessfullyDeletedTheCompletableFutureIsResolved() throws Exception {
         // arrange
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -183,7 +181,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void whenMessageFailsToBeDeletedTheCompletableFutureIsCompletedExceptionally() throws Exception {
+    void whenMessageFailsToBeDeletedTheCompletableFutureIsCompletedExceptionally() throws Exception {
         // arrange
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -217,7 +215,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void whenMessageIsNotHandledInBatchDeletionItIsRejected() throws Exception {
+    void whenMessageIsNotHandledInBatchDeletionItIsRejected() throws Exception {
         // arrange
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -246,7 +244,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void notProvidingPropertiesWillResolveMessagesAsSoonAsTheyAreRequested() throws Exception {
+    void notProvidingPropertiesWillResolveMessagesAsSoonAsTheyAreRequested() throws Exception {
         // arrange
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -268,7 +266,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void interruptingThreadWhileWaitingForTotalMessageBatchWillStillPublishCurrentMessagesObtained() throws Exception {
+    void interruptingThreadWhileWaitingForTotalMessageBatchWillStillPublishCurrentMessagesObtained() throws Exception {
         // arrange
         final StaticBatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
                 .bufferingTimeInMs(100_000L)
@@ -297,7 +295,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void exceptionThrownInResponseToBatchRemovalWillRejectAllMessages() throws Exception {
+    void exceptionThrownInResponseToBatchRemovalWillRejectAllMessages() throws Exception {
         // arrange
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -328,7 +326,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void exceptionThrownSendingBatchRemovalWillRejectAllMessages() throws Exception {
+    void exceptionThrownSendingBatchRemovalWillRejectAllMessages() throws Exception {
         // arrange
         final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
                 .bufferingSizeLimit(1)
@@ -355,7 +353,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void multipleBatchesOfDeletionsCanBeSentConcurrentlyIfManyResolveMessageCallsAreMadeAtOnce() throws Exception {
+    void multipleBatchesOfDeletionsCanBeSentConcurrentlyIfManyResolveMessageCallsAreMadeAtOnce() throws Exception {
         // arrange
         final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
                 .bufferingSizeLimit(1)
@@ -387,7 +385,7 @@ public class BatchingMessageResolverTest {
     }
 
     @Test
-    public void shuttingDownMessageResolverWillWaitUntilEachMessageBatchCompletes() throws Exception {
+    void shuttingDownMessageResolverWillWaitUntilEachMessageBatchCompletes() throws Exception {
         // arrange
         final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
                 .bufferingSizeLimit(1)

@@ -2,25 +2,23 @@ package it.com.jashmore.sqs.client;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.test.LocalSqsRule;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import com.jashmore.sqs.util.SqsQueuesConfig;
 import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
@@ -31,19 +29,15 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("unused")
 @Slf4j
 @SpringBootTest(classes = {Application.class, MultipleSqsAsyncClientIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
-@RunWith(SpringRunner.class)
-public class MultipleSqsAsyncClientIntegrationTest {
+@ExtendWith(SpringExtension.class)
+class MultipleSqsAsyncClientIntegrationTest {
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(3);
 
-    @ClassRule
-    public static final LocalSqsRule FIRST_CLIENT_LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName("firstClientQueueName").build()
-    ));
+    @RegisterExtension
+    static final LocalSqsExtension FIRST_CLIENT_LOCAL_SQS_RULE = new LocalSqsExtension("firstClientQueueName");
 
-    @ClassRule
-    public static final LocalSqsRule SECOND_CLIENT_LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName("secondClientQueueName").build()
-    ));
+    @RegisterExtension
+    static final LocalSqsExtension SECOND_CLIENT_LOCAL_SQS_RULE = new LocalSqsExtension("secondClientQueueName");
 
     @Configuration
     public static class TestConfig {
@@ -76,7 +70,7 @@ public class MultipleSqsAsyncClientIntegrationTest {
     }
 
     @Test
-    public void shouldBeAbleToProcessMessagesFromMultipleAwsAccounts() throws Exception {
+    void shouldBeAbleToProcessMessagesFromMultipleAwsAccounts() throws Exception {
         // arrange
         FIRST_CLIENT_LOCAL_SQS_RULE.getLocalAmazonSqsAsync().sendMessageToLocalQueue("firstClientQueueName", SendMessageRequest.builder()
                 .messageBody("message")

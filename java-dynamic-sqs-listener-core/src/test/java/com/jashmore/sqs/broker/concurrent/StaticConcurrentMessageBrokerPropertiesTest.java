@@ -1,12 +1,13 @@
 package com.jashmore.sqs.broker.concurrent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class StaticConcurrentMessageBrokerPropertiesTest {
+class StaticConcurrentMessageBrokerPropertiesTest {
     @Test
-    public void concurrencyLevelReturnedFromConstructor() {
+    void concurrencyLevelReturnedFromConstructor() {
         // act
         final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
                 .builder()
@@ -17,17 +18,17 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
         assertThat(retriever.getConcurrencyLevel()).isEqualTo(1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void negativeConcurrencyLevelThrowsIllegalArgumentException() {
-        // act
-        StaticConcurrentMessageBrokerProperties
-                .builder()
-                .concurrencyLevel(-1)
-                .build();
+    @Test
+    void negativeConcurrencyLevelThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                StaticConcurrentMessageBrokerProperties
+                        .builder()
+                        .concurrencyLevel(-1)
+                        .build());
     }
 
     @Test
-    public void concurrencyPollingLevelReturnedFromConstructor() {
+    void concurrencyPollingLevelReturnedFromConstructor() {
         // act
         final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
                 .builder()
@@ -39,12 +40,11 @@ public class StaticConcurrentMessageBrokerPropertiesTest {
         assertThat(retriever.getConcurrencyPollingRateInMilliseconds()).isEqualTo(1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void negativeConcurrencyPollingRateThrowsIllegalArgumentException() {
-        // act
-        StaticConcurrentMessageBrokerProperties
+    @Test
+    void negativeConcurrencyPollingRateThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> StaticConcurrentMessageBrokerProperties
                 .builder()
                 .preferredConcurrencyPollingRateInMilliseconds(-1L)
-                .build();
+                .build());
     }
 }

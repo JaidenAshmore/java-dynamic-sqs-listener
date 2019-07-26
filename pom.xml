@@ -74,14 +74,15 @@
         <jackson.version>2.9.9</jackson.version>
         <jacoco.version>0.8.4</jacoco.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
-        <junit.version>4.12</junit.version>
-        <junit5.version>5.3.2</junit5.version>
+        <junit4.version>4.12</junit4.version>
+        <junit-jupiter.version>5.5.0</junit-jupiter.version>
         <logback.version>1.2.3</logback.version>
         <lombok.version>1.18.8</lombok.version>
         <maven.failsafe.version>3.0.0-M1</maven.failsafe.version>
         <maven.surefire.version>3.0.0-M1</maven.surefire.version>
         <mockito.version>2.28.2</mockito.version>
-        <pitest.version>1.4.8</pitest.version>
+        <mockito.jupiter.version>2.23.0</mockito.jupiter.version>
+        <pitest.version>1.4.9</pitest.version>
         <slf4j.version>1.7.26</slf4j.version>
         <spring.version>5.1.8.RELEASE</spring.version>
         <spring.boot.version>2.1.6.RELEASE</spring.boot.version>
@@ -104,8 +105,14 @@
 
         <!-- Set up the default testing dependencies here so it does need to be done for each child module -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -137,16 +144,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-        For some reason Spring Boot 2.1.x contains JUnit Jupiter as a dependency....
-        See https://stackoverflow.com/questions/53319852/spring-boot-2-1-0-has-junit5-dependencies-but-how-to-get-rid-of-it
-        -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -188,13 +185,25 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
+                <version>${junit4.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
-                <version>${junit5.version}</version>
+                <version>${junit-jupiter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit-jupiter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.jupiter.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -293,6 +302,15 @@
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
                 <version>${pitest.version}</version>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>0.9</version>
+                    </dependency>
+                </dependencies>
+
                 <configuration>
                     <mutationThreshold>80</mutationThreshold>
                     <jvmArgs>

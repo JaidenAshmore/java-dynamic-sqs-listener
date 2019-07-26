@@ -15,12 +15,11 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +33,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Slf4j
-public class CoreMessageListenerContainerTest {
+@ExtendWith(MockitoExtension.class)
+class CoreMessageListenerContainerTest {
     private static final CompletableFuture<Message> STUB_MESSAGE_BROKER_DONE;
 
     static {
@@ -51,9 +51,6 @@ public class CoreMessageListenerContainerTest {
             .messageRetrieverShutdownTimeoutInSeconds(5)
             .build();
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     @Mock
     private MessageRetriever messageRetriever;
 
@@ -67,7 +64,7 @@ public class CoreMessageListenerContainerTest {
     private MessageResolver messageResolver;
 
     @Test
-    public void passedInIdentifierIsReturnedFromGetIdentifier() {
+    void passedInIdentifierIsReturnedFromGetIdentifier() {
         // arrange
         final CoreMessageListenerContainer container
                 = buildContainer("id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
@@ -80,7 +77,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void forEachAvailableMessageFromRetrieverTheMessageWillBeProcessedViaTheProcessor() {
+    void forEachAvailableMessageFromRetrieverTheMessageWillBeProcessedViaTheProcessor() {
         // arrange
         final Message message = Message.builder().body("first").build();
         final Message secondMessage = Message.builder().body("second").build();
@@ -100,7 +97,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void forEachMessageOnTheMessageRetrieverTheMessageResolverIsUsedAsTheRunnableMethodForMessageCompletion() {
+    void forEachMessageOnTheMessageRetrieverTheMessageResolverIsUsedAsTheRunnableMethodForMessageCompletion() {
         // arrange
         final Message message = Message.builder().body("first").build();
         when(messageRetriever.retrieveMessage())
@@ -120,7 +117,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void whenMessageBrokerFinishesWithoutThrowingInterruptedExceptionTheContainerShutsDown() throws Exception {
+    void whenMessageBrokerFinishesWithoutThrowingInterruptedExceptionTheContainerShutsDown() throws Exception {
         // arrange
         final CoreMessageListenerContainer container
                 = buildContainer("id", messageBroker, messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
@@ -133,7 +130,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void messageResolverWillBeRunOnBackgroundThread() {
+    void messageResolverWillBeRunOnBackgroundThread() {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -148,7 +145,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void whenMessageRetrieverIsAsyncItWillBeStartedOnBackgroundThread() {
+    void whenMessageRetrieverIsAsyncItWillBeStartedOnBackgroundThread() {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -163,7 +160,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void messageResolverBackgroundThreadNameCreatedFromIdentifier() {
+    void messageResolverBackgroundThreadNameCreatedFromIdentifier() {
         // arrange
         final AtomicReference<String> resolverThreadName = new AtomicReference<>();
         doAnswer(invocation -> {
@@ -181,7 +178,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void messageRetrieverBackgroundThreadNameCreatedFromIdentifier() {
+    void messageRetrieverBackgroundThreadNameCreatedFromIdentifier() {
         // arrange
         final AtomicReference<String> retrieverThreadName = new AtomicReference<>();
         when(messageRetriever.run()).thenAnswer(invocation -> {
@@ -199,7 +196,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void messageProcessingThreadNamesShouldBeMadeFromIdentifier() {
+    void messageProcessingThreadNamesShouldBeMadeFromIdentifier() {
         // arrange
         final AtomicReference<String> retrieverThreadName = new AtomicReference<>();
         doAnswer(invocation -> {
@@ -221,7 +218,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void anyExtraMessagesLeftoverByAsyncMessageRetrieverWillNotBeProcessedOnShutdownWhenPropertyIsFalse() {
+    void anyExtraMessagesLeftoverByAsyncMessageRetrieverWillNotBeProcessedOnShutdownWhenPropertyIsFalse() {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -237,7 +234,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void anyExtraMessagesLeftoverByAsyncMessageRetrieverWillBeProcessedOnShutdownWhenPropertyIsTrue() {
+    void anyExtraMessagesLeftoverByAsyncMessageRetrieverWillBeProcessedOnShutdownWhenPropertyIsTrue() {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -259,7 +256,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void willInterruptMessagesProcessingDuringShutdownWhenPropertySetToTrue() {
+    void willInterruptMessagesProcessingDuringShutdownWhenPropertySetToTrue() {
         // arrange
         final CountDownLatch messageProcessing = new CountDownLatch(1);
         final Message firstExtraMessage = Message.builder().body("first").build();
@@ -293,7 +290,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void willNotInterruptMessagesProcessingDuringShutdownWhenPropertySetToFalse() {
+    void willNotInterruptMessagesProcessingDuringShutdownWhenPropertySetToFalse() {
         // arrange
         final CountDownLatch messageProcessing = new CountDownLatch(1);
         final Message firstExtraMessage = Message.builder().body("first").build();
@@ -327,7 +324,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void whenContainerIsBeingStoppedAnyAsyncMessageRetrieverThreadWillBeInterrupted() {
+    void whenContainerIsBeingStoppedAnyAsyncMessageRetrieverThreadWillBeInterrupted() {
         // arrange
         final AtomicBoolean messageRetrieverInterrupted = new AtomicBoolean(false);
         when(messageRetriever.retrieveMessage())
@@ -353,7 +350,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void whenContainerIsBeingStoppedAnyAsyncMessageResolverThreadWillBeInterrupted() {
+    void whenContainerIsBeingStoppedAnyAsyncMessageResolverThreadWillBeInterrupted() {
         // arrange
         final AtomicBoolean messageResolverInterrupted = new AtomicBoolean(false);
         when(messageRetriever.retrieveMessage())
@@ -378,7 +375,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void whenMessageRetrieverExceedsShutdownLimitTheRestOfTheShutdownProcessIsTriggered() {
+    void whenMessageRetrieverExceedsShutdownLimitTheRestOfTheShutdownProcessIsTriggered() {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -414,7 +411,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void startingContainerWillRunTheMainProcessInTheBackground() throws Exception {
+    void startingContainerWillRunTheMainProcessInTheBackground() throws Exception {
         // arrange
         final CountDownLatch messageRetrievedLatched = new CountDownLatch(1);
         when(messageRetriever.retrieveMessage())
@@ -435,7 +432,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void startingContainerThatHasAlreadyStartedWillReturnSameCompletableFuture() throws Exception {
+    void startingContainerThatHasAlreadyStartedWillReturnSameCompletableFuture() throws Exception {
         // arrange
         final CountDownLatch messageRetrievedLatched = new CountDownLatch(1);
         when(messageRetriever.retrieveMessage())
@@ -457,7 +454,7 @@ public class CoreMessageListenerContainerTest {
     }
 
     @Test
-    public void stoppingContainerThatHasStartedWillShutDownContainer() throws Exception {
+    void stoppingContainerThatHasStartedWillShutDownContainer() throws Exception {
         // arrange
         final CountDownLatch messageBrokerStartedLatch = new CountDownLatch(1);
         doAnswer((invocation) -> {

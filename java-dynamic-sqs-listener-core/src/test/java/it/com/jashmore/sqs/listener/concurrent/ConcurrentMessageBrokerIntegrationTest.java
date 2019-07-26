@@ -22,41 +22,41 @@ import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.test.LocalSqsRule;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import it.com.jashmore.sqs.util.SqsIntegrationTestUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public class ConcurrentMessageBrokerIntegrationTest {
+class ConcurrentMessageBrokerIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
 
-    @Rule
-    public LocalSqsRule localSqsRule = new LocalSqsRule();
+    @RegisterExtension
+    static LocalSqsExtension LOCAL_SQS = new LocalSqsExtension();
 
     private String queueUrl;
     private QueueProperties queueProperties;
     private ArgumentResolverService argumentResolverService;
 
-    @Before
-    public void setUp() {
-        queueUrl = localSqsRule.createRandomQueue();
+    @BeforeEach
+    void setUp() {
+        queueUrl = LOCAL_SQS.createRandomQueue();
         queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
         argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
     }
 
-    @Test(timeout = 30_000)
-    public void allMessagesSentIntoQueueAreProcessed() throws Exception {
+    @Test
+    void allMessagesSentIntoQueueAreProcessed() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
                 sqsAsyncClient,
@@ -97,12 +97,12 @@ public class ConcurrentMessageBrokerIntegrationTest {
         SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
-    @Test(timeout = 30_000)
-    public void usingPrefetchingMessageRetrieverCanConsumeAllMessages() throws Exception {
+    @Test
+    void usingPrefetchingMessageRetrieverCanConsumeAllMessages() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new PrefetchingMessageRetriever(
                 sqsAsyncClient,
                 queueProperties,
@@ -150,12 +150,12 @@ public class ConcurrentMessageBrokerIntegrationTest {
     }
 
 
-    @Test(timeout = 30_000)
-    public void usingBatchingMessageRetrieverCanConsumeAllMessages() throws Exception {
+    @Test
+    void usingBatchingMessageRetrieverCanConsumeAllMessages() throws Exception {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
-        final SqsAsyncClient sqsAsyncClient = localSqsRule.getLocalAmazonSqsAsync();
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
                 sqsAsyncClient,

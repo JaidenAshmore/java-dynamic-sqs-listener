@@ -6,11 +6,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CachingConcurrentMessageBrokerPropertiesTest {
+class CachingConcurrentMessageBrokerPropertiesTest {
     @Test
-    public void concurrencyLevelIsCachedWithinTimeout() {
+    void concurrencyLevelIsCachedWithinTimeout() {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getConcurrencyLevel())
@@ -28,7 +28,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test
-    public void concurrencyLevelCacheIsClearedAfterTimeoutTimeout() throws InterruptedException {
+    void concurrencyLevelCacheIsClearedAfterTimeoutTimeout() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getConcurrencyLevel())
@@ -47,7 +47,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test
-    public void concurrencyLevelWillStillResetAtTimeoutEvenWhenFrequentAccesses() throws InterruptedException {
+    void concurrencyLevelWillStillResetAtTimeoutEvenWhenFrequentAccesses() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getConcurrencyLevel())
@@ -68,7 +68,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test
-    public void cachingPollingRateIsCached() throws InterruptedException {
+    void cachingPollingRateIsCached() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getConcurrencyPollingRateInMilliseconds())
@@ -79,7 +79,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
         // act
         cachingProperties.getConcurrencyPollingRateInMilliseconds();
         Thread.sleep(60);
-        long pollingRate = cachingProperties.getConcurrencyPollingRateInMilliseconds();
+        Long pollingRate = cachingProperties.getConcurrencyPollingRateInMilliseconds();
 
         // assert
         assertThat(pollingRate).isEqualTo(1);
@@ -87,7 +87,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
     }
 
     @Test
-    public void cachingPollingRateExpiresAfterTimePeriod() throws InterruptedException {
+    void cachingPollingRateExpiresAfterTimePeriod() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties delegate = mock(ConcurrentMessageBrokerProperties.class);
         when(delegate.getConcurrencyPollingRateInMilliseconds())
@@ -98,7 +98,7 @@ public class CachingConcurrentMessageBrokerPropertiesTest {
         // act
         cachingProperties.getConcurrencyPollingRateInMilliseconds();
         Thread.sleep(120);
-        long pollingRate = cachingProperties.getConcurrencyPollingRateInMilliseconds();
+        Long pollingRate = cachingProperties.getConcurrencyPollingRateInMilliseconds();
 
         // assert
         assertThat(pollingRate).isEqualTo(2);

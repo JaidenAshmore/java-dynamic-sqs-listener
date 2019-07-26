@@ -13,16 +13,14 @@ import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolve
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
+import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
@@ -35,296 +33,314 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
-public class QueueListenerConfigurationTest {
+@SuppressWarnings( {"unchecked", "rawtypes"})
+class QueueListenerConfigurationTest {
     private static final ObjectMapper USER_OBJECT_MAPPER = new ObjectMapper();
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class));
 
-    @Test
-    public void whenUserDoesNotProvidedSqsAsyncClientTheDefaultIsUsed() {
-        this.contextRunner
-                .withSystemProperties("aws.region:localstack")
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(SqsAsyncClient.class);
-                    assertThat(context.getBean(SqsAsyncClient.class)).isSameAs(
-                            context.getBean(QueueListenerConfiguration.class).sqsAsyncClient());
-                });
+    @Nested
+    class SqsAsyncClientBean {
+        @Test
+        void whenUserDoesNotProvidedSqsAsyncClientTheDefaultIsUsed() {
+            contextRunner
+                    .withSystemProperties("aws.region:localstack")
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(SqsAsyncClient.class);
+                        assertThat(context.getBean(SqsAsyncClient.class)).isSameAs(
+                                context.getBean(QueueListenerConfiguration.class).sqsAsyncClient());
+                    });
+        }
+
+        @Test
+        void whenUserProvidesSqsAsyncClientTheDefaultIsNotUsed() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(SqsAsyncClient.class);
+                        assertThat(context.getBean(SqsAsyncClient.class)).isSameAs(
+                                context.getBean(UserConfigurationWithSqsClient.class).userDefinedSqsAsyncClient());
+                    });
+        }
     }
 
-    @Test
-    public void whenUserProvidesSqsAsyncClientTheDefaultIsNotUsed() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(SqsAsyncClient.class);
-                    assertThat(context.getBean(SqsAsyncClient.class)).isSameAs(
-                            context.getBean(UserConfigurationWithSqsClient.class).userDefinedSqsAsyncClient());
-                });
+    @Nested
+    class SqsAsyncClientProviderBean {
+
+
+        @Test
+        void whenNoSqsAsyncClientProviderADefaultImplementationIsCreated() {
+            contextRunner
+                    .withSystemProperties("aws.region:localstack")
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(SqsAsyncClientProvider.class);
+                        assertThat(context.getBean(SqsAsyncClientProvider.class)).isSameAs(
+                                context.getBean(QueueListenerConfiguration.class).sqsAsyncClientProvider(null));
+                    });
+        }
+
+        @Test
+        void whenNoCustomSqsAsyncClientProviderAndSqsAsyncClientDefaultSqsAsyncClientIsTheSqsAsyncClientProvidersDefault() {
+            contextRunner
+                    .withSystemProperties("aws.region:localstack")
+                    .run((context) -> {
+                        final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
+                        final SqsAsyncClient expectedDefault = context.getBean(SqsAsyncClient.class);
+                        assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(expectedDefault);
+                    });
+        }
+
+        @Test
+        void whenCustomSqsAsyncClientProvidedTheDefaultSqsAsyncClientProviderUsesThisAsTheDefault() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
+                        final SqsAsyncClient userDefinedSqsAsyncClient = context.getBean(UserConfigurationWithSqsClient.class).userDefinedSqsAsyncClient();
+                        assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(userDefinedSqsAsyncClient);
+                    });
+        }
+
+        @Test
+        void whenCustomSqsAsyncClientProviderProvidedNoSqsAsyncClientBeanIsBuilt() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
+                    .run((context) -> assertThat(context).doesNotHaveBean(SqsAsyncClient.class));
+        }
+
+        @Test
+        void whenCustomSqsAsyncClientProviderThatIsUsedInsteadOfTheDefault() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
+                    .run((context) -> assertThat(context.getBean(SqsAsyncClientProvider.class))
+                            .isSameAs(context.getBean(UserConfigurationWithSqsClientProvider.class).userDefinedSqsAsyncClientProvider()));
+        }
     }
 
-    @Test
-    public void userConfigurationWithNoObjectMapperWillProvideOwnForArgumentResolvers() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-                    assertThat(objectMapper).isNotNull();
-                });
+    @Nested
+    class ObjectMapperBean {
+        @Test
+        void userConfigurationWithNoObjectMapperWillProvideOwnForArgumentResolvers() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
+                        assertThat(objectMapper).isNotNull();
+                    });
+        }
+
+        @Test
+        void customObjectMapperWillBeAbleToObtainThatObjectMapperWhenRequired() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithCustomObjectMapper.class)
+                    .run((context) -> {
+                        final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
+                        assertThat(objectMapper).isEqualTo(USER_OBJECT_MAPPER);
+                    });
+        }
     }
 
-    @Test
-    public void customObjectMapperWillBeAbleToObtainThatObjectMapperWhenRequired() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomObjectMapper.class)
-                .run((context) -> {
-                    final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-                    assertThat(objectMapper).isEqualTo(USER_OBJECT_MAPPER);
-                });
+    @Nested
+    class PayloadArgumentResolverBean {
+        @Test
+        void whenUserDoesNotProvideAPayloadArgumentResolverTheDefaultIsUsed() {
+            contextRunner
+                    .withSystemProperties("aws.region:localstack")
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
+                        assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
+                                context.getBean(QueueListenerConfiguration.ArgumentResolutionConfiguration.CoreArgumentResolversConfiguration.class)
+                                        .payloadArgumentResolver(new ObjectMapper()));
+                    });
+        }
+
+        @Test
+        void whenUserProvidesAPayloadArgumentResolverTheDefaultIsNotUsed() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithPayloadArgumentResolverDefined.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
+                        assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
+                                context.getBean(UserConfigurationWithPayloadArgumentResolverDefined.class).payloadArgumentResolver());
+                    });
+        }
     }
 
-    @Test
-    public void whenUserDoesNotProvideAPayloadArgumentResolverTheDefaultIsUsed() {
-        this.contextRunner
-                .withSystemProperties("aws.region:localstack")
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
-                    assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
-                            context.getBean(QueueListenerConfiguration.ArgumentResolutionConfiguration.CoreArgumentResolversConfiguration.class)
-                                    .payloadArgumentResolver(new ObjectMapper()));
-                });
+    @Nested
+    class MessageAttributeArgumentResolverBean {
+        @Test
+        void whenNoUserProvidesAMessageAttributeArgumentResolverTheDefaultIsUsed() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
+                        assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
+                                context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
+                    });
+        }
+
+        @Test
+        void whenUserProvidesAMessageAttributeArgumentResolverTheDefaultIsNotUsed() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
+                        assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
+                                context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
+                    });
+        }
     }
 
-    @Test
-    public void whenUserProvidesAPayloadArgumentResolverTheDefaultIsNotUsed() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithPayloadArgumentResolverDefined.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
-                    assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
-                            context.getBean(UserConfigurationWithPayloadArgumentResolverDefined.class).payloadArgumentResolver());
-                });
+    @Nested
+    class ArgumentResolverServiceBean {
+        @Test
+        void whenUserDoesNotProvideAnArgumentResolverServiceTheDefaultIsUsed() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(ArgumentResolverService.class);
+                        assertThat(context.getBean(ArgumentResolverService.class)).isInstanceOf(DelegatingArgumentResolverService.class);
+                    });
+        }
+
+        @Test
+        void coreArgumentResolversAreNotIncludedIfCustomArgumentResolverServiceProvided() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithArgumentResolverServiceDefined.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(ArgumentResolverService.class);
+                        assertThat(context.getBean(ArgumentResolverService.class))
+                                .isSameAs(context.getBean(UserConfigurationWithArgumentResolverServiceDefined.class).argumentResolverService());
+                        assertThat(context).doesNotHaveBean(ArgumentResolver.class);
+                    });
+        }
+
+        @Test
+        void allCoreArgumentResolversAreIncludedInDelegatingArgumentResolverServiceIfNoCustomArgumentResolverServiceProvided() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final Collection<ArgumentResolver> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values();
+                        final DelegatingArgumentResolverService argumentResolverService
+                                = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
+                        final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
+                        argumentResolversField.setAccessible(true);
+                        assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
+                                .containsExactlyElementsOf(argumentResolvers);
+                    });
+        }
+
+        @Test
+        void allCoreArgumentResolversAreIncludedInContextIfNoCustomArgumentResolverServiceProvided() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final Collection<Class<? extends ArgumentResolver>> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values().stream()
+                                .map(ArgumentResolver::getClass)
+                                .collect(toSet());
+
+                        assertThat(argumentResolvers).containsExactlyInAnyOrder(
+                                PayloadArgumentResolver.class, MessageIdArgumentResolver.class,
+                                MessageAttributeArgumentResolver.class, MessageSystemAttributeArgumentResolver.class, MessageArgumentResolver.class
+                        );
+                    });
+        }
+
+        @Test
+        void userDefinedArgumentResolversAreIncludedInDefaultDelegatingArgumentResolverService() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithCustomArgumentResolver.class)
+                    .run((context) -> {
+                        final Collection<ArgumentResolver> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values();
+                        final DelegatingArgumentResolverService argumentResolverService
+                                = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
+                        final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
+                        argumentResolversField.setAccessible(true);
+                        assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
+                                .containsExactlyElementsOf(argumentResolvers);
+                        assertThat(argumentResolvers).hasSize(6);
+                    });
+        }
     }
 
-    @Test
-    public void whenNoUserProvidesAMessageAttributeArgumentResolverTheDefaultIsUsed() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
-                    assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
-                            context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
-                });
-    }
+    @Nested
+    class MessageListenerContainerCoordinatorBean {
+        @Test
+        void defaultMessageListenerContainerCoordinatorIsUsedIfUserContextDoesNotDefineItsOwn() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
+                        assertThat(context.getBean(MessageListenerContainerCoordinator.class)).isInstanceOf(DefaultMessageListenerContainerCoordinator.class);
+                    });
+        }
 
-    @Test
-    public void whenUserProvidesAMessageAttributeArgumentResolverTheDefaultIsNotUsed() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithMessageAttributeArgumentResolverDefined.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(MessageAttributeArgumentResolver.class);
-                    assertThat(context.getBean(MessageAttributeArgumentResolver.class)).isSameAs(
-                            context.getBean(UserConfigurationWithMessageAttributeArgumentResolverDefined.class).messageAttributeArgumentResolver());
-                });
-    }
+        @Test
+        void allCoreDefinedMessageListenerContainerFactoriesAreIncludedInContext() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final Collection<Class<? extends MessageListenerContainerFactory>> MessageListenerContainerFactoryClasses = context.getBeansOfType(MessageListenerContainerFactory.class).values().stream()
+                                .map(MessageListenerContainerFactory::getClass)
+                                .collect(toSet());
 
-    @Test
-    public void whenUserDoesNotProvideAnArgumentResolverServiceTheDefaultIsUsed() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(ArgumentResolverService.class);
-                    assertThat(context.getBean(ArgumentResolverService.class)).isInstanceOf(DelegatingArgumentResolverService.class);
-                });
-    }
+                        assertThat(MessageListenerContainerFactoryClasses).containsExactlyInAnyOrder(BasicMessageListenerContainerFactory.class, PrefetchingMessageListenerContainerFactory.class);
+                    });
+        }
 
-    @Test
-    public void coreArgumentResolversAreNotIncludedIfCustomArgumentResolverServiceProvided() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithArgumentResolverServiceDefined.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(ArgumentResolverService.class);
-                    assertThat(context.getBean(ArgumentResolverService.class))
-                            .isSameAs(context.getBean(UserConfigurationWithArgumentResolverServiceDefined.class).argumentResolverService());
-                    assertThat(context).doesNotHaveBean(ArgumentResolver.class);
-                });
-    }
+        @Test
+        void allDefinedMessageListenerContainerFactoriesAreIncludedInDefaultMessageListenerContainerCoordinator() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                        final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                        final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        argumentResolversField.setAccessible(true);
+                        assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
+                                .containsExactlyElementsOf(messageListenerContainerFactories);
+                    });
+        }
 
-    @Test
-    public void allCoreArgumentResolversAreIncludedInDelegatingArgumentResolverServiceIfNoCustomArgumentResolverServiceProvided() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final Collection<ArgumentResolver> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values();
-                    final DelegatingArgumentResolverService argumentResolverService
-                            = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
-                    final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
-                    argumentResolversField.setAccessible(true);
-                    assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
-                            .containsExactlyElementsOf(argumentResolvers);
-                });
-    }
+        @Test
+        void userDefinedMessageListenerContainerFactoryIsIncludedInDefaultMessageListenerContainerCoordinator() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerFactory.class)
+                    .run((context) -> {
+                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                        final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                        final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        argumentResolversField.setAccessible(true);
+                        assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
+                                .containsExactlyElementsOf(messageListenerContainerFactories);
+                        assertThat(messageListenerContainerFactories).hasSize(3);
+                    });
+        }
 
-    @Test
-    public void allCoreArgumentResolversAreIncludedInContextIfNoCustomArgumentResolverServiceProvided() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final Collection<Class<? extends ArgumentResolver>> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values().stream()
-                            .map(ArgumentResolver::getClass)
-                            .collect(toSet());
+        @Test
+        void userDefinedMessageListenerContainerCoordinatorWillNotUseDefaultService() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
+                    .run((context) -> {
+                        assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
+                        assertThat(context.getBean(MessageListenerContainerCoordinator.class))
+                                .isSameAs(context.getBean(UserConfigurationWithCustomMessageListenerContainerCoordinator.class).customMessageListenerContainerCoordinator());
+                    });
+        }
 
-                    assertThat(argumentResolvers).containsExactlyInAnyOrder(
-                            PayloadArgumentResolver.class, MessageIdArgumentResolver.class,
-                            MessageAttributeArgumentResolver.class, MessageSystemAttributeArgumentResolver.class, MessageArgumentResolver.class
-                    );
-                });
-    }
-
-    @Test
-    public void userDefinedArgumentResolversAreIncludedInDefaultDelegatingArgumentResolverService() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomArgumentResolver.class)
-                .run((context) -> {
-                    final Collection<ArgumentResolver> argumentResolvers = context.getBeansOfType(ArgumentResolver.class).values();
-                    final DelegatingArgumentResolverService argumentResolverService
-                            = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
-                    final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
-                    argumentResolversField.setAccessible(true);
-                    assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
-                            .containsExactlyElementsOf(argumentResolvers);
-                    assertThat(argumentResolvers).hasSize(6);
-                });
-    }
-
-    @Test
-    public void defaultMessageListenerContainerCoordinatorIsUsedIfUserContextDoesNotDefineItsOwn() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
-                    assertThat(context.getBean(MessageListenerContainerCoordinator.class)).isInstanceOf(DefaultMessageListenerContainerCoordinator.class);
-                });
-    }
-
-    @Test
-    public void allCoreDefinedMessageListenerContainerFactoriesAreIncludedInContext() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final Collection<Class<? extends MessageListenerContainerFactory>> MessageListenerContainerFactoryClasses = context.getBeansOfType(MessageListenerContainerFactory.class).values().stream()
-                            .map(MessageListenerContainerFactory::getClass)
-                            .collect(toSet());
-
-                    assertThat(MessageListenerContainerFactoryClasses).containsExactlyInAnyOrder(BasicMessageListenerContainerFactory.class, PrefetchingMessageListenerContainerFactory.class);
-                });
-    }
-
-    @Test
-    public void allDefinedMessageListenerContainerFactoriesAreIncludedInDefaultMessageListenerContainerCoordinator() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
-                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
-                    final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
-                    argumentResolversField.setAccessible(true);
-                    assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
-                            .containsExactlyElementsOf(messageListenerContainerFactories);
-                });
-    }
-
-    @Test
-    public void userDefinedMessageListenerContainerFactoryIsIncludedInDefaultMessageListenerContainerCoordinator() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerFactory.class)
-                .run((context) -> {
-                    final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
-                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
-                    final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
-                    argumentResolversField.setAccessible(true);
-                    assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
-                            .containsExactlyElementsOf(messageListenerContainerFactories);
-                    assertThat(messageListenerContainerFactories).hasSize(3);
-                });
-    }
-
-    @Test
-    public void userDefinedMessageListenerContainerCoordinatorWillNotUseDefaultService() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
-                    assertThat(context.getBean(MessageListenerContainerCoordinator.class))
-                            .isSameAs(context.getBean(UserConfigurationWithCustomMessageListenerContainerCoordinator.class).customMessageListenerContainerCoordinator());
-                });
-    }
-
-    @Test
-    public void userDefinedMessageListenerContainerCoordinatorWillResultInNoCoreMessageListenerContainerFactoriesInContext() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
-                .run((context) -> assertThat(context).doesNotHaveBean(MessageListenerContainerFactory.class));
-    }
-
-    @Test
-    public void whenNoSqsAsyncClientProviderADefaultImplementationIsCreated() {
-        this.contextRunner
-                .withSystemProperties("aws.region:localstack")
-                .run((context) -> {
-                    assertThat(context).hasSingleBean(SqsAsyncClientProvider.class);
-                    assertThat(context.getBean(SqsAsyncClientProvider.class)).isSameAs(
-                            context.getBean(QueueListenerConfiguration.class).sqsAsyncClientProvider(null));
-                });
-    }
-
-    @Test
-    public void whenNoCustomSqsAsyncClientProviderAndSqsAsyncClientDefaultSqsAsyncClientIsTheSqsAsyncClientProvidersDefault() {
-        this.contextRunner
-                .withSystemProperties("aws.region:localstack")
-                .run((context) -> {
-                    final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
-                    final SqsAsyncClient expectedDefault = context.getBean(SqsAsyncClient.class);
-                    assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(expectedDefault);
-                });
-    }
-
-    @Test
-    public void whenCustomSqsAsyncClientProvidedTheDefaultSqsAsyncClientProviderUsesThisAsTheDefault() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .run((context) -> {
-                    final SqsAsyncClientProvider sqsAsyncClientProvider = context.getBean(SqsAsyncClientProvider.class);
-                    final SqsAsyncClient userDefinedSqsAsyncClient = context.getBean(UserConfigurationWithSqsClient.class).userDefinedSqsAsyncClient();
-                    assertThat(sqsAsyncClientProvider.getDefaultClient()).contains(userDefinedSqsAsyncClient);
-                });
-    }
-
-    @Test
-    public void whenCustomSqsAsyncClientProviderProvidedNoSqsAsyncClientBeanIsBuilt() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
-                .run((context) -> assertThat(context).doesNotHaveBean(SqsAsyncClient.class));
-    }
-
-    @Test
-    public void whenCustomSqsAsyncClientProviderThatIsUsedInsteadOfTheDefault() {
-        this.contextRunner
-                .withUserConfiguration(UserConfigurationWithSqsClientProvider.class)
-                .run((context) -> {
-                    assertThat(context.getBean(SqsAsyncClientProvider.class))
-                            .isSameAs(context.getBean(UserConfigurationWithSqsClientProvider.class).userDefinedSqsAsyncClientProvider());
-                });
+        @Test
+        void userDefinedMessageListenerContainerCoordinatorWillResultInNoCoreMessageListenerContainerFactoriesInContext() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
+                    .run((context) -> assertThat(context).doesNotHaveBean(MessageListenerContainerFactory.class));
+        }
     }
 
     @Configuration
     static class UserConfigurationWithSqsClient {
         @Bean
-        public SqsAsyncClient userDefinedSqsAsyncClient() {
+        SqsAsyncClient userDefinedSqsAsyncClient() {
             return mock(SqsAsyncClient.class);
         }
     }
@@ -333,7 +349,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithPayloadArgumentResolverDefined {
         @Bean
-        public PayloadArgumentResolver payloadArgumentResolver() {
+        PayloadArgumentResolver payloadArgumentResolver() {
             return mock(PayloadArgumentResolver.class);
         }
     }
@@ -342,7 +358,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithMessageAttributeArgumentResolverDefined {
         @Bean
-        public MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
+        MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
             return mock(MessageAttributeArgumentResolver.class);
         }
     }
@@ -351,7 +367,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithCustomObjectMapper {
         @Bean
-        public ObjectMapper myObjectMapper() {
+        ObjectMapper myObjectMapper() {
             return USER_OBJECT_MAPPER;
         }
     }
@@ -360,7 +376,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithArgumentResolverServiceDefined {
         @Bean
-        public ArgumentResolverService argumentResolverService() {
+        ArgumentResolverService argumentResolverService() {
             return mock(ArgumentResolverService.class);
         }
     }
@@ -369,7 +385,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithCustomArgumentResolver {
         @Bean
-        public ArgumentResolver<?> customArgumentResolver() {
+        ArgumentResolver<?> customArgumentResolver() {
             return mock(ArgumentResolver.class);
         }
     }
@@ -378,7 +394,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithCustomMessageListenerContainerCoordinator {
         @Bean
-        public MessageListenerContainerCoordinator customMessageListenerContainerCoordinator() {
+        MessageListenerContainerCoordinator customMessageListenerContainerCoordinator() {
             return mock(MessageListenerContainerCoordinator.class);
         }
     }
@@ -387,7 +403,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithCustomMessageListenerContainerFactory {
         @Bean
-        public MessageListenerContainerFactory customMessageListenerContainerFactory() {
+        MessageListenerContainerFactory customMessageListenerContainerFactory() {
             return mock(MessageListenerContainerFactory.class);
         }
     }
@@ -395,7 +411,7 @@ public class QueueListenerConfigurationTest {
     @Configuration
     static class UserConfigurationWithSqsClientProvider {
         @Bean
-        public SqsAsyncClientProvider userDefinedSqsAsyncClientProvider() {
+        SqsAsyncClientProvider userDefinedSqsAsyncClientProvider() {
             return mock(SqsAsyncClientProvider.class);
         }
     }

@@ -3,11 +3,11 @@ package com.jashmore.sqs.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResizableSemaphoreTest {
+class ResizableSemaphoreTest {
     @Test
-    public void initialPermitsIsPassedIntSuper() {
+    void initialPermitsIsPassedIntSuper() {
         // act
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(5);
 
@@ -16,7 +16,7 @@ public class ResizableSemaphoreTest {
     }
 
     @Test
-    public void changingPermitsAllowsToAcquireThreads() {
+    void changingPermitsAllowsToAcquireThreads() {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(0);
         assertThat(resizableSemaphore.tryAcquire()).isFalse();
@@ -29,7 +29,7 @@ public class ResizableSemaphoreTest {
     }
 
     @Test
-    public void changingPermitsToLessThanAvailableStillAllowsThreadsToRunUntilCompletion() throws InterruptedException {
+    void changingPermitsToLessThanAvailableStillAllowsThreadsToRunUntilCompletion() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(1);
         resizableSemaphore.acquire();
@@ -44,7 +44,7 @@ public class ResizableSemaphoreTest {
     }
 
     @Test
-    public void changingPermitSizeToSameAmountWhilstSomeAcquiredDoesNothing() throws InterruptedException {
+    void changingPermitSizeToSameAmountWhilstSomeAcquiredDoesNothing() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(1) {
             @Override
@@ -69,7 +69,7 @@ public class ResizableSemaphoreTest {
     }
 
     @Test
-    public void increasingPermitSizeShouldReleaseTheNumberOfExtraPermits() throws InterruptedException {
+    void increasingPermitSizeShouldReleaseTheNumberOfExtraPermits() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(1) {
             @Override
@@ -92,7 +92,7 @@ public class ResizableSemaphoreTest {
     }
 
     @Test
-    public void decreasePermitSizeShouldReduceTheNumberOfExtraPermits() throws InterruptedException {
+    void decreasePermitSizeShouldReduceTheNumberOfExtraPermits() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(6) {
             @Override

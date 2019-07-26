@@ -1,6 +1,6 @@
 package it.com.jashmore.sqs.examples.integrationtests;
 
-import static it.com.jashmore.sqs.examples.integrationtests.SqsListenerExampleIntegrationTest.QUEUE_NAME;
+import static it.com.jashmore.sqs.examples.integrationtests.SqsListenerExampleJunit4IntegrationTest.QUEUE_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -35,11 +35,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @SpringBootTest(classes = {
         IntegrationTestExampleApplication.class,
-        SqsListenerExampleIntegrationTest.TestConfiguration.class
+        SqsListenerExampleJunit4IntegrationTest.TestConfiguration.class
 }, webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = {"sqs.queues.integrationTestingQueue=" + QUEUE_NAME})
-public class SqsListenerExampleIntegrationTest {
+public class SqsListenerExampleJunit4IntegrationTest {
     static final String QUEUE_NAME = "testQueue";
     private static final int QUEUE_MAX_RECEIVE_COUNT = 3;
     private static final int VISIBILITY_TIMEOUT_IN_SECONDS = 2;

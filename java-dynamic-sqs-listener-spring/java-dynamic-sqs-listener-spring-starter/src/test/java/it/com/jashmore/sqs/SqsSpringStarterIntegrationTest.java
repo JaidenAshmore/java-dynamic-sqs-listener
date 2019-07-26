@@ -3,19 +3,14 @@ package it.com.jashmore.sqs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
-import com.jashmore.sqs.test.LocalSqsRule;
-import com.jashmore.sqs.test.PurgeQueuesRule;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,7 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +27,8 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @SpringBootTest(classes = {Application.class, SqsSpringStarterIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
-@RunWith(SpringRunner.class)
-public class SqsSpringStarterIntegrationTest {
+@ExtendWith(SpringExtension.class)
+class SqsSpringStarterIntegrationTest {
     private static final String QUEUE_NAME = "SqsSpringStarterIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(NUMBER_OF_MESSAGES_TO_SEND + 1);
@@ -43,17 +38,12 @@ public class SqsSpringStarterIntegrationTest {
     @SpringBootApplication
     public static class Application {
         public static void main(String[] args) {
-            SpringApplication.run(it.com.jashmore.sqs.Application.class);
+            SpringApplication.run(Application.class);
         }
     }
 
-    @ClassRule
-    public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME).build()
-    ));
-
-    @Rule
-    public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
+    @RegisterExtension
+    static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
 
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
@@ -82,7 +72,7 @@ public class SqsSpringStarterIntegrationTest {
     }
 
     @Test
-    public void springStarterShouldAutomaticallySetUpSqsConfigurationIfIncluded() throws Exception {
+    void springStarterShouldAutomaticallySetUpSqsConfigurationIfIncluded() throws Exception {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
                 .forEach(i -> localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i));

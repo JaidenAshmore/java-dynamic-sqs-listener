@@ -10,11 +10,9 @@ tests written includes test on:
  - A message was received, was not able to be processed after the number of times defined by the re-drive policy where it ended up in the Dead Letter Queue
 
 #### Tools
-The tools that will be used to help this are provided by the `local-sqs-test-utils`:
-1. [LocalSqsRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/LocalSqsRule.java): Test rule that will set up an in-memory ElasticMQ
-server. This should be used as a `@ClassRule` in Spring tests so it can be included in the spring application context.
-1. [PurgeQueuesRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/PurgeQueuesRule.java): Test rule that will purge the messages
-from all of the queues present in the SQS Server.
+The tools that will be used to help this are provided by the `local-sqs-test-utils-junit5`:
+1. [LocalSqsExtension](../../../util/local-sqs-test-utils-junit5/src/main/java/com/jashmore/sqs/test/LocalSqsExtension.java): extension that will be able
+to set up the Local SQS Queue before the tests start, purge between each test and shutdown the server after all the tests have run.
 
 ### Examples
 The main example that should be used as a reference is the
@@ -27,25 +25,20 @@ module would be good examples.
     ```xml
     <dependency>
         <groupId>com.jashmore</groupId>
-        <artifactId>local-sqs-test-utils</artifactId>
+        <artifactId>local-sqs-test-utils-junit5</artifactId>
         <version>${java.dynamic.sqs.listener.version}</version>
         <scope>test</scope> 
     </dependency>
     ```
 1. Add the [LocalSqsRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/LocalSqsRule.java) as a `ClassRule` to your integration test.
     ```java
-    @ClassRule
-    public static final LocalSqsRule LOCAL_SQS_RULE = new LocalSqsRule(ImmutableList.of(
-            // You should configure the queues that you need for your test here
-            SqsQueuesConfig.QueueConfig.builder().queueName("testQueue").build()
+    @RegisterExtension
+    static final LocalSqsExtension LOCAL_SQS = new LocalSqsExtension(ImmutableList.of(
+            SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME)
+                    .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
+                    .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
+                    .build()
     ));
-    ```
-1. Add the [PurgeQueuesRule](../../../util/local-sqs-test-utils/src/main/java/com/jashmore/sqs/test/PurgeQueuesRule.java) as a `Rule`
-to the integration test so the queues are all purged between tests. This should decrease the amount of flaky tests due to messages staying in the queues
-unintentionally.
-    ```java
-    @Rule
-    public final PurgeQueuesRule purgeQueuesRule = new PurgeQueuesRule(LOCAL_SQS_RULE.getLocalAmazonSqsAsync());
     ```
 1. Add the `LocalSqsAsyncClient` to the context of the spring application by defining a `@Configuration` in your application.
     ```java
@@ -53,7 +46,7 @@ unintentionally.
     public static class TestConfiguration {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
+            return LOCAL_SQS.getLocalAmazonSqsAsync();
         }
     }
     ```

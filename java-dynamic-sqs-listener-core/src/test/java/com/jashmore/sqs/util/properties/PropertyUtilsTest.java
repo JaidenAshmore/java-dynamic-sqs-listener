@@ -2,17 +2,12 @@ package com.jashmore.sqs.util.properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.Test;
 
-public class PropertyUtilsTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+class PropertyUtilsTest {
 
     @Test
-    public void testSafelyGetLongValue() {
+    void testSafelyGetLongValue() {
         assertThat(PropertyUtils.safelyGetLongValue("prop", () -> 1L, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetLongValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetLongValue("prop", () -> {
@@ -21,7 +16,7 @@ public class PropertyUtilsTest {
     }
 
     @Test
-    public void testSafelyGetPositiveLongValue() {
+    void testSafelyGetPositiveLongValue() {
         assertThat(PropertyUtils.safelyGetPositiveLongValue("prop", () -> 1L, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetPositiveLongValue("prop", () -> -1L, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveLongValue("prop", () -> 0L, 5)).isEqualTo(5);
@@ -32,7 +27,7 @@ public class PropertyUtilsTest {
     }
 
     @Test
-    public void testSafelyGetPositiveOrZeroLongValue() {
+    void testSafelyGetPositiveOrZeroLongValue() {
         assertThat(PropertyUtils.safelyGetPositiveOrZeroLongValue("prop", () -> 1L, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetPositiveOrZeroLongValue("prop", () -> -1L, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveOrZeroLongValue("prop", () -> 0L, 5)).isEqualTo(0);
@@ -41,9 +36,9 @@ public class PropertyUtilsTest {
             throw new RuntimeException("Expected Test Exception");
         }, 5)).isEqualTo(5);
     }
-    
+
     @Test
-    public void testSafelyGetIntegerValue() {
+    void testSafelyGetIntegerValue() {
         assertThat(PropertyUtils.safelyGetIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetIntegerValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetIntegerValue("prop", () -> {
@@ -52,7 +47,7 @@ public class PropertyUtilsTest {
     }
 
     @Test
-    public void testSafelyGetPositiveIntegerValue() {
+    void testSafelyGetPositiveIntegerValue() {
         assertThat(PropertyUtils.safelyGetPositiveIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetPositiveIntegerValue("prop", () -> -1, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveIntegerValue("prop", () -> 0, 5)).isEqualTo(5);
@@ -63,7 +58,7 @@ public class PropertyUtilsTest {
     }
 
     @Test
-    public void testSafelyGetPositiveOrZeroIntegerValue() {
+    void testSafelyGetPositiveOrZeroIntegerValue() {
         assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> -1, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> 0, 5)).isEqualTo(0);

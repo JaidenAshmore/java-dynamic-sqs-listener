@@ -14,34 +14,31 @@ import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 
+@ExtendWith(MockitoExtension.class)
 public class CoreArgumentResolverServiceTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     private ObjectMapper objectMapper = new ObjectMapper();
 
     private PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);
 
     private CoreArgumentResolverService service;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         service = new CoreArgumentResolverService(payloadMapper, objectMapper);
     }
 
     @Test
-    public void shouldReturnPayloadArgumentResolverForPayloadMethodArguments() throws Exception {
+    void shouldReturnPayloadArgumentResolverForPayloadMethodArguments() throws Exception {
         // arrange
         final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
@@ -59,7 +56,7 @@ public class CoreArgumentResolverServiceTest {
 
 
     @Test
-    public void shouldReturnMessageIdArgumentResolverForMessageIdMethodArguments() throws Exception {
+    void shouldReturnMessageIdArgumentResolverForMessageIdMethodArguments() throws Exception {
         // arrange
         final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final MethodParameter messageIdParameter = DefaultMethodParameter.builder()
@@ -76,7 +73,7 @@ public class CoreArgumentResolverServiceTest {
     }
 
     @Test
-    public void shouldReturnMessageAttributeArgumentResolverForMessageAttributeMethodArguments() throws Exception {
+    void shouldReturnMessageAttributeArgumentResolverForMessageAttributeMethodArguments() throws Exception {
         // arrange
         final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
@@ -93,7 +90,7 @@ public class CoreArgumentResolverServiceTest {
     }
 
     @Test
-    public void shouldReturnSystemMessageAttributeArgumentResolverForMessageSystemAttributeMethodArguments() throws Exception {
+    void shouldReturnSystemMessageAttributeArgumentResolverForMessageSystemAttributeMethodArguments() throws Exception {
         // arrange
         final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()
@@ -110,7 +107,7 @@ public class CoreArgumentResolverServiceTest {
     }
 
     @Test
-    public void shouldReturnMessageArgumentResolverForMessageMethodArguments() throws Exception {
+    void shouldReturnMessageArgumentResolverForMessageMethodArguments() throws Exception {
         // arrange
         final Method method = CoreArgumentResolverServiceTest.class.getMethod("method", Map.class, String.class, String.class, String.class, Message.class);
         final MethodParameter messagePayloadParameter = DefaultMethodParameter.builder()

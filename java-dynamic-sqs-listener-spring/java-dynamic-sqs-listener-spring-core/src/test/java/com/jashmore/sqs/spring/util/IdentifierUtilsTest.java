@@ -2,19 +2,13 @@ package com.jashmore.sqs.spring.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 
-public class IdentifierUtilsTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
+class IdentifierUtilsTest {
     @Test
-    public void whenIdentifierEmptyCanBeBuiltFromClassAndMethod() throws Exception {
+    void whenIdentifierEmptyCanBeBuiltFromClassAndMethod() throws Exception {
         // arrange
         final Method method = IdentifierUtilsTest.class.getMethod("method");
 
@@ -26,7 +20,7 @@ public class IdentifierUtilsTest {
     }
 
     @Test
-    public void whenIdentifierNotEmptyStringItIsReturnedAfterBeingTrimmed() throws Exception {
+    void whenIdentifierNotEmptyStringItIsReturnedAfterBeingTrimmed() throws Exception {
         // arrange
         final Method method = IdentifierUtilsTest.class.getMethod("method");
 
