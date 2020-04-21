@@ -49,6 +49,7 @@
 
     <modules>
         <module>examples</module>
+        <module>extensions</module>
         <module>java-dynamic-sqs-listener-api</module>
         <module>java-dynamic-sqs-listener-core</module>
         <module>java-dynamic-sqs-listener-spring</module>
@@ -84,8 +85,8 @@
         <mockito.jupiter.version>2.23.0</mockito.jupiter.version>
         <pitest.version>1.4.9</pitest.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <spring.version>5.1.8.RELEASE</spring.version>
-        <spring.boot.version>2.1.6.RELEASE</spring.boot.version>
+        <spring.version>5.2.5.RELEASE</spring.version>
+        <spring.boot.version>2.2.5.RELEASE</spring.boot.version>
     </properties>
 
     <dependencies>
@@ -248,6 +249,15 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <!-- Import dependency management from Spring Boot -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -470,6 +480,10 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <excludePackageNames>com.example</excludePackageNames>
+                    <sourceFileExcludes>
+                        <sourceFileExclude>**/generated-sources/**/*.java</sourceFileExclude>
+                    </sourceFileExcludes>
                     <failOnWarnings>true</failOnWarnings>
                 </configuration>
             </plugin>

@@ -4,4 +4,16 @@
     <Match>
         <Bug pattern="SE_NO_SERIALVERSIONID" />
     </Match>
+    <Match>
+        <!-- Avro generates redundant "implements" interface declarations -->
+        <Or>
+            <Package name="~com[.]example([.].*)?"     />
+        </Or>
+
+        <Or>
+            <Bug pattern="RI_REDUNDANT_INTERFACES" />
+            <Bug pattern="NM_CLASS_NAMING_CONVENTION" />
+            <Bug pattern="REC_CATCH_EXCEPTION" />
+        </Or>
+    </Match>
 </FindBugsFilter>
