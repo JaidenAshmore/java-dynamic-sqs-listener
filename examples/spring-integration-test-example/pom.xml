@@ -24,12 +24,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.boot.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
             <version>${project.version}</version>
@@ -44,14 +38,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
-            <version>${spring.boot.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -64,7 +56,7 @@
         <!-- Dependencies needed for creating the local SQS queue -->
         <dependency>
             <groupId>org.elasticmq</groupId>
-            <artifactId>elasticmq-rest-sqs_2.11</artifactId>
+            <artifactId>elasticmq-rest-sqs_2.12</artifactId>
             <scope>test</scope>
         </dependency>
 

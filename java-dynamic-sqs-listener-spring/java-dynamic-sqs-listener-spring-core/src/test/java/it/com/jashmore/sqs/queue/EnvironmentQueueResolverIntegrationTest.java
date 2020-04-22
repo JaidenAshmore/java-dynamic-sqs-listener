@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.test.LocalSqsExtension;
@@ -17,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@SpringBootTest(classes = {Application.class, EnvironmentQueueResolverIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, EnvironmentQueueResolverIntegrationTest.TestConfig.class})
 @TestPropertySource(properties = {
         "property.with.queue.url=http://sqs.some.url",
         "property.with.queue.name=EnvironmentQueueResolverIntegrationTest"

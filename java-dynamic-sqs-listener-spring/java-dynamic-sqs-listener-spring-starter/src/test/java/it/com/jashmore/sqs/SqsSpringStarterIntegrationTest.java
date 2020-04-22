@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
@@ -26,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, SqsSpringStarterIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, SqsSpringStarterIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 class SqsSpringStarterIntegrationTest {
     private static final String QUEUE_NAME = "SqsSpringStarterIntegrationTest";
