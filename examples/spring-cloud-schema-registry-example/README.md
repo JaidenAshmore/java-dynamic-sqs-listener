@@ -4,7 +4,7 @@
 Start each of these applications in new terminals/your IDE:
 1. A Spring Cloud Schema Registry server
     ```bash
-    wget -O /tmp/schema-registry-server.jar https://repo.spring.io/libs-snapshot-local/org/springframework/cloud/spring-cloud-schema-registry-server/1.0.0.BUILD-SNAPSHOT/spring-cloud-schema-registry-server-1.0.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/schema-registry-server.jar https://repo.spring.io/libs-release-ossrh-cache/org/springframework/cloud/spring-cloud-schema-registry-server/1.0.3.RELEASE/spring-cloud-schema-registry-server-1.0.3.RELEASE.jar
     cd /tmp
     java -jar schema-registry-server.jar
     ```
@@ -24,7 +24,7 @@ Start each of these applications in new terminals/your IDE:
    ```
 1. The second SQS producer service
    ```bash
-   cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer
+   cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-2
    mvn spring-boot:run
    ```
 
