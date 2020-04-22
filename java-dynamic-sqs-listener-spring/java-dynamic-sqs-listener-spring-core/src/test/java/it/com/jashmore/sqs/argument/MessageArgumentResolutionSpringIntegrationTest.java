@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.test.LocalSqsExtension;
@@ -25,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, MessageArgumentResolutionSpringIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, MessageArgumentResolutionSpringIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 public class MessageArgumentResolutionSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageArgumentResolutionSpringIntegrationTest";

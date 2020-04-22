@@ -24,7 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
     private static final String QUEUE_NAME = "DefaultMessageListenerContainerCoordinatorIntegrationTest";

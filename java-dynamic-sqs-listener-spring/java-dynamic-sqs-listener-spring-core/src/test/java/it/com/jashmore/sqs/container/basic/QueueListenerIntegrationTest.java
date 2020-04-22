@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.container.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, QueueListenerIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, QueueListenerIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 class QueueListenerIntegrationTest {
     private static final String QUEUE_NAME = "QueueListenerIntegrationTest";

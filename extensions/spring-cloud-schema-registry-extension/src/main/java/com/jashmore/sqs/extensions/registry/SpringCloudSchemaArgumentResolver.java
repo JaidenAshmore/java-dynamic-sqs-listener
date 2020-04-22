@@ -9,7 +9,6 @@ import com.jashmore.sqs.extensions.registry.deserializer.MessagePayloadDeseriali
 import com.jashmore.sqs.extensions.registry.producer.ProducerSchemaProvider;
 import com.jashmore.sqs.extensions.registry.schemareference.SchemaReferenceExtractor;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
-import org.apache.avro.Schema;
 import org.springframework.cloud.schema.registry.SchemaReference;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -21,16 +20,16 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * later version of the schema otherwise there isn't a way to know how to serialize it to a state that the consumer
  * doesn't know about.
  */
-public class SpringCloudSchemaArgumentResolver implements ArgumentResolver<Object> {
+public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Object> {
     private final SchemaReferenceExtractor schemaReferenceExtractor;
-    private final ConsumerSchemaProvider consumerSchemaProvider;
-    private final ProducerSchemaProvider producerSchemaProvider;
-    private final MessagePayloadDeserializer messagePayloadDeserializer;
+    private final ConsumerSchemaProvider<T> consumerSchemaProvider;
+    private final ProducerSchemaProvider<T> producerSchemaProvider;
+    private final MessagePayloadDeserializer<T> messagePayloadDeserializer;
 
     public SpringCloudSchemaArgumentResolver(final SchemaReferenceExtractor schemaReferenceExtractor,
-                                             final ConsumerSchemaProvider consumerSchemaProvider,
-                                             final ProducerSchemaProvider producerSchemaProvider,
-                                             final MessagePayloadDeserializer messagePayloadDeserializer) {
+                                             final ConsumerSchemaProvider<T> consumerSchemaProvider,
+                                             final ProducerSchemaProvider<T> producerSchemaProvider,
+                                             final MessagePayloadDeserializer<T> messagePayloadDeserializer) {
         this.schemaReferenceExtractor = schemaReferenceExtractor;
         this.consumerSchemaProvider = consumerSchemaProvider;
         this.producerSchemaProvider = producerSchemaProvider;
@@ -48,8 +47,8 @@ public class SpringCloudSchemaArgumentResolver implements ArgumentResolver<Objec
                                               final Message message) throws ArgumentResolutionException {
         final Class<?> clazz = methodParameter.getParameter().getType();
         final SchemaReference schemaReference = schemaReferenceExtractor.extract(message);
-        final Schema producerSchema = producerSchemaProvider.getSchema(schemaReference);
-        final Schema consumerSchema = consumerSchemaProvider.get(clazz);
+        final T producerSchema = producerSchemaProvider.getSchema(schemaReference);
+        final T consumerSchema = consumerSchemaProvider.get(clazz);
         return messagePayloadDeserializer.deserialize(message, producerSchema, consumerSchema, clazz);
     }
 }

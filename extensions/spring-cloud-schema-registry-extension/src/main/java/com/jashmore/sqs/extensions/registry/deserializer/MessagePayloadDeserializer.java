@@ -7,7 +7,7 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 @FunctionalInterface
-public interface MessagePayloadDeserializer {
+public interface MessagePayloadDeserializer<T extends Object> {
     /**
      * Deserialize the message body of the message to the required object type.
      *
@@ -26,5 +26,5 @@ public interface MessagePayloadDeserializer {
      * @return the deserialized body
      * @throws SchemaMessageDeserializationException when there was an error deserializing
      */
-    Object deserialize(Message message, Schema producerSchema, Schema consumerSchema, Class<?> clazz) throws SchemaMessageDeserializationException;
+    Object deserialize(Message message, T producerSchema, T consumerSchema, Class<?> clazz) throws SchemaMessageDeserializationException;
 }

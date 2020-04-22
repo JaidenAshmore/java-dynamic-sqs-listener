@@ -1,7 +1,5 @@
 package it.com.jashmore.sqs.client;
 
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-
 import com.google.common.collect.ImmutableMap;
 
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
@@ -28,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {Application.class, MultipleSqsAsyncClientIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, MultipleSqsAsyncClientIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 class MultipleSqsAsyncClientIntegrationTest {
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(3);

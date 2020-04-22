@@ -1,13 +1,12 @@
 package com.jashmore.sqs.extensions.registry.producer;
 
-import org.apache.avro.Schema;
 import org.springframework.cloud.schema.registry.SchemaReference;
 
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 @FunctionalInterface
-public interface ProducerSchemaProvider {
+public interface ProducerSchemaProvider<T> {
     /**
      * Given the schema reference, obtain the Schema that represents the payload that was sent from the producer.
      *
@@ -18,5 +17,5 @@ public interface ProducerSchemaProvider {
      * @return the schema definition
      * @throws ProducerSchemaRetrievalException when there was an error getting the schema
      */
-    Schema getSchema(SchemaReference reference) throws ProducerSchemaRetrievalException;
+    T getSchema(SchemaReference reference) throws ProducerSchemaRetrievalException;
 }

@@ -7,7 +7,7 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 @FunctionalInterface
-public interface ConsumerSchemaProvider {
+public interface ConsumerSchemaProvider<T> {
     /**
      * Get the {@link Schema} definition for the class in the classpath.
      *
@@ -17,5 +17,5 @@ public interface ConsumerSchemaProvider {
      * @param clazz the class of the object to get the schema for
      * @return the schema definition for this class
      */
-    Schema get(Class<?> clazz);
+    T get(Class<?> clazz);
 }

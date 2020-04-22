@@ -16,5 +16,6 @@
         <module>local-amazon-sqs</module>
         <module>local-sqs-test-utils</module>
         <module>local-sqs-test-utils-junit5</module>
+        <module>spring-cloud-register-sqs-client</module>
     </modules>
 </project>

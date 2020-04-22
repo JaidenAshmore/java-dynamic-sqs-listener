@@ -21,6 +21,7 @@
     <modules>
         <module>core-examples</module>
         <module>spring-aws-example</module>
+        <module>spring-cloud-schema-registry-example</module>
         <module>spring-integration-test-example</module>
         <module>spring-multiple-aws-account-example</module>
         <module>spring-starter-examples</module>

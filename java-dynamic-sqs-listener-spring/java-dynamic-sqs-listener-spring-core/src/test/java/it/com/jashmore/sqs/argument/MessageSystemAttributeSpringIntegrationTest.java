@@ -3,7 +3,6 @@ package it.com.jashmore.sqs.argument;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -34,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {Application.class, MessageSystemAttributeSpringIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, MessageSystemAttributeSpringIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 public class MessageSystemAttributeSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageAttributeSpringIntegrationTest";

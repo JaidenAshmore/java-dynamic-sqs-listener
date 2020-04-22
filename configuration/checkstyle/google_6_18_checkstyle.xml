@@ -13,6 +13,7 @@
  -->
 
 <module name="Checker">
+    <module name="SuppressWarningsFilter"/>
     <property name="charset" value="UTF-8"/>
 
     <property name="severity" value="warning"/>
@@ -25,6 +26,7 @@
     </module>
 
     <module name="TreeWalker">
+        <module name="SuppressWarningsHolder"/>
         <module name="OuterTypeFilename"/>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>

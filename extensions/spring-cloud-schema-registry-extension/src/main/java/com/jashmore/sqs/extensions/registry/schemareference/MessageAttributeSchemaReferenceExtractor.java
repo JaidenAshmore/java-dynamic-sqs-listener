@@ -43,8 +43,8 @@ public class MessageAttributeSchemaReferenceExtractor implements SchemaReference
         final String version = matcher.group(3);
         try {
             return new SchemaReference(subject, Integer.parseInt(version), AVRO_FORMAT);
-        } catch (NumberFormatException e) {
-            throw new SchemaReferenceExtractorException("Version for the schema is not in a number format", e);
+        } catch (NumberFormatException numberFormatException) {
+            throw new SchemaReferenceExtractorException("Version for the schema is not in a number format", numberFormatException);
         }
     }
 }

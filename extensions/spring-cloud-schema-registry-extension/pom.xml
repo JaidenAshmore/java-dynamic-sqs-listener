@@ -25,7 +25,6 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-schema-registry-client</artifactId>
-            <version>${spring-cloud-schema-registry-client.version}</version>
         </dependency>
 
         <dependency>
