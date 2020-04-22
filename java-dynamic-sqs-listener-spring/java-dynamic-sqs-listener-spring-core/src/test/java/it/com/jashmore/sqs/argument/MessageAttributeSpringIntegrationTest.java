@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -30,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {Application.class, MessageAttributeSpringIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, MessageAttributeSpringIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 public class MessageAttributeSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageAttributeSpringIntegrationTest";

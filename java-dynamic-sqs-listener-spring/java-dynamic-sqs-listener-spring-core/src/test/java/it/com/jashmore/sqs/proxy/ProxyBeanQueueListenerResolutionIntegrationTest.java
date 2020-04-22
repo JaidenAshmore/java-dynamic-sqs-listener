@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.proxy;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
@@ -25,7 +24,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@SpringBootTest(classes = {Application.class, ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+@SpringBootTest(classes = {Application.class, ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 @Slf4j
 class ProxyBeanQueueListenerResolutionIntegrationTest {

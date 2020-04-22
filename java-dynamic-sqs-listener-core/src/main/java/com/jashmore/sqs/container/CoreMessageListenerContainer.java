@@ -146,20 +146,22 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      */
     @VisibleForTesting
     void runContainer() {
-        final MessageRetriever messageRetriever = messageRetrieverSupplier.get();
-        final MessageResolver messageResolver = messageResolverSupplier.get();
-        final MessageBroker messageBroker = messageBrokerSupplier.get();
-        final MessageProcessor messageProcessor = messageProcessorSupplier.get();
-
-        final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(threadFactory(identifier + "-message-broker"));
-
-        final BlockingRunnable shutdownMessageResolver = startupMessageResolver(messageResolver);
-        final ExecutorService messageProcessingExecutorService = buildMessageProcessingExecutorService();
-
-        final Queue<Message> extraMessages = new LinkedList<>(); // As the AsyncMessageRetriever may have extra messages batched, they will be placed in here
-        final BlockingRunnable shutdownMessageRetriever = startupMessageRetriever(messageRetriever, extraMessages::addAll);
-
         try {
+            final MessageRetriever messageRetriever = messageRetrieverSupplier.get();
+            final MessageResolver messageResolver = messageResolverSupplier.get();
+            final MessageBroker messageBroker = messageBrokerSupplier.get();
+            final MessageProcessor messageProcessor = messageProcessorSupplier.get();
+
+            final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(threadFactory(identifier + "-message-broker"));
+
+            final BlockingRunnable shutdownMessageResolver = startupMessageResolver(messageResolver);
+            final ExecutorService messageProcessingExecutorService = buildMessageProcessingExecutorService();
+
+            // As the AsyncMessageRetriever may have extra messages batched, they will be placed in here
+            final Queue<Message> extraMessages = new LinkedList<>();
+
+            final BlockingRunnable shutdownMessageRetriever = startupMessageRetriever(messageRetriever, extraMessages::addAll);
+
             processMessagesFromRetriever(messageBroker, messageRetriever, messageProcessor, messageResolver,
                     messageBrokerExecutorService, messageProcessingExecutorService);
             log.info("Container '{}' is being shutdown", identifier);
@@ -171,6 +173,8 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             log.info("Container '{}' has stopped", identifier);
         } catch (final InterruptedException interruptedException) {
             log.error("Container '{}' was interrupted during the shutdown process. Doing a forceful shutdown that may eventually complete", identifier);
+        } catch (RuntimeException runtimeException) {
+            log.error("Unexpected error trying to start/stop the container", runtimeException);
         }
     }
 

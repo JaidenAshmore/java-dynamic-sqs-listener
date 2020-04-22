@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
  * {@link SqsAsyncClient} should be included into the context. For example:
  *
  * <pre class="code">
- * &#064;SpringBootTest(classes = {Application.class, IntegrationTest.TestConfig.class}, webEnvironment = RANDOM_PORT)
+ * &#064;SpringBootTest(classes = {Application.class, IntegrationTest.TestConfig.class})
  * &#064;RunWith(SpringRunner.class)
  * public class IntegrationTest {
  *     &#064;ClassRule
