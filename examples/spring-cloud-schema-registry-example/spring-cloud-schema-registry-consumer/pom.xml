@@ -17,8 +17,7 @@
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
 
-        <avro.version>1.8.2</avro.version>
-        <spring-cloud.version>Hoxton.BUILD-SNAPSHOT</spring-cloud.version>
+        <avro.version>1.9.2</avro.version>
     </properties>
 
     <dependencies>
@@ -46,7 +45,7 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>spring-cloud-schema-registry-extension</artifactId>
+            <artifactId>avro-spring-cloud-schema-registry-extension</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -61,6 +60,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -79,6 +79,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
                 <configuration>
                     <mainClass>com.jashmore.sqs.examples.schemaregistry.ConsumerApplication</mainClass>
                 </configuration>

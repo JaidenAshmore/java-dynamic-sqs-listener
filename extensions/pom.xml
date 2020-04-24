@@ -12,5 +12,7 @@
     <artifactId>extensions</artifactId>
     <packaging>pom</packaging>
 
-
+    <modules>
+        <module>spring-cloud-schema-registry-extension</module>
+    </modules>
 </project>

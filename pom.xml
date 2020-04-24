@@ -72,7 +72,7 @@
         <elasticmq.version>0.15.6</elasticmq.version>
         <guava.version>29.0-jre</guava.version>
         <hamcrest.verion>2.2</hamcrest.verion>
-        <jackson.version>2.9.10.3</jackson.version>
+        <jackson.version>2.9.10.4</jackson.version>
         <jacoco.version>0.8.5</jacoco.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <junit4.version>4.12</junit4.version>

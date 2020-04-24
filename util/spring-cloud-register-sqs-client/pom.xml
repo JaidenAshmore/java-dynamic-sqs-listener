@@ -11,6 +11,10 @@
 
     <artifactId>spring-cloud-register-sqs-client</artifactId>
 
+    <properties>
+        <avro.version>1.9.2</avro.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -20,6 +24,12 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-schema-registry-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>${avro.version}</version>
         </dependency>
 
         <dependency>

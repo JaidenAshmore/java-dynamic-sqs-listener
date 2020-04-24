@@ -27,6 +27,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>common-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
         </dependency>
@@ -72,9 +78,9 @@
         </dependency>
 
         <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
-            <version>3.2.10</version>
+            <groupId>com.jashmore</groupId>
+            <artifactId>proxy-method-intereceptor</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -14,7 +14,7 @@
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
 
-        <avro.version>1.8.2</avro.version>
+        <avro.version>1.9.2</avro.version>
         <spring-cloud.version>Hoxton.BUILD-SNAPSHOT</spring-cloud.version>
     </properties>
 
@@ -31,11 +31,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-schema-registry-client</artifactId>
-            <version>1.0.3.RELEASE</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -45,7 +40,6 @@
             <artifactId>spring-cloud-register-sqs-client</artifactId>
             <version>${project.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -58,6 +52,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -76,6 +71,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
                 <configuration>
                     <mainClass>com.jashmore.sqs.examples.schemaregistry.ProducerApplication</mainClass>
                 </configuration>

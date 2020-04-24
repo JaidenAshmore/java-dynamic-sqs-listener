@@ -36,6 +36,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+/**
+ * Helper client that is able to serialize a Pojo using Avro.
+ *
+ * <p>This makes sure that the schema that was used to serialize this object via the {@link SchemaRegistryClient}.
+ *
+ * <p>Note that this was built for testing purposes in this library only and is not meant to be production quality.
+ */
 @Slf4j
 public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
     @Delegate(excludes = SdkAutoCloseable.class)
@@ -147,7 +154,7 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
 
     @Override
     public void close() {
-
+        // Just needed cause lombok is odd for this class...
     }
 
     private String generateContentType(final String prefix, final SchemaReference reference) {
