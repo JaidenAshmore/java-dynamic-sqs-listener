@@ -1,13 +1,10 @@
 package com.jashmore.sqs.util;
 
-import lombok.Getter;
-
 import java.util.concurrent.Semaphore;
 
 /**
  * Semaphore that is able to dynamically update the number of available permits.
  */
-@Getter
 public class ResizableSemaphore extends Semaphore {
     private int maximumPermits;
 
@@ -32,5 +29,9 @@ public class ResizableSemaphore extends Semaphore {
             this.reducePermits(this.maximumPermits - permits);
         }
         this.maximumPermits = permits;
+    }
+
+    public int getMaximumPermits() {
+        return maximumPermits;
     }
 }

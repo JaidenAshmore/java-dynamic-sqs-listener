@@ -9,9 +9,8 @@
 
     <artifactId>java-dynamic-sqs-listener-spring-aws-example</artifactId>
 
-
     <name>Java Dynamic SQS Listener - Spring Starter - AWS Example</name>
-    <description>Contains examples for </description>
+    <description>Contains examples for connecting to an actual AWS SQS Queue</description>
 
     <properties>
         <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>

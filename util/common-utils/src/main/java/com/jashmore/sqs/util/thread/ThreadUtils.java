@@ -14,7 +14,7 @@ public class ThreadUtils {
      * @param threadNameFormat the thread name format to use
      * @return the generated thread factory
      */
-    public static ThreadFactory threadFactory(final String threadNameFormat) {
+    public ThreadFactory threadFactory(final String threadNameFormat) {
         return new ThreadFactoryBuilder()
                 .setNameFormat(threadNameFormat)
                 .build();
