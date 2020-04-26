@@ -15,6 +15,8 @@ import java.lang.annotation.Annotation;
  *
  * <p>This will obtain the schema of the object that the producer used to serialize the object and the schema that the
  * consumer can consume and transform the message payload between these versions.
+ *
+ * @param <T> the spring cloud registry schema type used to resolve this argument
  */
 public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Object> {
     private final SchemaReferenceExtractor schemaReferenceExtractor;

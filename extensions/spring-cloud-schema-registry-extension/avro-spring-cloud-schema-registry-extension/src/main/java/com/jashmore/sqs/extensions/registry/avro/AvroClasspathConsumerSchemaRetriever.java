@@ -3,13 +3,16 @@ package com.jashmore.sqs.extensions.registry.avro;
 import static java.util.stream.Collectors.toMap;
 
 import com.jashmore.sqs.extensions.registry.ConsumerSchemaRetriever;
+import com.jashmore.sqs.extensions.registry.ConsumerSchemaRetrieverException;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -23,15 +26,16 @@ public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetri
 
     public AvroClasspathConsumerSchemaRetriever(final List<Resource> schemaImports,
                                                 final List<Resource> schemaLocations) {
+        final Schema.Parser parser = new Schema.Parser();
         classSchemaMap = Stream.of(schemaImports, schemaLocations)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
                 .distinct()
                 .map(resource -> {
                     try {
-                        return new Schema.Parser().parse(resource.getInputStream());
-                    } catch (IOException ioException) {
-                        throw new RuntimeException("Error processing Schema definitions", ioException);
+                        return parser.parse(resource.getInputStream());
+                    } catch (SchemaParseException | IOException exception) {
+                        throw new AvroSchemaProcessingException("Error processing schema definition: " + resource.getFilename(), exception);
                     }
                 })
                 .collect(toMap(this::getClassForSchema, Function.identity()));
@@ -40,14 +44,16 @@ public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetri
 
     @Override
     public Schema getSchema(final Class<?> clazz) {
-        return classSchemaMap.get(clazz);
+        return Optional.ofNullable(classSchemaMap.get(clazz))
+                .orElseThrow(() -> new ConsumerSchemaRetrieverException("Could not schema for class: " + clazz.getName()));
     }
 
     private Class<?> getClassForSchema(final Schema schema) {
+        final String schemaClassName = schema.getNamespace() + "." + schema.getName();
         try {
-            return Class.forName(schema.getNamespace() + "." + schema.getName());
+            return Class.forName(schemaClassName);
         } catch (ClassNotFoundException classNotFoundException) {
-            throw new RuntimeException("Could not find class for schema", classNotFoundException);
+            throw new AvroSchemaProcessingException("Could not find class for schema: " + schemaClassName, classNotFoundException);
         }
     }
 }

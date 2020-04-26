@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    schema-registry-client:
+      endpoint: http://localhost:8990
+    schema:
+      avro:
+        schema-imports:
+          - classpath:avro-test-schemas/import/author.avsc
+        schema-locations:
+          - classpath:avro-test-schemas/schema/book.avsc

@@ -12,6 +12,7 @@
     <artifactId>avro-spring-cloud-schema-registry-extension</artifactId>
 
     <properties>
+        <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
         <avro.version>1.9.2</avro.version>
         <spring-cloud-schema-registry-client.version>1.0.3.RELEASE</spring-cloud-schema-registry-client.version>
     </properties>
@@ -46,5 +47,58 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>local-sqs-test-utils-junit5</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>spring-cloud-register-sqs-client</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <version>${avro.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>schema</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/test/resources/avro-test-schemas/schema</sourceDirectory>
+                            <imports>
+                                <import>${project.basedir}/src/test/resources/avro-test-schemas/import/author.avsc</import>
+                            </imports>
+                            <includes>
+                                <include>*.avsc</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources</outputDirectory>
+                            <stringType>String</stringType>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

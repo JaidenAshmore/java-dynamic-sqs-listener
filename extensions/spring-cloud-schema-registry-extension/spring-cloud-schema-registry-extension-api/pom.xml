@@ -12,6 +12,8 @@
     <artifactId>spring-cloud-schema-registry-extension-api</artifactId>
 
     <properties>
+        <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
+
         <spring-cloud-schema-registry-client.version>1.0.3.RELEASE</spring-cloud-schema-registry-client.version>
     </properties>
 

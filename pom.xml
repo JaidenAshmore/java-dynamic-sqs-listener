@@ -377,6 +377,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <addSourceDirs>true</addSourceDirs>
                     <failOnError>true</failOnError>
                     <threshold>Low</threshold>
                     <effort>Max</effort>

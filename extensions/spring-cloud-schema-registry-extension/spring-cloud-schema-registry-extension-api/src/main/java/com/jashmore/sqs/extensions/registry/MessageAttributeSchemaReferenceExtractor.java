@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * in the message attribute of the message.
  */
 public class MessageAttributeSchemaReferenceExtractor implements SchemaReferenceExtractor {
-    private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("application/([^.]+)\\.([^.]+)\\.v(\\d+)\\+([^.]+)");
+    private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("application/([^.]+)\\.([\\p{Alnum}\\$\\.]+)\\.v(\\p{Digit}+)\\+([^.]+)");
     private static final String CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME = "contentType";
 
     private final String attributeName;

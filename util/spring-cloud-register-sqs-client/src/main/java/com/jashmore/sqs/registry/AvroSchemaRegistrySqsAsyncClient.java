@@ -28,8 +28,8 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -54,8 +54,8 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
     public AvroSchemaRegistrySqsAsyncClient(final SqsAsyncClient delegate,
                                             final SchemaRegistryClient schemaRegistryClient,
                                             final AvroSchemaServiceManager avroSchemaServiceManager,
-                                            final Resource[] schemaImports,
-                                            final Resource[] schemaLocations) {
+                                            final List<Resource> schemaImports,
+                                            final List<Resource> schemaLocations) {
         this.delegate = delegate;
         this.schemaRegistryClient = schemaRegistryClient;
         this.avroSchemaServiceManager = avroSchemaServiceManager;
@@ -89,13 +89,13 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
                 .messageBody(serializeObject(payload, registeredSchema.schema)));
     }
 
-    private Map<Class<?>, RegisteredSchema> parseAvailableSchemas(final Resource[] schemaImports,
-                                                                  final Resource[] schemaLocations) {
+    private Map<Class<?>, RegisteredSchema> parseAvailableSchemas(final List<Resource> schemaImports,
+                                                                  final List<Resource> schemaLocations) {
         final Schema.Parser schemaParser = new Schema.Parser();
         return Stream.of(schemaImports, schemaLocations)
                 .filter(arr -> !ObjectUtils.isEmpty(arr))
                 .distinct()
-                .flatMap(Arrays::stream)
+                .flatMap(List::stream)
                 .flatMap(resource -> {
                     final Schema schema;
                     try {
