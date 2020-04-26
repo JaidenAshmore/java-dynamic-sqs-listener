@@ -12,6 +12,9 @@
     <artifactId>spring-cloud-schema-registry-example</artifactId>
     <packaging>pom</packaging>
 
+    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example</name>
+    <description>Contains examples for serializing messages using Avro and storing these Schema Definitions in the Spring Cloud Schema Registry</description>
+
     <modules>
         <module>spring-cloud-schema-registry-consumer</module>
         <module>spring-cloud-schema-registry-producer</module>

@@ -1,7 +1,7 @@
 package com.jashmore.sqs.extensions.registry;
 
 /**
- * Exception thrown if there is a problem getting the schema that the consumer has knowledge of.
+ * Exception thrown if there is a problem getting the consumer schema.
  */
 public class ConsumerSchemaRetrieverException extends RuntimeException {
 

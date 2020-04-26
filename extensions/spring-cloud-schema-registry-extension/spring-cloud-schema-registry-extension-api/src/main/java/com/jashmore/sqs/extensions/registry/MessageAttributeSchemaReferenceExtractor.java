@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public class MessageAttributeSchemaReferenceExtractor implements SchemaReferenceExtractor {
     private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("application/([^.]+)\\.([\\p{Alnum}\\$\\.]+)\\.v(\\p{Digit}+)\\+([^.]+)");
-    private static final String CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME = "contentType";
+    public static final String CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME = "contentType";
 
     private final String attributeName;
 
@@ -34,21 +34,21 @@ public class MessageAttributeSchemaReferenceExtractor implements SchemaReference
     public SchemaReference extract(final Message message) {
         final MessageAttributeValue contentTypeAttribute = message.messageAttributes().get(attributeName);
         if (contentTypeAttribute == null) {
-            throw new SchemaReferenceExtractorException("No attribute found with name " + attributeName);
+            throw new SchemaReferenceExtractorException("No attribute found with name: " + attributeName);
+        }
+
+        if (!contentTypeAttribute.dataType().equals("String")) {
+            throw new SchemaReferenceExtractorException("Attribute expected to be a String but is of type: " + contentTypeAttribute.dataType());
         }
 
         final Matcher matcher = MIME_TYPE_PATTERN.matcher(contentTypeAttribute.stringValue());
         if (!matcher.matches()) {
-            throw new SchemaReferenceExtractorException("Content type attribute value is not in the expected format");
+            throw new SchemaReferenceExtractorException("Content type attribute value is not in the expected format: " + contentTypeAttribute.stringValue());
         }
 
         final String subject = matcher.group(2);
         final String version = matcher.group(3);
         final String format = matcher.group(4);
-        try {
-            return new SchemaReference(subject, Integer.parseInt(version), format);
-        } catch (NumberFormatException numberFormatException) {
-            throw new SchemaReferenceExtractorException("Version for the schema is not in a number format", numberFormatException);
-        }
+        return new SchemaReference(subject, Integer.parseInt(version), format);
     }
 }

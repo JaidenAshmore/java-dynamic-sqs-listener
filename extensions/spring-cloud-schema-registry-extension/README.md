@@ -1,5 +1,5 @@
 # Spring Cloud Schema Registry Extension
-This extension is used to allow the SQS consumer to be able to parse messages that have been serialized using a schema
+This extension allows the SQS consumer to be able to parse messages that have been serialized using a schema
 like [Avro](https://avro.apache.org/docs/1.9.2/gettingstartedjava.html) and these definitions have been stored in the
 [Spring Cloud Schema Registry](https://cloud.spring.io/spring-cloud-static/spring-cloud-schema-registry/1.0.0.RC1/reference/html/spring-cloud-schema-registry.html).
 
