@@ -9,13 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-cloud-schema-registry-producer-v2</artifactId>
+    <artifactId>spring-cloud-schema-registry-producer-two</artifactId>
+
+    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example - Producer</name>
+    <description>Includes a second example of a service producing messages whose schema is registered in the Spring Cloud Schema Registry
+        and is in a different format to the first.</description>
 
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
-
-        <avro.version>1.9.2</avro.version>
-        <spring-cloud.version>Hoxton.BUILD-SNAPSHOT</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -37,10 +38,9 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>spring-cloud-register-sqs-client</artifactId>
+            <artifactId>avro-spring-cloud-schema-registry-sqs-client</artifactId>
             <version>${project.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -53,7 +53,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -74,7 +73,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
                 <configuration>
-                    <mainClass>com.jashmore.sqs.examples.schemaregistry.ProducerV2Application</mainClass>
+                    <mainClass>com.jashmore.sqs.examples.schemaregistry.ProducerTwoApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
@@ -87,15 +86,12 @@
             <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>${avro.version}</version>
                 <executions>
                     <execution>
                         <id>generate-sources-producer-1</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>schema</goal>
-                            <goal>protocol</goal>
-                            <goal>idl-protocol</goal>
                         </goals>
                         <configuration>
                             <sourceDirectory>src/main/resources/avro</sourceDirectory>

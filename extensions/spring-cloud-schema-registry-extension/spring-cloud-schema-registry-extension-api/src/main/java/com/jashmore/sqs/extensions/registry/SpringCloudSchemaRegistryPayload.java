@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * in the Spring Cloud Schema Registry.
  *
  * <p>Parameters marked with this annotation do not have a type restriction but the type of the parameter must be able to be map
- * from the message body via the Schema.
+ * from the message body via the Schema, such as an Avro schema.
  */
 @Retention(value = RUNTIME)
 @Target(ElementType.PARAMETER)

@@ -13,6 +13,40 @@ or other configuration properties.
 To keep the README minimal and easy to digest, the rest of the documentation is kept in the [doc](./doc/documentation.md) folder which provides a more
 thorough overview of how to use the library.
 
+## Spring Quick Guide
+The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
+kept in the [core module](./java-dynamic-sqs-listener-core) which is framework agnostic.*
+
+### Using the Spring Starter
+This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
+
+Include the maven dependency in your Spring Boot pom.xml:
+```xml
+<dependency>
+    <groupId>com.jashmore</groupId>
+    <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
+    <version>${sqs.listener.version}</version>
+</dependency>
+```
+
+In one of your beans, attach a
+[@QueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+annotation to a method indicating that it should process messages from a queue.
+
+```java
+@Service
+public class MyMessageListener {
+    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS 
+    public void processMessage(@Payload final String payload) {
+        // process the message payload here
+    }
+}
+```
+
+This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
+is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
+[How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
+
 ## Core Infrastructure
 This library has been divided into four main components each with distinct responsibilities. The following is a diagram describing a simple flow of a
 single SQS message flowing through each of the components to eventually be executed by some code.
@@ -49,41 +83,7 @@ for compatibility.
   - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.10.3
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.2.5.RELEAS
-
-## Spring Quick Guide
-The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
-kept in the [core module](./java-dynamic-sqs-listener-core) which is framework agnostic.*
-
-### Using the Spring Starter
-This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
-
-Include the maven dependency in your Spring Boot pom.xml:
-```xml
-<dependency>
-    <groupId>com.jashmore</groupId>
-    <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
-    <version>${sqs.listener.version}</version>
-</dependency>
-```
-
-In one of your beans, attach a
-[@QueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
-annotation to a method indicating that it should process messages from a queue.
-
-```java
-@Service
-public class MyMessageListener {
-    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS 
-    public void processMessage(@Payload final String payload) {
-        // process the message payload here
-    }
-}
-```
-
-This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
-is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
-[How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.2.5.RELEASE
 
 ### How to Mark the message as successfully processed
 When the method executing the message finishes without throwing an exception, the
@@ -172,7 +172,7 @@ do the logic for converting the message payload to uppercase.
     The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
     CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
     annotations. For more information about this, take a look at the JavaDoc provided in
-    [AnnotationUtils](./java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
+    [AnnotationUtils](./util/common-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
     this problem being tested in
     [PayloadArgumentResolver_ProxyClassTest.java](./java-dynamic-sqs-listener-core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
 1. Include the custom [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application

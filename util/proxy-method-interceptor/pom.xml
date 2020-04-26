@@ -9,14 +9,15 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>proxy-method-intereceptor</artifactId>
+    <artifactId>proxy-method-interceptor</artifactId>
+
+    <name>Java Dynamic SQS Listener - Utilities - Proxy Method Interceptor</name>
+    <description>Utility methods for testing a method being proxied via cglib.</description>
 
     <dependencies>
         <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
-            <version>3.2.10</version>
         </dependency>
     </dependencies>
-
 </project>

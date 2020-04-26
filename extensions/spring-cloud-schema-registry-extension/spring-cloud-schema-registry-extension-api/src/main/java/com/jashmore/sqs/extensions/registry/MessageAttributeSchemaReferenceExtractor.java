@@ -21,6 +21,11 @@ public class MessageAttributeSchemaReferenceExtractor implements SchemaReference
         this(CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME);
     }
 
+    /**
+     * Create the extractor using the provided Message Attribute name.
+     *
+     * @param attributeName the attribute name in the SQS message that will contain the content type
+     */
     public MessageAttributeSchemaReferenceExtractor(final String attributeName) {
         this.attributeName = attributeName;
     }

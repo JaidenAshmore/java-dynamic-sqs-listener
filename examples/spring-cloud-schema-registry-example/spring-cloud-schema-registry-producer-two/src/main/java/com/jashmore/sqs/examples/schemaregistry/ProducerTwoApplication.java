@@ -25,10 +25,10 @@ import java.util.Optional;
 @EnableScheduling
 @EnableSchemaRegistryClient
 @SuppressWarnings("checkstyle:javadocmethod")
-public class ProducerV2Application {
+public class ProducerTwoApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ProducerV2Application.class);
+        SpringApplication.run(ProducerTwoApplication.class);
     }
 
     @Bean

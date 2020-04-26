@@ -15,7 +15,7 @@
     <modules>
         <module>spring-cloud-schema-registry-consumer</module>
         <module>spring-cloud-schema-registry-producer</module>
-        <module>spring-cloud-schema-registry-producer-v2</module>
+        <module>spring-cloud-schema-registry-producer-two</module>
     </modules>
 
 </project>

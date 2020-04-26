@@ -11,11 +11,11 @@
 
     <artifactId>spring-cloud-schema-registry-producer</artifactId>
 
+    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example - Producer</name>
+    <description>Includes an example of a service producing messages whose schema is registered in the Spring Cloud Schema Registry.</description>
+
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
-
-        <avro.version>1.9.2</avro.version>
-        <spring-cloud.version>Hoxton.BUILD-SNAPSHOT</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -37,7 +37,7 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>spring-cloud-register-sqs-client</artifactId>
+            <artifactId>avro-spring-cloud-schema-registry-sqs-client</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -52,7 +52,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -86,15 +85,12 @@
             <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>${avro.version}</version>
                 <executions>
                     <execution>
                         <id>generate-sources-producer-1</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>schema</goal>
-                            <goal>protocol</goal>
-                            <goal>idl-protocol</goal>
                         </goals>
                         <configuration>
                             <sourceDirectory>src/main/resources/avro</sourceDirectory>

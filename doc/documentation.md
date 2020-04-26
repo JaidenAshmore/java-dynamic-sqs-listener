@@ -32,6 +32,8 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
         processing of messages for specific queue listeners
         1. [How to connect to multiple AWS Accounts](how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues
         across multiple AWS Accounts
+        1. [How to version message payload schemas](how-to-guides/spring/spring-how-to-version-payload-schemas-using-spring-cloud-schema-registry.md): guide
+        for versioning payloads using Avro and the Spring Cloud Schema Registry.
 1. Local Development:
     1. [Setting up IntelliJ](local-development/setting-up-intellij.md): steps for setting IntelliJ up for development,
     e.g. configuring checkstyle, Lombok, etc

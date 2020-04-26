@@ -7,7 +7,7 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Used to deserialize the payload of a message into a POJO represented by the given schemas.
  *
- * @param <T> the type of the payload to serialize to
+ * @param <T> the type of the schema used to represent the object
  */
 @ThreadSafe
 @FunctionalInterface
@@ -25,7 +25,7 @@ public interface MessagePayloadDeserializer<T> {
      *
      * @param message        the message to deserialize
      * @param producerSchema the schema of the payload that was sent by the producer
-     * @param consumerSchema the schema that the consumer can handle, this should be a later version than the producer
+     * @param consumerSchema the schema that the consumer can handle
      * @param clazz          the class of the object to deserialize to
      * @return the deserialized body
      * @throws MessagePayloadDeserializerException when there was an error deserializing

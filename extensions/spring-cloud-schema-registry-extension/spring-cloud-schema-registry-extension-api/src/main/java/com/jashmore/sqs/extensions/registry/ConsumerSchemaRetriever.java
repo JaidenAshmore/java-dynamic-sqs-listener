@@ -3,7 +3,7 @@ package com.jashmore.sqs.extensions.registry;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Provider for getting a schema representation of an object.
+ * Retriever used to get the schema representation of this class that is used to deserialize the message payload.
  *
  * @param <T> the type for the schema, for example an Avro schema, etc
  */

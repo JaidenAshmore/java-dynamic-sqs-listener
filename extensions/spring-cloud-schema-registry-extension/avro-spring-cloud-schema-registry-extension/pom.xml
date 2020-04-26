@@ -11,10 +11,11 @@
 
     <artifactId>avro-spring-cloud-schema-registry-extension</artifactId>
 
+    <name>Java Dynamic SQS Listener - Extensions - Spring Cloud Schema Registry Extension - Avro</name>
+    <description>Apache Avro implementation of the Spring Cloud Schema Registry Extension.</description>
+
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
-        <avro.version>1.9.2</avro.version>
-        <spring-cloud-schema-registry-client.version>1.0.3.RELEASE</spring-cloud-schema-registry-client.version>
     </properties>
 
     <dependencies>
@@ -33,7 +34,6 @@
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
         </dependency>
 
         <dependency>
@@ -53,15 +53,17 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>local-sqs-test-utils-junit5</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>spring-cloud-register-sqs-client</artifactId>
+            <artifactId>avro-spring-cloud-schema-registry-sqs-client</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -70,18 +72,36 @@
             <groupId>com.jashmore</groupId>
             <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.avro</groupId>
-                <artifactId>avro-maven-plugin</artifactId>
-                <version>${avro.version}</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <phase>generate-sources</phase>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-test-sources</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-test-sources</phase>
                         <goals>
                             <goal>schema</goal>
                         </goals>
@@ -93,7 +113,7 @@
                             <includes>
                                 <include>*.avsc</include>
                             </includes>
-                            <outputDirectory>${project.build.directory}/generated-sources</outputDirectory>
+                            <outputDirectory>${project.build.directory}/generated-test-sources</outputDirectory>
                             <stringType>String</stringType>
                         </configuration>
                     </execution>

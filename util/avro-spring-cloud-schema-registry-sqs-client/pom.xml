@@ -9,11 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-cloud-register-sqs-client</artifactId>
+    <artifactId>avro-spring-cloud-schema-registry-sqs-client</artifactId>
 
-    <properties>
-        <avro.version>1.9.2</avro.version>
-    </properties>
+    <name>Java Dynamic SQS Listener - Utilities - Avro Spring Cloud Registry SQS Client</name>
+    <description>Wrapper around the AWS SQS Async Client to help serialize messages using Avro and the Spring Cloud Schema Registry.</description>
 
     <dependencies>
         <dependency>
@@ -29,7 +28,6 @@
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
         </dependency>
 
         <dependency>
