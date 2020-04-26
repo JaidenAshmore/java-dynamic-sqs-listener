@@ -11,7 +11,7 @@
 
     <artifactId>spring-cloud-schema-registry-producer-two</artifactId>
 
-    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example - Producer</name>
+    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example - Producer Two</name>
     <description>Includes a second example of a service producing messages whose schema is registered in the Spring Cloud Schema Registry
         and is in a different format to the first.</description>
 
@@ -71,7 +71,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
                 <configuration>
                     <mainClass>com.jashmore.sqs.examples.schemaregistry.ProducerTwoApplication</mainClass>
                 </configuration>

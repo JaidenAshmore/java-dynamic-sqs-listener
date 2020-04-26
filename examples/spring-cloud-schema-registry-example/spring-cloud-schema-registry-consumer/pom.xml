@@ -12,7 +12,7 @@
     <artifactId>spring-cloud-schema-registry-consumer</artifactId>
 
     <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example - Consumer</name>
-    <description>Contains an example for deserializing a message payload that is in a schema registered in the Spring Cloud Schema Registry.</description>
+    <description>Contains an example of a consumer deserializing a message payload that is in a schema registered in the Spring Cloud Schema Registry.</description>
 
     <properties>
         <spotbugs.config.location>../../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
@@ -59,7 +59,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -78,7 +77,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
                 <configuration>
                     <mainClass>com.jashmore.sqs.examples.schemaregistry.ConsumerApplication</mainClass>
                 </configuration>

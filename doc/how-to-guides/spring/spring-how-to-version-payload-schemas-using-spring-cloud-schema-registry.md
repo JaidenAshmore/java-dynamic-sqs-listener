@@ -6,7 +6,7 @@ can be used to track the version of your schemas, allowing the SQS consumer to b
 ## Full reference
 For a full working solution of this feature, take a look at the [Spring Cloud Schema Registry Example](../../../examples/spring-cloud-schema-registry-example).
 
-## Steps to consume messages
+## Steps to consume messages serialized using Apache Avro
 1. Include the `Spring Cloud Schema Registry Extension` dependency
     ```xml
         <dependency>
@@ -28,7 +28,7 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
            schema-locations:
              - classpath:avro/book.avsc
     ```
-   In this example above we have a book schema which is dependent on the author schema. We have also harded coded the Schema Registry
+   In this example above we have a book schema which is dependent on the author schema. We have also hardcoded the Schema Registry
    to be at [http://localhost:8990](http://localhost:8990).
 1. Create your schemas and place them in your `resources` directory. For example this is an example schema for the Book.
     ```json
