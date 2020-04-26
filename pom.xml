@@ -369,6 +369,7 @@
                         they are being ignored -->
                         <param>com.jashmore.sqs.spring.container.basic.*</param>
                         <param>com.jashmore.sqs.spring.container.prefetch.*</param>
+                        <param>*Configuration</param>
                     </excludedClasses>
                 </configuration>
             </plugin>
