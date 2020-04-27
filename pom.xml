@@ -53,7 +53,6 @@
         <module>java-dynamic-sqs-listener-core</module>
         <module>java-dynamic-sqs-listener-spring</module>
         <module>util</module>
-        <module>util/expected-test-exception</module>
     </modules>
 
     <properties>
