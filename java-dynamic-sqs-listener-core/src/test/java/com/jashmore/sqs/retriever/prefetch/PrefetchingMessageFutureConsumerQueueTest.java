@@ -172,7 +172,7 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushCompletableFuture(secondCompletableFuture);
 
         // act
-        final PrefetchingMessageFutureConsumerQueue.QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
+        final QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
 
         // assert
         assertThat(drainedQueues.getFuturesWaitingForMessages()).containsExactly(firstCompletableFuture, secondCompletableFuture);
@@ -189,7 +189,7 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushMessage(secondMessage);
 
         // act
-        final PrefetchingMessageFutureConsumerQueue.QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
+        final QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
 
         // assert
         assertThat(drainedQueues.getFuturesWaitingForMessages()).isEmpty();
