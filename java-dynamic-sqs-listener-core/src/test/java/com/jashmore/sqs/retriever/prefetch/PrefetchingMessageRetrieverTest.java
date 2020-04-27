@@ -526,6 +526,7 @@ class PrefetchingMessageRetrieverTest {
         try {
             final CompletableFuture<List<Message>> future = CompletableFuture.supplyAsync(retriever::run, executorService);
             assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+            Thread.sleep(1000); // Give us a little bit of extra time just in case
             executorService.shutdownNow();
             executorService.awaitTermination(30, TimeUnit.SECONDS);
             return future.get(30, TimeUnit.SECONDS);
