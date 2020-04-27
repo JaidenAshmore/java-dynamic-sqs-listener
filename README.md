@@ -168,7 +168,7 @@ do the logic for converting the message payload to uppercase.
            }
         }
     ```
-    You may be curious why a custom `AnnotationUtils.findParameterAnnotation` function is used instead of getting the annotation directly from the parameter.
+    You may be curious why a custom `AnnotationUtils.findParameterAnnotation` function is being used instead of getting the annotation directly from the parameter.
     The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
     CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
     annotations. For more information about this, take a look at the JavaDoc provided in
@@ -253,7 +253,7 @@ If you want to see the difference between this library and others like the
 module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
 
 ### Other examples
-See [examples](./examples) for all of the other available examples. 
+See [examples](./examples) for all the other available examples. 
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).

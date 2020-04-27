@@ -11,6 +11,9 @@
 
     <artifactId>common-utils</artifactId>
 
+    <name>Java Dynamic SQS Listener - Utilities - Common Utilities</name>
+    <description>Utility methods for dealing with basic functionality for this library, split out so so it can be consumed by other extensions.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.jashmore</groupId>
@@ -36,6 +39,13 @@
         <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>proxy-method-interceptor</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>expected-test-exception</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

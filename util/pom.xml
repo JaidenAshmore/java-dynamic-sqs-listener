@@ -15,6 +15,7 @@
     <modules>
         <module>avro-spring-cloud-schema-registry-sqs-client</module>
         <module>common-utils</module>
+        <module>expected-test-exception</module>
         <module>local-amazon-sqs</module>
         <module>local-sqs-test-utils</module>
         <module>local-sqs-test-utils-junit5</module>
