@@ -364,11 +364,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle-plugin.version}</version>
-                <configuration>
-                    <sourceDirectories>
-                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
-                    </sourceDirectories>
-                </configuration>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -400,7 +395,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <addSourceDirs>true</addSourceDirs>
                     <failOnError>true</failOnError>
                     <threshold>Low</threshold>
                     <effort>Max</effort>
