@@ -248,7 +248,7 @@ If you want to see the difference between this library and others like the
 module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
 
 ### Other examples
-See [examples](./examples) for all of the other available examples. 
+See [examples](./examples) for all the other available examples. 
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use [Github Issues](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/issues).
