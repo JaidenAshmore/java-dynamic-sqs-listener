@@ -9,9 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.util.PrefetchingMessageFutureConsumerQueue;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkInterruptedException;
@@ -24,7 +22,6 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -144,11 +141,10 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
             }
         }
 
-        final Pair<Queue<CompletableFuture<Message>>, Queue<Message>> pairQueue = pairConsumerQueue.drain();
-        final Queue<CompletableFuture<Message>> extraThreads = pairQueue.getKey();
-        extraThreads.forEach(future -> future.cancel(true));
+        final QueueDrain pairQueue = pairConsumerQueue.drain();
+        pairQueue.getFuturesWaitingForMessages().forEach(future -> future.cancel(true));
         return ImmutableList.<Message>builder()
-                .addAll(pairQueue.getValue())
+                .addAll(pairQueue.getMessagesAvailableForProcessing())
                 .addAll(listsNotPublished)
                 .build();
     }

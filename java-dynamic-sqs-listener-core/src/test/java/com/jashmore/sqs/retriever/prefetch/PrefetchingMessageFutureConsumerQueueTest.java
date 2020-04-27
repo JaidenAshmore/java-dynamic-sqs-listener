@@ -1,4 +1,4 @@
-package com.jashmore.sqs.retriever.prefetch.util;
+package com.jashmore.sqs.retriever.prefetch;
 
 import static com.jashmore.sqs.util.thread.ThreadTestUtils.waitUntilThreadInState;
 import static java.lang.Thread.State.TERMINATED;
@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -174,11 +172,11 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushCompletableFuture(secondCompletableFuture);
 
         // act
-        final Pair<Queue<CompletableFuture<Message>>, Queue<Message>> drainedQueues = prefetchingMessageRetriever.drain();
+        final PrefetchingMessageFutureConsumerQueue.QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
 
         // assert
-        assertThat(drainedQueues.getKey()).containsExactly(firstCompletableFuture, secondCompletableFuture);
-        assertThat(drainedQueues.getValue()).isEmpty();
+        assertThat(drainedQueues.getFuturesWaitingForMessages()).containsExactly(firstCompletableFuture, secondCompletableFuture);
+        assertThat(drainedQueues.getMessagesAvailableForProcessing()).isEmpty();
     }
 
     @Test
@@ -191,11 +189,11 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushMessage(secondMessage);
 
         // act
-        final Pair<Queue<CompletableFuture<Message>>, Queue<Message>> drainedQueues = prefetchingMessageRetriever.drain();
+        final PrefetchingMessageFutureConsumerQueue.QueueDrain drainedQueues = prefetchingMessageRetriever.drain();
 
         // assert
-        assertThat(drainedQueues.getKey()).isEmpty();
-        assertThat(drainedQueues.getValue()).containsExactly(firstMessage, secondMessage);
+        assertThat(drainedQueues.getFuturesWaitingForMessages()).isEmpty();
+        assertThat(drainedQueues.getMessagesAvailableForProcessing()).containsExactly(firstMessage, secondMessage);
     }
 
     @Test
