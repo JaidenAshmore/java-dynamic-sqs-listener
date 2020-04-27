@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
+import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import com.jashmore.sqs.util.thread.ThreadTestUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -271,7 +272,7 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch secondMessageRequestedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")))
+                .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
                 .thenAnswer(invocation -> {
                     secondMessageRequestedLatch.countDown();
                     return mockReceiveMessageResponse(Message.builder().build());
@@ -299,7 +300,7 @@ class BatchingMessageRetrieverTest {
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")));
+                .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
         startRunnableInThread(retriever::run, thread -> {
             // act
@@ -453,7 +454,7 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetrieverProperties retrieverProperties = mock(BatchingMessageRetrieverProperties.class);
         when(retrieverProperties.getBatchSize()).thenReturn(1);
         when(retrieverProperties.getBatchingPeriodInMs()).thenReturn(1000L);
-        when(retrieverProperties.getMessageVisibilityTimeoutInSeconds()).thenThrow(new RuntimeException("Expected Test Exception"));
+        when(retrieverProperties.getMessageVisibilityTimeoutInSeconds()).thenThrow(new ExpectedTestException());
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))

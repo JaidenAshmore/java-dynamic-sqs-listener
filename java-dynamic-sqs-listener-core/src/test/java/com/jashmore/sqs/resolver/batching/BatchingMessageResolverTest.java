@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.util.ExpectedTestException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -303,7 +304,7 @@ class BatchingMessageResolverTest {
                 .thenAnswer(invocation -> {
                     batchBeingDeletedLatch.countDown();
                     final CompletableFuture<DeleteMessageBatchResponse> completableFuture = new CompletableFuture<>();
-                    completableFuture.completeExceptionally(new RuntimeException("Expected Test Exception"));
+                    completableFuture.completeExceptionally(new ExpectedTestException());
                     return completableFuture;
                 });
         final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(Message.builder()
@@ -320,8 +321,7 @@ class BatchingMessageResolverTest {
             messageResolvedFuture.get();
             fail("Should have failed to resolve message");
         } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(RuntimeException.class);
-            assertThat(executionException.getCause()).hasMessage("Expected Test Exception");
+            assertThat(executionException.getCause()).isInstanceOf(ExpectedTestException.class);
         }
     }
 
@@ -333,7 +333,7 @@ class BatchingMessageResolverTest {
                 .build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenThrow(new RuntimeException("Expected Test Exception"));
+                .thenThrow(new ExpectedTestException());
         final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(Message.builder()
                 .messageId("id")
                 .receiptHandle("handle")
@@ -347,8 +347,7 @@ class BatchingMessageResolverTest {
             messageResolvedFuture.get();
             fail("Should have failed to resolve message");
         } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(RuntimeException.class);
-            assertThat(executionException.getCause()).hasMessage("Expected Test Exception");
+            assertThat(executionException.getCause()).isInstanceOf(ExpectedTestException.class);
         }
     }
 
@@ -366,7 +365,7 @@ class BatchingMessageResolverTest {
                     log.debug("Received batch to delete");
                     batchBeingDeletedLatch.countDown();
                     blockDeleteMessage.await();
-                    throw new RuntimeException("Expected Test Exception");
+                    throw new ExpectedTestException();
                 });
         batchingMessageResolver.resolveMessage(Message.builder()
                 .messageId("id")
@@ -397,7 +396,7 @@ class BatchingMessageResolverTest {
                 .thenAnswer(invocation -> {
                     batchBeingDeletedLatch.countDown();
                     blockDeleteMessage.await();
-                    throw new RuntimeException("Expected Test Exception");
+                    throw new ExpectedTestException();
                 });
         batchingMessageResolver.resolveMessage(Message.builder()
                 .messageId("id")

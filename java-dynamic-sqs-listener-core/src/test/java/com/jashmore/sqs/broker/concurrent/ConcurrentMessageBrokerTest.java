@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessingException;
+import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -140,7 +141,7 @@ class ConcurrentMessageBrokerTest {
     void exceptionThrownWhileRetrievingMessageWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
         when(messageSupplier.get())
-                .thenThrow(new RuntimeException("Expected Test Exception"))
+                .thenThrow(new ExpectedTestException())
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
         final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
@@ -156,7 +157,7 @@ class ConcurrentMessageBrokerTest {
     void messageRetrievalReturningExceptionalCompletableFutureStillAllowsMoreMessagesToBeProcessed() throws InterruptedException {
         // arrange
         when(messageSupplier.get())
-                .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")))
+                .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
         final CountDownLatch messageProcessingLatch = new CountDownLatch(1);
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
@@ -174,7 +175,7 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
         when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1L);
         when(properties.getConcurrencyLevel())
-                .thenThrow(new RuntimeException("Expected Test Exception"))
+                .thenThrow(new ExpectedTestException())
                 .thenReturn(1);
         when(messageSupplier.get())
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()));
@@ -223,7 +224,7 @@ class ConcurrentMessageBrokerTest {
                     enteredBackoffSection.countDown();
                     return backoffTimeInMs;
                 });
-        when(messageSupplier.get()).thenThrow(new RuntimeException("Expected Test Exception"));
+        when(messageSupplier.get()).thenThrow(new ExpectedTestException());
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
+import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -443,7 +444,7 @@ class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch receiveMessageRequested = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenThrow(new RuntimeException("Expected Test Exception"))
+                .thenThrow(new ExpectedTestException())
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
@@ -464,7 +465,7 @@ class PrefetchingMessageRetrieverTest {
     void threadInterruptedWhileBackingOffWillStopBackgroundThread() {
         // arrange
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenThrow(new RuntimeException("Expected Test Exception"));
+                .thenThrow(new ExpectedTestException());
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
                 .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
@@ -486,7 +487,7 @@ class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch receiveMessageRequested = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Test Exception")))
+                .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()

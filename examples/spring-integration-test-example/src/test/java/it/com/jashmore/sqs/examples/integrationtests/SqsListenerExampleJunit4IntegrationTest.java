@@ -14,6 +14,7 @@ import com.jashmore.sqs.test.LocalSqsRule;
 import com.jashmore.sqs.test.PurgeQueuesRule;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
+import it.com.jashmore.sqs.examples.integrationtests.util.ExpectedTestException;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,7 +93,7 @@ public class SqsListenerExampleJunit4IntegrationTest {
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
         doAnswer(invocationOnMock -> {
             if (!processedMessageOnce.getAndSet(true)) {
-                throw new RuntimeException("Expected Test Exception");
+                throw new ExpectedTestException();
             }
             messageReceivedCountDownLatch.countDown();
             return null;
@@ -113,7 +114,7 @@ public class SqsListenerExampleJunit4IntegrationTest {
         final String queueUrl = localSqsAsyncClient.getQueueUrl(QUEUE_NAME);
         doAnswer(invocationOnMock -> {
             messageReceivedCountDownLatch.countDown();
-            throw new RuntimeException("Expected Test Exception");
+            throw new ExpectedTestException();
         }).when(mockSomeService).run(anyString());
 
         // act

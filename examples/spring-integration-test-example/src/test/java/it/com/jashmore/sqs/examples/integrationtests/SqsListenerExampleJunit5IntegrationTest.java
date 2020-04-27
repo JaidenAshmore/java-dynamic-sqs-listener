@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.examples.integrationtests.IntegrationTestExampleApplication;
 import com.jashmore.sqs.test.LocalSqsExtension;
+import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import org.junit.jupiter.api.Test;
@@ -87,7 +88,7 @@ class SqsListenerExampleJunit5IntegrationTest {
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
         doAnswer(invocationOnMock -> {
             if (!processedMessageOnce.getAndSet(true)) {
-                throw new RuntimeException("Expected Test Exception");
+                throw new ExpectedTestException();
             }
             messageReceivedCountDownLatch.countDown();
             return null;
@@ -108,7 +109,7 @@ class SqsListenerExampleJunit5IntegrationTest {
         final String queueUrl = localSqsAsyncClient.getQueueUrl(QUEUE_NAME);
         doAnswer(invocationOnMock -> {
             messageReceivedCountDownLatch.countDown();
-            throw new RuntimeException("Expected Test Exception");
+            throw new ExpectedTestException();
         }).when(mockSomeService).run(anyString());
 
         // act

@@ -53,6 +53,7 @@
         <module>java-dynamic-sqs-listener-core</module>
         <module>java-dynamic-sqs-listener-spring</module>
         <module>util</module>
+        <module>util/expected-test-exception</module>
     </modules>
 
     <properties>
@@ -91,6 +92,7 @@
         <spring-cloud-schema-registry-client.version>1.0.3.RELEASE</spring-cloud-schema-registry-client.version>
         <spring.boot.version>2.2.5.RELEASE</spring.boot.version>
         <skipTests>false</skipTests>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <dependencies>
@@ -506,7 +508,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <excludePackageNames>com.example</excludePackageNames>
                     <sourceFileExcludes>
                         <sourceFileExclude>**/generated-sources/**/*.java</sourceFileExclude>
                     </sourceFileExcludes>
@@ -519,6 +520,9 @@
     <profiles>
         <profile>
             <id>release</id>
+            <properties>
+                <maven.javadoc.skip>false</maven.javadoc.skip>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
