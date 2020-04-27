@@ -14,4 +14,4 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Maven
-      run: mvn -DrepoToken=${{ secrets.CoverallsRepoToken }} verify coveralls:report org.pitest:pitest-maven:mutationCoverage
+      run: mvn -DrepoToken="${{ secrets.CoverallsRepoToken }}" verify coveralls:report org.pitest:pitest-maven:mutationCoverage
