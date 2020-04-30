@@ -7,10 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.ProxyMethodInterceptor;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -18,9 +15,6 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 public class AnnotationUtils_ParameterAnnotationsTest {
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     @Test
     public void parameterAnnotationsCanBeFoundOnBaseClasses() {
         // arrange

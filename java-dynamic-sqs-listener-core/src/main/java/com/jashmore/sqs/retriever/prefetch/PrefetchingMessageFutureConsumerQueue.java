@@ -1,6 +1,5 @@
-package com.jashmore.sqs.retriever.prefetch.util;
+package com.jashmore.sqs.retriever.prefetch;
 
-import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -31,7 +30,7 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @Slf4j
 @ThreadSafe
-public class PrefetchingMessageFutureConsumerQueue {
+class PrefetchingMessageFutureConsumerQueue {
     private final Queue<CompletableFuture<Message>> futureQueue;
     private final Queue<Message> messageQueue;
     private final Integer messageCapacity;
@@ -45,7 +44,7 @@ public class PrefetchingMessageFutureConsumerQueue {
      * @param messageCapacity the maximum number of messages to batch before {@link #pushMessage(Message)} blocks until
      *     {@link #pushCompletableFuture(CompletableFuture)} is called
      */
-    public PrefetchingMessageFutureConsumerQueue(final Integer messageCapacity) {
+    PrefetchingMessageFutureConsumerQueue(final Integer messageCapacity) {
         this.futureQueue = new LinkedList<>();
         this.messageQueue = new LinkedList<>();
         this.messageCapacity = messageCapacity;
@@ -57,7 +56,7 @@ public class PrefetchingMessageFutureConsumerQueue {
      *
      * @param completableFuture the future to include in the queue
      */
-    public void pushCompletableFuture(@Nonnull CompletableFuture<Message> completableFuture) {
+    void pushCompletableFuture(@Nonnull CompletableFuture<Message> completableFuture) {
         final Message message;
         lock.lock();
         try {
@@ -89,7 +88,7 @@ public class PrefetchingMessageFutureConsumerQueue {
      * @param message the message to add
      * @throws InterruptedException if the thread was interrupted while waiting for the lock or adding a message onto the internal message queue
      */
-    public void pushMessage(@Nonnull final Message message) throws InterruptedException {
+    void pushMessage(@Nonnull final Message message) throws InterruptedException {
         CompletableFuture<Message> completableFuture;
         lock.lockInterruptibly();
         try {
@@ -116,7 +115,7 @@ public class PrefetchingMessageFutureConsumerQueue {
      *
      * @throws InterruptedException if the thread was interrupted while waiting for a slot
      */
-    public void blockUntilFreeSlotForMessage() throws InterruptedException {
+    void blockUntilFreeSlotForMessage() throws InterruptedException {
         lock.lockInterruptibly();
         try {
             while (messageQueue.size() == messageCapacity) {
@@ -132,29 +131,26 @@ public class PrefetchingMessageFutureConsumerQueue {
      *
      * @return the total messages batched
      */
-    public int getNumberOfBatchedMessages() {
+    int getNumberOfBatchedMessages() {
         return messageQueue.size();
     }
 
     /**
-     * Drain the queues (thus emptying) and return them as a {@link Pair}.
-     *
-     * <p>Note that only a single queue should contain entries. I wanted this to return an "Either" but Java does not provide this type, I did't want
-     * to import another library to provide this and I didn't want to implement it.
+     * Drain the queues (thus emptying) and return the messages to be resolved as well as the messages that have not been used yet.
      *
      * @return the queues of futures and messages that were in this queue
      */
-    public Pair<Queue<CompletableFuture<Message>>, Queue<Message>> drain() {
+    QueueDrain drain() {
         lock.lock();
         try {
-            final LinkedList<CompletableFuture<Message>> copiedFutureList = new LinkedList<>(futureQueue);
-            final LinkedList<Message> copiedMessageList = new LinkedList<>(messageQueue);
+            final LinkedList<CompletableFuture<Message>> futuresWaitingForMessages = new LinkedList<>(futureQueue);
+            final LinkedList<Message> messagesAvailableForProcessing = new LinkedList<>(messageQueue);
             futureQueue.clear();
             messageQueue.clear();
-            return new Pair<>(
-                    copiedFutureList,
-                    copiedMessageList
-            );
+            return QueueDrain.builder()
+                    .futuresWaitingForMessages(futuresWaitingForMessages)
+                    .messagesAvailableForProcessing(messagesAvailableForProcessing)
+                    .build();
         } finally {
             lock.unlock();
         }

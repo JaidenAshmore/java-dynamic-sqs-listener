@@ -8,7 +8,8 @@ import java.lang.reflect.Method;
 
 /**
  * Interceptor used to test a method being proxied via cglib.
- * @param <T>
+ *
+ * @param <T> the type of the original object to proxy
  */
 public class ProxyMethodInterceptor<T> implements MethodInterceptor {
     private final T original;
@@ -18,7 +19,7 @@ public class ProxyMethodInterceptor<T> implements MethodInterceptor {
     }
 
     @Override
-    public Object intercept(Object o, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+    public Object intercept(Object object, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
         System.out.println("BEFORE");
         method.invoke(original, args);
         System.out.println("AFTER");

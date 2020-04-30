@@ -13,8 +13,11 @@
     <description>Contains utility modules that are needed across multiple aspects of the framework</description>
 
     <modules>
+        <module>common-utils</module>
+        <module>expected-test-exception</module>
         <module>local-amazon-sqs</module>
         <module>local-sqs-test-utils</module>
         <module>local-sqs-test-utils-junit5</module>
+        <module>proxy-method-interceptor</module>
     </modules>
 </project>
