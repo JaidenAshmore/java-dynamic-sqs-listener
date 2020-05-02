@@ -12,6 +12,10 @@
     <artifactId>extensions</artifactId>
     <packaging>pom</packaging>
 
+
+    <name>Java Dynamic SQS Listener - Extensions</name>
+    <description>Extra functionality that is built ontop of the library, for example specific Argument Resolvers.</description>
+
     <modules>
         <module>spring-cloud-schema-registry-extension</module>
     </modules>

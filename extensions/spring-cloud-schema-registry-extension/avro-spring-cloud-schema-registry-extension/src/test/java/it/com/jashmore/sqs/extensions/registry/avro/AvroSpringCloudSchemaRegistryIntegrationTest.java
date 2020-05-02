@@ -11,7 +11,7 @@ import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import it.com.jashmore.sqs.extensions.registry.avro.util.InMemorySchemaRegistryClient;
+import com.jashmore.sqs.extensions.registry.InMemorySchemaRegistryClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;

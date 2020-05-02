@@ -12,8 +12,13 @@
     <artifactId>spring-cloud-schema-registry-extension</artifactId>
     <packaging>pom</packaging>
 
+
+    <name>Java Dynamic SQS Listener - Extensions - Spring Cloud Schema Registry</name>
+    <description>Extension for creating an Argument Resolver that can deserialize message payloads using schemas defined in the Spring Cloud Schema Registry.</description>
+
     <modules>
         <module>spring-cloud-schema-registry-extension-api</module>
         <module>avro-spring-cloud-schema-registry-extension</module>
+        <module>in-memory-spring-cloud-schema-registry</module>
     </modules>
 </project>
