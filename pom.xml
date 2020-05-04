@@ -49,6 +49,7 @@
 
     <modules>
         <module>examples</module>
+        <module>extensions</module>
         <module>java-dynamic-sqs-listener-api</module>
         <module>java-dynamic-sqs-listener-core</module>
         <module>java-dynamic-sqs-listener-spring</module>
@@ -66,6 +67,7 @@
         <spotbugs.config.location>configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
 
         <assertj.version>3.12.2</assertj.version>
+        <avro.version>1.9.2</avro.version>
         <aws.sdk.version>2.13.3</aws.sdk.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
@@ -162,6 +164,12 @@
                 <version>${aws.sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro</artifactId>
+                <version>${avro.version}</version>
             </dependency>
 
             <dependency>
@@ -282,6 +290,11 @@
                     <version>${builder-helper-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro-maven-plugin</artifactId>
+                    <version>${avro.version}</version>
+                </plugin>
+                <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
@@ -365,6 +378,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle-plugin.version}</version>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -396,6 +414,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <addSourceDirs>true</addSourceDirs>
                     <failOnError>true</failOnError>
                     <threshold>Low</threshold>
                     <effort>Max</effort>

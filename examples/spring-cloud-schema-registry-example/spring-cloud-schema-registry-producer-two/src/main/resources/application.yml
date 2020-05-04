@@ -1,0 +1,8 @@
+spring:
+  cloud:
+    schema-registry-client:
+      endpoint: http://localhost:8990
+    schema:
+      avro:
+        schema-locations:
+          - classpath:avro/sensor.avsc

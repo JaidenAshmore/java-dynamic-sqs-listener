@@ -13,6 +13,7 @@
     <description>Contains utility modules that are needed across multiple aspects of the framework</description>
 
     <modules>
+        <module>avro-spring-cloud-schema-registry-sqs-client</module>
         <module>common-utils</module>
         <module>expected-test-exception</module>
         <module>local-amazon-sqs</module>

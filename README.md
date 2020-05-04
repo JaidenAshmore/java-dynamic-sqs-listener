@@ -239,6 +239,11 @@ If the Spring Boot application needs to connect to SQS queues across multiple AW
 which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
 at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md)
 
+### Versioning Message Payloads using Apache Avro Schemas
+As the application grows, it may be beneficial to allow for versioning of the schema so that the consumer can still serialize messages from producers sending
+different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
+to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
+
 ### Comparing Libraries
 If you want to see the difference between this library and others like the
 [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and

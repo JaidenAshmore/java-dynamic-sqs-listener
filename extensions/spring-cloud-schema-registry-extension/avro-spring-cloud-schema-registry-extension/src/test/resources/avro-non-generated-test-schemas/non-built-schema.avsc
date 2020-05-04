@@ -1,0 +1,9 @@
+{
+  "namespace" : "com.jashmore.sqs.extensions.registry.model",
+  "type" : "record",
+  "name" : "NonBuiltSchema",
+  "fields" : [
+    { "name": "firstname", "type": "string" },
+    { "name": "lastname", "type": "string" }
+  ]
+}

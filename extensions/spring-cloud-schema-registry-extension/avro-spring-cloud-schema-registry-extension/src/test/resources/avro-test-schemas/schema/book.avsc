@@ -1,0 +1,10 @@
+{
+  "namespace" : "com.jashmore.sqs.extensions.registry.model",
+  "type" : "record",
+  "name" : "Book",
+  "fields" : [
+    { "name":"id","type":"string" },
+    { "name":"name","type":"string" },
+    { "name":"author","type":"Author" }
+  ]
+}

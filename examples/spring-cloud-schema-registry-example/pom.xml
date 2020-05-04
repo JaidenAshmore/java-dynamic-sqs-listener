@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>examples</artifactId>
+        <groupId>com.jashmore</groupId>
+        <version>3.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>spring-cloud-schema-registry-example</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Java Dynamic SQS Listener - Spring Starter - Spring Cloud Schema Registry Example</name>
+    <description>Contains examples for serializing messages using Avro and storing these Schema Definitions in the Spring Cloud Schema Registry</description>
+
+    <modules>
+        <module>spring-cloud-schema-registry-consumer</module>
+        <module>spring-cloud-schema-registry-producer</module>
+        <module>spring-cloud-schema-registry-producer-two</module>
+    </modules>
+
+</project>
