@@ -161,18 +161,30 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             final Queue<Message> extraMessages = new LinkedList<>();
 
             final BlockingRunnable shutdownMessageRetriever = startupMessageRetriever(messageRetriever, extraMessages::addAll);
-
+            log.info("Container '{}' is beginning to process messages", identifier);
             processMessagesFromRetriever(messageBroker, messageRetriever, messageProcessor, messageResolver,
                     messageBrokerExecutorService, messageProcessingExecutorService);
             log.info("Container '{}' is being shutdown", identifier);
+            log.debug("Container '{}' is shutting down MessageRetriever", identifier);
             shutdownMessageRetriever.run();
-            processExtraMessages(messageBroker, messageProcessor, messageResolver, messageBrokerExecutorService,
-                    messageProcessingExecutorService, extraMessages);
+            log.debug("Container '{}' has stopped the MessageRetriever", identifier);
+            if (!extraMessages.isEmpty() && shouldProcessAnyExtraRetrievedMessagesOnShutdown()) {
+                log.info("Container '{}' is processing {} extra messages before shutdown", identifier, extraMessages.size());
+                processExtraMessages(messageBroker, messageProcessor, messageResolver, messageBrokerExecutorService,
+                        messageProcessingExecutorService, extraMessages);
+            }
+            log.debug("Container '{}' is shutting down MessageProcessor threads", identifier);
             shutdownMessageProcessingThreads(messageProcessingExecutorService);
+            log.debug("Container '{}' has shutdown the MessageProcessor threads", identifier);
+            log.debug("Container '{}' is shutting down MessageResolver", identifier);
             shutdownMessageResolver.run();
+            log.debug("Container '{}' has shutdown the MessageResolver", identifier);
+            log.debug("Container '{}' is shutting down MessageBroker", identifier);
+            shutdownMessageBroker(messageBrokerExecutorService);
+            log.debug("Container '{}' has shutdown the MessageBroker", identifier);
             log.info("Container '{}' has stopped", identifier);
         } catch (final InterruptedException interruptedException) {
-            log.error("Container '{}' was interrupted during the shutdown process. Doing a forceful shutdown that may eventually complete", identifier);
+            log.error("Container '{}' was interrupted during the shutdown process.", identifier);
         } catch (RuntimeException runtimeException) {
             log.error("Unexpected error trying to start/stop the container", runtimeException);
         }
@@ -199,7 +211,6 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
                                               final MessageResolver messageResolver,
                                               final ExecutorService brokerExecutorService,
                                               final ExecutorService messageProcessingExecutorService) throws InterruptedException {
-        log.info("Container '{}' is beginning to process messages", identifier);
         try {
             runUntilInterruption(brokerExecutorService, () -> messageBroker.processMessages(
                     messageProcessingExecutorService,
@@ -227,18 +238,15 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
                                       final ExecutorService messageBrokerExecutorService,
                                       final ExecutorService executorService,
                                       final Queue<Message> messages) throws InterruptedException {
-        if (!messages.isEmpty() && shouldProcessAnyExtraRetrievedMessagesOnShutdown()) {
-            log.debug("Container '{}' is processing {} extra messages before shutdown", identifier, messages.size());
-            try {
-                runUntilInterruption(messageBrokerExecutorService, () -> messageBroker.processMessages(
-                        executorService,
-                        () -> !messages.isEmpty(),
-                        () -> CompletableFuture.completedFuture(messages.poll()),
-                        message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
-                ));
-            } catch (final ExecutionException executionException) {
-                log.error("Exception thrown processing extra messages", executionException.getCause());
-            }
+        try {
+            runUntilInterruption(messageBrokerExecutorService, () -> messageBroker.processMessages(
+                    executorService,
+                    () -> !messages.isEmpty(),
+                    () -> CompletableFuture.completedFuture(messages.poll()),
+                    message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
+            ));
+        } catch (final ExecutionException executionException) {
+            log.error("Exception thrown processing extra messages", executionException.getCause());
         }
     }
 
@@ -281,15 +289,35 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @throws InterruptedException if the thread was interrupted during this process
      */
     private void shutdownMessageProcessingThreads(final ExecutorService executorService) throws InterruptedException {
-        log.debug("Container '{}' is waiting for all message processing threads to finish...", identifier);
         if (shouldInterruptMessageProcessingThreadsOnShutdown()) {
+            log.debug("Container '{}' is interrupting and then waiting for all message processing threads to finish", identifier);
             executorService.shutdownNow();
-            log.debug("Container '{}' interrupted the message processing threads", identifier);
         } else {
+            log.debug("Container '{}' is waiting for all message processing threads to finish", identifier);
             executorService.shutdown();
         }
 
-        executorService.awaitTermination(getMessageProcessingShutdownTimeoutInSeconds(), SECONDS);
+        final int shutdownTimeoutInSeconds = getMessageProcessingShutdownTimeoutInSeconds();
+        final boolean messageProcessingTerminated = executorService.awaitTermination(shutdownTimeoutInSeconds, SECONDS);
+        if (!messageProcessingTerminated) {
+            log.error("Container '{}' did not shutdown MessageProcessor threads within {} seconds", shutdownTimeoutInSeconds);
+        }
+    }
+
+    /**
+     * Stop the message broker thread and wait for the configured amount of time to complete.
+     *
+     * @param executorService the executor service for the message broker
+     * @throws InterruptedException if the thread was interrupted while waiting for the service to stop
+     */
+    private void shutdownMessageBroker(final ExecutorService executorService) throws InterruptedException {
+        executorService.shutdownNow();
+
+        final int shutdownTimeoutInSeconds = getMessageBrokerShutdownTimeoutInSeconds();
+        final boolean terminationResult = executorService.awaitTermination(shutdownTimeoutInSeconds, SECONDS);
+        if (!terminationResult) {
+            log.error("Container '{}' did not shutdown MessageBroker within {} seconds", getIdentifier(), shutdownTimeoutInSeconds);
+        }
     }
 
     /**
@@ -309,14 +337,12 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         CompletableFuture.supplyAsync(messageRetriever::run, executorService)
                 .thenAccept(extraMessagesConsumer);
         return () -> {
-            log.info("Shutting down MessageRetriever");
             executorService.shutdownNow();
 
-            final boolean retrieverShutdown;
             final int retrieverShutdownTimeoutInSeconds = getMessageRetrieverShutdownTimeoutInSeconds();
-            retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
+            final boolean  retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
             if (!retrieverShutdown) {
-                log.error("MessageRetriever did not shutdown within {} seconds", retrieverShutdownTimeoutInSeconds);
+                log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), retrieverShutdownTimeoutInSeconds);
             }
         };
     }
@@ -332,13 +358,12 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         final ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory(getIdentifier() + "-message-resolver"));
         CompletableFuture.runAsync(messageResolver::run, executorService);
         return () -> {
-            log.info("Shutting down MessageResolver");
             executorService.shutdownNow();
 
             final long messageResolverShutdownTimeInSeconds = getMessageResolverShutdownTimeoutInSeconds();
             final boolean messageResolverShutdown = executorService.awaitTermination(getMessageResolverShutdownTimeoutInSeconds(), SECONDS);
             if (!messageResolverShutdown) {
-                log.error("MessageResolver did not shutdown within {} seconds", messageResolverShutdownTimeInSeconds);
+                log.error("Container '{}' did not shutdown MessageResolver within {} seconds", getIdentifier(), messageResolverShutdownTimeInSeconds);
             }
         };
     }
@@ -361,6 +386,19 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
                 "messageProcessingShutdownTimeoutInSeconds",
                 properties::getMessageProcessingShutdownTimeoutInSeconds,
+                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
+        );
+    }
+
+    /**
+     * Get the amount of time in seconds that we should wait for the {@link MessageBroker} to shutdown when requested.
+     *
+     * @return the amount of time in seconds to wait for shutdown
+     */
+    private int getMessageBrokerShutdownTimeoutInSeconds() {
+        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
+                "messageRetrieverShutdownTimeoutInSeconds",
+                properties::getMessageBrokerShutdownTimeoutInSeconds,
                 DEFAULT_SHUTDOWN_TIME_IN_SECONDS
         );
     }
