@@ -9,12 +9,13 @@ import javax.validation.constraints.PositiveOrZero;
 @Value
 @Builder(toBuilder = true)
 public class StaticCoreMessageListenerContainerProperties implements CoreMessageListenerContainerProperties {
-    private final String messageProcessingThreadNameFormat;
-    private final Boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown;
-    private final Boolean shouldInterruptThreadsProcessingMessagesOnShutdown;
-    private final Integer messageProcessingShutdownTimeoutInSeconds;
-    private final Integer messageRetrieverShutdownTimeoutInSeconds;
-    private final Integer messageResolverShutdownTimeoutInSeconds;
+    String messageProcessingThreadNameFormat;
+    Boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown;
+    Boolean shouldInterruptThreadsProcessingMessagesOnShutdown;
+    Integer messageProcessingShutdownTimeoutInSeconds;
+    Integer messageRetrieverShutdownTimeoutInSeconds;
+    Integer messageResolverShutdownTimeoutInSeconds;
+    Integer messageBrokerShutdownTimeoutInSeconds;
 
     @Nullable
     @Override
@@ -26,6 +27,12 @@ public class StaticCoreMessageListenerContainerProperties implements CoreMessage
     @Override
     public Boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown() {
         return shouldProcessAnyExtraRetrievedMessagesOnShutdown;
+    }
+
+    @Nullable
+    @Override
+    public @PositiveOrZero Integer getMessageBrokerShutdownTimeoutInSeconds() {
+        return messageBrokerShutdownTimeoutInSeconds;
     }
 
     @Nullable

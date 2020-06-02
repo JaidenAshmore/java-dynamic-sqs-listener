@@ -14,6 +14,7 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,12 +36,8 @@ import java.util.function.Supplier;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class CoreMessageListenerContainerTest {
-    private static final CompletableFuture<Message> STUB_MESSAGE_BROKER_DONE;
-
-    static {
-        STUB_MESSAGE_BROKER_DONE = new CompletableFuture<>();
-        STUB_MESSAGE_BROKER_DONE.completeExceptionally(new RuntimeException("Expected Messages Done"));
-    }
+    private static final CompletableFuture<Message> STUB_MESSAGE_BROKER_DONE
+            = CompletableFutureUtils.completedExceptionally(new RuntimeException("Expected Messages Done"));
 
     private static final StaticCoreMessageListenerContainerProperties DEFAULT_PROPERTIES = StaticCoreMessageListenerContainerProperties.builder()
             .shouldInterruptThreadsProcessingMessagesOnShutdown(true)
@@ -49,6 +46,7 @@ class CoreMessageListenerContainerTest {
             .messageProcessingShutdownTimeoutInSeconds(5)
             .messageResolverShutdownTimeoutInSeconds(5)
             .messageRetrieverShutdownTimeoutInSeconds(5)
+            .messageBrokerShutdownTimeoutInSeconds(5)
             .build();
 
     @Mock
@@ -256,6 +254,25 @@ class CoreMessageListenerContainerTest {
     }
 
     @Test
+    void allMessageListenerThreadsWillBeShutdownWhenContainerShutdown() {
+        // arrange
+        when(messageRetriever.retrieveMessage())
+                .thenReturn(STUB_MESSAGE_BROKER_DONE);
+        when(messageRetriever.run()).thenReturn(ImmutableList.of());
+        final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
+                .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
+                .build();
+        final CoreMessageListenerContainer container = buildContainer(
+                "id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, properties);
+
+        // act
+        container.runContainer();
+
+        // assert
+        assertThat(Thread.getAllStackTraces().keySet()).noneMatch(thread -> thread.getName().startsWith("id"));
+    }
+
+    @Test
     void willInterruptMessagesProcessingDuringShutdownWhenPropertySetToTrue() {
         // arrange
         final CountDownLatch messageProcessing = new CountDownLatch(1);
@@ -286,7 +303,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        assertThat(wasThreadInterrupted).isTrue();
+        assertThat(wasThreadInterrupted.get()).isTrue();
     }
 
     @Test
@@ -346,7 +363,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        assertThat(messageRetrieverInterrupted).isTrue();
+        assertThat(messageRetrieverInterrupted.get()).isTrue();
     }
 
     @Test
@@ -371,7 +388,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        assertThat(messageResolverInterrupted).isTrue();
+        assertThat(messageResolverInterrupted.get()).isTrue();
     }
 
     @Test
@@ -407,7 +424,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        assertThat(messageResolverInterrupted).isTrue();
+        assertThat(messageResolverInterrupted.get()).isTrue();
     }
 
     @Test
