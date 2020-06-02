@@ -31,4 +31,5 @@ the server for the maven repository.
 1. If you haven't uploaded your GPG credentials you can do so by going:
     ```gpg --keyserver hkp://pool.sks-keyservers.net --send-keys ${KEY_ID}```
     ```gpg --keyserver hkp://keyserver.ubuntu.com --send-keys ${KEY_ID}```
-1. Run the Maven release process: `mvn release:prepare release:perform`
+1. Reduce the number of times putting your ssh password in by doing `ssh-add`
+1. Run the Maven release process: `mvn clean -DskipTests -Darguments=-DskipTests release:prepare release:perform` (note the requested tag should be in a format like v3.1.1)
