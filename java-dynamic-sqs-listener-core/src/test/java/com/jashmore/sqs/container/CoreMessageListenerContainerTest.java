@@ -254,7 +254,7 @@ class CoreMessageListenerContainerTest {
     }
 
     @Test
-    void allMessageListenerThreadsWillBeShutdownWhenContainerShutdown() {
+    void allMessageListenerThreadsWillBeShutdownWhenContainerShutdown() throws InterruptedException {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -263,13 +263,14 @@ class CoreMessageListenerContainerTest {
                 .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
                 .build();
         final CoreMessageListenerContainer container = buildContainer(
-                "id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, properties);
+                "my-specific-container-id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, properties);
 
         // act
         container.runContainer();
+        Thread.sleep(1000); // let's just wait a little bit just to be sure that the thread is gone
 
         // assert
-        assertThat(Thread.getAllStackTraces().keySet()).noneMatch(thread -> thread.getName().startsWith("id"));
+        assertThat(Thread.getAllStackTraces().keySet()).noneMatch(thread -> thread.getName().startsWith("my-specific-container-id"));
     }
 
     @Test
