@@ -33,7 +33,22 @@ public interface CoreMessageListenerContainerProperties {
     Boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown();
 
     /**
-     * Gets the amount of time that the broker should wait for the {@link MessageRetriever} to shutdown when the broker is being shutdown.
+     * Gets the amount of time that the container should wait for the {@link com.jashmore.sqs.broker.MessageBroker} to shutdown when the broker is
+     * being shutdown.
+     *
+     * <p>If this value is negative or null, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME_IN_SECONDS} will be used for instead.
+     *
+     * @return the number of seconds to wait for the message retriever to shutdown
+     */
+    @Nullable
+    @PositiveOrZero
+    default Integer getMessageBrokerShutdownTimeoutInSeconds() {
+        // Added to not cause an API breaking change
+        return null;
+    }
+
+    /**
+     * Gets the amount of time that the container should wait for the {@link MessageRetriever} to shutdown when the broker is being shutdown.
      *
      * <p>If this value is negative or null, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME_IN_SECONDS} will be used for instead.
      *
@@ -44,7 +59,7 @@ public interface CoreMessageListenerContainerProperties {
     Integer getMessageRetrieverShutdownTimeoutInSeconds();
 
     /**
-     * The number of seconds that the broker should wait for the message processing threads to finish when a shutdown is initiated.
+     * The number of seconds that the container should wait for the message processing threads to finish when a shutdown is initiated.
      *
      * <p>When {@link #shouldProcessAnyExtraRetrievedMessagesOnShutdown()} is true and there are extra messages to be processed, this field will try and
      * put as many messages onto threads to be processed before this limit is hit. If this time limit is reached some messages may not have been processed.
@@ -58,7 +73,7 @@ public interface CoreMessageListenerContainerProperties {
     Integer getMessageProcessingShutdownTimeoutInSeconds();
 
     /**
-     * Gets the amount of time that the broker should wait for the {@link MessageResolver} to shutdown when the broker is being shutdown.
+     * Gets the amount of time that the container should wait for the {@link MessageResolver} to shutdown when the broker is being shutdown.
      *
      * <p>If this value is negative or null, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME_IN_SECONDS} will be used for instead.
      *
