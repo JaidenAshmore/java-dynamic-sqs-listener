@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         // arrange
         final MessageListenerContainerFactory messageListenerContainerFactory = mock(MessageListenerContainerFactory.class);
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of(messageListenerContainerFactory));
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{});
 
         // act
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
@@ -70,7 +69,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
         when(container.getIdentifier()).thenReturn("identifier");
         when(messageListenerContainerFactory.buildContainer(bean, method)).thenReturn(container);
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
 
         // act
@@ -88,7 +87,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         final MessageListenerContainerFactory messageListenerContainerFactory = mock(MessageListenerContainerFactory.class);
         final DefaultMessageListenerContainerCoordinator defaultMessageListenerContainerCoordinator = new DefaultMessageListenerContainerCoordinator(ImmutableList.of(messageListenerContainerFactory));
         when(messageListenerContainerFactory.canHandleMethod(any(Method.class))).thenReturn(false);
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
 
         // act
@@ -119,7 +118,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         when(containerTwo.getIdentifier()).thenReturn("identifier");
         when(messageListenerContainerFactory.buildContainer(bean, methodTwo)).thenReturn(containerTwo);
 
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
 
@@ -139,7 +138,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
         when(container.getIdentifier()).thenReturn("identifier");
         when(messageListenerContainerFactory.buildContainer(bean, method)).thenReturn(container);
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
         assertThat(defaultMessageListenerContainerCoordinator.getContainers()).hasSize(1);
@@ -168,7 +167,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
             log.info("Stopping container");
             return null;
         }).when(container).stop();
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
         assertThat(defaultMessageListenerContainerCoordinator.getContainers()).hasSize(1);
@@ -203,7 +202,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
         when(container.getIdentifier()).thenReturn("identifier");
         when(messageListenerContainerFactory.buildContainer(bean, method)).thenReturn(container);
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
 
@@ -236,7 +235,7 @@ class DefaultMessageListenerContainerCoordinatorTest {
         final MessageListenerContainer container = mock(MessageListenerContainer.class);
         when(container.getIdentifier()).thenReturn("identifier");
         when(messageListenerContainerFactory.buildContainer(bean, method)).thenReturn(container);
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] {"bean"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"bean"});
         when(applicationContext.getBean("bean")).thenReturn(bean);
         defaultMessageListenerContainerCoordinator.setApplicationContext(applicationContext);
 

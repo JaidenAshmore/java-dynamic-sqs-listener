@@ -1,7 +1,6 @@
 package com.jashmore.sqs.examples.schemaregistry;
 
 import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

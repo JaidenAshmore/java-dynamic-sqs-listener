@@ -1,7 +1,6 @@
 package com.jashmore.sqs.util.thread;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import lombok.experimental.UtilityClass;
 
 import java.util.concurrent.ThreadFactory;

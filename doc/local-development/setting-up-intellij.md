@@ -28,8 +28,6 @@ code style:
 ```
 import static all other imports
 <blank line>
-import com.google.*
-<blank line>
 import all other imports
 <blank line>
 import java.*

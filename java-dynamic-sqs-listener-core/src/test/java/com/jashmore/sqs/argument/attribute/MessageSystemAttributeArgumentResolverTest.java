@@ -8,7 +8,6 @@ import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeNa
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SEQUENCE_NUMBER;
 
 import com.google.common.collect.ImmutableMap;
-
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
@@ -20,7 +19,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Calendar;
 
-@SuppressWarnings( {"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class MessageSystemAttributeArgumentResolverTest {
     private MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver = new MessageSystemAttributeArgumentResolver();
 

@@ -1,8 +1,7 @@
 package com.jashmore.sqs.spring.config;
 
-import com.google.common.collect.ImmutableMap;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -49,7 +48,7 @@ public class QueueListenerConfiguration {
      * @see SqsAsyncClient#create() for more details about how to use this default client
      */
     @Bean(destroyMethod = "close")
-    @ConditionalOnMissingBean( {SqsAsyncClient.class, SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean({SqsAsyncClient.class, SqsAsyncClientProvider.class})
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.create();
     }
@@ -68,7 +67,7 @@ public class QueueListenerConfiguration {
      * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
      */
     @Bean
-    @ConditionalOnMissingBean( {SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean({SqsAsyncClientProvider.class})
     public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
         return new DefaultSqsAsyncClientProvider(defaultClient, ImmutableMap.of());
     }
@@ -101,7 +100,7 @@ public class QueueListenerConfiguration {
          * example, they want to define a type of payload argument resolution that will extract certain fields from the payload. They can define their
          * {@link ArgumentResolver} bean in the context and it will be included in this {@link ArgumentResolverService}.
          *
-         * @param argumentResolvers  the argument resolvers available in the application
+         * @param argumentResolvers the argument resolvers available in the application
          * @return an {@link ArgumentResolverService} that will be able to resolve method parameters for message processing
          */
         @Bean
@@ -152,7 +151,7 @@ public class QueueListenerConfiguration {
     /**
      * The default provided {@link QueueResolver} that can be used if it not overridden by a user defined bean.
      *
-     * @param environment    the environment for this spring application
+     * @param environment the environment for this spring application
      * @return the default service used for queue resolution
      */
     @Bean

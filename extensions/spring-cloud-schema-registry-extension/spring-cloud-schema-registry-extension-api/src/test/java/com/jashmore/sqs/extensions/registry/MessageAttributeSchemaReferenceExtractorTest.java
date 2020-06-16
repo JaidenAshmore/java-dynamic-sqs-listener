@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.schema.registry.SchemaReference;
 import software.amazon.awssdk.core.SdkBytes;

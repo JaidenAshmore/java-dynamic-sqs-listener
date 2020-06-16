@@ -1,7 +1,6 @@
 package it.com.jashmore.sqs.client;
 
 import com.google.common.collect.ImmutableMap;
-
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.basic.QueueListener;

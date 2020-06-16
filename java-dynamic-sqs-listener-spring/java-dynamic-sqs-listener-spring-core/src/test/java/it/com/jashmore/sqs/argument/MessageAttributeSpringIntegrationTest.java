@@ -3,7 +3,6 @@ package it.com.jashmore.sqs.argument;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
-
 import com.jashmore.sqs.argument.attribute.MessageAttribute;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.spring.container.basic.QueueListener;

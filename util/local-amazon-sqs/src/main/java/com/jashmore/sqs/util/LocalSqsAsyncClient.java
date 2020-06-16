@@ -5,7 +5,6 @@ import static com.jashmore.sqs.util.SqsQueuesConfig.QueueConfig.DEFAULT_MAX_RECE
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;

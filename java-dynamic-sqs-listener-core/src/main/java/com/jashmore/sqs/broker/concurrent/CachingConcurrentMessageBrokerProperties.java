@@ -3,7 +3,6 @@ package com.jashmore.sqs.broker.concurrent;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.concurrent.TimeUnit;

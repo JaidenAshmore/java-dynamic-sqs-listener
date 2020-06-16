@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
-
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.util.thread.ThreadUtils;

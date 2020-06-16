@@ -1,7 +1,6 @@
 package com.jashmore.sqs.util.annotation;
 
 import com.google.common.base.Preconditions;
-
 import com.jashmore.sqs.argument.MethodParameter;
 import lombok.experimental.UtilityClass;
 

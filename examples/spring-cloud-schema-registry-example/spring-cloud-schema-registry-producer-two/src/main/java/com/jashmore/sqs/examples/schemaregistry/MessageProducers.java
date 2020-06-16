@@ -1,8 +1,7 @@
 package com.jashmore.sqs.examples.schemaregistry;
 
-import com.google.common.collect.ImmutableList;
-
 import com.example.Sensor;
+import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
