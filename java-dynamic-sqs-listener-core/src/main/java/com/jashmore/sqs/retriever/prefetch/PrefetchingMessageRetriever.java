@@ -5,7 +5,6 @@ import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverCon
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;

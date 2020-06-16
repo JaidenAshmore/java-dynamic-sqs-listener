@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.extensions.registry.ConsumerSchemaRetrieverException;
 import com.jashmore.sqs.extensions.registry.model.Author;
 import com.jashmore.sqs.extensions.registry.model.Book;
@@ -51,7 +50,7 @@ class AvroClasspathConsumerSchemaRetrieverTest {
 
         @Test
         void missingDependentSchemasWillThrowExceptionInParsing() {
-            final AvroSchemaProcessingException exception = assertThrows(AvroSchemaProcessingException.class,() -> new AvroClasspathConsumerSchemaRetriever(
+            final AvroSchemaProcessingException exception = assertThrows(AvroSchemaProcessingException.class, () -> new AvroClasspathConsumerSchemaRetriever(
                     ImmutableList.of(),
                     ImmutableList.of(new ClassPathResource("avro-test-schemas/schema/book.avsc"))
             ));

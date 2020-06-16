@@ -8,7 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.examples.integrationtests.IntegrationTestExampleApplication;
 import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.ExpectedTestException;

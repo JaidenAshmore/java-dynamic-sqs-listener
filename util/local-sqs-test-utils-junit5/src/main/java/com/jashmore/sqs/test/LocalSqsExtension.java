@@ -1,8 +1,7 @@
 package com.jashmore.sqs.test;
 
-import com.google.common.collect.ImmutableList;
-
 import akka.http.scaladsl.Http;
+import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;

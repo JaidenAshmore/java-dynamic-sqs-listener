@@ -5,7 +5,6 @@ import static org.springframework.cloud.schema.registry.avro.AvroSchemaRegistryC
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Delegate;

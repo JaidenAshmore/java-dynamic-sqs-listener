@@ -1,7 +1,6 @@
 package com.jashmore.sqs.spring.util;
 
 import com.google.common.base.CaseFormat;
-
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
 

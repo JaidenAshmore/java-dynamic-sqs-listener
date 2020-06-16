@@ -1,8 +1,7 @@
 package com.jashmore.sqs.argument;
 
-import com.google.common.collect.ImmutableSet;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableSet;
 import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolver;
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;

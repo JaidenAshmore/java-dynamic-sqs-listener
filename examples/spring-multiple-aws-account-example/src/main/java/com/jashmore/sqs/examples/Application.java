@@ -1,8 +1,7 @@
 package com.jashmore.sqs.examples;
 
-import com.google.common.collect.ImmutableMap;
-
 import akka.http.scaladsl.Http;
+import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import lombok.extern.slf4j.Slf4j;

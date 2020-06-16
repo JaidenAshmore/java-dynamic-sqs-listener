@@ -2,7 +2,6 @@ package com.jashmore.sqs.spring.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Map;

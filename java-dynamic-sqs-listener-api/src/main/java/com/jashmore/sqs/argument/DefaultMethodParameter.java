@@ -1,7 +1,6 @@
 package com.jashmore.sqs.argument;
 
 import com.google.common.base.Preconditions;
-
 import lombok.Builder;
 
 import java.lang.reflect.Method;

@@ -2,9 +2,8 @@ package com.jashmore.sqs.argument.attribute;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import com.google.common.collect.ImmutableMap;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
@@ -515,15 +514,15 @@ class MessageAttributeArgumentResolverTest {
         assertThat(exception).hasMessage("Failure to parse binary bytes to '" + MyPojo.class.getName() + "'");
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("string") final String messageAttribute) {
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consumeWithRequiredAttribute(@MessageAttribute(value = "string", required = true) final String messageAttribute) {
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consumeNumbers(@MessageAttribute("float") float f,
                                @MessageAttribute("int") int i,
                                @MessageAttribute("long") long l,
@@ -531,7 +530,7 @@ class MessageAttributeArgumentResolverTest {
                                @MessageAttribute("short") short s) {
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consumeNumbers(@MessageAttribute("float") Float f,
                                @MessageAttribute("int") Integer i,
                                @MessageAttribute("long") Long l,
@@ -539,12 +538,12 @@ class MessageAttributeArgumentResolverTest {
                                @MessageAttribute("short") Short s) {
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("pojo") final MyPojo pojo) {
 
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("bytes") final byte[] b) {
 
     }

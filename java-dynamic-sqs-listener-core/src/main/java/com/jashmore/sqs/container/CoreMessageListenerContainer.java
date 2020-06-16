@@ -8,7 +8,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -199,10 +198,10 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      *
      * <p>This will keep running until the thread is interrupted via a call to {@link #stop()}.
      *
-     * @param messageBroker    the broker that handles the concurrent processing of messages and how to flow messages between the components
-     * @param messageRetriever the retriever for obtaining new messages
-     * @param messageProcessor the processor that will execute the message
-     * @param messageResolver  the resolver that will resolve the message on successful processing
+     * @param messageBroker                    the broker that handles the concurrent processing of messages and how to flow messages between the components
+     * @param messageRetriever                 the retriever for obtaining new messages
+     * @param messageProcessor                 the processor that will execute the message
+     * @param messageResolver                  the resolver that will resolve the message on successful processing
      * @param messageProcessingExecutorService the executor service that the message processing will run on
      */
     private void processMessagesFromRetriever(final MessageBroker messageBroker,
@@ -257,7 +256,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @param executorService the executor service to execute the runnable
      * @param runnable        the runnable to run which should keep running until an interruption
      * @throws InterruptedException if it was interrupted again waiting for the runnable to exit
-     * @throws ExecutionException if there was an error running the runnable
+     * @throws ExecutionException   if there was an error running the runnable
      */
     private void runUntilInterruption(final ExecutorService executorService, final BlockingRunnable runnable) throws InterruptedException, ExecutionException {
         final CompletableFuture<?> runnableCompleted = new CompletableFuture<>();
@@ -340,7 +339,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             executorService.shutdownNow();
 
             final int retrieverShutdownTimeoutInSeconds = getMessageRetrieverShutdownTimeoutInSeconds();
-            final boolean  retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
+            final boolean retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
             if (!retrieverShutdown) {
                 log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), retrieverShutdownTimeoutInSeconds);
             }
