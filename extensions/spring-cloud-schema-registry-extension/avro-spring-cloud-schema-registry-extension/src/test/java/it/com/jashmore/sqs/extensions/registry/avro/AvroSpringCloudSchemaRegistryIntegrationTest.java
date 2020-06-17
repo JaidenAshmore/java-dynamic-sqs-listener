@@ -2,6 +2,7 @@ package it.com.jashmore.sqs.extensions.registry.avro;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.extensions.registry.SpringCloudSchemaRegistryPayload;
 import com.jashmore.sqs.extensions.registry.avro.AvroSpringCloudSchemaProperties;
 import com.jashmore.sqs.extensions.registry.avro.EnableSchemaRegistrySqsExtension;
@@ -9,7 +10,6 @@ import com.jashmore.sqs.extensions.registry.model.Author;
 import com.jashmore.sqs.extensions.registry.model.Book;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.extensions.registry.InMemorySchemaRegistryClient;
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AvroSpringCloudSchemaRegistryIntegrationTest {
     private static final String QUEUE_NAME = "test";
 
-    @RegisterExtension
-    static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
-
     @Autowired
     private AvroSchemaServiceManager avroSchemaServiceManager;
 
@@ -44,6 +41,9 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
 
     @Autowired
     private SchemaRegistryClient schemaRegistryClient;
+
+    @Autowired
+    private LocalSqsAsyncClient localSqsAsyncClient;
 
     static final AtomicReference<Book> RECEIVED_BOOK = new AtomicReference<>();
     static final CountDownLatch MESSAGE_RECEIVED_LATCH = new CountDownLatch(1);
@@ -63,7 +63,7 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
 
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
+            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
         }
 
         @SuppressWarnings("unused")
@@ -78,7 +78,7 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
     void name() throws ExecutionException, InterruptedException {
         // arrange
         final AvroSchemaRegistrySqsAsyncClient avroClient = new AvroSchemaRegistrySqsAsyncClient(
-                LOCAL_SQS_RULE.getLocalAmazonSqsAsync(),
+                localSqsAsyncClient,
                 schemaRegistryClient,
                 avroSchemaServiceManager,
                 avroSpringCloudSchemaProperties.getSchemaImports(),

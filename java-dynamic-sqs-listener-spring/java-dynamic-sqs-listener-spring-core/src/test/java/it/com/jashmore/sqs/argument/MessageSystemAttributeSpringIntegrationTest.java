@@ -7,14 +7,13 @@ import static org.assertj.core.api.Assertions.within;
 import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -32,15 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {Application.class, MessageSystemAttributeSpringIntegrationTest.TestConfig.class})
+@SpringBootTest(classes = {MessageSystemAttributeSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
 @ExtendWith(SpringExtension.class)
 public class MessageSystemAttributeSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageAttributeSpringIntegrationTest";
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
     private static final AtomicReference<OffsetDateTime> messageAttributeReference = new AtomicReference<>();
-
-    @RegisterExtension
-    public static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
 
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
@@ -49,7 +45,7 @@ public class MessageSystemAttributeSpringIntegrationTest {
     public static class TestConfig {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
+            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
         }
 
         @Service
@@ -66,7 +62,7 @@ public class MessageSystemAttributeSpringIntegrationTest {
     @Test
     public void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
-        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, SendMessageRequest.builder()
+        localSqsAsyncClient.sendMessage(QUEUE_NAME, SendMessageRequest.builder()
                 .messageBody("message")
                 .messageAttributes(ImmutableMap.of(
                         "key", MessageAttributeValue.builder()

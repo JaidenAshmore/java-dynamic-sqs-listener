@@ -4,7 +4,7 @@ import akka.http.scaladsl.Http;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
-import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
@@ -49,7 +49,7 @@ public class Application {
                 .start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        return new LocalSqsAsyncClient(SqsQueuesConfig
+        return new LocalSqsAsyncClientImpl(SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("test").build())

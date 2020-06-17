@@ -19,10 +19,10 @@ import java.util.stream.IntStream;
 @Slf4j
 @UtilityClass
 public class SqsIntegrationTestUtils {
-    private static final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
+    private final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
 
-    public static void assertNoMessagesInQueue(final SqsAsyncClient sqsAsyncClient,
-                                               final String queueUrl) {
+    public void assertNoMessagesInQueue(final SqsAsyncClient sqsAsyncClient,
+                                        final String queueUrl) {
         final GetQueueAttributesRequest request = GetQueueAttributesRequest
                 .builder()
                 .queueUrl(queueUrl)
@@ -40,16 +40,16 @@ public class SqsIntegrationTestUtils {
                 });
     }
 
-    public static void sendNumberOfMessages(int numberOfMessages,
-                                            final SqsAsyncClient sqsAsyncClient,
-                                            final String queueUrl) {
+    public void sendNumberOfMessages(int numberOfMessages,
+                                     final SqsAsyncClient sqsAsyncClient,
+                                     final String queueUrl) {
         final AtomicInteger numberOfMessagesSent = new AtomicInteger(0);
         while (numberOfMessagesSent.get() < numberOfMessages) {
             final SendMessageBatchRequest.Builder sendMessageBatchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
             final int batchSize = Math.min(numberOfMessages - numberOfMessagesSent.get(), MAX_SEND_MESSAGE_BATCH_SIZE);
             sendMessageBatchRequestBuilder.entries(IntStream.range(0, batchSize)
                     .map(index -> numberOfMessagesSent.get() + index)
-                    .mapToObj(id ->  SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + id).build())
+                    .mapToObj(id -> SendMessageBatchRequestEntry.builder().id("" + id).messageBody("body: " + id).build())
                     .collect(Collectors.toSet()));
             try {
                 sqsAsyncClient.sendMessageBatch(sendMessageBatchRequestBuilder.build()).get();
