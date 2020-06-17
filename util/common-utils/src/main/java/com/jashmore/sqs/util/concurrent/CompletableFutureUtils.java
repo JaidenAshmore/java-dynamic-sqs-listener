@@ -1,7 +1,10 @@
 package com.jashmore.sqs.util.concurrent;
 
+import static java.util.stream.Collectors.toList;
+
 import lombok.experimental.UtilityClass;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @UtilityClass
@@ -13,9 +16,23 @@ public class CompletableFutureUtils {
      * @param <T> the type that the future is returning
      * @return a future that is completed exceptionally
      */
-    public static <T> CompletableFuture<T> completedExceptionally(final Throwable throwable) {
+    public <T> CompletableFuture<T> completedExceptionally(final Throwable throwable) {
         final CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(throwable);
         return future;
+    }
+
+    /**
+     * Wait for all of the futures to complete and return a single future containing the list of results.
+     *
+     * @param futures the futures to wait for
+     * @param <T> the type that the future returns
+     * @return a future that will complete if all futures are completed successfully
+     */
+    public <T> CompletableFuture<List<T>> allOf(final List<CompletableFuture<T>> futures) {
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]))
+                .thenApply((ignored) -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .collect(toList()));
     }
 }

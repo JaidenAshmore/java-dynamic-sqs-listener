@@ -2,7 +2,7 @@ package com.jashmore.sqs.resolver.batching;
 
 import static com.jashmore.sqs.util.thread.ThreadTestUtils.waitUntilThreadInState;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -206,13 +206,9 @@ class BatchingMessageResolverTest {
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();
 
         // assert
-        try {
-            messageResolvedCompletableFuture.get();
-            fail("Should have failed to resolve message");
-        } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(RuntimeException.class);
-            assertThat(executionException.getCause()).hasMessage("Expected Test Error");
-        }
+        final ExecutionException exception = assertThrows(ExecutionException.class, messageResolvedCompletableFuture::get);
+        assertThat(exception).hasCauseInstanceOf(RuntimeException.class);
+        assertThat(exception.getCause()).hasMessage("Expected Test Error");
     }
 
     @Test
@@ -235,13 +231,9 @@ class BatchingMessageResolverTest {
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();
 
         // assert
-        try {
-            messageResolvedCompletableFuture.get();
-            fail("Should have failed to resolve message");
-        } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(RuntimeException.class);
-            assertThat(executionException.getCause()).hasMessage("Message not handled by batch delete. This should not happen");
-        }
+        final ExecutionException exception = assertThrows(ExecutionException.class, messageResolvedCompletableFuture::get);
+        assertThat(exception).hasCauseInstanceOf(RuntimeException.class);
+        assertThat(exception.getCause()).hasMessage("Message not handled by batch delete. This should not happen");
     }
 
     @Test
@@ -317,16 +309,12 @@ class BatchingMessageResolverTest {
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();
 
         // assert
-        try {
-            messageResolvedFuture.get();
-            fail("Should have failed to resolve message");
-        } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(ExpectedTestException.class);
-        }
+        final ExecutionException exception = assertThrows(ExecutionException.class, messageResolvedFuture::get);
+        assertThat(exception).hasCauseInstanceOf(ExpectedTestException.class);
     }
 
     @Test
-    void exceptionThrownSendingBatchRemovalWillRejectAllMessages() throws Exception {
+    void exceptionThrownSendingBatchRemovalWillRejectAllMessages() {
         // arrange
         final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
                 .bufferingSizeLimit(1)
@@ -343,12 +331,8 @@ class BatchingMessageResolverTest {
         executorService.submit(batchingMessageResolver::run);
 
         // assert
-        try {
-            messageResolvedFuture.get();
-            fail("Should have failed to resolve message");
-        } catch (final ExecutionException executionException) {
-            assertThat(executionException.getCause()).isInstanceOf(ExpectedTestException.class);
-        }
+        final ExecutionException exception = assertThrows(ExecutionException.class, messageResolvedFuture::get);
+        assertThat(exception).hasCauseInstanceOf(ExpectedTestException.class);
     }
 
     @Test
