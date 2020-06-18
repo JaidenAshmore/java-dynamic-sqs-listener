@@ -27,6 +27,7 @@
         <module>spring-sleuth-example</module>
         <module>spring-starter-examples</module>
         <module>sqs-listener-library-comparison</module>
+        <module>aws-xray-spring-example</module>
     </modules>
 
     <dependencies>
