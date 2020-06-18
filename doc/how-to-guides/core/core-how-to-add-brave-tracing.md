@@ -27,3 +27,11 @@ the [DecoratingMessageProcessor](../../../java-dynamic-sqs-listener-core/src/mai
    
 ## Example
 See the [core-examples](../../../examples/core-examples) for a basic application that is running with tracing enabled automatically.
+
+## Including Brave information in your SQS messages
+If you want to include the Trace information into your SQS message so that the message listener continues the trace,
+you can use the [sqs-brave-tracing](../../../util/sqs-brave-tracing) Utility module to  add the tracing information to the
+SQS Message Attributes.
+
+An example of this being done is in the
+[spring-sleuth-example](../../../examples/spring-sleuth-example/src/main/java/com/jashmore/sqs/examples/sleuth/Application.java).

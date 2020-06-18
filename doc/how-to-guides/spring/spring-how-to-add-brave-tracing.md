@@ -18,3 +18,11 @@ wrap the processing of the message with custom logic.
 
 ## Example
 See the [spring-sleuth-example](../../../examples/spring-sleuth-example/README.md) for a Spring application that has this setup.
+
+## Including Brave information in your SQS messages
+If you want to include the Trace information into your SQS message so that the message listener continues the trace,
+you can use the [sqs-brave-tracing](../../../util/sqs-brave-tracing) Utility module to  add the tracing information to the
+SQS Message Attributes.
+
+An example of this being done is in the
+[spring-sleuth-example](../../../examples/spring-sleuth-example/src/main/java/com/jashmore/sqs/examples/sleuth/Application.java).
