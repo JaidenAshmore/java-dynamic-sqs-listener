@@ -7,15 +7,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
+
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -53,7 +57,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
     @BeforeEach
     void setUp() {
         prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                queueResolver, environment);
+                queueResolver, environment, ImmutableList.of());
     }
 
     @Test
@@ -264,6 +268,30 @@ class PrefetchingMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(container).isNotNull();
+    }
+
+    /**
+     * Sort of nothing tests, mostly tested in integration testing.
+     */
+    @Nested
+    class MessageProcessingDecorators {
+        @Test
+        void canBuildContainerWhenMessageProcessingDecoratorsIncluded() throws Exception {
+            // arrange
+            prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(
+                    argumentResolverService, sqsAsyncClientProvider, queueResolver, environment,
+                    ImmutableList.of(new MessageProcessingDecorator() {
+                    }));
+            when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
+            final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
+            final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
+
+            // act
+            final MessageListenerContainer container = prefetchingMessageListenerContainerFactory.buildContainer(bean, method);
+
+            // assert
+            assertThat(container).isNotNull();
+        }
     }
 
     @PrefetchingQueueListener("test")

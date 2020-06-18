@@ -69,6 +69,7 @@
         <assertj.version>3.12.2</assertj.version>
         <avro.version>1.9.2</avro.version>
         <aws.sdk.version>2.13.3</aws.sdk.version>
+        <brave.version>5.12.3</brave.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
         <cglib.version>3.2.10</cglib.version>
@@ -200,6 +201,25 @@
                 <groupId>org.elasticmq</groupId>
                 <artifactId>elasticmq-rest-sqs_2.12</artifactId>
                 <version>${elasticmq.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-context-slf4j</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-tests</artifactId>
+                <version>${brave.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>

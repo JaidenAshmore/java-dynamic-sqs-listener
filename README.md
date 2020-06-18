@@ -41,8 +41,8 @@ public class MyMessageListener {
 }
 ```
 
-This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
-is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
+This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none are defined, a default
+will be provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
 [How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
 
 ## Core Infrastructure
@@ -119,7 +119,7 @@ before requesting messages for threads waiting for another message.
 ### Setting up a queue listener that prefetches messages
 When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
 [@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
-annotation can be used to pretech messages in a background thread while messages are currently being processed.  The usage is something like this:
+annotation can be used to pre-fetch messages in a background thread while processing the existing messages.  The usage is something like this:
 
 ```java
 @Service
@@ -131,11 +131,11 @@ public class MyMessageListener {
 }
 ```
 
-In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try and get as many messages as possible
+In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible
 maximum.
 
 *Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
-10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefeteched messages it will
+10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
 not prefetch anymore.*
 
 ### Adding a custom argument resolver
@@ -196,9 +196,15 @@ context for automatic injection into the
 For a more extensive guide for doing this, take a look at
 [Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
 
+### Adding Brave Tracing
+If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
+[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension. See
+[Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and
+[Spring - How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md) for guides on how to add tracing.
+
 ### Building a custom queue listener annotation
-The core Queue Listener annotations may not provide the exact use case necessary for the application and they also do not provide any dynamic functionality and
-therefore it would be useful to provide your own annotation. See
+The core Queue Listener annotations may not provide the exact use case necessary for the application and therefore it can be useful to provide your
+own annotation. See
 [Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
 
 ### Testing locally an example Spring Boot app with the Spring Starter 
