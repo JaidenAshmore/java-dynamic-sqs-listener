@@ -9,9 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import software.amazon.awssdk.core.SdkClient;
+import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Slf4j
 public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
@@ -31,7 +33,21 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
                 .build()));
     }
 
+    public ElasticMqSqsAsyncClient(final String queueName,
+                                   final Consumer<SqsAsyncClientBuilder> clientBuilderConsumer) {
+        this(Collections.singletonList(SqsQueuesConfig.QueueConfig.builder()
+                .queueName(queueName)
+                .build()), clientBuilderConsumer);
+    }
+
     public ElasticMqSqsAsyncClient(final List<SqsQueuesConfig.QueueConfig> queuesConfiguration) {
+        this(queuesConfiguration, (builder) -> {
+
+        });
+    }
+
+    public ElasticMqSqsAsyncClient(final List<SqsQueuesConfig.QueueConfig> queueConfigs,
+                                   final Consumer<SqsAsyncClientBuilder> clientBuilderConsumer) {
         log.info("Starting local SQS Server");
         sqsRestServer = SQSRestServerBuilder
                 .withInterface("localhost")
@@ -39,12 +55,11 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
                 .start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        final SqsQueuesConfig queuesConfig = SqsQueuesConfig
-                .builder()
+        final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
-                .queues(queuesConfiguration)
+                .queues(queueConfigs)
                 .build();
-        delegate = new LocalSqsAsyncClientImpl(queuesConfig);
+        delegate = new LocalSqsAsyncClientImpl(queuesConfig, clientBuilderConsumer);
     }
 
     @Override

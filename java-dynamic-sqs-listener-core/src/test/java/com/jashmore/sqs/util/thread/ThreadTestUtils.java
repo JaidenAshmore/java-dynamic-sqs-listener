@@ -19,9 +19,10 @@ public class ThreadTestUtils {
         }
     }
 
+    @SuppressWarnings("BusyWait")
     public static void waitUntilThreadInState(Thread thread, Thread.State expectedState) throws InterruptedException {
         int numberOfTimesCompleted = 0;
-        while (thread.getState() != expectedState && numberOfTimesCompleted < 30) {
+        while (thread.getState() != expectedState && numberOfTimesCompleted < 60) {
             Thread.sleep(100);
             numberOfTimesCompleted++;
         }

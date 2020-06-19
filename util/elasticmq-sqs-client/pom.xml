@@ -11,6 +11,9 @@
 
     <artifactId>elasticmq-sqs-client</artifactId>
 
+    <name>Java Dynamic SQS Listener - Utilities - ElasticMQ Sqs Async Client</name>
+    <description>Provides the ability to create a SqsAsyncClient backed by an in-memory ElasticMQ SQS Server</description>
+
     <dependencies>
 
         <dependency>

@@ -34,8 +34,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.elasticmq</groupId>
-            <artifactId>elasticmq-rest-sqs_2.12</artifactId>
+            <groupId>com.jashmore</groupId>
+            <artifactId>elasticmq-sqs-client</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
