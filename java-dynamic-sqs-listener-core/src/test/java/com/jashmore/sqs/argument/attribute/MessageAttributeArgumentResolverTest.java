@@ -1,6 +1,6 @@
 package com.jashmore.sqs.argument.attribute;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
 
 @Slf4j
 class MessageAttributeArgumentResolverTest {
-    private MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(new ObjectMapper());
+    private final MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(new ObjectMapper());
 
     @Test
     void stringMessageAttributesCanBeObtainedFromMessage() throws Exception {
@@ -552,6 +552,6 @@ class MessageAttributeArgumentResolverTest {
     @Builder
     @SuppressWarnings("WeakerAccess")
     public static class MyPojo {
-        private final String name;
+        String name;
     }
 }

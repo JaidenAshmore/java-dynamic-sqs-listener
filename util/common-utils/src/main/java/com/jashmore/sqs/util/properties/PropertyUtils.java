@@ -103,7 +103,7 @@ public class PropertyUtils {
                         return true;
                     })
                     .orElse(defaultValue);
-        } catch (final Throwable throwable) {
+        } catch (final RuntimeException throwable) {
             log.error("Error obtaining Property value {} returning default value {}", propertyName, defaultValue, throwable);
             return defaultValue;
         }

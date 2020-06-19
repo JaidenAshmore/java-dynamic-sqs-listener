@@ -76,12 +76,12 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 - [Core Framework](java-dynamic-sqs-listener-core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.12.0
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.13.7
   - [Guava](https://github.com/google/guava): 29.0-jre
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.10.3
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.11.0
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.2.5.RELEASE
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.3.1.RELEASE
 
 ### How to Mark the message as successfully processed
 When the method executing the message finishes without throwing an exception, the
