@@ -69,6 +69,7 @@
         <assertj.version>3.12.2</assertj.version>
         <avro.version>1.9.2</avro.version>
         <aws.sdk.version>2.13.3</aws.sdk.version>
+        <aws-xray-recorder.sdk.version>2.4.0</aws-xray-recorder.sdk.version>
         <brave.version>5.12.3</brave.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
@@ -297,6 +298,18 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-schema-registry-client</artifactId>
                 <version>${spring-cloud-schema-registry-client.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-xray-recorder-sdk-core</artifactId>
+                <version>${aws-xray-recorder.sdk.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-xray-recorder-sdk-spring</artifactId>
+                <version>${aws-xray-recorder.sdk.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

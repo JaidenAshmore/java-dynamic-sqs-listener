@@ -1,7 +1,6 @@
 package com.jashmore.sqs.examples;
 
 import com.amazonaws.xray.entities.Subsegment;
-import com.amazonaws.xray.spring.aop.AbstractXRayInterceptor;
 import com.amazonaws.xray.spring.aop.BaseAbstractXRayInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,6 +21,7 @@ public class XRayInterceptor extends BaseAbstractXRayInterceptor {
 
     @Override
     @Pointcut("@within(com.amazonaws.xray.spring.aop.XRayEnabled) && bean(*Listeners)")
-    public void xrayEnabledClasses() {}
+    public void xrayEnabledClasses() {
 
+    }
 }

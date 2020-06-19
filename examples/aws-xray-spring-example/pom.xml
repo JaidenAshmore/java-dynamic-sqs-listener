@@ -11,13 +11,11 @@
 
     <artifactId>aws-xray-spring-example</artifactId>
 
-    <name>Java Dynamic SQS Listener - Examples - AWS XRay</name>
+    <name>Java Dynamic SQS Listener - Examples - AWS XRay Spring</name>
     <description>Contains examples for using the AWS XRay tracing.</description>
 
     <properties>
         <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
-
-        <aws-xray-recorder-sdk.version>2.4.0</aws-xray-recorder-sdk.version>
     </properties>
 
     <dependencies>
@@ -55,18 +53,6 @@
             <artifactId>aws-xray-recorder-sdk-spring</artifactId>
         </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-xray-recorder-sdk-bom</artifactId>
-                <version>${aws-xray-recorder-sdk.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>

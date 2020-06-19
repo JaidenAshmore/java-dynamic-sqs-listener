@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 public class XrayMessageProcessingDecoratorConfiguration {
 
     @Bean
-    public XrayMessageProcessingDecorator xrayMessageFilter() {
-        return new XrayMessageProcessingDecorator();
+    public BasicXrayMessageProcessingDecorator xrayMessageDecorator() {
+        return new BasicXrayMessageProcessingDecorator();
     }
 }

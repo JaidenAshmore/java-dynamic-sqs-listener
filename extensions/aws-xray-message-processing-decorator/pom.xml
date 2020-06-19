@@ -11,15 +11,13 @@
 
     <artifactId>aws-xray-message-processing-decorator</artifactId>
 
-    <properties>
-        <aws-xray-recorder-sdk.version>2.4.0</aws-xray-recorder-sdk.version>
-    </properties>
+    <name>Java Dynamic SQS Listener - Extensions - XRay Message Processing Decorator</name>
+    <description>Message Processing Decorator that wraps message processing in an AWS XRay Segment</description>
 
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-xray-recorder-sdk-core</artifactId>
-            <version>${aws-xray-recorder-sdk.version}</version>
             <scope>provided</scope>
         </dependency>
 

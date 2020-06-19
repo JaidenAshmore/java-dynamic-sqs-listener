@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class MessageListeners {
 
     @SuppressWarnings("unused")
-    @QueueListener(value = "queue-name")
+    @QueueListener(identifier = "queue", value = "queue-name")
     public void batching(@Payload final String payload) throws InterruptedException {
         log.info("Batching Message Received: {}", payload);
         Thread.sleep(500);
