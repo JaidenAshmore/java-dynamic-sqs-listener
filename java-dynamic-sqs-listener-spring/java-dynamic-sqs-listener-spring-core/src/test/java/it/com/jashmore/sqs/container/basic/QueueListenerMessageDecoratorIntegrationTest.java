@@ -44,7 +44,7 @@ public class QueueListenerMessageDecoratorIntegrationTest {
         public MessageProcessingDecorator mdcDecorator() {
             return new MessageProcessingDecorator() {
                 @Override
-                public void onPreSupply(@Nonnull final MessageProcessingContext context, @Nonnull final Message message) {
+                public void onPreMessageProcessing(@Nonnull final MessageProcessingContext context, @Nonnull final Message message) {
                     MDC.put("test", "value");
                 }
             };

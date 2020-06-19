@@ -70,14 +70,9 @@ public class CoreMessageProcessor implements MessageProcessor {
         try {
             result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
         } catch (IllegalAccessException exception) {
-            throw new MessageProcessingException(exception);
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception));
         } catch (InvocationTargetException exception) {
-            if (returnsCompletableFuture) {
-                // as this is an asynchronous message listener we would say this failed to supply the message
-                throw new MessageProcessingException("Message listener threw exception before returning CompletableFuture", exception.getCause());
-            } else {
-                return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
-            }
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
         }
 
         if (hasAcknowledgeParameter) {
@@ -111,7 +106,7 @@ public class CoreMessageProcessor implements MessageProcessor {
         };
 
         return resultCompletableFuture
-                .thenCompose((ignored) -> resolveCallbackLoggingErrorsOnly.get());
+                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.get());
     }
 
     /**
