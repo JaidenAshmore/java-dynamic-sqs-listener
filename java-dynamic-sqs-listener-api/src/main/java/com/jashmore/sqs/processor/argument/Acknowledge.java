@@ -15,7 +15,7 @@ public interface Acknowledge {
      *
      * <p>Multiple calls to this has indeterminate behaviour and should not be done.
      *
-     * @return the future that will be resolved if the message was succesfully resolved
+     * @return the future that will be resolved if the message was successfully acknowledged
      */
     CompletableFuture<?> acknowledgeSuccessful();
 }

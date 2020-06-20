@@ -37,8 +37,8 @@ import javax.annotation.concurrent.ThreadSafe;
  *     message callback is called</li>
  * </ul>
  *
- * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the function that executes the underlying subscriber
- * in that it will take messages provided by the {@link MessageBroker}.
+ * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the subscriber executor
+ * in that it will take messages provided by the {@link MessageBroker} and provide it to the message listener.
  *
  * <p>As there could be multiple messages all being processed at once, the implementations of this interface must be thread safe.
  */
