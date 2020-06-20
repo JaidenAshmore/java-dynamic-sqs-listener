@@ -69,6 +69,7 @@
         <assertj.version>3.16.1</assertj.version>
         <avro.version>1.9.2</avro.version>
         <aws.sdk.version>2.13.7</aws.sdk.version>
+        <brave.version>5.12.3</brave.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
         <cglib.version>3.3.0</cglib.version>
@@ -87,7 +88,6 @@
          countdown latch was passed. No idea why... -->
         <maven.failsafe.version>3.0.0-M4</maven.failsafe.version>
         <maven.surefire.version>3.0.0-M4</maven.surefire.version>
-
 
         <mockito.version>3.3.3</mockito.version>
         <mockito.jupiter.version>3.3.3</mockito.jupiter.version>
@@ -205,6 +205,25 @@
                 <groupId>org.elasticmq</groupId>
                 <artifactId>elasticmq-rest-sqs_2.12</artifactId>
                 <version>${elasticmq.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-context-slf4j</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-tests</artifactId>
+                <version>${brave.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>

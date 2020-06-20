@@ -5,6 +5,7 @@ import com.jashmore.sqs.processor.argument.Acknowledge;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -66,7 +67,7 @@ public interface MessageProcessingDecorator {
      * @param message the message being processed
      * @param object  the value that was resolved from the message listener function or {@link CompletableFuture}
      */
-    default void onMessageProcessingSuccess(MessageProcessingContext context, Message message, Object object) {
+    default void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
 
     }
 

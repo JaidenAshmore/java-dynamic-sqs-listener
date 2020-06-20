@@ -2,6 +2,9 @@ package com.jashmore.sqs.examples;
 
 import static java.util.stream.Collectors.toSet;
 
+import brave.Tracing;
+import brave.context.slf4j.MDCScopeDecorator;
+import brave.propagation.ThreadLocalCurrentTraceContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
@@ -18,6 +21,7 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.extensions.brave.decorator.BraveMessageProcessingDecorator;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -128,10 +132,18 @@ public class ConcurrentBrokerExample {
             throw new RuntimeException(exception);
         }
 
+        final Tracing tracing = Tracing.newBuilder()
+                .currentTraceContext(ThreadLocalCurrentTraceContext.newBuilder()
+                        .addScopeDecorator(MDCScopeDecorator.get())
+                        .build()
+                )
+                .build();
+        tracing.setNoop(true);
+
         return new DecoratingMessageProcessor(
                 identifier,
                 queueProperties,
-                Collections.emptyList(),
+                Collections.singletonList(new BraveMessageProcessingDecorator(tracing)),
                 new CoreMessageProcessor(
                         argumentResolverService(),
                         queueProperties,

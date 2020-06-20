@@ -196,6 +196,12 @@ context for automatic injection into the
 For a more extensive guide for doing this, take a look at
 [Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
 
+### Adding Brave Tracing
+If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
+[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension. See
+[Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and
+[Spring - How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md) for guides on how to add tracing.
+
 ### Building a custom queue listener annotation
 The core Queue Listener annotations may not provide the exact use case necessary for the application and therefore it can be useful to provide your
 own annotation. See

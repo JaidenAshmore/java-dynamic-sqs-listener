@@ -44,6 +44,24 @@
             <artifactId>java-dynamic-sqs-listener-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- Tracing -->
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave-context-slf4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>brave-message-processing-decorator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

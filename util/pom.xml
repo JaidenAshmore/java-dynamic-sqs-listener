@@ -19,5 +19,6 @@
         <module>expected-test-exception</module>
         <module>local-sqs-async-client</module>
         <module>proxy-method-interceptor</module>
+        <module>sqs-brave-tracing</module>
     </modules>
 </project>

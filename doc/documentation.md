@@ -11,6 +11,7 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
         for obtaining messages from the SQS queue if the core implementations do not provided the required functionality
         1. [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing how the
         arguments in the method being executed are resolved
+        1. [How to add Brave Tracing](how-to-guides/core/core-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
         1. [How to extend a message's visibility during processing](how-to-guides/core/core-how-to-extend-message-visibility-during-processing.md): useful for
         extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
         1. [How to manually acknowledge message](how-to-guides/core/core-how-to-mark-message-as-successfully-processed.md): useful for when you want to mark the
@@ -22,8 +23,9 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
         1. [How to add a custom ArgumentResolver to a Spring application](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
         integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
         for how build a new ArgumentResolver from scratch
-        1. [ How to add custom MessageProcessingDecorators](how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
+        1. [How to add custom MessageProcessingDecorators](how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
         to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
+        1. [How to add Brave Tracing](how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
         1. [How to provide a custom Object Mapper](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): guide for overriding the default
         `ObjectMapper` that is used to serialise the message body and attributes
         1. [How to add your own queue listener](how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the
