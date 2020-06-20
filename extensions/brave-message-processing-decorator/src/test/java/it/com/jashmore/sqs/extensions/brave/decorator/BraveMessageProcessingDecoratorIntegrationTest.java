@@ -14,7 +14,6 @@ import com.jashmore.sqs.extensions.brave.decorator.BraveMessageProcessingDecorat
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import org.junit.After;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -104,7 +103,7 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
         spanHandler.clear();
     }
 
-    @After
+    @AfterEach
     public void tearDownTracing() {
         tracing.close();
     }
