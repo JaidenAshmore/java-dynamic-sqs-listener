@@ -90,6 +90,7 @@
             <groupId>com.jashmore</groupId>
             <artifactId>expected-test-exception</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

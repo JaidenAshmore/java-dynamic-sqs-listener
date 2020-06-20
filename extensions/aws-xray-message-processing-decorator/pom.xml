@@ -14,6 +14,10 @@
     <name>Java Dynamic SQS Listener - Extensions - XRay Message Processing Decorator</name>
     <description>Message Processing Decorator that wraps message processing in an AWS XRay Segment</description>
 
+    <properties>
+        <spotbugs.config.location>../../configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -40,6 +44,18 @@
             <artifactId>java-dynamic-sqs-listener-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

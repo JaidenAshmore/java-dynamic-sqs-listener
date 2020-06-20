@@ -14,10 +14,9 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Processor that has the responsibility of taking a message and processing it via the required message consumer (Java method).
  *
- * <p>This wraps a Java method that should be executed for each message received. The parameters of the function will need to extract data out
- * of the message and the implementations of this {@link MessageProcessor} should use the {@link ArgumentResolverService}. For example, an argument
- * may require a parameter to contain the message id of the message and therefore this would handle populating the argument for this parameter with
- * this value.
+ * <p>This wraps a Java method that should be executed for each message received. The parameters of the function will need to be extracted out
+ * of the message and the implementations of this {@link MessageProcessor} should use the {@link ArgumentResolverService} to do this. For example, an argument
+ * may require the message id of the message and therefore this would handle populating the argument for this parameter with this value.
  *
  * <p>Most arguments would be able to be resolved via the {@link ArgumentResolverService}, however, the following arguments must be resolved via
  * this {@link MessageProcessor}:
@@ -34,11 +33,12 @@ import javax.annotation.concurrent.ThreadSafe;
  *     <li>the method has an {@link Acknowledge} field as a parameter, the {@link Acknowledge#acknowledgeSuccessful()} is called in the method and
  *     that is completed successfully</li>
  *     <li>or the method returns a {@link CompletableFuture} which is resolved, the process will call the resolve message callback after this</li>
- *     <li>or the method executes without throwing an exception, in which the resolve message callback is called</li>
+ *     <li>or the method does not return a {@link CompletableFuture} and executes without throwing an exception, in which the resolve
+ *     message callback is called</li>
  * </ul>
  *
- * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the function that executes the underlying subscriber
- * in that it will take messages provided by the {@link MessageBroker}.
+ * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the subscriber executor
+ * in that it will take messages provided by the {@link MessageBroker} and provide it to the message listener.
  *
  * <p>As there could be multiple messages all being processed at once, the implementations of this interface must be thread safe.
  */

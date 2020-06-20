@@ -24,17 +24,12 @@ public class BasicXrayMessageProcessingDecorator implements MessageProcessingDec
     }
 
     @Override
-    public void onPreSupply(final MessageProcessingContext context, final Message message) {
+    public void onPreMessageProcessing(final MessageProcessingContext context, final Message message) {
         recorder.beginSegment("sqs-listener-" + context.getListenerIdentifier());
     }
 
     @Override
-    public void onSupplyFailure(MessageProcessingContext context, Message message, Throwable throwable) {
-        recorder.getCurrentSegment().addException(throwable);
-    }
-
-    @Override
-    public void onSupplyFinished(final MessageProcessingContext context, final Message message) {
+    public void onMessageProcessingThreadComplete(MessageProcessingContext context, Message message) {
         recorder.endSegment();
     }
 }

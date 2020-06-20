@@ -76,12 +76,12 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 - [Core Framework](java-dynamic-sqs-listener-core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.12.0
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.13.7
   - [Guava](https://github.com/google/guava): 29.0-jre
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.10.3
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.11.0
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.2.5.RELEASE
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.3.1.RELEASE
 
 ### How to Mark the message as successfully processed
 When the method executing the message finishes without throwing an exception, the
@@ -249,6 +249,12 @@ at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how
 As the application grows, it may be beneficial to allow for versioning of the schema so that the consumer can still serialize messages from producers sending
 different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
 to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
+
+### Wrapping the Message Listener execution using a MessageProcessingDecorator
+If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
+[MessageProcessingDecorator](java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
+functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
+look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
 
 ### Comparing Libraries
 If you want to see the difference between this library and others like the

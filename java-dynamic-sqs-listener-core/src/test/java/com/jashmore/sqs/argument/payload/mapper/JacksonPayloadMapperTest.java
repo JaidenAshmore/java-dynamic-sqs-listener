@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class JacksonPayloadMapperTest {
     void errorBuildingPayloadThrowsArgumentResolutionException() throws IOException {
         // arrange
         final Message message = Message.builder().body("test").build();
-        when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenThrow(new IOException());
+        when(objectMapper.readValue(anyString(), eq(Pojo.class))).thenThrow(JsonProcessingException.class);
 
         // act
         final PayloadMappingException exception = assertThrows(PayloadMappingException.class, () -> payloadMapper.map(message, Pojo.class));
@@ -80,5 +81,4 @@ class JacksonPayloadMapperTest {
             return field;
         }
     }
-
 }

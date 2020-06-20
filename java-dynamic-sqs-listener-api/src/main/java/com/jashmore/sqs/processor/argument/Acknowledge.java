@@ -14,6 +14,8 @@ public interface Acknowledge {
      * Acknowledge that the message was successfully completed, which will result in it being removed from the queue.
      *
      * <p>Multiple calls to this has indeterminate behaviour and should not be done.
+     *
+     * @return the future that will be resolved if the message was successfully acknowledged
      */
     CompletableFuture<?> acknowledgeSuccessful();
 }

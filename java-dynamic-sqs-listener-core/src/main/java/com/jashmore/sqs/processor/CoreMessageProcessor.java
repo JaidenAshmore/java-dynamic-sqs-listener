@@ -70,14 +70,9 @@ public class CoreMessageProcessor implements MessageProcessor {
         try {
             result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
         } catch (IllegalAccessException exception) {
-            throw new MessageProcessingException(exception);
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception));
         } catch (InvocationTargetException exception) {
-            if (returnsCompletableFuture) {
-                // as this is an asynchronous message listener we would say this failed to supply the message
-                throw new MessageProcessingException("Message listener threw exception before returning CompletableFuture", exception.getCause());
-            } else {
-                return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
-            }
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
         }
 
         if (hasAcknowledgeParameter) {
@@ -95,9 +90,9 @@ public class CoreMessageProcessor implements MessageProcessor {
             resultCompletableFuture = CompletableFuture.completedFuture(null);
         }
 
-        final Supplier<CompletableFuture<Object>> resolveCallbackLoggingErrorsOnly = () -> {
+        final Runnable resolveCallbackLoggingErrorsOnly = () -> {
             try {
-                return resolveMessageCallback.get()
+                resolveMessageCallback.get()
                         .handle((i, throwable) -> {
                             if (throwable != null) {
                                 log.error("Error resolving successfully processed message", throwable);
@@ -106,12 +101,11 @@ public class CoreMessageProcessor implements MessageProcessor {
                         });
             } catch (RuntimeException runtimeException) {
                 log.error("Failed to trigger message resolving", runtimeException);
-                return CompletableFuture.completedFuture(null);
             }
         };
 
         return resultCompletableFuture
-                .thenCompose((ignored) -> resolveCallbackLoggingErrorsOnly.get());
+                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.run());
     }
 
     /**

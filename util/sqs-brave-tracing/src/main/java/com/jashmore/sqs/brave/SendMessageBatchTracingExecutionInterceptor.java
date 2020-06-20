@@ -63,8 +63,7 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
 
         final SendMessageBatchRequest request = (SendMessageBatchRequest) context.request();
         final Map<String, Span> messageSpans = request.entries().stream()
-                .collect(
-                        toMap(SendMessageBatchRequestEntry::id, entry -> startSpanForMessage(request, entry)));
+                .collect(toMap(SendMessageBatchRequestEntry::id, entry -> startSpanForMessage(request, entry)));
 
         executionAttributes.putAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE, messageSpans);
     }

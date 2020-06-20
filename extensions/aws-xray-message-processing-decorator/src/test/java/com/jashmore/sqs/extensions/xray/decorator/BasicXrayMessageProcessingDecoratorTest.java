@@ -37,7 +37,7 @@ class BasicXrayMessageProcessingDecoratorTest {
                 .build();
 
         // act
-        decorator.onPreSupply(context, Message.builder().build());
+        decorator.onPreMessageProcessing(context, Message.builder().build());
 
         // assert
         verify(recorder).beginSegment("sqs-listener-identifier");
@@ -53,7 +53,7 @@ class BasicXrayMessageProcessingDecoratorTest {
                 .build();
 
         // act
-        decorator.onSupplyFinished(context, Message.builder().build());
+        decorator.onMessageProcessingThreadComplete(context, Message.builder().build());
 
         // assert
         verify(recorder).endSegment();
