@@ -90,9 +90,9 @@ public class CoreMessageProcessor implements MessageProcessor {
             resultCompletableFuture = CompletableFuture.completedFuture(null);
         }
 
-        final Supplier<CompletableFuture<Object>> resolveCallbackLoggingErrorsOnly = () -> {
+        final Runnable resolveCallbackLoggingErrorsOnly = () -> {
             try {
-                return resolveMessageCallback.get()
+                resolveMessageCallback.get()
                         .handle((i, throwable) -> {
                             if (throwable != null) {
                                 log.error("Error resolving successfully processed message", throwable);
@@ -101,12 +101,11 @@ public class CoreMessageProcessor implements MessageProcessor {
                         });
             } catch (RuntimeException runtimeException) {
                 log.error("Failed to trigger message resolving", runtimeException);
-                return CompletableFuture.completedFuture(null);
             }
         };
 
         return resultCompletableFuture
-                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.get());
+                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.run());
     }
 
     /**

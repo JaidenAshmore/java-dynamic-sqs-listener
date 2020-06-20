@@ -244,6 +244,12 @@ As the application grows, it may be beneficial to allow for versioning of the sc
 different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
 to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
 
+### Wrapping the Message Listener execution using a MessageProcessingDecorator
+If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
+[MessageProcessingDecorator](java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
+functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
+look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
+
 ### Comparing Libraries
 If you want to see the difference between this library and others like the
 [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and
