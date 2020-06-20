@@ -7,7 +7,6 @@ This contains all of the documentation for the framework.
 more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs-listener-api](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs).
 1. How to Guides:
     1. Core Framework How To Guides
-        1. [How to add Brave Tracing](how-to-guides/core/core-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
         1. [How to implement a custom MessageRetriever](how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic
         for obtaining messages from the SQS queue if the core implementations do not provided the required functionality
         1. [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing how the
@@ -21,7 +20,6 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
         decorator to wrap a message listener's processing of a message
     1. [How to Connect to an AWS SQS Queue](how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
     1. Spring How To Guides
-1. [How to add Brave Tracing](how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
         1. [How to add a custom ArgumentResolver to a Spring application](how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
         integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
         for how build a new ArgumentResolver from scratch
