@@ -41,7 +41,14 @@ public class DecoratingMessageProcessor implements MessageProcessor {
                 .attributes(new HashMap<>())
                 .build();
 
-        decorators.forEach(decorator -> decorator.onPreSupply(context, message));
+        decorators.forEach(decorator -> {
+            try {
+                decorator.onPreMessageProcessing(context, message);
+            } catch (RuntimeException runtimeException) {
+                throw new MessageProcessingException(runtimeException);
+            }
+        });
+
         try {
             final Supplier<CompletableFuture<?>> wrappedResolveMessageCallback = () -> resolveMessageCallback.get()
                     .whenComplete((returnValue, throwable) -> {
@@ -52,22 +59,19 @@ public class DecoratingMessageProcessor implements MessageProcessor {
                         }
                     });
 
-            final CompletableFuture<?> resultingCompletableFuture = delegate.processMessage(message, wrappedResolveMessageCallback)
+            return delegate.processMessage(message, wrappedResolveMessageCallback)
                     .whenComplete((returnValue, throwable) -> {
                         if (throwable != null) {
                             safelyRun(decorators, decorator -> decorator.onMessageProcessingFailure(context, message, throwable));
                         } else {
                             safelyRun(decorators, decorator -> decorator.onMessageProcessingSuccess(context, message, returnValue));
                         }
-                        safelyRun(decorators, decorator -> decorator.onMessageProcessingFinished(context, message));
                     });
-            safelyRun(decorators, decorator -> decorator.onSupplySuccess(context, message));
-            return resultingCompletableFuture;
         } catch (RuntimeException runtimeException) {
-            safelyRun(decorators, decorator -> decorator.onSupplyFailure(context, message, runtimeException));
+            safelyRun(decorators, decorator -> decorator.onMessageProcessingFailure(context, message, runtimeException));
             throw runtimeException;
         } finally {
-            safelyRun(decorators, decorator -> decorator.onSupplyFinished(context, message));
+            safelyRun(decorators, decorator -> decorator.onMessageProcessingThreadComplete(context, message));
         }
     }
 

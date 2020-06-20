@@ -199,6 +199,7 @@ public class QueueListenerConfiguration {
                                                                                         final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                         final QueueResolver queueResolver,
                                                                                         final Environment environment,
+                                                                                        @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
                                                                                         final List<MessageProcessingDecorator> decorators) {
                 return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
                         queueResolver, environment, decorators);
@@ -209,6 +210,7 @@ public class QueueListenerConfiguration {
                                                                                               final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                               final QueueResolver queueResolver,
                                                                                               final Environment environment,
+                                                                                              @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
                                                                                               final List<MessageProcessingDecorator> decorators) {
                 return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
                         queueResolver, environment, decorators);
