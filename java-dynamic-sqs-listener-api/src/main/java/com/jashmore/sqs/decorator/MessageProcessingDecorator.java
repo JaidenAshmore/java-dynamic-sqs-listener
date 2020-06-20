@@ -107,7 +107,7 @@ public interface MessageProcessingDecorator {
      * {@link Acknowledge#acknowledgeSuccessful()} and the message resolving is completed unsuccessfully.
      *
      * <p>Execution of this method is not guaranteed to be run on the same thread that the message listener was running in. Also note that
-     * it is not guaranteed that either this or the {@link #onMessageResolvedFailure(MessageProcessingContext, Message, Throwable)} are not guaranteed to be
+     * it is not guaranteed that either this or the {@link #onMessageResolvedFailure(MessageProcessingContext, Message, Throwable)} will be
      * executed as failure to process the message or not making a call to {@link Acknowledge} will not trigger the message resolving process to be run.
      *
      * @param context details about the message processing functionality, e.g. identifier for this message processor
@@ -132,7 +132,7 @@ public interface MessageProcessingDecorator {
      * {@link Acknowledge#acknowledgeSuccessful()} and the message resolving is completed unsuccessfully.
      *
      * <p>Execution of this method is not guaranteed to be run on the same thread that the message listener was running in. Also note that
-     * it is not guaranteed that either this or the {@link #onMessageResolvedSuccess(MessageProcessingContext, Message)} are not guaranteed to be executed
+     * it is not guaranteed that either this or the {@link #onMessageResolvedSuccess(MessageProcessingContext, Message)} will be executed
      * as failure to process the message or not making a call to {@link Acknowledge} will not trigger the message resolving process to be run.
      *
      * @param context details about the message processing functionality, e.g. identifier for this message processor
