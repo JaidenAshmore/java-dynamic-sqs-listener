@@ -12,6 +12,7 @@ import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
@@ -197,16 +198,22 @@ public class QueueListenerConfiguration {
             public MessageListenerContainerFactory basicMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
                                                                                         final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                         final QueueResolver queueResolver,
-                                                                                        final Environment environment) {
-                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
+                                                                                        final Environment environment,
+                                                                                        @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+                                                                                        final List<MessageProcessingDecorator> decorators) {
+                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
+                        queueResolver, environment, decorators);
             }
 
             @Bean
             public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
                                                                                               final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                               final QueueResolver queueResolver,
-                                                                                              final Environment environment) {
-                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
+                                                                                              final Environment environment,
+                                                                                              @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+                                                                                              final List<MessageProcessingDecorator> decorators) {
+                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
+                        queueResolver, environment, decorators);
             }
         }
     }

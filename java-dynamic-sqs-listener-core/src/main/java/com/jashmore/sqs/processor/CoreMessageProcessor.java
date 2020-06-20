@@ -11,6 +11,7 @@ import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -20,6 +21,7 @@ import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -27,6 +29,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * Default implementation of the {@link MessageProcessor} that will simply resolve arguments, process the message and delete the
  * message from the queue if it was completed successfully.
  */
+@Slf4j
 @ThreadSafe
 public class CoreMessageProcessor implements MessageProcessor {
     private final QueueProperties queueProperties;
@@ -36,8 +39,8 @@ public class CoreMessageProcessor implements MessageProcessor {
 
     // These are calculated in the constructor so that it is not recalculated each time a message is processed
     private final List<InternalArgumentResolver> methodArgumentResolvers;
-    private final Class<?> returnType;
     private final boolean hasAcknowledgeParameter;
+    private final boolean returnsCompletableFuture;
 
     public CoreMessageProcessor(final ArgumentResolverService argumentResolverService,
                                 final QueueProperties queueProperties,
@@ -51,18 +54,25 @@ public class CoreMessageProcessor implements MessageProcessor {
 
         this.methodArgumentResolvers = getArgumentResolvers(argumentResolverService);
         this.hasAcknowledgeParameter = hasAcknowledgeParameter();
-        this.returnType = messageConsumerMethod.getReturnType();
+        this.returnsCompletableFuture = CompletableFuture.class.isAssignableFrom(messageConsumerMethod.getReturnType());
     }
 
     @Override
-    public CompletableFuture<?> processMessage(final Message message, final Runnable resolveMessageCallback) throws MessageProcessingException {
-        final Object[] arguments = getArguments(message, resolveMessageCallback);
+    public CompletableFuture<?> processMessage(final Message message, final Supplier<CompletableFuture<?>> resolveMessageCallback) {
+        final Object[] arguments;
+        try {
+            arguments = getArguments(message, resolveMessageCallback);
+        } catch (RuntimeException runtimeException) {
+            throw new MessageProcessingException("Error building arguments for the message listener", runtimeException);
+        }
 
         final Object result;
         try {
             result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
-        } catch (final InvocationTargetException | IllegalAccessException | RuntimeException exception) {
-            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Error processing message", exception));
+        } catch (IllegalAccessException exception) {
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception));
+        } catch (InvocationTargetException exception) {
+            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
         }
 
         if (hasAcknowledgeParameter) {
@@ -70,19 +80,32 @@ public class CoreMessageProcessor implements MessageProcessor {
             return CompletableFuture.completedFuture(null);
         }
 
-        if (CompletableFuture.class.isAssignableFrom(returnType)) {
-            final CompletableFuture<?> resultCompletableFuture = (CompletableFuture) result;
-
-            if (resultCompletableFuture == null) {
+        final CompletableFuture<?> resultCompletableFuture;
+        if (returnsCompletableFuture) {
+            if (result == null) {
                 return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Method returns CompletableFuture but null was returned"));
             }
-
-            return resultCompletableFuture
-                    .thenAccept((ignored) -> resolveMessageCallback.run());
+            resultCompletableFuture = (CompletableFuture<?>) result;
         } else {
-            resolveMessageCallback.run();
-            return CompletableFuture.completedFuture(null);
+            resultCompletableFuture = CompletableFuture.completedFuture(null);
         }
+
+        final Runnable resolveCallbackLoggingErrorsOnly = () -> {
+            try {
+                resolveMessageCallback.get()
+                        .handle((i, throwable) -> {
+                            if (throwable != null) {
+                                log.error("Error resolving successfully processed message", throwable);
+                            }
+                            return null;
+                        });
+            } catch (RuntimeException runtimeException) {
+                log.error("Failed to trigger message resolving", runtimeException);
+            }
+        };
+
+        return resultCompletableFuture
+                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.run());
     }
 
     /**
@@ -91,7 +114,7 @@ public class CoreMessageProcessor implements MessageProcessor {
      * @param message     the message to populate the arguments from
      * @return the array of arguments to call the method with
      */
-    private Object[] getArguments(final Message message, final Runnable resolveMessageCallback) {
+    private Object[] getArguments(final Message message, final  Supplier<CompletableFuture<?>> resolveMessageCallback) {
         return methodArgumentResolvers.stream()
                 .map(resolver -> resolver.resolveArgument(message, resolveMessageCallback))
                 .toArray(Object[]::new);
@@ -110,7 +133,7 @@ public class CoreMessageProcessor implements MessageProcessor {
                             .build();
 
                     if (isAcknowledgeParameter(parameter)) {
-                        return (message, resolveMessageCallback) -> (Acknowledge) resolveMessageCallback::run;
+                        return (message, resolveMessageCallback) -> (Acknowledge) resolveMessageCallback::get;
                     }
 
                     if (isVisibilityExtenderParameter(parameter)) {
@@ -148,6 +171,6 @@ public class CoreMessageProcessor implements MessageProcessor {
          * @param resolveMessageCallback the callback that should be executed when the message has successfully been processed
          * @return the argument that should be used for the corresponding parameter
          */
-        Object resolveArgument(final Message message, final Runnable resolveMessageCallback);
+        Object resolveArgument(final Message message, final Supplier<CompletableFuture<?>> resolveMessageCallback);
     }
 }

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,12 +16,14 @@ import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.UnsupportedArgumentResolutionException;
-import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
+import com.jashmore.sqs.util.ExpectedTestException;
+import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
@@ -31,6 +32,9 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 @ExtendWith(MockitoExtension.class)
 class CoreMessageProcessorTest {
@@ -38,9 +42,11 @@ class CoreMessageProcessorTest {
             .builder()
             .queueUrl("queueUrl")
             .build();
-    private static final CoreMessageProcessorTest BEAN = new CoreMessageProcessorTest();
-    private static final Runnable NO_OP = () -> {
-    };
+    private static final Message MESSAGE = Message.builder()
+            .body("test")
+            .build();
+    private static final SynchronousMessageListenerScenarios syncMessageListener = new SynchronousMessageListenerScenarios();
+    private static final Supplier<CompletableFuture<?>> NO_OP = () -> CompletableFuture.completedFuture(null);
 
     @Mock
     private ArgumentResolverService argumentResolverService;
@@ -52,238 +58,374 @@ class CoreMessageProcessorTest {
     private ArgumentResolver<String> mockArgumentResolver;
 
     @Mock
-    private ArgumentResolver<CompletableFuture<Object>> completableFutureArgumentResolver;
+    private Supplier<CompletableFuture<?>> mockMessageResolver;
 
-    @Test
-    void forEachParameterInMethodTheArgumentIsResolved() {
-        // arrange
-        final Method method = getMethodWithAcknowledge();
-        final Message message = Message.builder().build();
-        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
+    @Nested
+    class Arguments {
+        @Test
+        void forEachParameterInMethodTheArgumentIsResolved() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithArguments", String.class, String.class);
+            doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
 
-        // act
-        processor.processMessage(message, NO_OP);
+            // act
+            processor.processMessage(MESSAGE, NO_OP);
 
-        // assert
-        verify(argumentResolverService, times(2)).getArgumentResolver(any(MethodParameter.class));
+            // assert
+            verify(argumentResolverService, times(2)).getArgumentResolver(any(MethodParameter.class));
+        }
+
+        @Test
+        void anyParameterUnableToBeResolvedWillThrowAnError() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithArguments", String.class, String.class);
+            when(argumentResolverService.getArgumentResolver(any(MethodParameter.class)))
+                    .thenThrow(new UnsupportedArgumentResolutionException());
+
+            // act
+            assertThrows(UnsupportedArgumentResolutionException.class,
+                    () -> new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener));
+        }
+
+        @Test
+        void methodWillBeInvokedWithArgumentsResolved() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithArguments", String.class, String.class);
+            final SynchronousMessageListenerScenarios mockMessageListener = mock(SynchronousMessageListenerScenarios.class);
+            doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+            when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(MESSAGE)))
+                    .thenReturn("payload")
+                    .thenReturn("payload2");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, mockMessageListener);
+
+            // act
+            processor.processMessage(MESSAGE, NO_OP);
+
+            // assert
+            verify(mockMessageListener).methodWithArguments("payload", "payload2");
+        }
+
+        @Test
+        void methodWithVisibilityExtenderWillBeCorrectlyResolved() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithVisibilityExtender", VisibilityExtender.class);
+            final SynchronousMessageListenerScenarios mockMessageListener = mock(SynchronousMessageListenerScenarios.class);
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, mockMessageListener);
+
+            // act
+            processor.processMessage(MESSAGE, NO_OP);
+
+            // assert
+            verify(mockMessageListener).methodWithVisibilityExtender(any(VisibilityExtender.class));
+        }
+
+        @Test
+        void anyArgumentThatFailsToBeResolvedForMessageWillThrowMessageProcessingException() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithArguments", String.class, String.class);
+            doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
+            when(mockArgumentResolver.resolveArgumentForParameter(any(), any(), any()))
+                    .thenThrow(new ExpectedTestException());
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+
+            // act
+            final MessageProcessingException exception = assertThrows(MessageProcessingException.class, () -> processor.processMessage(MESSAGE, NO_OP));
+
+            // assert
+            assertThat(exception).hasCauseInstanceOf(ExpectedTestException.class);
+        }
     }
 
-    @Test
-    void anyParameterUnableToBeResolvedWillThrowAnError() {
-        // arrange
-        final Method method = getMethodWithAcknowledge();
-        when(argumentResolverService.getArgumentResolver(any(MethodParameter.class)))
-                .thenThrow(new UnsupportedArgumentResolutionException());
+    @Nested
+    class SynchronousMessageProcessing {
 
-        // act
-        assertThrows(UnsupportedArgumentResolutionException.class,
-                () -> new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, BEAN));
+        @Test
+        void willReturnCompletedFutureWhenTheMessageListenerDidNotThrowAnException() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            assertThat(result).isCompleted();
+        }
+
+        @Test
+        void willAttemptToResolveMessageWhenMessageListenerProcessedSuccessfully() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+            // act
+            processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            verify(mockMessageResolver).get();
+        }
+
+        @Test
+        void returnedCompletableFutureIsNotReliantOnMessageResolvingCompleting() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(new CompletableFuture<>());
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            assertThat(result).isCompleted();
+        }
+
+        @Test
+        void successfullyProcessingTheMessageWillAllowSubsequentFutureChainCallsToBeOnSameThread() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(new CompletableFuture<>());
+
+            // act
+            final AtomicReference<String> futureChainThreadName = new AtomicReference<>();
+            final String messageListenerThreadName = Thread.currentThread().getName();
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver)
+                    .thenAccept((ignored) -> futureChainThreadName.set(Thread.currentThread().getName()));
+
+            // assert
+            assertThat(result).isCompleted();
+            assertThat(futureChainThreadName.get()).isEqualTo(messageListenerThreadName);
+        }
+
+        @Test
+        void willReturnRejectedCompletableFutureWhenTheMessageListenerThrewAnException() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodThatThrowsException");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // arrange
+            assertThat(result).isCompletedExceptionally();
+        }
+
+        @Test
+        void unsuccessfullyProcessingTheMessageWillAllowSubsequentFutureChainCallsToBeOnSameThread() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodThatThrowsException");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+
+            // act
+            final AtomicReference<String> futureChainThreadName = new AtomicReference<>();
+            final String messageListenerThreadName = Thread.currentThread().getName();
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver)
+                    .whenComplete((ignored, throwable) -> futureChainThreadName.set(Thread.currentThread().getName()));
+
+            // assert
+            assertThat(result).isCompletedExceptionally();
+            assertThat(futureChainThreadName.get()).isEqualTo(messageListenerThreadName);
+        }
+
+        @Test
+        void failingToTriggerResolveMessageSupplierWillNotRejectFuture() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenThrow(ExpectedTestException.class);
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            assertThat(result).isCompleted();
+        }
+
+        @Test
+        void failingToResolveMessageWillNotRejectFuture() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            assertThat(result).isCompleted();
+        }
+
+        @Test
+        void failingToProcessDueToIllegalAccessExceptionWilRejectFuture() {
+            // arrange
+            final Method method = SynchronousMessageListenerScenarios.getMethod("privateMethod");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
+
+            // act
+            final CompletableFuture<?> result = processor.processMessage(MESSAGE, mockMessageResolver);
+
+            // assert
+            assertThat(result).isCompletedExceptionally();
+            final ExecutionException processingException = assertThrows(ExecutionException.class, result::get);
+            assertThat(processingException).hasCauseInstanceOf(MessageProcessingException.class);
+            assertThat(processingException.getCause()).hasCauseInstanceOf(IllegalAccessException.class);
+        }
+
+        @Nested
+        class AcknowledgeArgument {
+            @Test
+            void methodWithAcknowledgeParameterWillNotDeleteMessageOnSuccess() {
+                // arrange
+                final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithAcknowledge", Acknowledge.class);
+                final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                        sqsAsyncClient, method, syncMessageListener);
+
+                // act
+                processor.processMessage(MESSAGE, mockMessageResolver);
+
+                // assert
+                verify(mockMessageResolver, never()).get();
+            }
+        }
     }
 
-    @Test
-    void methodWillBeInvokedWithArgumentsResolved() {
-        // arrange
-        final Method method = getMethodWithAcknowledge();
-        final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
-        final Message message = Message.builder().build();
-        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
-                .thenReturn("payload")
-                .thenReturn("payload2");
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, mockProcessor);
+    @Nested
+    class AsynchronousMessageProcessing {
+        private final AsynchronousMessageListenerScenarios asyncMessageListener = new AsynchronousMessageListenerScenarios();
 
-        // act
-        processor.processMessage(message, NO_OP);
+        @Test
+        void willReturnCompletedFutureWhenMessageListenerReturnsResolvedFuture() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturningResolvedFuture");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
-        // assert
-        verify(mockProcessor).methodWithAcknowledge(ArgumentMatchers.isA(Acknowledge.class), eq("payload"), eq("payload2"));
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @Test
-    void methodWithVisibilityExtenderWillBeCorrectlyResolved() {
-        // arrange
-        final Method method = getMethodWithVisibiltyExtender();
-        final CoreMessageProcessorTest mockProcessor = mock(CoreMessageProcessorTest.class);
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, mockProcessor);
-        final Message message = Message.builder().build();
+            // assert
+            assertThat(completableFuture).isCompleted();
+        }
 
-        // act
-        processor.processMessage(message, NO_OP);
+        @Test
+        void willAttemptToResolveMessageWhenMessageListenerReturnsCompletedFuture() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturningResolvedFuture");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
-        // assert
-        verify(mockProcessor).methodWithVisibilityExtender(any(VisibilityExtender.class));
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @Test
-    void methodWithAcknowledgeParameterWillNotDeleteMessageOnSuccess() {
-        // arrange
-        final Method method = getMethodWithAcknowledge();
-        final Message message = Message.builder().build();
-        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
-                .thenReturn("payload");
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
-        final Runnable messageResolvedRunnable = mock(Runnable.class);
+            // assert
+            assertThat(completableFuture).isCompleted();
+            verify(mockMessageResolver).get();
+        }
 
-        // act
-        processor.processMessage(message, messageResolvedRunnable);
+        @Test
+        @SneakyThrows
+        void whenTheMessageListenerReturnsCompletableFutureThatIsResolvedAsynchronouslyFutureChainIsNotOnSameThread() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+            final String messageListenerThreadName = Thread.currentThread().getName();
 
-        // assert
-        verify(messageResolvedRunnable, never()).run();
-    }
+            // act
+            final AtomicReference<String> futureChainThreadName = new AtomicReference<>();
+            processor.processMessage(MESSAGE, mockMessageResolver)
+                    .whenComplete((ignored, throwable) -> futureChainThreadName.set(Thread.currentThread().getName()))
+                    .get(5, TimeUnit.SECONDS);
 
-    @Test
-    void methodWithoutAcknowledgeParameterWillResolveMessageOnExecutionWithoutException() {
-        // arrange
-        final Method method = getMethodWithNoAcknowledge();
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
-                .thenReturn("payload");
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
-        final Runnable messageResolvedRunnable = mock(Runnable.class);
+            // assert
+            assertThat(futureChainThreadName).isNotNull();
+            assertThat(futureChainThreadName.get()).isNotEqualTo(messageListenerThreadName);
+        }
 
-        // act
-        processor.processMessage(message, messageResolvedRunnable);
+        @Test
+        void willReturnRejectedFutureWhenMessageListenerThrowsException() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodThatThrowsException");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
 
-        // assert
-        verify(messageResolvedRunnable).run();
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @Test
-    void methodWithoutAcknowledgeThatThrowsExceptionDoesNotResolveMessage() {
-        // arrange
-        final Method method = getMethodThatThrowsException();
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(mockArgumentResolver).when(argumentResolverService).getArgumentResolver(any(MethodParameter.class));
-        when(mockArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(), eq(message)))
-                .thenReturn("payload");
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
-        final Runnable messageResolvedRunnable = mock(Runnable.class);
+            // assert
+            assertThat(completableFuture).isCompletedExceptionally();
+        }
 
-        // act
-        final CompletableFuture<?> result = processor.processMessage(message, messageResolvedRunnable);
+        @Test
+        void willNotAttemptToResolveMessageWhenMessageListenerThrowsException() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodThatThrowsException");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
 
-        // arrange
-        assertThat(result).isCompletedExceptionally();
-        verify(messageResolvedRunnable, never()).run();
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @Test
-    void methodReturningCompletableFutureWillResolveMessageWhenFutureResolved() throws Exception {
-        // arrange
-        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
-        final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenReturn(future);
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
-        final Runnable messageResolvedRunnable = mock(Runnable.class);
+            // assert
+            assertThat(completableFuture).isCompletedExceptionally();
+            verify(mockMessageResolver, never()).get();
+        }
 
-        // act
-        CompletableFuture.runAsync(() -> processor.processMessage(message, messageResolvedRunnable));
+        @Test
+        @SneakyThrows
+        void whenTheMessageListenerReturnsCompletableFutureThatIsRejectedAsynchronouslyFutureChainIsNotOnSameThread() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+            final String messageListenerThreadName = Thread.currentThread().getName();
 
-        // assert
-        verify(messageResolvedRunnable, never()).run();
-        future.complete("value");
-        verify(messageResolvedRunnable, timeout(5000)).run();
-    }
+            // act
+            final AtomicReference<String> futureChainThreadName = new AtomicReference<>();
+            processor.processMessage(MESSAGE, mockMessageResolver)
+                    .whenComplete((ignored, throwable) -> futureChainThreadName.set(Thread.currentThread().getName()))
+                    .get(5, TimeUnit.SECONDS);
 
-    @Test
-    void methodReturningCompletableFutureWillNotResolveMessageWhenFutureRejected() throws Exception {
-        // arrange
-        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
-        final CompletableFuture<Object> future = new CompletableFuture<>();
-        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenReturn(future);
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
-        final Runnable messageResolvedRunnable = mock(Runnable.class);
-        future.completeExceptionally(new RuntimeException("Excepted Exception"));
+            // assert
+            assertThat(futureChainThreadName).isNotNull();
+            assertThat(futureChainThreadName.get()).isNotEqualTo(messageListenerThreadName);
+        }
 
-        // act
-        final CompletableFuture<?> result = processor.processMessage(message, messageResolvedRunnable);
+        @Test
+        void messageListenerThatReturnsNullWillReturnRejectedFuture() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodThatReturnsNull");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
 
-        // assert
-        assertThat(result).isCompletedExceptionally();
-        verify(messageResolvedRunnable, never()).run();
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @Test
-    void methodReturningCompletableFutureThatReturnsNullWillThrowMessageProcessingException() throws Exception {
-        // arrange
-        final Method method = CoreMessageProcessorTest.class.getMethod("methodReturningCompletableFuture", CompletableFuture.class);
-        final Message message = Message.builder().receiptHandle("handle").build();
-        doReturn(completableFutureArgumentResolver).when(argumentResolverService).getArgumentResolver(any());
-        when(completableFutureArgumentResolver.resolveArgumentForParameter(eq(QUEUE_PROPERTIES), any(MethodParameter.class), eq(message)))
-                .thenReturn(null);
-        final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
-                sqsAsyncClient, method, BEAN);
+            // assert
+            assertThat(completableFuture).isCompletedExceptionally();
+        }
 
-        // act
-        final ExecutionException exception = assertThrows(ExecutionException.class, () -> processor.processMessage(message, NO_OP).get());
+        @Test
+        void thatCompletesButMessageResolvingFailsWillNotRejectFuture() {
+            // arrange
+            final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturningResolvedFuture");
+            final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
+                    sqsAsyncClient, method, asyncMessageListener);
+            when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
-        // assert
-        assertThat(exception.getCause()).isInstanceOf(MessageProcessingException.class);
-    }
+            // act
+            final CompletableFuture<?> completableFuture = processor.processMessage(MESSAGE, mockMessageResolver);
 
-    @SuppressWarnings("unused")
-    public void methodWithNoAcknowledge(@Payload String payload, @Payload String payloadTwo) {
-
-    }
-
-    @SuppressWarnings( {"unused", "WeakerAccess"})
-    public void methodWithAcknowledge(Acknowledge acknowledge, @Payload String payload, @Payload String payloadTwo) {
-
-    }
-
-    @SuppressWarnings( {"unused", "WeakerAccess"})
-    public void methodWithVisibilityExtender(VisibilityExtender visibilityExtender) {
-
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public CompletableFuture<?> methodReturningCompletableFuture(CompletableFuture<?> futureToReturn) {
-        return futureToReturn;
-    }
-
-    @SuppressWarnings("unused")
-    public void methodThatThrowsException(@Payload String payload) {
-        throw new RuntimeException("error");
-    }
-
-    private static Method getMethodWithNoAcknowledge() {
-        return getTestingMethod("methodWithNoAcknowledge", String.class, String.class);
-    }
-
-    private static Method getMethodWithAcknowledge() {
-        return getTestingMethod("methodWithAcknowledge", Acknowledge.class, String.class, String.class);
-    }
-
-    private static Method getMethodThatThrowsException() {
-        return getTestingMethod("methodThatThrowsException", String.class);
-    }
-
-    private static Method getMethodWithVisibiltyExtender() {
-        return getTestingMethod("methodWithVisibilityExtender", VisibilityExtender.class);
-    }
-
-    private static Method getTestingMethod(final String methodName, final Class<?>... parameterClasses) {
-        try {
-            return CoreMessageProcessorTest.class.getMethod(methodName, parameterClasses);
-        } catch (final NoSuchMethodException exception) {
-            throw new RuntimeException("Unable to find method for testing against", exception);
+            // assert
+            assertThat(completableFuture).isCompleted();
         }
     }
 }

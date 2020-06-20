@@ -1,13 +1,5 @@
 package com.jashmore.sqs.container;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -18,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -31,6 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +57,9 @@ class CoreMessageListenerContainerTest {
 
     @Mock
     private MessageResolver messageResolver;
+
+    @Captor
+    private ArgumentCaptor<Supplier<CompletableFuture<?>>> messageResolverArgumentCaptor;
 
     @Test
     void passedInIdentifierIsReturnedFromGetIdentifier() {
@@ -89,8 +90,8 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor).processMessage(eq(message), any(Runnable.class));
-        verify(messageProcessor).processMessage(eq(secondMessage), any(Runnable.class));
+        verify(messageProcessor).processMessage(eq(message), any());
+        verify(messageProcessor).processMessage(eq(secondMessage), any());
     }
 
     @Test
@@ -103,11 +104,10 @@ class CoreMessageListenerContainerTest {
         final CoreMessageListenerContainer container
                 = buildContainer("id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
         container.runContainer();
-        final ArgumentCaptor<Runnable> messageResolutionRunnableArgumentCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(messageProcessor).processMessage(eq(message), messageResolutionRunnableArgumentCaptor.capture());
+        verify(messageProcessor).processMessage(eq(message), messageResolverArgumentCaptor.capture());
 
         // act
-        messageResolutionRunnableArgumentCaptor.getValue().run();
+        messageResolverArgumentCaptor.getValue().get();
 
         // assert
         verify(messageResolver).resolveMessage(message);
@@ -200,7 +200,7 @@ class CoreMessageListenerContainerTest {
             retrieverThreadName.set(Thread.currentThread().getName());
             log.info("Processing message");
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
+        }).when(messageProcessor).processMessage(any(Message.class), any());
         when(messageRetriever.retrieveMessage())
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()))
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -227,7 +227,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor, never()).processMessage(any(Message.class), any(Runnable.class));
+        verify(messageProcessor, never()).processMessage(any(Message.class), any());
     }
 
     @Test
@@ -248,8 +248,8 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor).processMessage(eq(firstExtraMessage), any(Runnable.class));
-        verify(messageProcessor).processMessage(eq(secondExtraMessage), any(Runnable.class));
+        verify(messageProcessor).processMessage(eq(firstExtraMessage), any());
+        verify(messageProcessor).processMessage(eq(secondExtraMessage), any());
     }
 
     @Test
@@ -292,7 +292,7 @@ class CoreMessageListenerContainerTest {
                 wasThreadInterrupted.set(true);
             }
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
+        }).when(messageProcessor).processMessage(any(Message.class), any());
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldInterruptThreadsProcessingMessagesOnShutdown(true)
                 .build();
@@ -326,7 +326,7 @@ class CoreMessageListenerContainerTest {
                 wasThreadInterrupted.set(true);
             }
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
+        }).when(messageProcessor).processMessage(any(Message.class), any());
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldInterruptThreadsProcessingMessagesOnShutdown(false)
                 .build();
