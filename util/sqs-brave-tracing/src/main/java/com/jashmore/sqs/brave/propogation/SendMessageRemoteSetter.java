@@ -23,9 +23,7 @@ public class SendMessageRemoteSetter implements Propagation.RemoteSetter<Map<Str
     }
 
     @Override
-    public void put(final Map<String, MessageAttributeValue> carrier,
-                    final String fieldName,
-                    final String value) {
+    public void put(final Map<String, MessageAttributeValue> carrier, final String fieldName, final String value) {
         carrier.put(fieldName, MessageAttributeValue.builder()
                 .dataType("String")
                 .stringValue(value)

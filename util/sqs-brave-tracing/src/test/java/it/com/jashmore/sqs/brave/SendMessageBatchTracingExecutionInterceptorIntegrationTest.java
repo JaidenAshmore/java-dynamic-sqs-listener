@@ -2,28 +2,24 @@ package it.com.jashmore.sqs.brave;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import akka.http.scaladsl.Http;
 import brave.ScopedSpan;
 import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.propagation.TraceContextOrSamplingFlags;
 import brave.test.TestSpanHandler;
 import com.jashmore.sqs.brave.SendMessageBatchTracingExecutionInterceptor;
+import com.jashmore.sqs.brave.SendMessageTracingExecutionInterceptor;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
-import org.elasticmq.rest.sqs.SQSRestServer;
-import org.elasticmq.rest.sqs.SQSRestServerBuilder;
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -36,39 +32,24 @@ public class SendMessageBatchTracingExecutionInterceptorIntegrationTest {
             .addSpanHandler(testSpanHandler)
             .build();
 
-    private SqsAsyncClient sqsAsyncClient;
-
-    private SQSRestServer sqsRestServer;
+    private LocalSqsAsyncClient sqsAsyncClient;
 
     private String queueUrl;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        sqsRestServer = SQSRestServerBuilder
-                .withInterface("localhost")
-                .withDynamicPort()
-                .start();
+    @SneakyThrows
+    public void setUp() {
+        sqsAsyncClient = new ElasticMqSqsAsyncClient(builder -> {
+            builder.overrideConfiguration(overrideBuilder -> overrideBuilder.addExecutionInterceptor(
+                    new SendMessageBatchTracingExecutionInterceptor(tracing)));
+        });
 
-        final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        final String queueServerUrl = "http://localhost:" + serverBinding.localAddress().getPort();
-
-        sqsAsyncClient = SqsAsyncClient.builder()
-                .endpointOverride(URI.create(queueServerUrl))
-                .region(Region.of("elastic-mq"))
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("accessKeyId", "secretAccessKey")))
-                .overrideConfiguration(builder -> builder.addExecutionInterceptor(new SendMessageBatchTracingExecutionInterceptor(tracing)))
-                .build();
-
-        queueUrl = sqsAsyncClient.createQueue(builder -> builder.queueName("name"))
-                .get(5, TimeUnit.SECONDS)
-                .queueUrl();
+        queueUrl = sqsAsyncClient.createRandomQueue().get(5, TimeUnit.SECONDS).getResponse().queueUrl();
     }
 
     @AfterEach
     public void tearDown() {
-        if (sqsRestServer != null) {
-            sqsRestServer.stopAndWait();
-        }
+        sqsAsyncClient.close();
         testSpanHandler.clear();
     }
 

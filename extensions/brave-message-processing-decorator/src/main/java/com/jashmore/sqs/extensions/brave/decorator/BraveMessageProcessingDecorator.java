@@ -45,8 +45,6 @@ public class BraveMessageProcessingDecorator implements MessageProcessingDecorat
 
     @Override
     public void onPreMessageProcessing(MessageProcessingContext context, Message message) {
-        // create span
-        // start span in scope
         final TraceContextOrSamplingFlags traceContextOrSamplingFlags = traceExtractor.extract(message.messageAttributes());
         final Span span = tracer.nextSpan(traceContextOrSamplingFlags);
         if (span != null && !span.isNoop()) {
@@ -88,7 +86,18 @@ public class BraveMessageProcessingDecorator implements MessageProcessingDecorat
     @Value
     @Builder
     public static class Options {
+        /**
+         * The extractor that will be used to obtain the trace information out of the message.
+         *
+         * @see SendMessageRemoteGetter#create(Tracing) for the default value
+         */
         TraceContext.Extractor<Map<String, MessageAttributeValue>> traceExtractor;
+
+        /**
+         * Function that can be used to provide the name of the span, otherwise a default will be used.
+         *
+         * @see BraveMessageProcessingDecorator#DEFAULT_SPAN_NAME_CREATOR for the default value
+         */
         BiFunction<MessageProcessingContext, Message, String> spanNameCreator;
     }
 }
