@@ -1,10 +1,9 @@
 package com.jashmore.sqs.container;
 
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.PositiveOrZero;
 
 public interface CoreMessageListenerContainerProperties {
     /**

@@ -11,7 +11,7 @@
     <logger name="akka" level="OFF" />
     <logger name="io.netty" level="ERROR" />
 
-    <root level="info">
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

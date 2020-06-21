@@ -1,10 +1,10 @@
 package it.com.jashmore.sqs.argument;
 
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
@@ -43,7 +43,7 @@ class VisibilityExtenderIntegrationTest {
     private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
     private static final int ORIGINAL_MESSAGE_VISIBILITY = 2;
 
-    private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient(ImmutableList.of(
+    private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient(singletonList(
             SqsQueuesConfig.QueueConfig.builder()
                     .queueName("VisibilityExtenderIntegrationTest")
                     .visibilityTimeout(ORIGINAL_MESSAGE_VISIBILITY)

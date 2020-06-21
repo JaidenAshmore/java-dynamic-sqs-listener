@@ -1,8 +1,8 @@
 package com.jashmore.sqs.broker.concurrent;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
-import javax.validation.constraints.PositiveOrZero;
+import com.jashmore.documentation.annotations.NotThreadSafe;
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.PositiveOrZero;
 
 /**
  * Properties for dynamically configuring how the {@link ConcurrentMessageBroker} is able to process messages concurrently.

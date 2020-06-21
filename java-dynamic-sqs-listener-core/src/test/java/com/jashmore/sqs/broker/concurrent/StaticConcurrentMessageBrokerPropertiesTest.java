@@ -44,6 +44,7 @@ class StaticConcurrentMessageBrokerPropertiesTest {
     void negativeConcurrencyPollingRateThrowsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> StaticConcurrentMessageBrokerProperties
                 .builder()
+                .concurrencyLevel(1)
                 .preferredConcurrencyPollingRateInMilliseconds(-1L)
                 .build());
     }

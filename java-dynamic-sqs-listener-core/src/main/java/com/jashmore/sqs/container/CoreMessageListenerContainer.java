@@ -7,12 +7,14 @@ import static com.jashmore.sqs.util.thread.ThreadUtils.multiNamedThreadFactory;
 import static com.jashmore.sqs.util.thread.ThreadUtils.singleNamedThreadFactory;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import com.jashmore.documentation.annotations.GuardedBy;
+import com.jashmore.documentation.annotations.ThreadSafe;
+import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.util.Preconditions;
 import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -31,8 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Container that allows for the safe start and stop of all the components for the SQS Library.

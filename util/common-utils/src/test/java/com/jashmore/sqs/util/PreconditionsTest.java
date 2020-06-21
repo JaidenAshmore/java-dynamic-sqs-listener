@@ -23,4 +23,36 @@ class PreconditionsTest {
         }
     }
 
+    @Nested
+    class CheckPositiveOrZero {
+        @Test
+        void shouldThrowIllegalArgumentExceptionWhenNegative() {
+            final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Preconditions.checkPositiveOrZero(-1, "message"));
+            assertThat(exception).hasMessage("message");
+        }
+
+        @Test
+        void shouldNotThrowExceptionWhenZero() {
+            Preconditions.checkPositiveOrZero(0, "message");
+        }
+
+        @Test
+        void shouldNotThrowExceptionWhenPositive() {
+            Preconditions.checkPositiveOrZero(1, "message");
+        }
+    }
+
+    @Nested
+    class CheckArgument {
+        @Test
+        void shouldThrowIllegalArgumentExceptionWhenExpressionIsFalse() {
+            final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Preconditions.checkArgument(false, "message"));
+            assertThat(exception).hasMessage("message");
+        }
+
+        @Test
+        void shouldNotThrowExceptionWhenTrueExpression() {
+            Preconditions.checkArgument(true, "message");
+        }
+    }
 }

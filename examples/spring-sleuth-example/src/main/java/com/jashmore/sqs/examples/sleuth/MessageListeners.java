@@ -24,6 +24,7 @@ public class MessageListeners {
     private final SqsAsyncClient sqsAsyncClient;
     private final Tracing tracing;
 
+    @SuppressWarnings("unused")
     @QueueListener(identifier = "message-listener", value = "test")
     @NewSpan("wrapped-message-processing")
     public void processingMessage(Message message) throws InterruptedException {

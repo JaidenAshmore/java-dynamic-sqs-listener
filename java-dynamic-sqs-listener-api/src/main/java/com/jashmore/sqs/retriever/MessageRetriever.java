@@ -16,9 +16,6 @@ import java.util.concurrent.CompletableFuture;
  * remote queue which will be taken by the {@link MessageBroker}, transferred to the corresponding {@link MessageProcessor} that knows how to process
  * this message and then deleted by the {@link MessageResolver}.
  *
- * <p>Messages that are downloaded from the remote server must contain all of the {@link Message#attributes()} and {@link Message#messageAttributes()} as
- * they can be consumed by corresponding {@link com.jashmore.sqs.argument.ArgumentResolver}s.
- *
  * <p>As there could be multiple threads wanting to process messages the implementations of this class must be thread safe.
  */
 @ThreadSafe

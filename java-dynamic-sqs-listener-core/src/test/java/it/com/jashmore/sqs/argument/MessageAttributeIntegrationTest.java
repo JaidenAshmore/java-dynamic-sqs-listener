@@ -1,10 +1,10 @@
 package it.com.jashmore.sqs.argument;
 
+import static java.util.Collections.singletonMap;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
@@ -97,7 +97,7 @@ class MessageAttributeIntegrationTest {
         elasticMQSqsAsyncClient.sendMessage(SendMessageRequest.builder()
                 .queueUrl(queueProperties.getQueueUrl())
                 .messageBody("test")
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "key",
                         MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())

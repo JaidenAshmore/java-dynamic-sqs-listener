@@ -51,7 +51,6 @@
             <groupId>com.jashmore</groupId>
             <artifactId>documentation-annotations</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>

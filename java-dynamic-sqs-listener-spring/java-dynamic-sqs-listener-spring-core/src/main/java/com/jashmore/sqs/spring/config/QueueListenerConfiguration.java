@@ -30,7 +30,6 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * The configuration for the application has been designed to allow for replacements by the consumer so that they can extend the framework, integrate into
@@ -105,7 +104,7 @@ public class QueueListenerConfiguration {
          * @return an {@link ArgumentResolverService} that will be able to resolve method parameters for message processing
          */
         @Bean
-        public ArgumentResolverService defaultArgumentResolverService(final Set<ArgumentResolver<?>> argumentResolvers) {
+        public ArgumentResolverService defaultArgumentResolverService(final List<ArgumentResolver<?>> argumentResolvers) {
             return new DelegatingArgumentResolverService(argumentResolvers);
         }
 

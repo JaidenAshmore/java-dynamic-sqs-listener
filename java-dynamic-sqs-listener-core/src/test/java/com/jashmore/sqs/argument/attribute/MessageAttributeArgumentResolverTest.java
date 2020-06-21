@@ -1,9 +1,10 @@
 package com.jashmore.sqs.argument.attribute;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
@@ -26,7 +27,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void stringMessageAttributesCanBeObtainedFromMessage() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "string", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())
                                 .stringValue("my attribute value")
@@ -50,7 +51,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void unknownDataTypeWillThrowArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "string", MessageAttributeValue.builder()
                                 .dataType("Unknown")
                                 .stringValue("my attribute value")
@@ -75,7 +76,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void missingMessageAttributeWillReturnNullWhenNotRequired() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of())
+                .messageAttributes(emptyMap())
                 .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", String.class);
         final MethodParameter methodParameter = DefaultMethodParameter.builder()
@@ -94,7 +95,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void missingMessageAttributeWillThrowArgumentResolutionExceptionWhenRequired() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of())
+                .messageAttributes(emptyMap())
                 .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeWithRequiredAttribute", String.class);
         final MethodParameter methodParameter = DefaultMethodParameter.builder()
@@ -114,7 +115,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void floatCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "float", MessageAttributeValue.builder()
                                 .dataType("Number.float")
                                 .stringValue("1.0")
@@ -139,7 +140,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void integerCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "int", MessageAttributeValue.builder()
                                 .dataType("Number.int")
                                 .stringValue("1.0")
@@ -164,7 +165,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void longCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "long", MessageAttributeValue.builder()
                                 .dataType("Number.long")
                                 .stringValue("1234")
@@ -189,7 +190,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void byteCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "byte", MessageAttributeValue.builder()
                                 .dataType("Number.byte")
                                 .stringValue("1")
@@ -215,7 +216,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void shortCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "short", MessageAttributeValue.builder()
                                 .dataType("Number.short")
                                 .stringValue("1")
@@ -240,7 +241,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void floatClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "float", MessageAttributeValue.builder()
                                 .dataType("Number.float")
                                 .stringValue("1.0")
@@ -265,7 +266,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void integerClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "int", MessageAttributeValue.builder()
                                 .dataType("Number.int")
                                 .stringValue("1.0")
@@ -290,7 +291,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void longClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "long", MessageAttributeValue.builder()
                                 .dataType("Number.long")
                                 .stringValue("1234")
@@ -315,7 +316,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void byteClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "byte", MessageAttributeValue.builder()
                                 .dataType("Number.byte")
                                 .stringValue("12")
@@ -341,7 +342,7 @@ class MessageAttributeArgumentResolverTest {
     void shortClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "short", MessageAttributeValue.builder()
                                 .dataType("Number.short")
                                 .stringValue("12")
@@ -367,7 +368,7 @@ class MessageAttributeArgumentResolverTest {
     void pojoCanBeDeserialisedFromMessageAttribute() throws Exception {
         final MyPojo pojo = MyPojo.builder().name("name").build();
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "pojo", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())
                                 .stringValue(new ObjectMapper().writeValueAsString(pojo))
@@ -391,7 +392,7 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void attributeThatCannotBeProperlyParsedThrowsArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "pojo", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())
                                 .stringValue("Expected Test Exception")
@@ -417,7 +418,7 @@ class MessageAttributeArgumentResolverTest {
     void canExtractBytesFromBinaryMessageAttribute() throws Exception {
         final byte[] binaryBytes = "some string".getBytes();
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "bytes", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.BINARY.getValue())
                                 .binaryValue(SdkBytes.fromByteArray(binaryBytes))
@@ -442,7 +443,7 @@ class MessageAttributeArgumentResolverTest {
     void canParseStringFromBinaryMessageAttribute() throws Exception {
         final String expectedString = "some string";
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "string", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.BINARY.getValue())
                                 .binaryValue(SdkBytes.fromByteArray(expectedString.getBytes()))
@@ -467,7 +468,7 @@ class MessageAttributeArgumentResolverTest {
     void canParseObjectFromBinaryMessageAttribute() throws Exception {
         final MyPojo myPojo = MyPojo.builder().name("name").build();
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "pojo", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.BINARY.getValue())
                                 .binaryValue(SdkBytes.fromByteArray(new ObjectMapper().writeValueAsBytes(myPojo)))
@@ -492,7 +493,7 @@ class MessageAttributeArgumentResolverTest {
     void failureParseObjectFromBinaryMessageAttributeWillThrowArgumentResolutionException() throws Exception {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         "pojo", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.BINARY.getValue())
                                 .binaryValue(SdkBytes.fromByteArray("My String".getBytes()))

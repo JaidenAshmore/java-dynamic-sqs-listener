@@ -1,13 +1,13 @@
 package com.jashmore.sqs.retriever.prefetch;
 
+import com.jashmore.documentation.annotations.Min;
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.Positive;
+import com.jashmore.documentation.annotations.PositiveOrZero;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 
 @Builder(toBuilder = true)
 @ToString
@@ -21,21 +21,27 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     private final Integer errorBackoffTimeInMilliseconds;
 
     @Override
-    public @Positive @NotNull int getDesiredMinPrefetchedMessages() {
+    @Positive
+    public int getDesiredMinPrefetchedMessages() {
         return desiredMinPrefetchedMessages;
     }
 
     @Override
-    public @Min(1) @NotNull int getMaxPrefetchedMessages() {
+    @Min(1)
+    public int getMaxPrefetchedMessages() {
         return maxPrefetchedMessages;
     }
 
     @Override
+    @Nullable
+    @Positive
     public Integer getMessageVisibilityTimeoutInSeconds() {
         return messageVisibilityTimeoutInSeconds;
     }
 
     @Override
+    @Nullable
+    @PositiveOrZero
     public Integer getErrorBackoffTimeInMilliseconds() {
         return errorBackoffTimeInMilliseconds;
     }
