@@ -102,20 +102,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-annotations</artifactId>
-            <version>${spotbugs.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Set up the default testing dependencies here so it does need to be done for each child module -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

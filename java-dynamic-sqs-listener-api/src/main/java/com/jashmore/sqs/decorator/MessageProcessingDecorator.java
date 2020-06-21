@@ -1,13 +1,12 @@
 package com.jashmore.sqs.decorator;
 
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Used to decorate the thread that will be used to process the given message.
@@ -16,7 +15,6 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @SuppressWarnings("unused")
 @ThreadSafe
-@ParametersAreNonnullByDefault
 public interface MessageProcessingDecorator {
     /**
      * Apply decorations to the thread before the message is handed to the message listener to process.

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>util</artifactId>
         <groupId>com.jashmore</groupId>
@@ -7,20 +9,21 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common-utils</artifactId>
+    <artifactId>annotation-utils</artifactId>
 
-    <name>Java Dynamic SQS Listener - Utilities - Common Utilities</name>
-    <description>Utility methods for dealing with basic functionality for this library, split out so so it can be consumed by other extensions.</description>
+    <name>Java Dynamic SQS Listener - Utilities - Annotation Utilities</name>
+    <description>Utility methods for dealing with annotations in a library that may be using proxying tools like cglib</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>documentation-annotations</artifactId>
+            <artifactId>common-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -33,13 +36,6 @@
         <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>proxy-method-interceptor</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>expected-test-exception</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

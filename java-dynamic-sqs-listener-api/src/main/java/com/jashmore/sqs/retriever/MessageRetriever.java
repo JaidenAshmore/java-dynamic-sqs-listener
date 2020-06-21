@@ -1,5 +1,6 @@
 package com.jashmore.sqs.retriever;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -7,7 +8,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Class used for retrieving messages to execute from the queue.

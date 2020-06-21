@@ -1,5 +1,6 @@
 package com.jashmore.sqs.processor;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.argument.Acknowledge;
@@ -9,7 +10,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Processor that has the responsibility of taking a message and processing it via the required message consumer (Java method).

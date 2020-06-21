@@ -29,13 +29,9 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>com.jashmore</groupId>
+            <artifactId>documentation-annotations</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

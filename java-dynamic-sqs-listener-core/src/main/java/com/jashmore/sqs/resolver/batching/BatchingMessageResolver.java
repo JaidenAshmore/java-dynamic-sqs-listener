@@ -140,7 +140,7 @@ public class BatchingMessageResolver implements MessageResolver {
      * @return the service for running message deletion on a separate thread
      */
     private ExecutorService buildExecutorServiceForSendingBatchDeletion() {
-        return Executors.newCachedThreadPool(ThreadUtils.threadFactory(Thread.currentThread().getName() + "-batch-delete-%d"));
+        return Executors.newCachedThreadPool(ThreadUtils.multiNamedThreadFactory(Thread.currentThread().getName() + "-batch-delete"));
     }
 
     /**
