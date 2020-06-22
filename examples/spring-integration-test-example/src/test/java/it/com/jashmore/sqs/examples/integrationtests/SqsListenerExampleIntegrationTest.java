@@ -6,7 +6,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.examples.integrationtests.IntegrationTestExampleApplication;
 import com.jashmore.sqs.util.ExpectedTestException;
@@ -23,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +50,7 @@ class SqsListenerExampleIntegrationTest {
     public static class TestConfig {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return new ElasticMqSqsAsyncClient(ImmutableList.of(
+            return new ElasticMqSqsAsyncClient(Collections.singletonList(
                     SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME)
                             .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
                             .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)

@@ -74,7 +74,6 @@
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <elasticmq.version>0.15.6</elasticmq.version>
-        <guava.version>29.0-jre</guava.version>
         <jackson.version>2.11.0</jackson.version>
         <jacoco.version>0.8.5</jacoco.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
@@ -254,12 +253,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>${guava.version}</version>
             </dependency>
 
             <dependency>
