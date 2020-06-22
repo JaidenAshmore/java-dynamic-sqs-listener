@@ -6,8 +6,6 @@ import static java.lang.Thread.State.WAITING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -16,9 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -116,9 +116,9 @@ class PrefetchingMessageFutureConsumerQueueTest {
         final int totalMessages = 1000;
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(20);
         final ExecutorService executorService = Executors.newCachedThreadPool();
-        final Set<String> futuresCompleted = Sets.newConcurrentHashSet();
-        final Set<String> messagesCompleted = Sets.newConcurrentHashSet();
-        final List<CompletableFuture<?>> allFutures = Lists.newLinkedList();
+        final Set<String> futuresCompleted = ConcurrentHashMap.newKeySet();
+        final Set<String> messagesCompleted = ConcurrentHashMap.newKeySet();
+        final List<CompletableFuture<?>> allFutures = new LinkedList<>();
 
         // act
         executorService.submit(() -> {

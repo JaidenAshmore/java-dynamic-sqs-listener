@@ -20,5 +20,7 @@
         <module>local-sqs-async-client</module>
         <module>proxy-method-interceptor</module>
         <module>sqs-brave-tracing</module>
+        <module>annotation-utils</module>
+        <module>documentation-annotations</module>
     </modules>
 </project>

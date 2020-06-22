@@ -2,6 +2,7 @@ package com.jashmore.sqs.argument;
 
 import lombok.AllArgsConstructor;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -12,7 +13,7 @@ import java.util.Set;
  */
 @AllArgsConstructor
 public class DelegatingArgumentResolverService implements ArgumentResolverService {
-    private final Set<ArgumentResolver<?>> argumentResolvers;
+    private final List<ArgumentResolver<?>> argumentResolvers;
 
     @Override
     public ArgumentResolver<?> getArgumentResolver(final MethodParameter methodParameter) throws UnsupportedArgumentResolutionException {

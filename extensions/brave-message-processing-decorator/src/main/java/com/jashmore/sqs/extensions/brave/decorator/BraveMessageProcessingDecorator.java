@@ -5,6 +5,7 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
+import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
@@ -15,8 +16,6 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.util.Map;
 import java.util.function.BiFunction;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * Message processing decorator that is used to add Brave tracing to the message processing thread.
@@ -24,7 +23,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * <p>If the SQS message contains Brave attributes they will be extracted and the trace will be continued from
  * here, otherwise a new trace will be started.
  */
-@ParametersAreNonnullByDefault
 public class BraveMessageProcessingDecorator implements MessageProcessingDecorator {
     private static final BiFunction<MessageProcessingContext, Message, String> DEFAULT_SPAN_NAME_CREATOR = (details, message)
             -> "sqs-listener-" + details.getListenerIdentifier();

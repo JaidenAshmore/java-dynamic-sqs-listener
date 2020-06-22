@@ -1,14 +1,14 @@
 package com.jashmore.sqs.util.annotation;
 
-import com.google.common.base.Preconditions;
+import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.sqs.argument.MethodParameter;
+import com.jashmore.sqs.util.Preconditions;
 import lombok.experimental.UtilityClass;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
 
 /**
  * These annotation utility method are written to get past the problem of CGLib and other proxying libraries that extend the base classes to add extra

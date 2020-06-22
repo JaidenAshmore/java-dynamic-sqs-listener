@@ -7,8 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
-
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
@@ -28,6 +26,7 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -57,7 +56,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
     @BeforeEach
     void setUp() {
         prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                queueResolver, environment, ImmutableList.of());
+                queueResolver, environment, Collections.emptyList());
     }
 
     @Test
@@ -280,7 +279,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
             // arrange
             prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(
                     argumentResolverService, sqsAsyncClientProvider, queueResolver, environment,
-                    ImmutableList.of(new MessageProcessingDecorator() {
+                    Collections.singletonList(new MessageProcessingDecorator() {
                     }));
             when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
             final Object bean = new PrefetchingMessageListenerContainerFactoryTest();

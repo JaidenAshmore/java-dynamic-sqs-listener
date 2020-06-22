@@ -1,9 +1,8 @@
 package com.jashmore.sqs.argument;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Used to resolve an argument in the method processing a messages if it can resolve it.

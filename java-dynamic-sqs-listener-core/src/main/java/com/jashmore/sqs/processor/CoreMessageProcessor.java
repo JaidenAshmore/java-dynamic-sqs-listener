@@ -2,6 +2,7 @@ package com.jashmore.sqs.processor;
 
 import static java.util.stream.Collectors.toList;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Default implementation of the {@link MessageProcessor} that will simply resolve arguments, process the message and delete the

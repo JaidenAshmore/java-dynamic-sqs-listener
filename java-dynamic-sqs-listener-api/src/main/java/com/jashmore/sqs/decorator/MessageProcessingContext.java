@@ -1,13 +1,12 @@
 package com.jashmore.sqs.decorator;
 
+import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.QueueProperties;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 @Value
 @Builder
@@ -54,7 +53,7 @@ public class MessageProcessingContext {
      * @param value the value to set for the attribute
      * @return this object for further chaining if necessary
      */
-    public MessageProcessingContext setAttribute(@Nonnull final String key, final Object value) {
+    public MessageProcessingContext setAttribute(final String key, @Nullable final Object value) {
         attributes.put(key, value);
         return this;
     }

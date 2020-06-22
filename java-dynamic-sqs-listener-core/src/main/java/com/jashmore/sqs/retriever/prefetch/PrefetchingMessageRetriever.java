@@ -3,11 +3,11 @@ package com.jashmore.sqs.retriever.prefetch;
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
 import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.util.Preconditions;
+import com.jashmore.sqs.util.collections.CollectionUtils;
 import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -142,10 +142,7 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
 
         final QueueDrain pairQueue = pairConsumerQueue.drain();
         pairQueue.getFuturesWaitingForMessages().forEach(future -> future.cancel(true));
-        return ImmutableList.<Message>builder()
-                .addAll(pairQueue.getMessagesAvailableForProcessing())
-                .addAll(listsNotPublished)
-                .build();
+        return CollectionUtils.immutableListFrom(pairQueue.getMessagesAvailableForProcessing(), listsNotPublished);
     }
 
     /**

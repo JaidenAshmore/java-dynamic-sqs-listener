@@ -24,7 +24,8 @@ public class MessageListeners {
     private final SqsAsyncClient sqsAsyncClient;
     private final Tracing tracing;
 
-    @QueueListener(identifier = "message-listener", value = "test")
+    @SuppressWarnings("unused")
+    @QueueListener(value = "test")
     @NewSpan("wrapped-message-processing")
     public void processingMessage(Message message) throws InterruptedException {
         log.info("Waiting one second");

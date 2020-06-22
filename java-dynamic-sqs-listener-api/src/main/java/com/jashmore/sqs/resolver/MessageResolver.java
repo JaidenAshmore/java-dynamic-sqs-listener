@@ -1,5 +1,6 @@
 package com.jashmore.sqs.resolver;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>This can internally figure out how the messages will be resolved, for example whether the message is deleted straight away or if it waits for a certain
  * period before deleting the message from the queue.
  */
+@ThreadSafe
 public interface MessageResolver {
     /**
      * Resolve the message by deleting it from the SQS queue.

@@ -1,7 +1,8 @@
 package com.jashmore.sqs.argument;
 
+import static com.jashmore.sqs.util.collections.CollectionUtils.immutableListOf;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableSet;
 import com.jashmore.sqs.argument.attribute.MessageAttributeArgumentResolver;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolver;
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
@@ -10,7 +11,7 @@ import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import lombok.experimental.Delegate;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * Default implementation of the {@link ArgumentResolverService} that applies all of the {@link ArgumentResolver}s that have been implemented as
@@ -24,7 +25,7 @@ public class CoreArgumentResolverService implements ArgumentResolverService {
 
     public CoreArgumentResolverService(final PayloadMapper payloadMapper,
                                        final ObjectMapper objectMapper) {
-        final Set<ArgumentResolver<?>> argumentResolvers = ImmutableSet.of(
+        final List<ArgumentResolver<?>> argumentResolvers = immutableListOf(
                 new PayloadArgumentResolver(payloadMapper),
                 new MessageIdArgumentResolver(),
                 new MessageAttributeArgumentResolver(objectMapper),

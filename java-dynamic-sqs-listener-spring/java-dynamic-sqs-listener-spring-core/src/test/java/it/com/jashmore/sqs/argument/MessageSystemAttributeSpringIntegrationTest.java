@@ -4,7 +4,6 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
@@ -25,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,7 +64,7 @@ public class MessageSystemAttributeSpringIntegrationTest {
         // arrange
         localSqsAsyncClient.sendMessage(QUEUE_NAME, SendMessageRequest.builder()
                 .messageBody("message")
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(Collections.singletonMap(
                         "key", MessageAttributeValue.builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())
                                 .stringValue("value")

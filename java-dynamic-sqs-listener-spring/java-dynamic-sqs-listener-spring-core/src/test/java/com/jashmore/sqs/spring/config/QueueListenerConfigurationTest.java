@@ -31,7 +31,6 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @SuppressWarnings( {"unchecked", "rawtypes"})
 class QueueListenerConfigurationTest {
@@ -226,7 +225,7 @@ class QueueListenerConfigurationTest {
                                 = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
                         final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
                         argumentResolversField.setAccessible(true);
-                        assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
+                        assertThat(((List<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                                 .containsExactlyElementsOf(argumentResolvers);
                     });
         }
@@ -257,7 +256,7 @@ class QueueListenerConfigurationTest {
                                 = (DelegatingArgumentResolverService) context.getBean(ArgumentResolverService.class);
                         final Field argumentResolversField = DelegatingArgumentResolverService.class.getDeclaredField("argumentResolvers");
                         argumentResolversField.setAccessible(true);
-                        assertThat(((Set<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
+                        assertThat(((List<ArgumentResolver>) argumentResolversField.get(argumentResolverService)))
                                 .containsExactlyElementsOf(argumentResolvers);
                         assertThat(argumentResolvers).hasSize(6);
                     });

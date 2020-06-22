@@ -1,5 +1,7 @@
 package com.jashmore.sqs.processor;
 
+import static com.jashmore.sqs.util.collections.CollectionUtils.immutableListOf;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,7 +15,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
+import com.jashmore.documentation.annotations.Nonnull;
+import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -31,6 +34,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -38,8 +42,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 @ExtendWith(MockitoExtension.class)
 class DecoratingMessageProcessorTest {
@@ -75,7 +77,7 @@ class DecoratingMessageProcessorTest {
             final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
             final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
             final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                    ImmutableList.of(decorator), delegate);
+                    singletonList(decorator), delegate);
             when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
             // act
@@ -93,7 +95,7 @@ class DecoratingMessageProcessorTest {
             doThrow(ExpectedTestException.class).when(failingDecorator).onPreMessageProcessing(any(), any());
             final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
             final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                    ImmutableList.of(failingDecorator, otherDecorator), createCoreProcessor(synchronousMessageListener, method));
+                    immutableListOf(failingDecorator, otherDecorator), createCoreProcessor(synchronousMessageListener, method));
 
             // act
             final MessageProcessingException exception = assertThrows(MessageProcessingException.class,
@@ -112,7 +114,7 @@ class DecoratingMessageProcessorTest {
             final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
             final MessageProcessor delegateProcessor = mock(MessageProcessor.class);
             final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                    ImmutableList.of(failingDecorator, otherDecorator), delegateProcessor);
+                    Arrays.asList(failingDecorator, otherDecorator), delegateProcessor);
 
             // act
             assertThrows(MessageProcessingException.class,
@@ -142,7 +144,7 @@ class DecoratingMessageProcessorTest {
                 doReturn(methodFuture).when(futureArgumentResolver).resolveArgumentForParameter(any(), any(), any());
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -162,7 +164,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 final CompletableFuture<?> completableFuture = processor.processMessage(message, mockMessageResolver);
@@ -178,17 +180,16 @@ class DecoratingMessageProcessorTest {
                 // when
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
-                @ParametersAreNonnullByDefault
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
                     @Override
-                    public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, Object object) {
+                    public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
                         decoratorThread.set(Thread.currentThread());
                     }
                 };
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 final Thread currentThread = Thread.currentThread();
 
@@ -207,7 +208,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingSuccess(any(), any(), any());
 
@@ -227,12 +228,12 @@ class DecoratingMessageProcessorTest {
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
                     @Override
-                    public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
+                    public void onPreMessageProcessing(MessageProcessingContext context, Message message) {
                         contextReference.set(context);
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -255,7 +256,7 @@ class DecoratingMessageProcessorTest {
                 doReturn(methodFuture).when(futureArgumentResolver).resolveArgumentForParameter(any(), any(), any());
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -275,7 +276,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 final CompletableFuture<?> completableFuture = processor.processMessage(message, mockMessageResolver);
@@ -291,7 +292,6 @@ class DecoratingMessageProcessorTest {
                 // when
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyRejected");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
-                @ParametersAreNonnullByDefault
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
                     @Override
                     public void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable object) {
@@ -301,7 +301,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 final Thread currentThread = Thread.currentThread();
 
                 // act
@@ -320,7 +320,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingFailure(any(), any(), any());
 
                 // act
@@ -344,7 +344,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
 
                 // act
                 assertThrows(ExecutionException.class, () -> processor.processMessage(message, mockMessageResolver).get(5, SECONDS));
@@ -366,7 +366,7 @@ class DecoratingMessageProcessorTest {
                 doReturn(methodFuture).when(futureArgumentResolver).resolveArgumentForParameter(any(), any(), any());
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -386,7 +386,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 final CompletableFuture<?> completableFuture = processor.processMessage(message, mockMessageResolver);
@@ -411,7 +411,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 final Thread currentThread = Thread.currentThread();
 
@@ -430,7 +430,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingThreadComplete(any(), any());
 
@@ -455,7 +455,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -478,7 +478,7 @@ class DecoratingMessageProcessorTest {
                 doReturn(methodFuture).when(futureArgumentResolver).resolveArgumentForParameter(any(), any(), any());
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -498,7 +498,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 final CompletableFuture<?> completableFuture = processor.processMessage(message, mockMessageResolver);
@@ -515,7 +515,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 assertThrows(ExecutionException.class, () -> processor.processMessage(message, mockMessageResolver).get(5, SECONDS));
@@ -539,7 +539,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenAnswer(invocation -> CompletableFuture.runAsync(() -> {
                     try {
                         Thread.sleep(100);
@@ -564,7 +564,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageResolvedSuccess(any(), any());
 
@@ -589,7 +589,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -612,7 +612,7 @@ class DecoratingMessageProcessorTest {
                 doReturn(methodFuture).when(futureArgumentResolver).resolveArgumentForParameter(any(), any(), any());
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
                 // act
@@ -633,7 +633,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -658,7 +658,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, asynchronousMessageListenerScenarios);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenAnswer(invocation -> CompletableFuture.runAsync(() -> {
                     try {
                         Thread.sleep(100);
@@ -684,7 +684,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageResolvedFailure(any(), any(), any());
 
@@ -709,7 +709,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
                 // act
@@ -733,7 +733,7 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -750,7 +750,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -764,16 +764,16 @@ class DecoratingMessageProcessorTest {
                 // when
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
-                @ParametersAreNonnullByDefault final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
+                final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
                     @Override
-                    public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, Object object) {
+                    public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
                         decoratorThread.set(Thread.currentThread());
                     }
                 };
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 final Thread currentThread = Thread.currentThread();
 
@@ -791,7 +791,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingSuccess(any(), any(), any());
 
@@ -815,7 +815,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -834,7 +834,7 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -851,7 +851,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -874,7 +874,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 final Thread currentThread = Thread.currentThread();
 
                 // act
@@ -891,7 +891,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingFailure(any(), any(), any());
 
                 // act
@@ -914,7 +914,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -932,7 +932,7 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -949,7 +949,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -972,7 +972,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 final Thread currentThread = Thread.currentThread();
 
@@ -990,7 +990,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageProcessingThreadComplete(any(), any());
 
@@ -1014,7 +1014,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -1033,7 +1033,7 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -1050,7 +1050,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -1076,7 +1076,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenAnswer(invocation -> CompletableFuture.runAsync(() -> {
                     try {
                         Thread.sleep(100);
@@ -1102,7 +1102,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageResolvedSuccess(any(), any());
 
@@ -1126,7 +1126,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
 
                 // act
@@ -1145,7 +1145,7 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
                 // act
@@ -1172,7 +1172,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES,
                         sqsAsyncClient, method, synchronousMessageListener);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator), delegate);
+                        singletonList(decorator), delegate);
                 when(mockMessageResolver.get()).thenAnswer(invocation -> CompletableFuture.runAsync(() -> {
                     try {
                         Thread.sleep(100);
@@ -1199,7 +1199,7 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final MessageProcessingDecorator otherDecorator = mock(MessageProcessingDecorator.class);
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(decorator, otherDecorator), delegate);
+                        Arrays.asList(decorator, otherDecorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
                 doThrow(ExpectedTestException.class).when(decorator).onMessageResolvedFailure(any(), any(), any());
 
@@ -1223,7 +1223,7 @@ class DecoratingMessageProcessorTest {
                     }
                 };
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor("identifier", QUEUE_PROPERTIES,
-                        ImmutableList.of(otherDecorator, decorator), delegate);
+                        Arrays.asList(otherDecorator, decorator), delegate);
                 when(mockMessageResolver.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 
                 // act

@@ -1,12 +1,11 @@
 package com.jashmore.sqs.retriever.batching;
 
+import com.jashmore.documentation.annotations.Max;
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.Positive;
+import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.aws.AwsConstants;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 
 /**
  * The properties used to configure the {@link BatchingMessageRetriever} which will be continually polled throughout the execution and therefore the
