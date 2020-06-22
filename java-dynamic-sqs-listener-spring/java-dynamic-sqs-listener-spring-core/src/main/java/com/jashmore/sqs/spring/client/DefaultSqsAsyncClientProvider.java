@@ -1,9 +1,10 @@
 package com.jashmore.sqs.spring.client;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.jashmore.sqs.util.Preconditions;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,7 +17,7 @@ public class DefaultSqsAsyncClientProvider implements SqsAsyncClientProvider {
 
     public DefaultSqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
         this.defaultClient = defaultClient;
-        this.clientMap = ImmutableMap.of();
+        this.clientMap = Collections.emptyMap();
     }
 
     public DefaultSqsAsyncClientProvider(final Map<String, SqsAsyncClient> clientMap) {
@@ -27,7 +28,7 @@ public class DefaultSqsAsyncClientProvider implements SqsAsyncClientProvider {
         Preconditions.checkNotNull(clientMap, "clientMap should not be null");
 
         this.defaultClient = defaultClient;
-        this.clientMap = ImmutableMap.copyOf(clientMap);
+        this.clientMap = Collections.unmodifiableMap(new HashMap<>(clientMap));
     }
 
     @Override

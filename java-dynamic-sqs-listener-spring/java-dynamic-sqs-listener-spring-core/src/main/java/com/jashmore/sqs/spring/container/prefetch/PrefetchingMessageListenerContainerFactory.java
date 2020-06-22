@@ -1,6 +1,6 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.MessageBroker;

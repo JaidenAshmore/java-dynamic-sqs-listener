@@ -1,6 +1,5 @@
 package it.com.jashmore.sqs.client;
 
-import com.google.common.collect.ImmutableMap;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
@@ -20,6 +19,8 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -51,10 +52,10 @@ class MultipleSqsAsyncClientIntegrationTest {
 
         @Bean
         public SqsAsyncClientProvider sqsAsyncClientProvider(SqsAsyncClient firstClient, SqsAsyncClient secondClient) {
-            return new DefaultSqsAsyncClientProvider(ImmutableMap.of(
-                    "firstClient", firstClient,
-                    "secondClient", secondClient
-            ));
+            final Map<String, SqsAsyncClient> clients = new HashMap<>();
+            clients.put("firstClient", firstClient);
+            clients.put("secondClient", secondClient);
+            return new DefaultSqsAsyncClientProvider(clients);
         }
 
         @Service

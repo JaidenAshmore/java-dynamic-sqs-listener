@@ -25,7 +25,7 @@ public class MessageListeners {
     private final Tracing tracing;
 
     @SuppressWarnings("unused")
-    @QueueListener(identifier = "message-listener", value = "test")
+    @QueueListener(value = "test")
     @NewSpan("wrapped-message-processing")
     public void processingMessage(Message message) throws InterruptedException {
         log.info("Waiting one second");

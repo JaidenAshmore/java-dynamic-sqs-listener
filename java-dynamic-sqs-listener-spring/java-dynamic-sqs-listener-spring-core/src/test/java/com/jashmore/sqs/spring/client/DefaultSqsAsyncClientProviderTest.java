@@ -2,8 +2,6 @@ package com.jashmore.sqs.spring.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,6 +11,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -60,7 +60,7 @@ class DefaultSqsAsyncClientProviderTest {
         @Test
         void whenNoDefaultClientProvidedWithClientMapDefaultClientWillBeEmptyOptional() {
             // arrange
-            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(ImmutableMap.of("id", client));
+            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(Collections.singletonMap("id", client));
 
             // act
             final Optional<SqsAsyncClient> optionalDefaultClient = sqsAsyncClientProvider.getDefaultClient();
@@ -76,7 +76,7 @@ class DefaultSqsAsyncClientProviderTest {
         @Test
         void whenClientMapProvidedOneCanBeObtainedViaTheIdentifier() {
             // arrange
-            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, ImmutableMap.of("id", client));
+            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, Collections.singletonMap("id", client));
 
             // act
             final Optional<SqsAsyncClient> optionalDefaultClient = sqsAsyncClientProvider.getClient("id");
@@ -88,7 +88,7 @@ class DefaultSqsAsyncClientProviderTest {
         @Test
         void whenClientMapProvidedUsingAnIdentifierThatDoesNotExistReturnsEmptyOptional() {
             // arrange
-            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, ImmutableMap.of("id", client));
+            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, Collections.singletonMap("id", client));
 
             // act
             final Optional<SqsAsyncClient> optionalDefaultClient = sqsAsyncClientProvider.getClient("unknownid");
@@ -100,7 +100,7 @@ class DefaultSqsAsyncClientProviderTest {
         @Test
         void clientMapCannotBeUpdatedAfterConstruction() {
             // arrange
-            final Map<String, SqsAsyncClient> clientMap = Maps.newHashMap();
+            final Map<String, SqsAsyncClient> clientMap = new HashMap<>();
             final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, clientMap);
 
             // act
