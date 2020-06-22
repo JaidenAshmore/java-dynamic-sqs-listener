@@ -4,7 +4,7 @@
 
     <groupId>com.jashmore</groupId>
     <artifactId>java-dynamic-sqs-listener-parent</artifactId>
-    <version>3.1.2-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Java Dynamic SQS Listener</name>
@@ -48,11 +48,11 @@
     </distributionManagement>
 
     <modules>
+        <module>api</module>
+        <module>core</module>
         <module>examples</module>
         <module>extensions</module>
-        <module>java-dynamic-sqs-listener-api</module>
-        <module>java-dynamic-sqs-listener-core</module>
-        <module>java-dynamic-sqs-listener-spring</module>
+        <module>spring</module>
         <module>util</module>
     </modules>
 
