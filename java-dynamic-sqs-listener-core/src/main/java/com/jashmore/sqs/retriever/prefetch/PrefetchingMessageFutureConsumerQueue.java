@@ -1,5 +1,7 @@
 package com.jashmore.sqs.retriever.prefetch;
 
+import com.jashmore.documentation.annotations.Nonnull;
+import com.jashmore.documentation.annotations.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -8,8 +10,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Queue that allows for the persistence of extra {@link CompletableFuture}s and {@link Message}s and when there are two matching together, resolve the

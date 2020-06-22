@@ -1,10 +1,9 @@
 package com.jashmore.sqs.extensions.registry;
 
 import static com.jashmore.sqs.extensions.registry.MessageAttributeSchemaReferenceExtractor.CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME;
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import com.google.common.collect.ImmutableMap;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.schema.registry.SchemaReference;
@@ -32,7 +31,7 @@ class MessageAttributeSchemaReferenceExtractorTest {
     void contentTypeValueThatIsNotStringThrowsException() {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME, MessageAttributeValue.builder()
                                 .dataType("Binary")
                                 .binaryValue(SdkBytes.fromByteArray(new byte[]{0, 1}))
@@ -52,7 +51,7 @@ class MessageAttributeSchemaReferenceExtractorTest {
     void contentTypeThatIsUnsuccessfullyParsedThrowsException() {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME, MessageAttributeValue.builder()
                                 .dataType("String")
                                 .stringValue("invalid-format")
@@ -72,7 +71,7 @@ class MessageAttributeSchemaReferenceExtractorTest {
     void contentTypeWithNonNumberVersionThrowsException() {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME, MessageAttributeValue.builder()
                                 .dataType("String")
                                 .stringValue("application/prefix.name.vOne+avro")
@@ -93,7 +92,7 @@ class MessageAttributeSchemaReferenceExtractorTest {
     void contentTypeThatCanBeSuccessfullyParsedReturnsSchemaReference() {
         // arrange
         final Message message = Message.builder()
-                .messageAttributes(ImmutableMap.of(
+                .messageAttributes(singletonMap(
                         CONTENT_TYPE_MESSAGE_ATTRIBUTE_NAME, MessageAttributeValue.builder()
                                 .dataType("String")
                                 .stringValue("application/prefix.name.v1+avro")

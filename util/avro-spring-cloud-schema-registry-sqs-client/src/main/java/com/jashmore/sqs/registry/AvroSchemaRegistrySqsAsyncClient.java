@@ -1,10 +1,8 @@
 package com.jashmore.sqs.registry;
 
+import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.cloud.schema.registry.avro.AvroSchemaRegistryClientMessageConverter.AVRO_FORMAT;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import lombok.Builder;
 import lombok.Value;
@@ -28,6 +26,7 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -82,7 +81,7 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
         final SchemaReference reference = registeredSchema.reference;
 
         return delegate.sendMessage(builder -> builder.applyMutation(requestBuilder)
-                .messageAttributes(ImmutableMap.of(messageAttributeName, MessageAttributeValue.builder()
+                .messageAttributes(singletonMap(messageAttributeName, MessageAttributeValue.builder()
                         .dataType("String")
                         .stringValue(generateContentType(contentTypePrefix, reference))
                         .build()))
@@ -125,7 +124,7 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
             throw new RuntimeException(classNotFoundException);
         }
 
-        return Maps.immutableEntry(clazz, RegisteredSchema.builder()
+        return new AbstractMap.SimpleImmutableEntry<>(clazz, RegisteredSchema.builder()
                 .schema(schema)
                 .reference(response.getSchemaReference())
                 .build());

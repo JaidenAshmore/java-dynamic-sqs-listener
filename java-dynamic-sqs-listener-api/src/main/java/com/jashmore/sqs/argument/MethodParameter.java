@@ -1,9 +1,9 @@
 package com.jashmore.sqs.argument;
 
+import com.jashmore.documentation.annotations.PositiveOrZero;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import javax.annotation.Nonnull;
-import javax.validation.constraints.PositiveOrZero;
 
 /**
  * Represents details about the method parameter that needs to have the argument resolved.
@@ -14,7 +14,6 @@ public interface MethodParameter {
      *
      * @return the method for the parameter
      */
-    @Nonnull
     Method getMethod();
 
     /**
@@ -22,7 +21,6 @@ public interface MethodParameter {
      *
      * @return the parameter for the method
      */
-    @Nonnull
     Parameter getParameter();
 
     /**

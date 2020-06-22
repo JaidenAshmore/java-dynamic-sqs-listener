@@ -14,6 +14,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>documentation-annotations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-schema-registry-client</artifactId>
             <exclusions>

@@ -1,10 +1,9 @@
 package com.jashmore.sqs.spring.container;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
+import com.jashmore.documentation.annotations.GuardedBy;
+import com.jashmore.documentation.annotations.Nonnull;
+import com.jashmore.documentation.annotations.ThreadSafe;
+import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -13,7 +12,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,8 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Default implementation that will build the {@link MessageListenerContainer}s on post construction.
@@ -47,7 +46,11 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * <p>This must be contained within a {@link Supplier} because the {@link MessageListenerContainerCoordinator} can be dependency injected into the
      * application and because the construction of these containers needs to look at all beans there can be a cyclic dependency.
      */
-    private Supplier<Map<String, MessageListenerContainer>> containersLazilyLoaded;
+    @GuardedBy("this")
+    private volatile Map<String, MessageListenerContainer> containersLazilyLoadedCache;
+
+    @GuardedBy("this")
+    private volatile ApplicationContext applicationContext = null;
 
     /**
      * Determines whether this container service is currently running in the Spring lifecycle.
@@ -56,11 +59,14 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
 
     public DefaultMessageListenerContainerCoordinator(final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
         this.messageListenerContainerFactories = messageListenerContainerFactories;
+        this.containersLazilyLoadedCache = null;
     }
 
     @Override
     public void setApplicationContext(@Nonnull final ApplicationContext applicationContext) throws BeansException {
-        containersLazilyLoaded = Suppliers.memoize(() -> calculateMessageListenerContainers(messageListenerContainerFactories, applicationContext));
+        synchronized (this) {
+            this.applicationContext = applicationContext;
+        }
     }
 
     @Override
@@ -89,7 +95,7 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * @param containerConsumer the consumer to call
      */
     private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
-        final CompletableFuture<?>[] allTaskCompletableFutures = containersLazilyLoaded.get().values().stream()
+        final CompletableFuture<?>[] allTaskCompletableFutures = getContainers().stream()
                 .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
                 .toArray(CompletableFuture[]::new);
 
@@ -110,7 +116,7 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * @param containerConsumer   the container consumer to run
      */
     private void runForContainer(final String containerIdentifier, final Consumer<MessageListenerContainer> containerConsumer) {
-        final MessageListenerContainer container = Optional.ofNullable(containersLazilyLoaded.get().get(containerIdentifier))
+        final MessageListenerContainer container = Optional.ofNullable(getContainerMap().get(containerIdentifier))
                 .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
 
         containerConsumer.accept(container);
@@ -156,8 +162,31 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
     }
 
     @VisibleForTesting
-    synchronized Set<MessageListenerContainer> getContainers() {
-        return ImmutableSet.copyOf(containersLazilyLoaded.get().values());
+    Set<MessageListenerContainer> getContainers() {
+        return Collections.unmodifiableSet((new HashSet<>(getContainerMap().values())));
+    }
+
+    /**
+     * Get the map of container ID to containers.
+     *
+     * @return the container map
+     * @see <a href="https://wiki.sei.cmu.edu/confluence/display/java/LCK10-J.+Use+a+correct+form+of+the+double-checked+locking+idiom#LCK10-J.Useacorrectformofthedouble-checkedlockingidiom-CompliantSolution(Immutable)">Double Check Locks</a>
+     *    for where this implementation was gotten from.
+     */
+    private Map<String, MessageListenerContainer> getContainerMap() {
+        Map<String, MessageListenerContainer> localContainer = containersLazilyLoadedCache;
+        if (localContainer == null) {
+            synchronized (this) {
+                localContainer = containersLazilyLoadedCache;
+                if (localContainer == null) {
+                    localContainer = calculateMessageListenerContainers(messageListenerContainerFactories, applicationContext);
+                    containersLazilyLoadedCache = localContainer;
+                }
+                return localContainer;
+            }
+        }
+
+        return localContainer;
     }
 
     /**
@@ -167,7 +196,7 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
             @Nonnull final List<MessageListenerContainerFactory> messageListenerContainerFactories,
             @Nonnull final ApplicationContext applicationContext) {
         if (messageListenerContainerFactories.isEmpty()) {
-            return ImmutableMap.of();
+            return Collections.emptyMap();
         }
 
         log.debug("Starting all MessageListenerContainers");
@@ -190,6 +219,6 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
             }
         }
 
-        return ImmutableMap.copyOf(messageContainers);
+        return Collections.unmodifiableMap(messageContainers);
     }
 }

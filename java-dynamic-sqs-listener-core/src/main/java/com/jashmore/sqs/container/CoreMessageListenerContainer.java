@@ -3,16 +3,18 @@ package com.jashmore.sqs.container;
 import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHOULD_INTERRUPT_MESSAGE_PROCESSING_ON_SHUTDOWN;
 import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHOULD_PROCESS_EXTRA_MESSAGES_ON_SHUTDOWN;
 import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHUTDOWN_TIME_IN_SECONDS;
-import static com.jashmore.sqs.util.thread.ThreadUtils.threadFactory;
+import static com.jashmore.sqs.util.thread.ThreadUtils.multiNamedThreadFactory;
+import static com.jashmore.sqs.util.thread.ThreadUtils.singleNamedThreadFactory;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-
+import com.jashmore.documentation.annotations.GuardedBy;
+import com.jashmore.documentation.annotations.ThreadSafe;
+import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
+import com.jashmore.sqs.util.Preconditions;
 import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -31,8 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Container that allows for the safe start and stop of all the components for the SQS Library.
@@ -107,7 +107,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             log.info("Container '{}' has already been started. No action taken", identifier);
         } else {
             log.info("Container '{}' is being started", identifier);
-            executorService = Executors.newSingleThreadExecutor(threadFactory(identifier + "-message-container"));
+            executorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(identifier + "-message-container"));
             containerFuture = CompletableFuture.runAsync(this::runContainer, executorService);
         }
         return containerFuture;
@@ -152,7 +152,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             final MessageBroker messageBroker = messageBrokerSupplier.get();
             final MessageProcessor messageProcessor = messageProcessorSupplier.get();
 
-            final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(threadFactory(identifier + "-message-broker"));
+            final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(identifier + "-message-broker"));
 
             final BlockingRunnable shutdownMessageResolver = startupMessageResolver(messageResolver);
             final ExecutorService messageProcessingExecutorService = buildMessageProcessingExecutorService();
@@ -199,10 +199,10 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      *
      * <p>This will keep running until the thread is interrupted via a call to {@link #stop()}.
      *
-     * @param messageBroker    the broker that handles the concurrent processing of messages and how to flow messages between the components
-     * @param messageRetriever the retriever for obtaining new messages
-     * @param messageProcessor the processor that will execute the message
-     * @param messageResolver  the resolver that will resolve the message on successful processing
+     * @param messageBroker                    the broker that handles the concurrent processing of messages and how to flow messages between the components
+     * @param messageRetriever                 the retriever for obtaining new messages
+     * @param messageProcessor                 the processor that will execute the message
+     * @param messageResolver                  the resolver that will resolve the message on successful processing
      * @param messageProcessingExecutorService the executor service that the message processing will run on
      */
     private void processMessagesFromRetriever(final MessageBroker messageBroker,
@@ -257,7 +257,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @param executorService the executor service to execute the runnable
      * @param runnable        the runnable to run which should keep running until an interruption
      * @throws InterruptedException if it was interrupted again waiting for the runnable to exit
-     * @throws ExecutionException if there was an error running the runnable
+     * @throws ExecutionException   if there was an error running the runnable
      */
     private void runUntilInterruption(final ExecutorService executorService, final BlockingRunnable runnable) throws InterruptedException, ExecutionException {
         final CompletableFuture<?> runnableCompleted = new CompletableFuture<>();
@@ -333,14 +333,14 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      */
     private BlockingRunnable startupMessageRetriever(final MessageRetriever messageRetriever,
                                                      final Consumer<List<Message>> extraMessagesConsumer) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory(getIdentifier() + "-message-retriever"));
+        final ExecutorService executorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(getIdentifier() + "-message-retriever"));
         CompletableFuture.supplyAsync(messageRetriever::run, executorService)
                 .thenAccept(extraMessagesConsumer);
         return () -> {
             executorService.shutdownNow();
 
             final int retrieverShutdownTimeoutInSeconds = getMessageRetrieverShutdownTimeoutInSeconds();
-            final boolean  retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
+            final boolean retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
             if (!retrieverShutdown) {
                 log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), retrieverShutdownTimeoutInSeconds);
             }
@@ -355,7 +355,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @return the optional {@link ExecutorService} for this background thread if it was started
      */
     private BlockingRunnable startupMessageResolver(final MessageResolver messageResolver) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory(getIdentifier() + "-message-resolver"));
+        final ExecutorService executorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(getIdentifier() + "-message-resolver"));
         CompletableFuture.runAsync(messageResolver::run, executorService);
         return () -> {
             executorService.shutdownNow();
@@ -374,7 +374,7 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @return the executor service that will be used for processing messages
      */
     private ExecutorService buildMessageProcessingExecutorService() {
-        return Executors.newCachedThreadPool(threadFactory(getIdentifier() + "-message-processing-%d"));
+        return Executors.newCachedThreadPool(multiNamedThreadFactory(getIdentifier() + "-message-processing"));
     }
 
     /**

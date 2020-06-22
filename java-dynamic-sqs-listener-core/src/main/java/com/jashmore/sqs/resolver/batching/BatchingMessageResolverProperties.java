@@ -1,10 +1,9 @@
 package com.jashmore.sqs.resolver.batching;
 
+import com.jashmore.documentation.annotations.Max;
+import com.jashmore.documentation.annotations.Min;
+import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.sqs.aws.AwsConstants;
-
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Positive;
 
 /**
  * Properties used for configuring the {@link BatchingMessageResolver} specifically the size of the buffer that should be used.

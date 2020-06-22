@@ -1,9 +1,8 @@
 package com.jashmore.sqs.extensions.registry;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import org.springframework.cloud.schema.registry.SchemaReference;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 @FunctionalInterface

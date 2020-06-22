@@ -2,7 +2,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} %magenta([%thread]) %highlight(%-5level) %logger{36}.%M - %msg %yellow(%mdc) %n</pattern>
         </encoder>
     </appender>
 
@@ -13,7 +13,7 @@
 
     <logger name="com.jashmore" level="INFO" />
 
-    <root level="info">
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

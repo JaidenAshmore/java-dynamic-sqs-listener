@@ -41,7 +41,7 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>local-amazon-sqs</artifactId>
+            <artifactId>local-sqs-async-client</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

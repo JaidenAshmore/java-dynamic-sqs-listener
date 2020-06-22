@@ -15,6 +15,7 @@
     <description>Extra functionality that is built ontop of the library, for example specific Argument Resolvers.</description>
 
     <modules>
+        <module>brave-message-processing-decorator</module>
         <module>spring-cloud-schema-registry-extension</module>
     </modules>
 </project>

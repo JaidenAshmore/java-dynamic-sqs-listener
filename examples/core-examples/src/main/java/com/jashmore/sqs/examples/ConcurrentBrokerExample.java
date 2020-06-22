@@ -1,11 +1,18 @@
 package com.jashmore.sqs.examples;
 
-import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
 import static java.util.stream.Collectors.toSet;
 
-import akka.http.scaladsl.Http;
+import brave.Tracing;
+import brave.context.slf4j.MDCScopeDecorator;
+import brave.propagation.ThreadLocalCurrentTraceContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.jashmore.documentation.annotations.Min;
+import com.jashmore.documentation.annotations.PositiveOrZero;
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
@@ -14,12 +21,14 @@ import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.broker.concurrent.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.extensions.brave.decorator.BraveMessageProcessingDecorator;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
+import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
@@ -27,27 +36,23 @@ import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverPropertie
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.util.CreateRandomQueueResponse;
+import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticmq.rest.sqs.SQSRestServer;
-import org.elasticmq.rest.sqs.SQSRestServerBuilder;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
+import javax.annotation.Nullable;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -67,8 +72,6 @@ public class ConcurrentBrokerExample {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private static final String QUEUE_NAME = "my_queue";
-
     /**
      * Example that will continue to place messages on the message queue with a message listener consuming them.
      *
@@ -77,48 +80,25 @@ public class ConcurrentBrokerExample {
      */
     public static void main(final String[] args) throws Exception {
         // Sets up the SQS that will be used
-        final SqsAsyncClient sqsAsyncClient = startElasticMqServer();
-        final String queueUrl = sqsAsyncClient.createQueue((request) -> request.queueName(QUEUE_NAME).build()).get().queueUrl();
+        final LocalSqsAsyncClient sqsAsyncClient = new ElasticMqSqsAsyncClient();
+        final CreateRandomQueueResponse response = sqsAsyncClient.createRandomQueue().get();
         final QueueProperties queueProperties = QueueProperties
                 .builder()
-                .queueUrl(queueUrl)
+                .queueUrl(response.queueUrl())
                 .build();
 
+        final String identifier = "core-example-container";
         final MessageListenerContainer messageListenerContainer = new CoreMessageListenerContainer(
-                "core-example-container",
+                identifier,
                 ConcurrentBrokerExample::buildBroker,
                 () -> buildMessageRetriever(queueProperties, sqsAsyncClient),
-                () -> buildMessageProcessor(queueProperties, sqsAsyncClient),
+                () -> buildMessageProcessor(identifier, queueProperties, sqsAsyncClient),
                 () -> buildMessageResolver(queueProperties, sqsAsyncClient)
         );
         messageListenerContainer.start();
 
         log.info("Starting producing");
-        Executors.newSingleThreadExecutor().submit(new Producer(sqsAsyncClient, queueUrl))
-                .get();
-    }
-
-    /**
-     * Runs a local Elastic MQ server that will act like the SQS queue for local testing.
-     *
-     * <p>This is useful as it means the users of this example don't need to worry about setting up any queue system them self.
-     *
-     * @return amazon sqs client for connecting the local queue
-     */
-    private static SqsAsyncClient startElasticMqServer() throws URISyntaxException {
-        log.info("Starting Local ElasticMQ SQS Server");
-        final SQSRestServer sqsRestServer = SQSRestServerBuilder
-                .withInterface("localhost")
-                .withDynamicPort()
-                .start();
-
-        final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-
-        return SqsAsyncClient.builder()
-                .region(Region.of("elasticmq"))
-                .endpointOverride(new URI("http://localhost:" + serverBinding.localAddress().getPort()))
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("accessKeyId", "secretAccessKey")))
-                .build();
+        Executors.newSingleThreadExecutor().submit(new Producer(sqsAsyncClient, response.queueUrl())).get();
     }
 
     private static MessageBroker buildBroker() {
@@ -145,7 +125,9 @@ public class ConcurrentBrokerExample {
         );
     }
 
-    private static MessageProcessor buildMessageProcessor(final QueueProperties queueProperties,
+    @SuppressWarnings("SameParameterValue")
+    private static MessageProcessor buildMessageProcessor(final String identifier,
+                                                          final QueueProperties queueProperties,
                                                           final SqsAsyncClient sqsAsyncClient) {
         final MessageConsumer messageConsumer = new MessageConsumer();
         final Method messageReceivedMethod;
@@ -155,12 +137,25 @@ public class ConcurrentBrokerExample {
             throw new RuntimeException(exception);
         }
 
-        return new CoreMessageProcessor(
-                argumentResolverService(),
+        final Tracing tracing = Tracing.newBuilder()
+                .currentTraceContext(ThreadLocalCurrentTraceContext.newBuilder()
+                        .addScopeDecorator(MDCScopeDecorator.get())
+                        .build()
+                )
+                .build();
+        tracing.setNoop(true);
+
+        return new DecoratingMessageProcessor(
+                identifier,
                 queueProperties,
-                sqsAsyncClient,
-                messageReceivedMethod,
-                messageConsumer
+                Collections.singletonList(new BraveMessageProcessingDecorator(tracing)),
+                new CoreMessageProcessor(
+                        argumentResolverService(),
+                        queueProperties,
+                        sqsAsyncClient,
+                        messageReceivedMethod,
+                        messageConsumer
+                )
         );
     }
 
@@ -168,7 +163,7 @@ public class ConcurrentBrokerExample {
                                                         final SqsAsyncClient sqsAsyncClient) {
         return new BatchingMessageResolver(queueProperties, sqsAsyncClient,
                 StaticBatchingMessageResolverProperties.builder()
-                        .bufferingSizeLimit(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
+                        .bufferingSizeLimit(1)
                         .bufferingTimeInMs(5000)
                         .build());
 
@@ -230,7 +225,7 @@ public class ConcurrentBrokerExample {
                             .collect(toSet()));
                     log.info("Put 10 messages onto queue");
                     async.sendMessageBatch(batchRequestBuilder.build());
-                    Thread.sleep(500);
+                    Thread.sleep(2000);
                 } catch (final InterruptedException interruptedException) {
                     log.info("Producer Thread has been interrupted");
                     shouldStop = true;
@@ -256,7 +251,7 @@ public class ConcurrentBrokerExample {
          * <p>This is useful when the concurrency is dynamically changing we can see that we are in fact properly processing them with the correct
          * concurrency level.
          */
-        private static AtomicInteger concurrentMessagesBeingProcessed = new AtomicInteger(0);
+        private static final AtomicInteger concurrentMessagesBeingProcessed = new AtomicInteger(0);
 
         /**
          * Random number generator for calculating the random time that a message will take to be processed.
@@ -280,6 +275,61 @@ public class ConcurrentBrokerExample {
             } finally {
                 concurrentMessagesBeingProcessed.decrementAndGet();
             }
+        }
+    }
+
+    /**
+     * Implementation that will provided {@link ConcurrentMessageBrokerProperties} via a cache to reduce the amount of time that it is calculated.
+     *
+     * <p>This is useful if it is costly to determine the values, e.g. by making an outbound call to determine the value, and therefore a cached value should
+     * be used instead.
+     */
+    @ThreadSafe
+    private static class CachingConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
+        /**
+         * Cache key as only a single value is being loaded into the cache.
+         */
+        private static final Boolean SINGLE_CACHE_VALUE_KEY = true;
+
+        private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel;
+        private final LoadingCache<Boolean, Long> cachedPreferredConcurrencyPollingRateInSeconds;
+        private final LoadingCache<Boolean, Long> cachedErrorBackoffTimeInMilliseconds;
+
+        /**
+         * Constructor.
+         *
+         * @param cachingTimeoutInMs the amount of time in milliseconds that the values for each property should be cached internally
+         * @param delegateProperties the delegate properties object that should be called when the cache has not been populated yet or has expired
+         */
+        public CachingConcurrentMessageBrokerProperties(final int cachingTimeoutInMs,
+                                                        final ConcurrentMessageBrokerProperties delegateProperties) {
+            this.cachedConcurrencyLevel = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getConcurrencyLevel));
+
+            this.cachedPreferredConcurrencyPollingRateInSeconds = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getConcurrencyPollingRateInMilliseconds));
+
+            this.cachedErrorBackoffTimeInMilliseconds = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getErrorBackoffTimeInMilliseconds));
+        }
+
+        @Override
+        public int getConcurrencyLevel() {
+            return cachedConcurrencyLevel.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+        }
+
+        @Override
+        public Long getConcurrencyPollingRateInMilliseconds() {
+            return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+        }
+
+        @Nullable
+        @Override
+        public Long getErrorBackoffTimeInMilliseconds() {
+            return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
         }
     }
 }

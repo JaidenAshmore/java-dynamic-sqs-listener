@@ -2,13 +2,10 @@ package com.jashmore.sqs.resolver.batching;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
-
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.resolver.MessageResolver;
+import com.jashmore.sqs.util.collections.QueueUtils;
 import com.jashmore.sqs.util.thread.ThreadUtils;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -19,19 +16,19 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.time.Duration;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * {@link MessageResolver} that will batch the deletions of messages into a group to reduce the amount of messages that are being sent to SQS queue.
@@ -93,14 +90,14 @@ public class BatchingMessageResolver implements MessageResolver {
         boolean continueProcessing = true;
         final ExecutorService executorService = buildExecutorServiceForSendingBatchDeletion();
         // all of the batches currently being sent so that they can be waited on during shutdown
-        final Set<CompletableFuture<?>> batchesBeingPublished = Sets.newConcurrentHashSet();
+        final List<CompletableFuture<?>> batchesBeingPublished = new ArrayList<>();
         while (continueProcessing) {
             final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
             try {
                 final int batchSize = getBatchSize();
                 final long bufferingTimeInMs = getBufferingTimeInMs();
                 log.trace("Waiting {}ms for {} messages to be submitted for deletion", bufferingTimeInMs, batchSize);
-                Queues.drain(messagesToBeResolved, batchOfMessagesToResolve, batchSize, bufferingTimeInMs, TimeUnit.MILLISECONDS);
+                QueueUtils.drain(messagesToBeResolved, batchOfMessagesToResolve, batchSize, Duration.ofMillis(bufferingTimeInMs));
             } catch (final InterruptedException interruptedException) {
                 log.info("Shutting down MessageResolver");
                 // Do nothing, we still want to send the current batch of messages
@@ -141,7 +138,7 @@ public class BatchingMessageResolver implements MessageResolver {
      * @return the service for running message deletion on a separate thread
      */
     private ExecutorService buildExecutorServiceForSendingBatchDeletion() {
-        return Executors.newCachedThreadPool(ThreadUtils.threadFactory(Thread.currentThread().getName() + "-batch-delete-%d"));
+        return Executors.newCachedThreadPool(ThreadUtils.multiNamedThreadFactory(Thread.currentThread().getName() + "-batch-delete"));
     }
 
     /**
@@ -150,7 +147,11 @@ public class BatchingMessageResolver implements MessageResolver {
      * @return the number of messages that should be resolved in a single batch
      */
     private int getBatchSize() {
-        return Ints.constrainToRange(properties.getBufferingSizeLimit(), 1, MAX_NUMBER_OF_MESSAGES_IN_BATCH);
+        final int bufferingSizeLimit = properties.getBufferingSizeLimit();
+        if (bufferingSizeLimit < 1) {
+            return 1;
+        }
+        return Math.min(bufferingSizeLimit, MAX_NUMBER_OF_MESSAGES_IN_BATCH);
     }
 
     /**
@@ -172,7 +173,7 @@ public class BatchingMessageResolver implements MessageResolver {
     private CompletableFuture<?> submitMessageDeletionBatch(final List<MessageResolutionBean> batchOfMessagesToResolve,
                                                             final ExecutorService executorService) {
         final Map<String, CompletableFuture<Object>> messageCompletableFutures = batchOfMessagesToResolve.stream()
-                .map(bean -> Maps.immutableEntry(bean.getMessage().messageId(), bean.getCompletableFuture()))
+                .map(bean -> new AbstractMap.SimpleImmutableEntry<>(bean.getMessage().messageId(), bean.getCompletableFuture()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return CompletableFuture.supplyAsync(() -> buildBatchDeleteMessageRequest(batchOfMessagesToResolve))
@@ -231,10 +232,10 @@ public class BatchingMessageResolver implements MessageResolver {
         /**
          * The message to be resolved.
          */
-        private final Message message;
+        Message message;
         /**
          * The future that should be resolved when the message is successfully or unsuccessfully deleted.
          */
-        private final CompletableFuture<Object> completableFuture;
+        CompletableFuture<Object> completableFuture;
     }
 }

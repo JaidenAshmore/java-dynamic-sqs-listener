@@ -15,10 +15,12 @@
     <modules>
         <module>avro-spring-cloud-schema-registry-sqs-client</module>
         <module>common-utils</module>
+        <module>elasticmq-sqs-client</module>
         <module>expected-test-exception</module>
-        <module>local-amazon-sqs</module>
-        <module>local-sqs-test-utils</module>
-        <module>local-sqs-test-utils-junit5</module>
+        <module>local-sqs-async-client</module>
         <module>proxy-method-interceptor</module>
+        <module>sqs-brave-tracing</module>
+        <module>annotation-utils</module>
+        <module>documentation-annotations</module>
     </modules>
 </project>

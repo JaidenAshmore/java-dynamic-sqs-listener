@@ -3,14 +3,13 @@ package it.com.jashmore.sqs.container.prefetch;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.argument.payload.Payload;
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
-import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, PrefetchingQueueListenerIntegrationTest.TestConfig.class})
+@SpringBootTest(classes = {PrefetchingQueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = {
         "prop.concurrency=5"
@@ -38,14 +37,16 @@ class PrefetchingQueueListenerIntegrationTest {
 
     private static final int MESSAGE_VISIBILITY_IN_SECONDS = 2;
 
-    @RegisterExtension
-    public static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
-
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
 
     @Configuration
     public static class TestConfig {
+        @Bean
+        public LocalSqsAsyncClient localSqsAsyncClient() {
+            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
+        }
+
         @Service
         @SuppressWarnings("unused")
         public static class MessageListener {
@@ -61,18 +62,13 @@ class PrefetchingQueueListenerIntegrationTest {
                 }
             }
         }
-
-        @Bean
-        public LocalSqsAsyncClient localSqsAsyncClient() {
-            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
-        }
     }
 
     @Test
     void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i));
+                .forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

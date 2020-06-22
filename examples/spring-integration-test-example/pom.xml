@@ -46,12 +46,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Dependencies needed for creating the local SQS queue -->
         <dependency>
             <groupId>org.elasticmq</groupId>
@@ -61,21 +55,14 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>local-amazon-sqs</artifactId>
+            <artifactId>local-sqs-async-client</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>local-sqs-test-utils</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>local-sqs-test-utils-junit5</artifactId>
+            <artifactId>elasticmq-sqs-client</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

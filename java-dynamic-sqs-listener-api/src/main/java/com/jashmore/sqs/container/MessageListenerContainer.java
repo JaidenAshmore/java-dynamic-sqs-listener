@@ -1,11 +1,11 @@
 package com.jashmore.sqs.container;
 
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Container used to handle the entire lifecycle of a message listener for a queue.

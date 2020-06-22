@@ -3,14 +3,13 @@ package it.com.jashmore.sqs.container.basic;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.argument.payload.Payload;
+import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, QueueListenerEnvironmentIntegrationTest.TestConfig.class})
+@SpringBootTest(classes = {QueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = {
         "prop.concurrency=5"
@@ -37,9 +36,6 @@ class QueueListenerEnvironmentIntegrationTest {
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(NUMBER_OF_MESSAGES_TO_SEND + 1);
     private static final AtomicInteger messagesProcessed = new AtomicInteger(0);
 
-    @RegisterExtension
-    public static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
-
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
 
@@ -47,7 +43,7 @@ class QueueListenerEnvironmentIntegrationTest {
     public static class TestConfig {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
+            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
         }
 
         @SuppressWarnings("unused")
@@ -73,7 +69,7 @@ class QueueListenerEnvironmentIntegrationTest {
                 .forEach(i -> {
                     final String messageBody = "message: " + i;
                     log.info("Sent message: {}", messageBody);
-                    localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, messageBody);
+                    localSqsAsyncClient.sendMessage(QUEUE_NAME, messageBody);
                 });
 
         // act
