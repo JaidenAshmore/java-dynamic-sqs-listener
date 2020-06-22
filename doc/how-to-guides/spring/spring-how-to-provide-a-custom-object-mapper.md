@@ -19,14 +19,14 @@ by the application, the Spring Starter will provide their own to use. This shows
 ## Providing an ObjectMapper without including it in the Spring Context
 One problem with doing this method is that this ObjectMapper will be shared with this library as well as any others that need this, e.g. the HTTP layer
 may be using this ObjectMapper for their own serialisation. Therefore, if you want to provide an `ObjectMapper` that is only used by this library you would
-need to override the individual core [ArgumentResolvers](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
+need to override the individual core [ArgumentResolvers](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 that are using this `ObjectMapper`, which is the
-[PayloadArgumentResolver](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver.java) and
-[MessageAttributeArgumentResolver](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/attribute/MessageAttributeArgumentResolver.java). 
+[PayloadArgumentResolver](../../../core/src/main/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver.java) and
+[MessageAttributeArgumentResolver](../../../core/src/main/java/com/jashmore/sqs/argument/attribute/MessageAttributeArgumentResolver.java). 
 
 ### Steps
 
-1. In a `@Configuration` class define your own [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
+1. In a `@Configuration` class define your own [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
     ```java
     @Configuration
     public class MyConfiguration {

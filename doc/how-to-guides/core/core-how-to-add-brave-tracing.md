@@ -1,7 +1,7 @@
 # Core - How to add Brave Tracing
 If your application is using Brave for tracing the application, it would be good to be able to continue your tracing
 for the messages that are being processed. This is done using
-a [MessageProcessingDecorators](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) which will
+a [MessageProcessingDecorators](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) which will
 wrap the processing of the message with custom logic.
 
 ## Steps
@@ -14,8 +14,8 @@ wrap the processing of the message with custom logic.
         <version>${java.dynamic.sqs.listener.version}</version>
     </dependency>
     ```
-1. Wrap your [MessageProcessor](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) with
-the [DecoratingMessageProcessor](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java).
+1. Wrap your [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) with
+the [DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java).
 
     ```java
     final List<MessageProcessingDecorators> messageProcessingDecorators = ImmutableList.of(

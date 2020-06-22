@@ -1,7 +1,7 @@
 # Core - How to extend message visibility during processing
 When processing a message the visibility is originally set for the message which indicates when SQS should deem it a failure and place it back onto the queue
 for reprocessing (if there is a redrive policy). If it is desirable to dynamically change this visibility time throughout the execution a
-[VisibilityExtender](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/processor/argument/VisibilityExtender.java) can be included
+[VisibilityExtender](../../../api/src/main/java/com/jashmore/sqs/processor/argument/VisibilityExtender.java) can be included
 as a parameter. This provides a method for extending this message's visibility if more time is needed.
 
 ## Example

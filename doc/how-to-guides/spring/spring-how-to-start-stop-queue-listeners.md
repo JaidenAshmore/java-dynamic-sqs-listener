@@ -1,6 +1,6 @@
 # Spring - How to start and stop Queue Listeners
 Queue Listeners can be started and stopped while it is executing via the
-[MessageListenerContainerCoordinator](../../../java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java).
+[MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java).
 To choose a specific queue the unique identifier for the listener must be supplied which was either set on the listener specifically or if none were supplied
 an automatic is supplied.
 

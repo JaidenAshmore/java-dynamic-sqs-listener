@@ -1,7 +1,7 @@
 # Spring - How to add Brave Tracing
 If your application is using Brave for tracing the application, it would be good to be able to continue your tracing
 for the messages that are being processed. This is done using
-a [MessageProcessingDecorators](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) which will
+a [MessageProcessingDecorators](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) which will
 wrap the processing of the message with custom logic.
 
 ## Steps
