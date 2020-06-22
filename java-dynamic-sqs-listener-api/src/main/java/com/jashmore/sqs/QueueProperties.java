@@ -14,5 +14,5 @@ public class QueueProperties {
     /**
      * The URL of the queue that can be used by the Amazon clients to add, remove messages etc.
      */
-    String queueUrl;
+    private final String queueUrl;
 }

@@ -66,41 +66,51 @@
         <checkstyle.config.location>configuration/checkstyle/google_6_18_checkstyle.xml</checkstyle.config.location>
         <spotbugs.config.location>configuration/spotbugs/bugsExcludeFilter.xml</spotbugs.config.location>
 
-        <assertj.version>3.16.1</assertj.version>
+        <assertj.version>3.12.2</assertj.version>
         <avro.version>1.9.2</avro.version>
-        <aws.sdk.version>2.13.7</aws.sdk.version>
-        <brave.version>5.12.3</brave.version>
+        <aws.sdk.version>2.13.3</aws.sdk.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
-        <cglib.version>3.3.0</cglib.version>
+        <cglib.version>3.2.10</cglib.version>
         <elasticmq.version>0.15.6</elasticmq.version>
-        <jackson.version>2.11.0</jackson.version>
+        <guava.version>29.0-jre</guava.version>
+        <hamcrest.verion>2.2</hamcrest.verion>
+        <jackson.version>2.9.10.4</jackson.version>
         <jacoco.version>0.8.5</jacoco.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
+        <junit4.version>4.12</junit4.version>
         <junit-jupiter.version>5.6.2</junit-jupiter.version>
         <logback.version>1.2.3</logback.version>
         <lombok.version>1.18.12</lombok.version>
-
-        <!-- Be wary of upgrading this to 3.0.0-M5. It made tests begin to fail for no reason, specifically
-         ConcurrentMessageBrokerTest#threadInterruptedDuringBackoffShouldStopBroker and I was able to get it to
-         pass by adding a log message before the shutdown. It is like the main thread wasn't being ran after the
-         countdown latch was passed. No idea why... -->
         <maven.failsafe.version>3.0.0-M4</maven.failsafe.version>
         <maven.surefire.version>3.0.0-M4</maven.surefire.version>
-
         <mockito.version>3.3.3</mockito.version>
         <mockito.jupiter.version>3.3.3</mockito.jupiter.version>
-        <pitest.version>1.5.2</pitest.version>
+        <pitest.version>1.5.1</pitest.version>
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.plugin.version>4.0.0</spotbugs.plugin.version>
         <spotbugs.version>4.0.2</spotbugs.version>
         <spring-cloud-schema-registry-client.version>1.0.3.RELEASE</spring-cloud-schema-registry-client.version>
-        <spring.boot.version>2.3.1.RELEASE</spring.boot.version>
+        <spring.boot.version>2.2.5.RELEASE</spring.boot.version>
         <skipTests>false</skipTests>
         <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Set up the default testing dependencies here so it does need to be done for each child module -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -193,22 +203,9 @@
             </dependency>
 
             <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave-context-slf4j</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave-tests</artifactId>
-                <version>${brave.version}</version>
-                <scope>test</scope>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit4.version}</version>
             </dependency>
 
             <dependency>
@@ -228,6 +225,12 @@
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${hamcrest.verion}</version>
             </dependency>
 
             <dependency>
@@ -253,6 +256,12 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
 
             <dependency>

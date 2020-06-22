@@ -1,6 +1,5 @@
 package com.jashmore.sqs.extensions.registry.avro;
 
-import com.jashmore.documentation.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 @Data
 @Builder

@@ -23,12 +23,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>29.0-jre</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
@@ -40,9 +34,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>elasticmq-sqs-client</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.elasticmq</groupId>
+            <artifactId>elasticmq-rest-sqs_2.12</artifactId>
         </dependency>
 
         <dependency>
@@ -50,24 +43,6 @@
             <artifactId>java-dynamic-sqs-listener-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <!-- Tracing -->
-        <dependency>
-            <groupId>io.zipkin.brave</groupId>
-            <artifactId>brave</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.zipkin.brave</groupId>
-            <artifactId>brave-context-slf4j</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>brave-message-processing-decorator</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
     </dependencies>
 
     <build>

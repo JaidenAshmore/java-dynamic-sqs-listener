@@ -29,6 +29,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>avro-spring-cloud-schema-registry-sqs-client</artifactId>
             <version>${project.version}</version>

@@ -1,7 +1,5 @@
 package com.jashmore.sqs.processor.argument;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Used to acknowledge the completion of a message being processed by the message consumer.
  *
@@ -14,8 +12,6 @@ public interface Acknowledge {
      * Acknowledge that the message was successfully completed, which will result in it being removed from the queue.
      *
      * <p>Multiple calls to this has indeterminate behaviour and should not be done.
-     *
-     * @return the future that will be resolved if the message was successfully acknowledged
      */
-    CompletableFuture<?> acknowledgeSuccessful();
+    void acknowledgeSuccessful();
 }

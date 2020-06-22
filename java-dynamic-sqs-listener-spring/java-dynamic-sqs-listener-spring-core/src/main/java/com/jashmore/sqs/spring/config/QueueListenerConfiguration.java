@@ -1,5 +1,7 @@
 package com.jashmore.sqs.spring.config;
 
+import com.google.common.collect.ImmutableMap;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
@@ -11,7 +13,6 @@ import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
@@ -28,8 +29,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The configuration for the application has been designed to allow for replacements by the consumer so that they can extend the framework, integrate into
@@ -48,7 +49,7 @@ public class QueueListenerConfiguration {
      * @see SqsAsyncClient#create() for more details about how to use this default client
      */
     @Bean(destroyMethod = "close")
-    @ConditionalOnMissingBean({SqsAsyncClient.class, SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean( {SqsAsyncClient.class, SqsAsyncClientProvider.class})
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.create();
     }
@@ -67,9 +68,9 @@ public class QueueListenerConfiguration {
      * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
      */
     @Bean
-    @ConditionalOnMissingBean({SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean( {SqsAsyncClientProvider.class})
     public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
-        return new DefaultSqsAsyncClientProvider(defaultClient, Collections.emptyMap());
+        return new DefaultSqsAsyncClientProvider(defaultClient, ImmutableMap.of());
     }
 
     /**
@@ -100,11 +101,11 @@ public class QueueListenerConfiguration {
          * example, they want to define a type of payload argument resolution that will extract certain fields from the payload. They can define their
          * {@link ArgumentResolver} bean in the context and it will be included in this {@link ArgumentResolverService}.
          *
-         * @param argumentResolvers the argument resolvers available in the application
+         * @param argumentResolvers  the argument resolvers available in the application
          * @return an {@link ArgumentResolverService} that will be able to resolve method parameters for message processing
          */
         @Bean
-        public ArgumentResolverService defaultArgumentResolverService(final List<ArgumentResolver<?>> argumentResolvers) {
+        public ArgumentResolverService defaultArgumentResolverService(final Set<ArgumentResolver<?>> argumentResolvers) {
             return new DelegatingArgumentResolverService(argumentResolvers);
         }
 
@@ -151,7 +152,7 @@ public class QueueListenerConfiguration {
     /**
      * The default provided {@link QueueResolver} that can be used if it not overridden by a user defined bean.
      *
-     * @param environment the environment for this spring application
+     * @param environment    the environment for this spring application
      * @return the default service used for queue resolution
      */
     @Bean
@@ -197,20 +198,16 @@ public class QueueListenerConfiguration {
             public MessageListenerContainerFactory basicMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
                                                                                         final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                         final QueueResolver queueResolver,
-                                                                                        final Environment environment,
-                                                                                        final List<MessageProcessingDecorator> decorators) {
-                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                        queueResolver, environment, decorators);
+                                                                                        final Environment environment) {
+                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
             }
 
             @Bean
             public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
                                                                                               final SqsAsyncClientProvider sqsAsyncClientProvider,
                                                                                               final QueueResolver queueResolver,
-                                                                                              final Environment environment,
-                                                                                              final List<MessageProcessingDecorator> decorators) {
-                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                        queueResolver, environment, decorators);
+                                                                                              final Environment environment) {
+                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment);
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.jashmore.sqs.examples.schemaregistry;
 
-import static java.util.Collections.singletonList;
+import com.google.common.collect.ImmutableList;
 
 import com.example.Sensor;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
@@ -23,7 +23,7 @@ public class MessageProducers {
 
     @Scheduled(initialDelay = 1000, fixedDelay = 1000)
     public void addMessages() {
-        final Sensor payload = new Sensor("V2-" + UUID.randomUUID().toString(), 1.0F, 1.1F, 1.2F, 1.3F, singletonList(1.4F), singletonList(1.5F));
+        final Sensor payload = new Sensor("V2-" + UUID.randomUUID().toString(), 1.0F, 1.1F, 1.2F, 1.3F, ImmutableList.of(1.4F), ImmutableList.of(1.5F));
 
         sqsAsyncClient.getQueueUrl((request) -> request.queueName("test"))
                 .thenApply(GetQueueUrlResponse::queueUrl)

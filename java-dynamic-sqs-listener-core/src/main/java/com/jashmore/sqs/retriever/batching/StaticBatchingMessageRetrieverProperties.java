@@ -1,10 +1,11 @@
 package com.jashmore.sqs.retriever.batching;
 
-import com.jashmore.documentation.annotations.Nullable;
-import com.jashmore.documentation.annotations.Positive;
-import com.jashmore.documentation.annotations.PositiveOrZero;
 import lombok.Builder;
 import lombok.Value;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 
 /**
  * Static implementation of the properties that will never change during the processing of the messages.
@@ -12,10 +13,10 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticBatchingMessageRetrieverProperties implements BatchingMessageRetrieverProperties {
-    int batchSize;
-    Long batchingPeriodInMs;
-    Integer messageVisibilityTimeoutInSeconds;
-    Long errorBackoffTimeInMilliseconds;
+    private final int batchSize;
+    private final Long batchingPeriodInMs;
+    private final Integer messageVisibilityTimeoutInSeconds;
+    private final Long errorBackoffTimeInMilliseconds;
 
     @Positive
     @Override

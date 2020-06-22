@@ -3,12 +3,13 @@ package it.com.jashmore.sqs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -40,6 +41,9 @@ class SqsSpringStarterIntegrationTest {
         }
     }
 
+    @RegisterExtension
+    static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
+
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
 
@@ -62,7 +66,7 @@ class SqsSpringStarterIntegrationTest {
 
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
+            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
         }
     }
 
@@ -70,7 +74,7 @@ class SqsSpringStarterIntegrationTest {
     void springStarterShouldAutomaticallySetUpSqsConfigurationIfIncluded() throws Exception {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
+                .forEach(i -> localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, "message: " + i));
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

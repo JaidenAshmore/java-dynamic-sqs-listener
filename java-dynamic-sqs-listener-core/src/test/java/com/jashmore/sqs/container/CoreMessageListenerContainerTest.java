@@ -1,9 +1,5 @@
 package com.jashmore.sqs.container;
 
-import static com.jashmore.sqs.util.collections.CollectionUtils.immutableListOf;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -11,6 +7,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.google.common.collect.ImmutableList;
 
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
@@ -21,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -64,9 +61,6 @@ class CoreMessageListenerContainerTest {
     @Mock
     private MessageResolver messageResolver;
 
-    @Captor
-    private ArgumentCaptor<Supplier<CompletableFuture<?>>> messageResolverArgumentCaptor;
-
     @Test
     void passedInIdentifierIsReturnedFromGetIdentifier() {
         // arrange
@@ -96,8 +90,8 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor).processMessage(eq(message), any());
-        verify(messageProcessor).processMessage(eq(secondMessage), any());
+        verify(messageProcessor).processMessage(eq(message), any(Runnable.class));
+        verify(messageProcessor).processMessage(eq(secondMessage), any(Runnable.class));
     }
 
     @Test
@@ -110,10 +104,11 @@ class CoreMessageListenerContainerTest {
         final CoreMessageListenerContainer container
                 = buildContainer("id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
         container.runContainer();
-        verify(messageProcessor).processMessage(eq(message), messageResolverArgumentCaptor.capture());
+        final ArgumentCaptor<Runnable> messageResolutionRunnableArgumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(messageProcessor).processMessage(eq(message), messageResolutionRunnableArgumentCaptor.capture());
 
         // act
-        messageResolverArgumentCaptor.getValue().get();
+        messageResolutionRunnableArgumentCaptor.getValue().run();
 
         // assert
         verify(messageResolver).resolveMessage(message);
@@ -186,7 +181,7 @@ class CoreMessageListenerContainerTest {
         final AtomicReference<String> retrieverThreadName = new AtomicReference<>();
         when(messageRetriever.run()).thenAnswer(invocation -> {
             retrieverThreadName.set(Thread.currentThread().getName());
-            return emptyMap();
+            return ImmutableList.of();
         });
         final CoreMessageListenerContainer container = buildContainer(
                 "container-id", messageBroker, messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
@@ -206,7 +201,7 @@ class CoreMessageListenerContainerTest {
             retrieverThreadName.set(Thread.currentThread().getName());
             log.info("Processing message");
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any());
+        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
         when(messageRetriever.retrieveMessage())
                 .thenReturn(CompletableFuture.completedFuture(Message.builder().build()))
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
@@ -225,7 +220,7 @@ class CoreMessageListenerContainerTest {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
-        when(messageRetriever.run()).thenReturn(singletonList(Message.builder().build()));
+        when(messageRetriever.run()).thenReturn(ImmutableList.of(Message.builder().build()));
         final CoreMessageListenerContainer container = buildContainer(
                 "id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, DEFAULT_PROPERTIES);
 
@@ -233,7 +228,7 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor, never()).processMessage(any(Message.class), any());
+        verify(messageProcessor, never()).processMessage(any(Message.class), any(Runnable.class));
     }
 
     @Test
@@ -243,7 +238,7 @@ class CoreMessageListenerContainerTest {
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
         final Message firstExtraMessage = Message.builder().body("first").build();
         final Message secondExtraMessage = Message.builder().body("second").build();
-        when(messageRetriever.run()).thenReturn(immutableListOf(firstExtraMessage, secondExtraMessage));
+        when(messageRetriever.run()).thenReturn(ImmutableList.of(firstExtraMessage, secondExtraMessage));
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
                 .build();
@@ -254,8 +249,8 @@ class CoreMessageListenerContainerTest {
         container.runContainer();
 
         // assert
-        verify(messageProcessor).processMessage(eq(firstExtraMessage), any());
-        verify(messageProcessor).processMessage(eq(secondExtraMessage), any());
+        verify(messageProcessor).processMessage(eq(firstExtraMessage), any(Runnable.class));
+        verify(messageProcessor).processMessage(eq(secondExtraMessage), any(Runnable.class));
     }
 
     @Test
@@ -263,7 +258,7 @@ class CoreMessageListenerContainerTest {
         // arrange
         when(messageRetriever.retrieveMessage())
                 .thenReturn(STUB_MESSAGE_BROKER_DONE);
-        when(messageRetriever.run()).thenReturn(emptyList());
+        when(messageRetriever.run()).thenReturn(ImmutableList.of());
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldProcessAnyExtraRetrievedMessagesOnShutdown(true)
                 .build();
@@ -298,7 +293,7 @@ class CoreMessageListenerContainerTest {
                 wasThreadInterrupted.set(true);
             }
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any());
+        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldInterruptThreadsProcessingMessagesOnShutdown(true)
                 .build();
@@ -332,7 +327,7 @@ class CoreMessageListenerContainerTest {
                 wasThreadInterrupted.set(true);
             }
             return null;
-        }).when(messageProcessor).processMessage(any(Message.class), any());
+        }).when(messageProcessor).processMessage(any(Message.class), any(Runnable.class));
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .shouldInterruptThreadsProcessingMessagesOnShutdown(false)
                 .build();
@@ -409,7 +404,7 @@ class CoreMessageListenerContainerTest {
                     } catch (final InterruptedException interruptedException) {
                         Thread.sleep(2000);
                     }
-                    return emptyMap();
+                    return ImmutableList.of();
                 });
         final AtomicBoolean messageResolverInterrupted = new AtomicBoolean(false);
         doAnswer(invocation -> {

@@ -1,6 +1,7 @@
 package com.jashmore.sqs.spring.container.prefetch;
 
-import com.jashmore.documentation.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
+
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.broker.MessageBroker;
@@ -9,9 +10,7 @@ import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerPropertie
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.StaticCoreMessageListenerContainerProperties;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
-import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
@@ -32,7 +31,6 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -46,7 +44,6 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolver queueResolver;
     private final Environment environment;
-    private final List<MessageProcessingDecorator> messageProcessingDecorators;
 
     @Override
     protected Class<PrefetchingQueueListener> getAnnotationClass() {
@@ -64,12 +61,11 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
                 .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
                 .build();
 
-        final String identifier = IdentifierUtils.buildIdentifierForMethod(annotation.identifier(), bean.getClass(), method);
         return new CoreMessageListenerContainer(
-                identifier,
+                IdentifierUtils.buildIdentifierForMethod(annotation.identifier(), bean.getClass(), method),
                 buildMessageBrokerSupplier(annotation),
                 buildMessageRetrieverSupplier(annotation, queueProperties, sqsAsyncClient),
-                buildProcessorSupplier(identifier, queueProperties, sqsAsyncClient, bean, method),
+                buildProcessorSupplier(queueProperties, sqsAsyncClient, bean, method),
                 buildMessageResolverSupplier(queueProperties, sqsAsyncClient),
                 StaticCoreMessageListenerContainerProperties.builder()
                         .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
@@ -92,19 +88,11 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
     }
 
 
-    private Supplier<MessageProcessor> buildProcessorSupplier(final String identifier,
-                                                              final QueueProperties queueProperties,
+    private Supplier<MessageProcessor> buildProcessorSupplier(final QueueProperties queueProperties,
                                                               final SqsAsyncClient sqsAsyncClient,
                                                               final Object bean,
                                                               final Method method) {
-        return () -> {
-            final CoreMessageProcessor delegateProcessor = new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
-            if (messageProcessingDecorators.isEmpty()) {
-                return delegateProcessor;
-            } else {
-                return new DecoratingMessageProcessor(identifier, queueProperties, messageProcessingDecorators, delegateProcessor);
-            }
-        };
+        return () -> new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
     }
 
     private int getConcurrencyLevel(final PrefetchingQueueListener annotation) {

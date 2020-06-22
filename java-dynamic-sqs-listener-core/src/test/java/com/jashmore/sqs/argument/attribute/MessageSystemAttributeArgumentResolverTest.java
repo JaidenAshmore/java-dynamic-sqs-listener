@@ -1,13 +1,13 @@
 package com.jashmore.sqs.argument.attribute;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SENDER_ID;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SENT_TIMESTAMP;
 import static software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.SEQUENCE_NUMBER;
+
+import com.google.common.collect.ImmutableMap;
 
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
@@ -20,14 +20,14 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Calendar;
 
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings( {"unused", "WeakerAccess"})
 public class MessageSystemAttributeArgumentResolverTest {
-    private final MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver = new MessageSystemAttributeArgumentResolver();
+    private MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver = new MessageSystemAttributeArgumentResolver();
 
     @Test
     public void systemAttributesThatDoNotExistForNonRequiredAttributeWillReturnNull() throws Exception {
         final Message message = Message.builder()
-                .attributes(emptyMap())
+                .attributes(ImmutableMap.of())
                 .build();
         final Method method = MessageSystemAttributeArgumentResolverTest.class.getMethod("consume", String.class);
         final MethodParameter methodParameter = DefaultMethodParameter.builder()
@@ -46,7 +46,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesThatDoNotExistForRequiredAttributeWillThrowArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
-                .attributes(emptyMap())
+                .attributes(ImmutableMap.of())
                 .build();
         final Method method = MessageSystemAttributeArgumentResolverTest.class.getMethod("consumeNotRequired", String.class);
         final MethodParameter methodParameter = DefaultMethodParameter.builder()
@@ -66,7 +66,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForStringArgumentsCanBeConsumedWhenPresent() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SENDER_ID, "value"
                 ))
                 .build();
@@ -87,7 +87,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForIntegerArgumentsCanBeConsumed() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SEQUENCE_NUMBER, "123"
                 ))
                 .build();
@@ -108,7 +108,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForIntArgumentsCanBeConsumed() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "123"
                 ))
                 .build();
@@ -130,7 +130,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForIntegerArgumentsThatAreNotIntegersThrowsArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "invalid"
                 ))
                 .build();
@@ -152,7 +152,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForLongClassArgumentsCanBeConsumed() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SENT_TIMESTAMP, "123"
                 ))
                 .build();
@@ -173,7 +173,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForLongArgumentsCanBeConsumed() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SEQUENCE_NUMBER, "123"
                 ))
                 .build();
@@ -194,7 +194,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesForLongArgumentsThatAreNotLongsThrowsArgumentResolutionException() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SEQUENCE_NUMBER, "invalid"
                 ))
                 .build();
@@ -217,7 +217,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     public void timestampSystemAttributesCanBeCastToOffsetDateTime() throws Exception {
         final OffsetDateTime time = OffsetDateTime.parse("2007-12-03T10:15:30.000Z");
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         SENT_TIMESTAMP, String.valueOf(time.toInstant().toEpochMilli())
                 ))
                 .build();
@@ -239,7 +239,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     public void timestampSystemAttributesCanBeCastToInstant() throws Exception {
         final Instant time = OffsetDateTime.parse("2007-12-03T10:15:30.000Z").toInstant();
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, String.valueOf(time.toEpochMilli())
                 ))
                 .build();
@@ -260,7 +260,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     @Test
     public void systemAttributesCannotBeCastToUnsupportedClasses() throws Exception {
         final Message message = Message.builder()
-                .attributes(singletonMap(SEQUENCE_NUMBER, "ignored"))
+                .attributes(ImmutableMap.of(SEQUENCE_NUMBER, "ignored"))
                 .build();
         final Method method = MessageSystemAttributeArgumentResolverTest.class.getMethod("consume", Float.class);
         final MethodParameter methodParameter = DefaultMethodParameter.builder()
@@ -281,7 +281,7 @@ public class MessageSystemAttributeArgumentResolverTest {
     public void timestampSystemAttributesCannotBeCastToUnsupportedClasses() throws Exception {
         final Instant time = OffsetDateTime.parse("2007-12-03T10:15:30.000Z").toInstant();
         final Message message = Message.builder()
-                .attributes(singletonMap(
+                .attributes(ImmutableMap.of(
                         APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, String.valueOf(time.toEpochMilli())
                 ))
                 .build();

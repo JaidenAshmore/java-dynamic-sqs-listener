@@ -1,6 +1,5 @@
 package com.jashmore.sqs.retriever;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -8,6 +7,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Class used for retrieving messages to execute from the queue.
@@ -15,6 +15,9 @@ import java.util.concurrent.CompletableFuture;
  * <p>If you were to consider this library as similar to a pub-sub system, this could be considered the publisher.  It polls for messages from the
  * remote queue which will be taken by the {@link MessageBroker}, transferred to the corresponding {@link MessageProcessor} that knows how to process
  * this message and then deleted by the {@link MessageResolver}.
+ *
+ * <p>Messages that are downloaded from the remote server must contain all of the {@link Message#attributes()} and {@link Message#messageAttributes()} as
+ * they can be consumed by corresponding {@link com.jashmore.sqs.argument.ArgumentResolver}s.
  *
  * <p>As there could be multiple threads wanting to process messages the implementations of this class must be thread safe.
  */

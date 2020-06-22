@@ -1,6 +1,6 @@
 package com.jashmore.sqs.spring.util;
 
-import static com.jashmore.sqs.util.string.StringUtils.toLowerHyphenCase;
+import com.google.common.base.CaseFormat;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
@@ -17,9 +17,9 @@ public class IdentifierUtils {
      * @param method     the method used for the message listener,  used if no identifier supplied
      * @return an identifier for this class' method
      */
-    public String buildIdentifierForMethod(final String identifier, final Class<?> clazz, final Method method) {
+    public static String buildIdentifierForMethod(final String identifier, final Class<?> clazz, final Method method) {
         if (StringUtils.isEmpty(identifier.trim())) {
-            return toLowerHyphenCase(clazz.getSimpleName() + "-" + method.getName());
+            return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, clazz.getSimpleName() + "-" + method.getName());
         } else {
             return identifier.trim();
         }

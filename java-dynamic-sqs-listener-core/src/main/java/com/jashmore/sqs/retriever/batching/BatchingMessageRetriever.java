@@ -5,11 +5,15 @@ import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConsta
 import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BATCHING_PERIOD_IN_MS;
 import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BATCHING_TRIGGER;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.common.primitives.Ints;
+
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.util.collections.QueueUtils;
 import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -20,14 +24,12 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This implementation of the {@link MessageRetriever} will group requests for messages into batches to reduce the number of times that messages are requested
@@ -125,11 +127,11 @@ public class BatchingMessageRetriever implements MessageRetriever {
         }
         futuresWaitingForMessages.forEach(future -> future.cancel(true));
         log.info("MessageRetriever has been successfully stopped");
-        return Collections.emptyList();
+        return ImmutableList.of();
     }
 
     private Queue<CompletableFuture<Message>> obtainRequestForMessagesBatch() throws InterruptedException {
-        final Queue<CompletableFuture<Message>> messagesToObtain = new LinkedList<>();
+        final Queue<CompletableFuture<Message>> messagesToObtain = Lists.newLinkedList();
         final int batchSize = getbatchSize();
         final long pollingPeriod = getMaxBatchingPeriodInMs();
         if (log.isDebugEnabled()) {
@@ -139,7 +141,7 @@ public class BatchingMessageRetriever implements MessageRetriever {
                     futuresWaitingForMessages.size()
             );
         }
-        QueueUtils.drain(futuresWaitingForMessages, messagesToObtain, batchSize, Duration.ofMillis(pollingPeriod));
+        Queues.drain(futuresWaitingForMessages, messagesToObtain, batchSize, pollingPeriod, TimeUnit.MILLISECONDS);
         return messagesToObtain;
     }
 
@@ -179,13 +181,7 @@ public class BatchingMessageRetriever implements MessageRetriever {
                 properties::getBatchSize,
                 DEFAULT_BATCHING_TRIGGER
         );
-
-        if (batchSize < 0) {
-            return 0;
-        }
-
-        return Math.min(batchSize, AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
-
+        return Ints.constrainToRange(batchSize, 0, AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
     }
 
     /**

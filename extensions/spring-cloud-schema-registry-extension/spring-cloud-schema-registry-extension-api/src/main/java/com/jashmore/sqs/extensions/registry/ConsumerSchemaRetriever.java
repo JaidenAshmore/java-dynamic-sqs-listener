@@ -1,6 +1,6 @@
 package com.jashmore.sqs.extensions.registry;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Retriever used to get the schema representation of this class that will deserialize the message payload.

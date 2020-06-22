@@ -4,7 +4,7 @@ import com.example.Sensor;
 import com.jashmore.sqs.extensions.registry.SpringCloudSchemaRegistryPayload;
 import com.jashmore.sqs.extensions.registry.avro.EnableSchemaRegistrySqsExtension;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
+import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -24,7 +24,7 @@ public class ConsumerApplication {
 
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
-        return new LocalSqsAsyncClientImpl(SqsQueuesConfig.builder()
+        return new LocalSqsAsyncClient(SqsQueuesConfig.builder()
                 .sqsServerUrl("http://localhost:9324")
                 .queue(SqsQueuesConfig.QueueConfig.builder()
                         .queueName("test")
@@ -34,7 +34,6 @@ public class ConsumerApplication {
                 .build());
     }
 
-    @SuppressWarnings("unused")
     @QueueListener(value = "test", identifier = "message-listener")
     public void listen(@SpringCloudSchemaRegistryPayload Sensor payload) {
         log.info("Payload: {}", payload);

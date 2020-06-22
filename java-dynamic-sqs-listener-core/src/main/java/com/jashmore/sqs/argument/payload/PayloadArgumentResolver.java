@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  *
  * <p>This should allow for the serialisation of the body to a specific Java Bean via an implementation of the {@link PayloadMapper}.
  *
- * @see Message#body() for the payload that will be consumed
+ * @see Message#body for the payload that will be consumed
  */
 @AllArgsConstructor
 public class PayloadArgumentResolver implements ArgumentResolver<Object> {

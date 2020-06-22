@@ -1,5 +1,6 @@
 ### Changes to Google Checkstyle
-I don't agree with some rules and therefore have done slight modifications to the ruleset:
+As some of the rules I don't agree with and can be frustrating to use I have done some slight modifications to the sheet. The changes that I
+have made are:
 
 - Line length increased from 100 to 160
 - Tab width doubled from 2 spaces to 4 spaces
@@ -7,4 +8,3 @@ I don't agree with some rules and therefore have done slight modifications to th
 - Made unused imports a checkstyle error
 - Allowed for suppression annotations
 - Fixed up when upgrading Checkstyle Maven Plugin
-- Removed explicit google import ordering

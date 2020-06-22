@@ -1,7 +1,8 @@
 package com.jashmore.sqs.extensions.registry;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
 import software.amazon.awssdk.services.sqs.model.Message;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Used to deserialize the payload of a message into a POJO represented by the given schemas.

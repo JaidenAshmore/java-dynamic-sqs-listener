@@ -41,8 +41,8 @@ public class MyMessageListener {
 }
 ```
 
-This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none are defined, a default
-will be provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
+This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none is defined, a default
+is provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
 [How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
 
 ## Core Infrastructure
@@ -76,11 +76,12 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 - [Core Framework](java-dynamic-sqs-listener-core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.13.7
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.11.0
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.12.0
+  - [Guava](https://github.com/google/guava): 29.0-jre
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.9.10.3
 - [Spring Framework](java-dynamic-sqs-listener-spring)
   - All of the core dependencies
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.3.1.RELEASE
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.2.5.RELEASE
 
 ### How to Mark the message as successfully processed
 When the method executing the message finishes without throwing an exception, the
@@ -118,7 +119,7 @@ before requesting messages for threads waiting for another message.
 ### Setting up a queue listener that prefetches messages
 When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
 [@PrefetchingQueueListener](./java-dynamic-sqs-listener-spring/java-dynamic-sqs-listener-spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
-annotation can be used to pre-fetch messages in a background thread while processing the existing messages.  The usage is something like this:
+annotation can be used to pretech messages in a background thread while messages are currently being processed.  The usage is something like this:
 
 ```java
 @Service
@@ -130,11 +131,11 @@ public class MyMessageListener {
 }
 ```
 
-In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible
+In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try and get as many messages as possible
 maximum.
 
 *Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
-10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
+10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefeteched messages it will
 not prefetch anymore.*
 
 ### Adding a custom argument resolver
@@ -169,8 +170,8 @@ do the logic for converting the message payload to uppercase.
     The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
     CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
     annotations. For more information about this, take a look at the JavaDoc provided in
-    [AnnotationUtils](./util/annotation-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
-    testing this problem in
+    [AnnotationUtils](./util/common-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
+    this problem being tested in
     [PayloadArgumentResolver_ProxyClassTest.java](./java-dynamic-sqs-listener-core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
 1. Include the custom [ArgumentResolver](./java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
 context for automatic injection into the
@@ -195,15 +196,9 @@ context for automatic injection into the
 For a more extensive guide for doing this, take a look at
 [Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
 
-### Adding Brave Tracing
-If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
-[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension. See
-[Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and
-[Spring - How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md) for guides on how to add tracing.
-
 ### Building a custom queue listener annotation
-The core Queue Listener annotations may not provide the exact use case necessary for the application and therefore it can be useful to provide your
-own annotation. See
+The core Queue Listener annotations may not provide the exact use case necessary for the application and they also do not provide any dynamic functionality and
+therefore it would be useful to provide your own annotation. See
 [Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
 
 ### Testing locally an example Spring Boot app with the Spring Starter 
@@ -248,12 +243,6 @@ at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how
 As the application grows, it may be beneficial to allow for versioning of the schema so that the consumer can still serialize messages from producers sending
 different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
 to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
-
-### Wrapping the Message Listener execution using a MessageProcessingDecorator
-If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
-[MessageProcessingDecorator](java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
-functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
-look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
 
 ### Comparing Libraries
 If you want to see the difference between this library and others like the

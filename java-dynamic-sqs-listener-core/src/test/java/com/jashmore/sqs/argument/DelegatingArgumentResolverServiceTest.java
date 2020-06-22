@@ -1,7 +1,5 @@
 package com.jashmore.sqs.argument;
 
-import static com.jashmore.sqs.util.collections.CollectionUtils.immutableListOf;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,12 +9,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
+import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
 class DelegatingArgumentResolverServiceTest {
@@ -29,7 +29,7 @@ class DelegatingArgumentResolverServiceTest {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(any(MethodParameter.class))).thenReturn(false);
-        final List<ArgumentResolver<?>> resolvers = singletonList(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
         when(methodParameter.getMethod()).thenReturn(this.getClass().getMethod("someMethod"));
         when(methodParameter.getParameterIndex()).thenReturn(1);
 
@@ -46,7 +46,7 @@ class DelegatingArgumentResolverServiceTest {
         // arrange
         final ArgumentResolver<?> resolver = mock(ArgumentResolver.class);
         when(resolver.canResolveParameter(isNull())).thenReturn(true);
-        final List<ArgumentResolver<?>> resolvers = singletonList(resolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(resolver);
 
         // act
         final ArgumentResolver<?> matchedResolver = new DelegatingArgumentResolverService(resolvers).getArgumentResolver(null);
@@ -61,7 +61,7 @@ class DelegatingArgumentResolverServiceTest {
         final ArgumentResolver<?> firstResolver = mock(ArgumentResolver.class);
         when(firstResolver.canResolveParameter(isNull())).thenReturn(true);
         final ArgumentResolver<?> secondResolver = mock(ArgumentResolver.class);
-        final List<ArgumentResolver<?>> resolvers = immutableListOf(firstResolver, secondResolver);
+        final Set<ArgumentResolver<?>> resolvers = ImmutableSet.of(firstResolver, secondResolver);
 
         // act
         final ArgumentResolver<?> matchedResolver = new DelegatingArgumentResolverService(resolvers).getArgumentResolver(null);

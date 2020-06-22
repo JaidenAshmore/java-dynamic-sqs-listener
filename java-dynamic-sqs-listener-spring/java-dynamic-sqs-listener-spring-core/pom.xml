@@ -18,9 +18,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>java-dynamic-sqs-listener-spring-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
 
         <dependency>
@@ -30,14 +45,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-spring-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -72,7 +82,7 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>elasticmq-sqs-client</artifactId>
+            <artifactId>local-sqs-test-utils-junit5</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

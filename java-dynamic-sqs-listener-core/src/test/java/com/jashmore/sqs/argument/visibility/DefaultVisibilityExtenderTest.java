@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
+import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,6 +88,7 @@ class DefaultVisibilityExtenderTest {
         // assert
         assertThat(extendFuture).isEqualTo(changeMessageVisibilityResultFuture);
     }
+
 
     @Test
     void extendShouldReturnFutureFromAmazon() {

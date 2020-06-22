@@ -1,12 +1,14 @@
 package com.jashmore.sqs.broker.concurrent;
 
-import com.jashmore.documentation.annotations.Nullable;
-import com.jashmore.documentation.annotations.PositiveOrZero;
-import com.jashmore.documentation.annotations.ThreadSafe;
-import com.jashmore.sqs.util.Preconditions;
+import com.google.common.base.Preconditions;
+
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import net.jcip.annotations.ThreadSafe;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.PositiveOrZero;
 
 /**
  * Implementation that stores the value as non-mutable field values and therefore will return the same value on every call.
@@ -27,8 +29,7 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
                                                    final Long preferredConcurrencyPollingRateInMilliseconds,
                                                    final Long errorBackoffTimeInMilliseconds) {
-        Preconditions.checkNotNull(concurrencyLevel, "concurrencyLevel should not be null");
-        Preconditions.checkPositiveOrZero(concurrencyLevel, "concurrencyLevel should be greater than or equal to zero");
+        Preconditions.checkArgument(concurrencyLevel != null && concurrencyLevel >= 0, "concurrencyLevel should be greater than or equal to zero");
         Preconditions.checkArgument(preferredConcurrencyPollingRateInMilliseconds == null || preferredConcurrencyPollingRateInMilliseconds >= 0,
                 "preferredConcurrencyPollingRateInMilliseconds should null or greater than or equal to zero");
 

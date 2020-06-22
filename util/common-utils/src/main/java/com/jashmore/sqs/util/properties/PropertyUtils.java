@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 
 /**
  * Class that provides helper methods for dealing with the properties of the core components, e.g. by providing safety methods for getting default property
@@ -86,6 +87,7 @@ public class PropertyUtils {
         return safelyGetValue(propertyName, valueSupplier, defaultValue, aInteger -> aInteger >= 0);
     }
 
+    @Nonnull
     private <T> T safelyGetValue(final String propertyName,
                                  final Supplier<T> valueSupplier,
                                  final T defaultValue,
@@ -101,7 +103,7 @@ public class PropertyUtils {
                         return true;
                     })
                     .orElse(defaultValue);
-        } catch (final RuntimeException throwable) {
+        } catch (final Throwable throwable) {
             log.error("Error obtaining Property value {} returning default value {}", propertyName, defaultValue, throwable);
             return defaultValue;
         }

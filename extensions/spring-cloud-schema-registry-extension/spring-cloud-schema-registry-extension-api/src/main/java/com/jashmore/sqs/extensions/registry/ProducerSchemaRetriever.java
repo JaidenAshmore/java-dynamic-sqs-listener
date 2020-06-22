@@ -1,7 +1,8 @@
 package com.jashmore.sqs.extensions.registry;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
 import org.springframework.cloud.schema.registry.SchemaReference;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Used to obtain the schema for a message that was sent from a producer.

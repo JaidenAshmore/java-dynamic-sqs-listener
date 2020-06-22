@@ -14,14 +14,18 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>documentation-annotations</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
 
         <dependency>

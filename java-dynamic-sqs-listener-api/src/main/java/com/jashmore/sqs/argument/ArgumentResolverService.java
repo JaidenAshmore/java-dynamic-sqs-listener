@@ -1,9 +1,10 @@
 package com.jashmore.sqs.argument;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Service used to determine the {@link ArgumentResolver} that can be applied to a parameter of a method when it is executed during processing of

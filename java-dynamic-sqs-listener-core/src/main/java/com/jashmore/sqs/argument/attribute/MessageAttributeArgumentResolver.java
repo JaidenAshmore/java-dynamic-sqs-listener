@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Optional;
 
 /**
@@ -109,7 +109,7 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
         }
 
         if (parameterClass.isAssignableFrom(String.class)) {
-            return new String(byteArray, StandardCharsets.UTF_8);
+            return new String(byteArray, Charset.forName("UTF-8"));
         }
 
         try {

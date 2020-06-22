@@ -1,6 +1,5 @@
 package com.jashmore.sqs.extensions.registry;
 
-import com.jashmore.documentation.annotations.ThreadSafe;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.cloud.schema.registry.SchemaReference;
@@ -10,6 +9,7 @@ import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * In Memory implementation of the {@link SchemaRegistryClient} that is used for mocking this service in Integration Tests.

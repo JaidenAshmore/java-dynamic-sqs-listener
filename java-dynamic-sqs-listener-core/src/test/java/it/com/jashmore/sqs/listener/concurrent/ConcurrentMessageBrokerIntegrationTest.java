@@ -13,7 +13,6 @@ import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
-import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
@@ -23,32 +22,32 @@ import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.util.CreateRandomQueueResponse;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import it.com.jashmore.sqs.util.SqsIntegrationTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 class ConcurrentMessageBrokerIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
 
-    private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient();
+    @RegisterExtension
+    static LocalSqsExtension LOCAL_SQS = new LocalSqsExtension();
 
+    private String queueUrl;
     private QueueProperties queueProperties;
     private ArgumentResolverService argumentResolverService;
 
     @BeforeEach
-    void setUp() throws InterruptedException, ExecutionException, TimeoutException {
-        queueProperties = elasticMQSqsAsyncClient.createRandomQueue()
-                .thenApply(CreateRandomQueueResponse::queueUrl)
-                .thenApply(url -> QueueProperties.builder().queueUrl(url).build())
-                .get(5, SECONDS);
+    void setUp() {
+        queueUrl = LOCAL_SQS.createRandomQueue();
+        queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
         argumentResolverService = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
     }
 
@@ -57,18 +56,19 @@ class ConcurrentMessageBrokerIntegrationTest {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, elasticMQSqsAsyncClient);
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
@@ -77,7 +77,7 @@ class ConcurrentMessageBrokerIntegrationTest {
                         .concurrencyLevel(concurrencyLevel)
                         .build()
         );
-        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
         final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
                 "id",
                 () -> messageBroker,
@@ -94,7 +94,7 @@ class ConcurrentMessageBrokerIntegrationTest {
 
         // cleanup
         coreMessageListenerContainer.stop();
-        SqsIntegrationTestUtils.assertNoMessagesInQueue(elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     @Test
@@ -102,8 +102,9 @@ class ConcurrentMessageBrokerIntegrationTest {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new PrefetchingMessageRetriever(
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 queueProperties,
                 StaticPrefetchingMessageRetrieverProperties
                         .builder()
@@ -114,11 +115,11 @@ class ConcurrentMessageBrokerIntegrationTest {
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, elasticMQSqsAsyncClient);
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
@@ -135,7 +136,7 @@ class ConcurrentMessageBrokerIntegrationTest {
                 () -> messageResolver
         );
 
-        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
         coreMessageListenerContainer.start();
@@ -145,7 +146,7 @@ class ConcurrentMessageBrokerIntegrationTest {
 
         // cleanup
         coreMessageListenerContainer.stop();
-        SqsIntegrationTestUtils.assertNoMessagesInQueue(elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
 
@@ -154,9 +155,10 @@ class ConcurrentMessageBrokerIntegrationTest {
         // arrange
         final int concurrencyLevel = 10;
         final int numberOfMessages = 100;
+        final SqsAsyncClient sqsAsyncClient = LOCAL_SQS.getLocalAmazonSqsAsync();
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
                 queueProperties,
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 StaticBatchingMessageRetrieverProperties.builder()
                         .batchSize(10)
                         .batchingPeriodInMs(3000L)
@@ -165,11 +167,11 @@ class ConcurrentMessageBrokerIntegrationTest {
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);
         final MessageConsumer messageConsumer = new MessageConsumer(messageReceivedLatch);
-        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, elasticMQSqsAsyncClient);
+        final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, sqsAsyncClient);
         final MessageProcessor messageProcessor = new CoreMessageProcessor(
                 argumentResolverService,
                 queueProperties,
-                elasticMQSqsAsyncClient,
+                sqsAsyncClient,
                 MessageConsumer.class.getMethod("consume", String.class),
                 messageConsumer
         );
@@ -186,7 +188,7 @@ class ConcurrentMessageBrokerIntegrationTest {
                 () -> messageResolver
         );
 
-        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.sendNumberOfMessages(numberOfMessages, sqsAsyncClient, queueUrl);
 
         // act
         coreMessageListenerContainer.start();
@@ -196,7 +198,7 @@ class ConcurrentMessageBrokerIntegrationTest {
 
         // cleanup
         coreMessageListenerContainer.stop();
-        SqsIntegrationTestUtils.assertNoMessagesInQueue(elasticMQSqsAsyncClient, queueProperties.getQueueUrl());
+        SqsIntegrationTestUtils.assertNoMessagesInQueue(sqsAsyncClient, queueUrl);
     }
 
     @SuppressWarnings("WeakerAccess")

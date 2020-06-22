@@ -2,13 +2,14 @@ package it.com.jashmore.sqs.argument;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
-import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.test.LocalSqsExtension;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import it.com.jashmore.example.Application;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -23,12 +24,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-@SpringBootTest(classes = {MessageArgumentResolutionSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = {Application.class, MessageArgumentResolutionSpringIntegrationTest.TestConfig.class})
 @ExtendWith(SpringExtension.class)
 public class MessageArgumentResolutionSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageArgumentResolutionSpringIntegrationTest";
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
     private static final AtomicReference<Message> messageAttributeReference = new AtomicReference<>();
+
+    @RegisterExtension
+    public static final LocalSqsExtension LOCAL_SQS_RULE = new LocalSqsExtension(QUEUE_NAME);
 
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
@@ -37,7 +41,7 @@ public class MessageArgumentResolutionSpringIntegrationTest {
     public static class TestConfig {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return new ElasticMqSqsAsyncClient(QUEUE_NAME);
+            return LOCAL_SQS_RULE.getLocalAmazonSqsAsync();
         }
 
         @Service
@@ -55,7 +59,7 @@ public class MessageArgumentResolutionSpringIntegrationTest {
     @Test
     void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
-        localSqsAsyncClient.sendMessage(QUEUE_NAME, SendMessageRequest.builder()
+        localSqsAsyncClient.sendMessageToLocalQueue(QUEUE_NAME, SendMessageRequest.builder()
                 .messageBody("message")
                 .build())
                 .get(5, TimeUnit.SECONDS);

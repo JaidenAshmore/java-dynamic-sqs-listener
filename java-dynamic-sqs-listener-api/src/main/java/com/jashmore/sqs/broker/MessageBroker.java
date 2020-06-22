@@ -1,6 +1,5 @@
 package com.jashmore.sqs.broker;
 
-import com.jashmore.documentation.annotations.NotThreadSafe;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.retriever.MessageRetriever;
@@ -12,9 +11,11 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Broker used to co-ordinate the retrieval and processing of messages.
+ * Broker used to co-ordinate the retrieval and processing of {@link Message}s.
  *
  * <p>If you were to consider this library as similar to a pub-sub system, this would be considered the broker/bus that transports messages from the publisher
  * to the subscriber.  For example it will ultimately be requesting messages from the {@link MessageRetriever} and delegate the processing to a
@@ -27,14 +28,13 @@ import java.util.function.Supplier;
  * {@link Supplier} for message retrieval can be provided. For example, there is a batch of messages that were downloaded at some previous time and they
  * need to be processed.
  *
- * <p>The broker does not have a requirement for being thread safe as it is not intended for multiple threads to call into the
+ * <p>The broker does not have a requirement for being {@link ThreadSafe} as it is not intended for multiple threads to call into the
  * {@link #processMessages(ExecutorService, Supplier, Function)} methods however having it thread safe is recommended.
- *
  */
 @NotThreadSafe
 public interface MessageBroker {
     /**
-     * Requests for messages and consume these when they are eventually obtained by the provided message {@link Consumer}.
+     * Requests for {@link Message}s and consume these when they are eventually obtained by the provided message {@link Consumer}.
      *
      * <p>This should keep processing messages until the {@link BooleanSupplier} returns false or the thread is interrupted. Thread
      * interruption will be triggered by the surrounding container when it is ready to stop processing messages, for example by the
@@ -55,7 +55,7 @@ public interface MessageBroker {
                          Function<Message, CompletableFuture<?>> messageProcessor) throws InterruptedException;
 
     /**
-     * Requests for messages and consume these when they are eventually obtained by the provided message {@link Consumer}.
+     * Requests for {@link Message}s and consume these when they are eventually obtained by the provided message {@link Consumer}.
      *
      * <p>This should keep processing messages until the the thread is interrupted. Thread interruption will be triggered by the surrounding container
      * when it is ready to stop processing messages, for example by the {@link MessageListenerContainer}.

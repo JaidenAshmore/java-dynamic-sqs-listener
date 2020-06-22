@@ -1,9 +1,10 @@
 package com.jashmore.sqs.container;
 
-import com.jashmore.documentation.annotations.Nullable;
-import com.jashmore.documentation.annotations.PositiveOrZero;
 import lombok.Builder;
 import lombok.Value;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.PositiveOrZero;
 
 @Value
 @Builder(toBuilder = true)
@@ -29,16 +30,14 @@ public class StaticCoreMessageListenerContainerProperties implements CoreMessage
     }
 
     @Nullable
-    @PositiveOrZero
     @Override
-    public Integer getMessageBrokerShutdownTimeoutInSeconds() {
+    public @PositiveOrZero Integer getMessageBrokerShutdownTimeoutInSeconds() {
         return messageBrokerShutdownTimeoutInSeconds;
     }
 
     @Nullable
-    @PositiveOrZero
     @Override
-    public Integer getMessageProcessingShutdownTimeoutInSeconds() {
+    public @PositiveOrZero Integer getMessageProcessingShutdownTimeoutInSeconds() {
         return messageProcessingShutdownTimeoutInSeconds;
     }
 

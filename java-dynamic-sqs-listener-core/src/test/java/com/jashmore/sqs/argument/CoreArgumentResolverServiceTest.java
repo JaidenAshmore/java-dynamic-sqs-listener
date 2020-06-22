@@ -26,9 +26,9 @@ import java.util.Map;
 
 @ExtendWith(MockitoExtension.class)
 public class CoreArgumentResolverServiceTest {
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    private final PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);
+    private PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);
 
     private CoreArgumentResolverService service;
 

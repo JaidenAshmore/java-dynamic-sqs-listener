@@ -21,7 +21,6 @@ import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.jashmore.sqs.examples.latency.LatencyAppliedAmazonSqsAsync;
 import com.jashmore.sqs.examples.latency.LatencyAppliedSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
@@ -78,7 +77,7 @@ public class SqsListenersConfiguration {
     @Bean
     public SqsAsyncClient sqsAsyncClient(SQSRestServer sqsRestServer) throws Exception {
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        final LocalSqsAsyncClient localSqsAsyncClient = new LocalSqsAsyncClientImpl(SqsQueuesConfig
+        final LocalSqsAsyncClient localSqsAsyncClient = new LocalSqsAsyncClient(SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(JMS_10_QUEUE_NAME).build())
@@ -89,6 +88,8 @@ public class SqsListenersConfiguration {
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_10_QUEUE_NAME).build())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_30_QUEUE_NAME).build())
                 .build());
+
+        localSqsAsyncClient.buildQueues();
 
         sendMessagesToQueue(localSqsAsyncClient);
 
@@ -103,7 +104,7 @@ public class SqsListenersConfiguration {
      * @return client for communicating with the local SQS
      */
     @Bean
-    public AmazonSQSAsync amazonSqs(SQSRestServer sqsRestServer, @SuppressWarnings("unused") SqsAsyncClient ignored) {
+    public AmazonSQSAsync amazonSqs(SQSRestServer sqsRestServer, SqsAsyncClient ignored) {
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
 
         return new LatencyAppliedAmazonSqsAsync(AmazonSQSAsyncClientBuilder.standard()

@@ -1,2 +1,0 @@
-spring.zipkin.baseUrl: http://localhost:9411/
-spring.zipkin.service.name: service

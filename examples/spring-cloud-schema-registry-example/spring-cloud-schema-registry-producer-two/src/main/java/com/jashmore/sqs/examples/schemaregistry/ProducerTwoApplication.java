@@ -1,5 +1,7 @@
 package com.jashmore.sqs.examples.schemaregistry;
 
+import com.google.common.collect.ImmutableList;
+
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,8 +18,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,13 +47,11 @@ public class ProducerTwoApplication {
                                                                              final AvroSchemaServiceManager avroSchemaServiceManager,
                                                                              final AvroMessageConverterProperties avroMessageConverterProperties) {
         final List<Resource> schemaImports = Optional.ofNullable(avroMessageConverterProperties.getSchemaImports())
-                .map(Arrays::asList)
-                .map(Collections::unmodifiableList)
-                .orElse(Collections.emptyList());
+                .map(ImmutableList::copyOf)
+                .orElse(ImmutableList.of());
         final List<Resource> schemaLocations = Optional.ofNullable(avroMessageConverterProperties.getSchemaLocations())
-                .map(Arrays::asList)
-                .map(Collections::unmodifiableList)
-                .orElse(Collections.emptyList());
+                .map(ImmutableList::copyOf)
+                .orElse(ImmutableList.of());
 
         return new AvroSchemaRegistrySqsAsyncClient(delegate, schemaRegistryClient, avroSchemaServiceManager, schemaImports, schemaLocations);
     }

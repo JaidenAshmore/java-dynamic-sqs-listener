@@ -25,7 +25,7 @@
 
         <dependency>
             <groupId>com.jashmore</groupId>
-            <artifactId>annotation-utils</artifactId>
+            <artifactId>common-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
 
