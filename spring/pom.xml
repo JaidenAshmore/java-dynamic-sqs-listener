@@ -3,7 +3,7 @@
     <parent>
         <artifactId>java-dynamic-sqs-listener-parent</artifactId>
         <groupId>com.jashmore</groupId>
-        <version>3.1.2-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -15,8 +15,8 @@
     <description>Modules for setting up queue listeners in a Spring Boot application.</description>
 
     <modules>
-        <module>java-dynamic-sqs-listener-spring-api</module>
-        <module>java-dynamic-sqs-listener-spring-core</module>
-        <module>java-dynamic-sqs-listener-spring-starter</module>
+        <module>spring-api</module>
+        <module>spring-core</module>
+        <module>spring-starter</module>
     </modules>
 </project>

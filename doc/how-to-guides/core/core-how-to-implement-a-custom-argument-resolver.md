@@ -1,13 +1,13 @@
 # Core - How to implement a custom Argument Resolver
 When the framework executes the methods for a SQS message, the
-[ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used to build
+[ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used to build
 the arguments for the method execution from the message being processed.  The default core implementation, the
-[DelegatingArgumentResolverService](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java),
-uses [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s under the hood to resolve
+[DelegatingArgumentResolverService](../../../core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java),
+uses [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s under the hood to resolve
 each type of argument. Users of the framework may get to a point where the default argument types are insufficient and therefore want to provide their own.
 
-To do this, when building your [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
-with the [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s make sure to add your
+To do this, when building your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
+with the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s make sure to add your
 custom resolver.
     ```java
     new DelegatingArgumentResolverService(ImmutableSet.of(
@@ -20,7 +20,7 @@ custom resolver.
 ## Example Use Case
 The payload in a SQS message is deeply nested and it is desirable to only provide the field that is needed instead of passing the entire
 message body into the method. For example, using the sample SQS Message below, only the user's group is necessary and therefore an
-[ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) is wanting to be included
+[ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) is wanting to be included
 that will map any method argument annotated with `@UserGroup` to extract just that single field.
 example:
 
@@ -51,7 +51,7 @@ public void messageListener(@UserGroup final String userGroup) {
 public @interface UserGroup {
 }
 ```
-1. Create a new implementation of the [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
+1. Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 interface that will be able to resolve these arguments with those annotations.
     ```java
     public class UserGroupArgumentResolver implements ArgumentResolver<String> {
@@ -87,8 +87,8 @@ interface that will be able to resolve these arguments with those annotations.
             // Do something here
         }
     ```
-1. Build your [ArgumentResolverService](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with
-this [ArgumentResolver](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
+1. Build your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with
+this [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
     ```java
     new DelegatingArgumentResolverService(ImmutableSet.of(
          // other ArgumentResolvers here

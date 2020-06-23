@@ -4,7 +4,7 @@ This contains all of the documentation for the framework.
 ## Table of Contents
 
 1. [Core Implementation Overview](core-implementations-overview.md): this document provides a quick overview of the libraries core implementations. For a
-more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs-listener-api](../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs).
+more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs-listener-api](../api/src/main/java/com/jashmore/sqs).
 1. How to Guides:
     1. Core Framework How To Guides
         1. [How to implement a custom MessageRetriever](how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic

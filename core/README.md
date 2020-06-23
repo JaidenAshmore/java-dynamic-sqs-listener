@@ -10,5 +10,5 @@ using this core code to listen to a queue.
 ## More Information?
 
 For more information you can look at the root project [README.md](../README.md) which provides more information about 
-the architecture of the application. The [API](../java-dynamic-sqs-listener-api) is also a good location to find more
+the architecture of the application. The [API](../api) is also a good location to find more
 information about what each part of the framework is how they interact with each other.

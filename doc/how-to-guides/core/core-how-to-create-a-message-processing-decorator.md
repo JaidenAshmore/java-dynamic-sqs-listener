@@ -1,5 +1,5 @@
 # Core - How to create a message processing decorator
-The [MessageProcessingDecorator](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) is used
+The [MessageProcessingDecorator](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) is used
 to wrap the processing of the messages with extra functionality like logging, metrics, etc.  This guide provides some examples of message decorators and
 then how to use them.
 
@@ -90,7 +90,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
 ```
 
 ## Adding the MessageProcessingDecorators to the message processing
-There is a [DecoratingMessageProcessor](../../../java-dynamic-sqs-listener-core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java) which
+There is a [DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java) which
 wraps a delegate `MessageProcessor` with this decorating logic. You can then use this `MessageProcessor` instead of the delegate in your
 `MessageListenerContainer`.
 
@@ -159,7 +159,7 @@ public class MetricsMessageProcessingDecorator implements MessageProcessingDecor
 
 ## Sharing information between callbacks
 As we cannot guarantee that all callbacks will be run on the same thread, instead of using a `ThreadLocal` you can use the
-[MessageProcessingContext](../../../java-dynamic-sqs-listener-api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingContext.java) to set
+[MessageProcessingContext](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingContext.java) to set
 attributes in there for your future usage.
 
 ```java
