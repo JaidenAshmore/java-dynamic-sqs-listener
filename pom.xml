@@ -69,7 +69,7 @@
         <assertj.version>3.16.1</assertj.version>
         <avro.version>1.9.2</avro.version>
         <aws.sdk.version>2.13.7</aws.sdk.version>
-        <aws-xray-recorder.sdk.version>2.4.0</aws-xray-recorder.sdk.version>
+        <aws-xray-recorder.sdk.version>2.6.1</aws-xray-recorder.sdk.version>
         <brave.version>5.12.3</brave.version>
         <builder-helper-maven-plugin.version>3.1.0</builder-helper-maven-plugin.version>
         <checkstyle-plugin.version>3.1.1</checkstyle-plugin.version>
