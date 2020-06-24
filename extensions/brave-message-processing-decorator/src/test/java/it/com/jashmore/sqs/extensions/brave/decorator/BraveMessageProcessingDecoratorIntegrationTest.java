@@ -7,8 +7,8 @@ import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.test.TestSpanHandler;
 import com.jashmore.sqs.brave.SendMessageTracingExecutionInterceptor;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
+import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.extensions.brave.decorator.BraveMessageProcessingDecoratorConfiguration;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
@@ -29,7 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nonnull;
 
 @SpringBootTest(classes = {
         BraveMessageProcessingDecoratorConfiguration.class,
@@ -53,8 +52,8 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient(final Tracing tracing) {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME, clientBuilder ->
-                clientBuilder.overrideConfiguration(overrideBuilder
-                        -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing)))
+                    clientBuilder.overrideConfiguration(overrideBuilder
+                            -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing)))
             );
         }
 
@@ -62,8 +61,8 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
         public MessageProcessingDecorator messageFinishedDecorator() {
             return new MessageProcessingDecorator() {
                 @Override
-                public void onMessageResolvedSuccess(@Nonnull final MessageProcessingContext context,
-                                                     @Nonnull final Message message) {
+                public void onMessageResolvedSuccess(final MessageProcessingContext context,
+                                                     final Message message) {
                     messageResolvedLatch.countDown();
                 }
             };

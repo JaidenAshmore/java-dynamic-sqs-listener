@@ -8,7 +8,6 @@ import brave.handler.MutableSpan;
 import brave.propagation.TraceContextOrSamplingFlags;
 import brave.test.TestSpanHandler;
 import com.jashmore.sqs.brave.SendMessageBatchTracingExecutionInterceptor;
-import com.jashmore.sqs.brave.SendMessageTracingExecutionInterceptor;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;

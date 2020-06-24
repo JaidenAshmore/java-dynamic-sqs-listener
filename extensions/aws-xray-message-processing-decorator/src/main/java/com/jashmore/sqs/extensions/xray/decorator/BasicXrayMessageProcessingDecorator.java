@@ -6,12 +6,9 @@ import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
 /**
  * A very basic decorator that just starts and stops an XRay segment.
  */
-@ParametersAreNonnullByDefault
 public class BasicXrayMessageProcessingDecorator implements MessageProcessingDecorator {
     private final AWSXRayRecorder recorder;
 

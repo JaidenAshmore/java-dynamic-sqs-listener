@@ -4,6 +4,10 @@
     <Match>
         <Bug pattern="SE_NO_SERIALVERSIONID" />
     </Match>
+    <!-- Ignore any test failures, I don't care about these -->
+    <Match>
+        <Source name="~.*Test.java" />
+    </Match>
     <Match>
         <Source name="~.*generated-sources.*" />
     </Match>

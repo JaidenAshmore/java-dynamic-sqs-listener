@@ -1,8 +1,10 @@
 # Local Development Guide - Setting up IntelliJ
+
 This guide contains some steps for setting up your local environment to work with this library. Note that this will
 assume that you are using IntelliJ for your IDE.
 
 ## Steps
+
 *Note these steps were written using IntelliJ 2017.1 so the steps may be different for you.*
 
 1. Open the project in IntelliJ.
@@ -25,7 +27,8 @@ assume that you are using IntelliJ for your IDE.
 1. For some reason the imports in the code style doesn't work correctly. Updating the Import layout for the Java
 code style:
 ```IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> Imports``` to be
-```
+
+```text
 import static all other imports
 <blank line>
 import all other imports

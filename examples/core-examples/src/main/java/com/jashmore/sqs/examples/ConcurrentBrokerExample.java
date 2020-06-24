@@ -7,6 +7,12 @@ import brave.context.slf4j.MDCScopeDecorator;
 import brave.propagation.ThreadLocalCurrentTraceContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.jashmore.documentation.annotations.Min;
+import com.jashmore.documentation.annotations.PositiveOrZero;
+import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
@@ -15,7 +21,6 @@ import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.broker.concurrent.CachingConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
@@ -44,10 +49,10 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
+import javax.annotation.Nullable;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -270,6 +275,61 @@ public class ConcurrentBrokerExample {
             } finally {
                 concurrentMessagesBeingProcessed.decrementAndGet();
             }
+        }
+    }
+
+    /**
+     * Implementation that will provided {@link ConcurrentMessageBrokerProperties} via a cache to reduce the amount of time that it is calculated.
+     *
+     * <p>This is useful if it is costly to determine the values, e.g. by making an outbound call to determine the value, and therefore a cached value should
+     * be used instead.
+     */
+    @ThreadSafe
+    private static class CachingConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
+        /**
+         * Cache key as only a single value is being loaded into the cache.
+         */
+        private static final Boolean SINGLE_CACHE_VALUE_KEY = true;
+
+        private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel;
+        private final LoadingCache<Boolean, Long> cachedPreferredConcurrencyPollingRateInSeconds;
+        private final LoadingCache<Boolean, Long> cachedErrorBackoffTimeInMilliseconds;
+
+        /**
+         * Constructor.
+         *
+         * @param cachingTimeoutInMs the amount of time in milliseconds that the values for each property should be cached internally
+         * @param delegateProperties the delegate properties object that should be called when the cache has not been populated yet or has expired
+         */
+        public CachingConcurrentMessageBrokerProperties(final int cachingTimeoutInMs,
+                                                        final ConcurrentMessageBrokerProperties delegateProperties) {
+            this.cachedConcurrencyLevel = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getConcurrencyLevel));
+
+            this.cachedPreferredConcurrencyPollingRateInSeconds = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getConcurrencyPollingRateInMilliseconds));
+
+            this.cachedErrorBackoffTimeInMilliseconds = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cachingTimeoutInMs, TimeUnit.MILLISECONDS)
+                    .build(CacheLoader.from(delegateProperties::getErrorBackoffTimeInMilliseconds));
+        }
+
+        @Override
+        public int getConcurrencyLevel() {
+            return cachedConcurrencyLevel.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+        }
+
+        @Override
+        public Long getConcurrencyPollingRateInMilliseconds() {
+            return cachedPreferredConcurrencyPollingRateInSeconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
+        }
+
+        @Nullable
+        @Override
+        public Long getErrorBackoffTimeInMilliseconds() {
+            return cachedErrorBackoffTimeInMilliseconds.getUnchecked(SINGLE_CACHE_VALUE_KEY);
         }
     }
 }

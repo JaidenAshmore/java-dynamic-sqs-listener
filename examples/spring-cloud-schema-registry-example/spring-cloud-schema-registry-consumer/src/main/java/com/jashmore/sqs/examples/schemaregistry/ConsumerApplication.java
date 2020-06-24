@@ -34,6 +34,7 @@ public class ConsumerApplication {
                 .build());
     }
 
+    @SuppressWarnings("unused")
     @QueueListener(value = "test", identifier = "message-listener")
     public void listen(@SpringCloudSchemaRegistryPayload Sensor payload) {
         log.info("Payload: {}", payload);

@@ -13,7 +13,7 @@ import java.util.Map;
  * Allows for use of this library without Spring Data JPA being in the classpath.
  * For projects using Spring Data JPA, consider using {@link AbstractXRayInterceptor} instead.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation"})
 public abstract class BaseAbstractXRayInterceptor {
 
     @Around("xrayTracedClasses() || xrayEnabledClasses()")

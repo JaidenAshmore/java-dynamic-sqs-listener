@@ -36,7 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nonnull;
 
 @SpringBootTest(classes = {
         BraveMessageProcessingDecoratorConfiguration.class,
@@ -66,8 +65,7 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
         public MessageProcessingDecorator messageFinishedDecorator() {
             return new MessageProcessingDecorator() {
                 @Override
-                public void onMessageResolvedSuccess(@Nonnull final MessageProcessingContext context,
-                                                     @Nonnull final Message message) {
+                public void onMessageResolvedSuccess(final MessageProcessingContext context, final Message message) {
                     messageResolvedLatch.countDown();
                 }
             };
