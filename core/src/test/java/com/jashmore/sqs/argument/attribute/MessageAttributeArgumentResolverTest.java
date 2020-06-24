@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import java.lang.reflect.Method;
 
 @Slf4j
+@SuppressWarnings("checkstyle:ParameterName")
 class MessageAttributeArgumentResolverTest {
     private final MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(new ObjectMapper());
 
@@ -516,10 +517,6 @@ class MessageAttributeArgumentResolverTest {
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consume(@MessageAttribute("string") final String messageAttribute) {
-    }
-
-    @SuppressWarnings({"unused", "WeakerAccess"})
     public void consumeWithRequiredAttribute(@MessageAttribute(value = "string", required = true) final String messageAttribute) {
     }
 
@@ -538,6 +535,11 @@ class MessageAttributeArgumentResolverTest {
                                @MessageAttribute("byte") Byte b,
                                @MessageAttribute("short") Short s) {
     }
+
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public void consume(@MessageAttribute("string") final String messageAttribute) {
+    }
+
 
     @SuppressWarnings({"unused", "WeakerAccess"})
     public void consume(@MessageAttribute("pojo") final MyPojo pojo) {

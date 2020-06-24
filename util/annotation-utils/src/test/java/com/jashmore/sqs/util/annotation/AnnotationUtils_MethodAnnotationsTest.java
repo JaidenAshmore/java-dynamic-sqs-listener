@@ -11,6 +11,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Optional;
 
+@SuppressWarnings("checkstyle:TypeName")
 class AnnotationUtils_MethodAnnotationsTest {
     @Test
     void methodAnnotationsCanBeFoundOnBaseClasses() throws Exception {

@@ -38,7 +38,8 @@ class DelegatingArgumentResolverServiceTest {
                 () -> new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter));
 
         // assert
-        assertThat(exception).hasMessage("No eligible ArgumentResolver for parameter[1] for method: com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#someMethod");
+        assertThat(exception).hasMessage("No eligible ArgumentResolver for parameter[1] for method: "
+                + "com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#someMethod");
     }
 
     @Test

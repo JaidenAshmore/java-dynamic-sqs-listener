@@ -4,8 +4,7 @@ import static com.jashmore.sqs.brave.SendMessageTracingExecutionInterceptor.SPAN
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import java.util.HashMap;
-import java.util.Map;
+
 import brave.ScopedSpan;
 import brave.Span;
 import brave.Tracing;
@@ -25,6 +24,9 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SendMessageTracingExecutionInterceptorTest {
     private final TestSpanHandler spanHandler = new TestSpanHandler();

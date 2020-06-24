@@ -286,7 +286,7 @@ class PrefetchingMessageRetrieverTest {
     }
 
     @Test
-    void waitTimeForPrefetchingPropertiesWillBeSQSMaximum() {
+    void waitTimeForPrefetchingPropertiesWillBeSqsMaximum() {
         // arrange
         final CountDownLatch receiveMessageRequested = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))

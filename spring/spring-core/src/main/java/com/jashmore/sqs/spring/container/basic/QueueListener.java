@@ -1,6 +1,5 @@
 package com.jashmore.sqs.spring.container.basic;
 
-
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

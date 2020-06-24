@@ -4,10 +4,7 @@ import static com.jashmore.sqs.brave.SendMessageBatchTracingExecutionInterceptor
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
 import brave.ScopedSpan;
 import brave.Span;
 import brave.Tracing;
@@ -30,6 +27,11 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResultEntry;
 import software.amazon.awssdk.utils.ImmutableMap;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class SendMessageBatchTracingExecutionInterceptorTest {
     private final TestSpanHandler spanHandler = new TestSpanHandler();

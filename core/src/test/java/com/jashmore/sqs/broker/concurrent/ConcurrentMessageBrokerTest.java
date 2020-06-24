@@ -243,7 +243,7 @@ class ConcurrentMessageBrokerTest {
             final ExecutorService executorService = Executors.newCachedThreadPool();
             try {
                 broker.processMessages(executorService, messageRetriever, messageConsumer);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException interruptedException) {
                 // do nothing
             } finally {
                 executorService.shutdownNow();
@@ -259,7 +259,7 @@ class ConcurrentMessageBrokerTest {
             final ExecutorService executorService = Executors.newCachedThreadPool();
             try {
                 broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException interruptedException) {
                 // do nothing
             } finally {
                 executorService.shutdownNow();

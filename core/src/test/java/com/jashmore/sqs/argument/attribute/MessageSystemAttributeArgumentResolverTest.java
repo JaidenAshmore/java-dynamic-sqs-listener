@@ -335,9 +335,6 @@ public class MessageSystemAttributeArgumentResolverTest {
     public void consume(@MessageSystemAttribute(SENDER_ID) final String senderId) {
     }
 
-    public void consumeNotRequired(@MessageSystemAttribute(value = SENDER_ID, required = true) final String senderId) {
-    }
-
     public void consume(@MessageSystemAttribute(SEQUENCE_NUMBER) final Integer sequenceNumber) {
     }
 
@@ -364,5 +361,8 @@ public class MessageSystemAttributeArgumentResolverTest {
 
     public void consume(final String param, final String otherParam) {
 
+    }
+
+    public void consumeNotRequired(@MessageSystemAttribute(value = SENDER_ID, required = true) final String senderId) {
     }
 }

@@ -21,7 +21,8 @@ class CompletableFutureUtilsTest {
             final RuntimeException exception = new RuntimeException("test");
 
             // act
-            final ExecutionException exceptionThrown = assertThrows(ExecutionException.class, () -> CompletableFutureUtils.completedExceptionally(exception).get());
+            final ExecutionException exceptionThrown =
+                    assertThrows(ExecutionException.class, () -> CompletableFutureUtils.completedExceptionally(exception).get());
 
             // assert
             assertThat(exceptionThrown.getCause()).isSameAs(exception);

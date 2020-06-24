@@ -55,7 +55,7 @@ class QueueListenerEnvironmentIntegrationTest {
                     log.info("Received message: {}", payload);
                     messagesProcessed.incrementAndGet();
                     CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);
-                } catch (final Exception e) {
+                } catch (final Exception exception) {
                     // do nothing
                 }
             }
@@ -66,8 +66,8 @@ class QueueListenerEnvironmentIntegrationTest {
     void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> {
-                    final String messageBody = "message: " + i;
+                .forEach(index -> {
+                    final String messageBody = "message: " + index;
                     log.info("Sent message: {}", messageBody);
                     localSqsAsyncClient.sendMessage(QUEUE_NAME, messageBody);
                 });

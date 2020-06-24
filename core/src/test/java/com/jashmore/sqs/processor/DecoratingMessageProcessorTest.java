@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 
 @ExtendWith(MockitoExtension.class)
 class DecoratingMessageProcessorTest {
-    QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().build();
+    static QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().build();
 
     MessageProcessingContext emptyContext = MessageProcessingContext.builder()
             .listenerIdentifier("identifier")
