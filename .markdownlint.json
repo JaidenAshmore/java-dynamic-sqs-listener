@@ -1,0 +1,8 @@
+{
+    "line-length": {
+        "line_length": 160
+    },
+    "no-duplicate-header": {
+        "allow_different_nesting": true
+    }
+}
