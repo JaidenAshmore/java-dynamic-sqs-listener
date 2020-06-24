@@ -3,6 +3,7 @@ package it.com.jashmore.sqs.extensions.registry.avro;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.extensions.registry.InMemorySchemaRegistryClient;
 import com.jashmore.sqs.extensions.registry.SpringCloudSchemaRegistryPayload;
 import com.jashmore.sqs.extensions.registry.avro.AvroSpringCloudSchemaProperties;
 import com.jashmore.sqs.extensions.registry.avro.EnableSchemaRegistrySqsExtension;
@@ -11,9 +12,7 @@ import com.jashmore.sqs.extensions.registry.model.Book;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import com.jashmore.sqs.extensions.registry.InMemorySchemaRegistryClient;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

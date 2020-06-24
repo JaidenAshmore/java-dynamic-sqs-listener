@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 @Slf4j
 @UtilityClass
 public class SqsIntegrationTestUtils {
-    private final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
+    private static final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
 
     public void assertNoMessagesInQueue(final SqsAsyncClient sqsAsyncClient,
                                         final String queueUrl) {

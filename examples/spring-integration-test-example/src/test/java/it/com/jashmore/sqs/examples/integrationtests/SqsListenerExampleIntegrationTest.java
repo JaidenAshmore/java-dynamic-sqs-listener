@@ -116,7 +116,7 @@ class SqsListenerExampleIntegrationTest {
         waitForMessageVisibilityToExpire();
 
         // assert
-        final int numberOfMessages = localSqsAsyncClient.getApproximateMessages(QUEUE_NAME +"-dlq").get();
+        final int numberOfMessages = localSqsAsyncClient.getApproximateMessages(QUEUE_NAME + "-dlq").get();
         assertThat(numberOfMessages).isEqualTo(1);
     }
 

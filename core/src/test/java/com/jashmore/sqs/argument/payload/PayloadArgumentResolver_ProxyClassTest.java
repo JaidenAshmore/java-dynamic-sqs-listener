@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Method;
 
+@SuppressWarnings("checkstyle:TypeName")
 @ExtendWith(MockitoExtension.class)
 class PayloadArgumentResolver_ProxyClassTest {
 

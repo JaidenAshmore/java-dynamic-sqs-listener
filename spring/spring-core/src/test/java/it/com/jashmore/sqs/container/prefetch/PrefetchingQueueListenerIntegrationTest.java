@@ -57,7 +57,7 @@ class PrefetchingQueueListenerIntegrationTest {
                     log.info("Received message: {}", payload);
                     messagesProcessed.incrementAndGet();
                     CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);
-                } catch (final Exception e) {
+                } catch (final Exception exception) {
                     // do nothing
                 }
             }

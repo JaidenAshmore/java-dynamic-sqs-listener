@@ -50,7 +50,7 @@ class PrefetchingMessageFutureConsumerQueueTest {
         final Thread thread = new Thread(() -> {
             try {
                 prefetchingMessageRetriever.pushMessage(Message.builder().build());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException interruptedException) {
                 // do nothing
             }
         });
@@ -68,7 +68,7 @@ class PrefetchingMessageFutureConsumerQueueTest {
         thread = new Thread(() -> {
             try {
                 prefetchingMessageRetriever.pushMessage(Message.builder().build());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException interruptedException) {
                 // do nothing
             }
         });

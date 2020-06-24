@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
+@SuppressWarnings("checkstyle:TypeName")
 public class AnnotationUtils_ParameterAnnotationsTest {
     @Test
     public void parameterAnnotationsCanBeFoundOnBaseClasses() {

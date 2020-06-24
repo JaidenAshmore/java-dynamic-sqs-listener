@@ -1,9 +1,7 @@
 package it.com.jashmore.sqs.brave;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-import akka.http.scaladsl.Http;
+
 import brave.ScopedSpan;
 import brave.Tracing;
 import brave.handler.MutableSpan;
@@ -14,17 +12,13 @@ import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import lombok.SneakyThrows;
-import org.elasticmq.rest.sqs.SQSRestServer;
-import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+
+import java.util.concurrent.TimeUnit;
 
 public class SendMessageTracingExecutionInterceptorIntegrationTest {
     private final TestSpanHandler testSpanHandler = new TestSpanHandler();

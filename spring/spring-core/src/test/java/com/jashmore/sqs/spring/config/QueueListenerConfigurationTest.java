@@ -280,11 +280,13 @@ class QueueListenerConfigurationTest {
             contextRunner
                     .withUserConfiguration(UserConfigurationWithSqsClient.class)
                     .run((context) -> {
-                        final Collection<Class<? extends MessageListenerContainerFactory>> MessageListenerContainerFactoryClasses = context.getBeansOfType(MessageListenerContainerFactory.class).values().stream()
-                                .map(MessageListenerContainerFactory::getClass)
-                                .collect(toSet());
+                        final Collection<Class<? extends MessageListenerContainerFactory>> MessageListenerContainerFactoryClasses =
+                                context.getBeansOfType(MessageListenerContainerFactory.class).values().stream()
+                                        .map(MessageListenerContainerFactory::getClass)
+                                        .collect(toSet());
 
-                        assertThat(MessageListenerContainerFactoryClasses).containsExactlyInAnyOrder(BasicMessageListenerContainerFactory.class, PrefetchingMessageListenerContainerFactory.class);
+                        assertThat(MessageListenerContainerFactoryClasses)
+                                .containsExactlyInAnyOrder(BasicMessageListenerContainerFactory.class, PrefetchingMessageListenerContainerFactory.class);
                     });
         }
 
@@ -293,9 +295,12 @@ class QueueListenerConfigurationTest {
             contextRunner
                     .withUserConfiguration(UserConfigurationWithSqsClient.class)
                     .run((context) -> {
-                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
-                        final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
-                        final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories =
+                                context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                        final DefaultMessageListenerContainerCoordinator service =
+                                (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                        final Field argumentResolversField =
+                                DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                         argumentResolversField.setAccessible(true);
                         assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
                                 .containsExactlyElementsOf(messageListenerContainerFactories);
@@ -307,9 +312,12 @@ class QueueListenerConfigurationTest {
             contextRunner
                     .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerFactory.class)
                     .run((context) -> {
-                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context.getBeansOfType(MessageListenerContainerFactory.class).values();
-                        final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
-                        final Field argumentResolversField = DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        final Collection<MessageListenerContainerFactory> messageListenerContainerFactories =
+                                context.getBeansOfType(MessageListenerContainerFactory.class).values();
+                        final DefaultMessageListenerContainerCoordinator service =
+                                (DefaultMessageListenerContainerCoordinator) context.getBean(MessageListenerContainerCoordinator.class);
+                        final Field argumentResolversField =
+                                DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                         argumentResolversField.setAccessible(true);
                         assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
                                 .containsExactlyElementsOf(messageListenerContainerFactories);
@@ -324,7 +332,8 @@ class QueueListenerConfigurationTest {
                     .run((context) -> {
                         assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
                         assertThat(context.getBean(MessageListenerContainerCoordinator.class))
-                                .isSameAs(context.getBean(UserConfigurationWithCustomMessageListenerContainerCoordinator.class).customMessageListenerContainerCoordinator());
+                                .isSameAs(context.getBean(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
+                                        .customMessageListenerContainerCoordinator());
                     });
         }
 

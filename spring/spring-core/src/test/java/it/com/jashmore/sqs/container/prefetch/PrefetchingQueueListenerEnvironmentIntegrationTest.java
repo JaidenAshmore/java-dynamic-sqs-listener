@@ -57,9 +57,9 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
     void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
         IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> {
-                    log.info("Sending message: " + i);
-                    localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i);
+                .forEach(index -> {
+                    log.info("Sending message: " + index);
+                    localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + index);
                 });
 
         // act
@@ -67,7 +67,7 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
         Thread.sleep(MESSAGE_VISIBILITY_IN_SECONDS * 1000 * 2);
 
         // assert
-        final int numberOfMessages  = localSqsAsyncClient.getApproximateMessages(QUEUE_NAME).get(1, TimeUnit.SECONDS);
+        final int numberOfMessages = localSqsAsyncClient.getApproximateMessages(QUEUE_NAME).get(1, TimeUnit.SECONDS);
         assertThat(numberOfMessages).isEqualTo(0);
     }
 }
