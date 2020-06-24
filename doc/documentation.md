@@ -1,4 +1,5 @@
 # Documentation
+
 This contains all of the documentation for the framework.
 
 ## Table of Contents
@@ -43,4 +44,3 @@ more in depth understanding take a look at the JavaDoc for the [java-dynamic-sqs
     e.g. configuring checkstyle, Lombok, etc
     1. [Releasing Artifacts](local-development/release-artifact.md): reminder steps for the project owner on how to
     release a version of this library
-   

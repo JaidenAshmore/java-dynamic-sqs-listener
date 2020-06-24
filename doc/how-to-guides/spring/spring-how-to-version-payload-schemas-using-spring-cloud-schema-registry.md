@@ -1,13 +1,17 @@
 # Spring - How to version message payload Schemas using Spring Cloud Schema Registry
+
 As your application grows over time the format of the data that needs to be sent in the SQS messages may change as well. To allow for
 these changes, the [Spring Cloud Schema Registry](https://cloud.spring.io/spring-cloud-static/spring-cloud-schema-registry/1.0.0.RC1/reference/html/spring-cloud-schema-registry.html)
 can be used to track the version of your schemas, allowing the SQS consumer to be able to interpret multiple versions of your payload.
 
 ## Full reference
+
 For a full working solution of this feature, take a look at the [Spring Cloud Schema Registry Example](../../../examples/spring-cloud-schema-registry-example).
 
 ## Steps to consume messages serialized using Apache Avro
+
 1. Include the `Spring Cloud Schema Registry Extension` dependency
+
     ```xml
         <dependency>
             <groupId>com.jashmore</groupId>
@@ -15,7 +19,9 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
             <version>${project.version}</version>
         </dependency>  
     ```
+
 1. Define your schemas and map this in your spring `application.yml`
+
     ```yml
    spring:
      cloud:
@@ -28,9 +34,11 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
            schema-locations:
              - classpath:avro/book.avsc
     ```
+
    In this example above we have a book schema which is dependent on the author schema. We have also hardcoded the Schema Registry
    to be at [http://localhost:8990](http://localhost:8990).
 1. Create your schemas and place them in your `resources` directory. For example this is an example schema for the Book.
+
     ```json
     {
       "namespace" : "com.jashmore.sqs.extensions.registry.model",
@@ -43,7 +51,9 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
       ]
     }
     ```
+
 1. Enable the extension by annotating the Spring Application
+
     ```java
     @EnableSchemaRegistrySqsExtension
     @SpringBootApplication
@@ -51,8 +61,10 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
         // normal code
     }
     ```
+
 1. Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be deserialized from
 the message payload.
+
     ```java
     @QueueListener(value = "queueName")
     public void listen(@SpringCloudSchemaRegistryPayload Book payload) {
@@ -61,8 +73,9 @@ the message payload.
     ```
 
 ## Steps to produce messages using Avro
+
 You can wrap your `SqsAsyncClient` with the
-[AvroSchemaRegistrySqsAsyncClient](../../../util/proxy-method-interceptor/src/main/java/com/jashmore/sqs/registry/AvroSchemaRegistrySqsAsyncClient.java)
+[AvroSchemaRegistrySqsAsyncClient](../../../util/avro-spring-cloud-schema-registry-sqs-client/src/main/java/com/jashmore/sqs/registry/AvroSchemaRegistrySqsAsyncClient.java)
 to be able to more easily send a message that will be serialized using the Avro Schema.  This Avro SQS Client was built for testing purposes and therefore it is
 recommended to developer your own logic for sending these messages.
 

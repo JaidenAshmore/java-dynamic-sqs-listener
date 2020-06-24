@@ -1,4 +1,5 @@
-### Changes to Google Checkstyle
+# Changes to Google Checkstyle
+
 I don't agree with some rules and therefore have done slight modifications to the ruleset:
 
 - Line length increased from 100 to 160
