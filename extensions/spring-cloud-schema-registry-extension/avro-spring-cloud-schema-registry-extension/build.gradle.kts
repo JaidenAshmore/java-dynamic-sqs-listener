@@ -3,7 +3,6 @@ import com.commercehub.gradle.plugin.avro.GenerateAvroJavaTask
 description = "Apache Avro implementation of the Spring Cloud Schema Registry Extension"
 
 plugins {
-    id("org.springframework.boot")
     id("com.commercehub.gradle.plugin.avro-base")
 }
 

@@ -17,8 +17,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Look at working directory
-      run: ls -alh
     - name: Build with Gradle
       uses: eskatos/gradle-command-action@v1
       env:
