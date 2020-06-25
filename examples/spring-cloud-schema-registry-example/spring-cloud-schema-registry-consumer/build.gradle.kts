@@ -11,10 +11,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-autoconfigure-processor")
 
-    implementation(project(":java-dynamic-sqs-listener-spring:java-dynamic-sqs-listener-spring-starter"))
-    implementation(project(":util:local-sqs-async-client"))
+    implementation(project(":java-dynamic-sqs-listener-spring-starter"))
+    implementation(project(":local-sqs-async-client"))
 
-    implementation(project(":extensions:spring-cloud-schema-registry-extension:avro-spring-cloud-schema-registry-extension"))
+    implementation(project(":avro-spring-cloud-schema-registry-extension"))
 }
 
 val generateAvro = tasks.register<GenerateAvroJavaTask>("generateAvro") {

@@ -8,8 +8,8 @@ plugins {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE")
-    implementation(project(":java-dynamic-sqs-listener-spring:java-dynamic-sqs-listener-spring-starter"))
-    implementation(project(":util:elasticmq-sqs-client"))
-    implementation(project(":extensions:brave-message-processing-decorator"))
-    implementation(project(":util:sqs-brave-tracing"))
+    implementation(project(":java-dynamic-sqs-listener-spring-starter"))
+    implementation(project(":elasticmq-sqs-client"))
+    implementation(project(":brave-message-processing-decorator"))
+    implementation(project(":sqs-brave-tracing"))
 }

@@ -3,8 +3,8 @@ description = "Utility methods for dealing with basic functionality for this lib
 
 dependencies {
     implementation("org.slf4j:slf4j-api")
-    implementation(project(":util:documentation-annotations"))
+    compileOnly(project(":documentation-annotations"))
 
-    testImplementation(project(":util:proxy-method-interceptor"))
-    testImplementation(project(":util:expected-test-exception"))
+    testImplementation(project(":proxy-method-interceptor"))
+    testImplementation(project(":expected-test-exception"))
 }

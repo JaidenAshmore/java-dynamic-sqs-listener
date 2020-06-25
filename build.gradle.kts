@@ -5,7 +5,15 @@ plugins {
     checkstyle
     jacoco
     id("com.github.kt3k.coveralls") version "2.10.1"
+    `maven-publish`
+    signing
+    id("io.codearte.nexus-staging") version "0.21.2"
 }
+
+val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
+val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
+val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
+val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
 
 allprojects {
     group = "com.jashmore"
@@ -22,6 +30,8 @@ subprojects {
     apply(plugin = "checkstyle")
     apply(plugin = "jacoco")
     apply(plugin = "com.github.kt3k.coveralls")
+    apply(plugin = "maven-publish")
+    apply(plugin = "signing")
 
     dependencies {
         // BOMs
@@ -144,6 +154,70 @@ subprojects {
         dependsOn(tasks.jacocoTestCoverageVerification)
         dependsOn(integrationTestTask)
     }
+
+    // We don't want to ever publish example projects as these are standalone Jars/Spring Boot Apps
+    if (!project.projectDir.path.contains("examples")) {
+        publishing {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    groupId = project.group as String
+                    artifactId = project.name.replace(":", "")
+                    version = project.version as String
+
+                    if (plugins.hasPlugin("java")) {
+                        from(components["java"])
+
+                        pom {
+                            licenses {
+                                license {
+                                    name.set("MIT License")
+                                    url.set("http://www.opensource.org/licenses/mit-license.php")
+                                }
+                            }
+                            developers {
+                                developer {
+                                    id.set("jaidenashmore")
+                                    name.set("Jaiden Ashmore")
+                                    email.set("jaidenkyleashmore@gmail.com")
+                                    organization {
+                                        name.set("jaidenashmore")
+                                        url.set("https://github.com/jaidenashmore")
+                                    }
+                                }
+                            }
+                            scm {
+                                connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
+                                tag.set("HEAD")
+                            }
+                        }
+                    }
+                }
+            }
+
+            repositories {
+                maven {
+                    val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
+                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+
+                    credentials {
+                        username = sonatypeUsername
+                        password = sonatypePassword
+                    }
+                }
+            }
+        }
+
+        signing {
+            // We only want to sign if we are actually publishing to Maven Central
+            setRequired({ gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenRepository") })
+
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications["mavenJava"])
+        }
+    }
 }
 
 // we explicitly exclude the sub-project folders, as well as modules that have no tests and therefore will not generate jacoco reports
@@ -204,4 +278,11 @@ tasks.coveralls {
     dependsOn(jacocoRootReportTask)
 
     onlyIf { env["CI"].equals("true", true) }
+}
+
+apply(plugin = "io.codearte.nexus-staging")
+
+nexusStaging {
+    username = sonatypeUsername
+    password = sonatypePassword
 }

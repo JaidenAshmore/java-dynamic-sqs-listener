@@ -6,5 +6,5 @@ dependencies {
     implementation("software.amazon.awssdk:sqs")
 
     testImplementation("io.zipkin.brave:brave-tests")
-    testImplementation(project(":util:elasticmq-sqs-client"))
+    testImplementation(project(":elasticmq-sqs-client"))
 }
