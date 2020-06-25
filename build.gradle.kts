@@ -62,6 +62,10 @@ subprojects {
 
             // ElasticMQ
             implementation("org.elasticmq:elasticmq-rest-sqs_2.12:0.15.6")
+
+            // AWS Xray
+            implementation("com.amazonaws:aws-xray-recorder-sdk-core:2.6.1")
+            implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.6.1")
         }
     }
 
