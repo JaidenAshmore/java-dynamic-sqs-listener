@@ -14,20 +14,20 @@ java {
 
 dependencies {
     api("org.apache.avro:avro:1.9.2")
-    api(project(":extensions:spring-cloud-schema-registry-extension:spring-cloud-schema-registry-extension-api"))
+    api(project(":spring-cloud-schema-registry-extension-api"))
 
     "springImplementation"("org.springframework:spring-core")
     "springImplementation"("org.springframework:spring-context")
     "springImplementation"("org.springframework.boot:spring-boot-autoconfigure")
     "springImplementation"("org.springframework.boot:spring-boot-configuration-processor")
 
-    implementation(project(":util:documentation-annotations"))
+    compileOnly(project(":documentation-annotations"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation(project(":util:elasticmq-sqs-client"))
-    testImplementation(project(":util:avro-spring-cloud-schema-registry-sqs-client"))
-    testImplementation(project(":java-dynamic-sqs-listener-spring:java-dynamic-sqs-listener-spring-starter"))
-    testImplementation(project(":extensions:spring-cloud-schema-registry-extension:in-memory-spring-cloud-schema-registry"))
+    testImplementation(project(":elasticmq-sqs-client"))
+    testImplementation(project(":avro-spring-cloud-schema-registry-sqs-client"))
+    testImplementation(project(":java-dynamic-sqs-listener-spring-starter"))
+    testImplementation(project(":in-memory-spring-cloud-schema-registry"))
 }
 
 val generateAvro = tasks.register<GenerateAvroJavaTask>("generateAvro") {

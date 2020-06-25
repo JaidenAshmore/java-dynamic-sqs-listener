@@ -3,8 +3,8 @@ description = "Utility methods for dealing with annotations in a library that ma
 
 dependencies {
     implementation(project(":java-dynamic-sqs-listener-api"))
-    implementation(project(":util:common-utils"))
-    implementation(project(":util:documentation-annotations"))
+    implementation(project(":common-utils"))
+    compileOnly(project(":documentation-annotations"))
 
-    testImplementation(project(":util:proxy-method-interceptor"))
+    testImplementation(project(":proxy-method-interceptor"))
 }

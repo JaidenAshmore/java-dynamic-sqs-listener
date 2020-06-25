@@ -10,7 +10,7 @@ plugins {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("software.amazon.awssdk:sqs")
-    implementation(project(":util:avro-spring-cloud-schema-registry-sqs-client"))
+    implementation(project(":avro-spring-cloud-schema-registry-sqs-client"))
 }
 
 val generateAvro = tasks.register<GenerateAvroJavaTask>("generateAvro") {

@@ -7,6 +7,6 @@ dependencies {
         exclude(group = "org.apache.avro", module = "avro")
     }
 
-    implementation(project(":util:annotation-utils"))
-    implementation(project(":util:documentation-annotations"))
+    implementation(project(":annotation-utils"))
+    compileOnly(project(":documentation-annotations"))
 }

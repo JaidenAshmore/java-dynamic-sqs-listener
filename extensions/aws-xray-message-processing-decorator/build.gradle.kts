@@ -10,7 +10,7 @@ java {
 dependencies {
     api("com.amazonaws:aws-xray-recorder-sdk-core")
     api(project(":java-dynamic-sqs-listener-api"))
-    implementation(project(":util:documentation-annotations"))
+    compileOnly(project(":documentation-annotations"))
 
     "springImplementation"("org.springframework:spring-context")
     "springImplementation"("org.springframework.boot:spring-boot-autoconfigure")

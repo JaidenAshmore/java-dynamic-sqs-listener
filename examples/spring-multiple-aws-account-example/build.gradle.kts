@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation(project(":java-dynamic-sqs-listener-spring:java-dynamic-sqs-listener-spring-starter"))
-    implementation(project(":util:local-sqs-async-client"))
+    implementation(project(":java-dynamic-sqs-listener-spring-starter"))
+    implementation(project(":local-sqs-async-client"))
     implementation("org.elasticmq:elasticmq-rest-sqs_2.12")
 }
