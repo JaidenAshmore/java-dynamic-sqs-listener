@@ -17,7 +17,7 @@ val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
 
 allprojects {
     group = "com.jashmore"
-    version = "4.0.0-SNAPSHOT"
+    version = "4.0.0-M1"
 
     repositories {
         mavenCentral()
