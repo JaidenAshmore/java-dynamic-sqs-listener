@@ -310,4 +310,6 @@ apply(plugin = "io.codearte.nexus-staging")
 nexusStaging {
     username = sonatypeUsername
     password = sonatypePassword
+    numberOfRetries = 20
+    delayBetweenRetriesInMillis = 3000
 }

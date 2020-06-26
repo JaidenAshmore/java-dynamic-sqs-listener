@@ -22,4 +22,4 @@ jobs:
           GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT: ${{ secrets.GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT }}
           GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
         with:
-          arguments: assemble publishMavenJavaPublicationToMavenRepository releaseRepository
+          arguments: assemble publishMavenJavaPublicationToMavenRepository closeRepository releaseRepository
