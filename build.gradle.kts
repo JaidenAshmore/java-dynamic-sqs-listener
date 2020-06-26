@@ -15,6 +15,24 @@ val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
 val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
 val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
 
+/**
+ * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
+ */
+fun determineModuleName(projectName: String): String {
+    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
+    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
+    projectName.forEachIndexed { i, c ->
+        if (c == '-') {
+            updatedProjectNameBuilder.setCharAt(i, ' ')
+            if (i + 1 < projectName.length) {
+                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
+            }
+        }
+    }
+
+    return updatedProjectNameBuilder.toString()
+}
+
 allprojects {
     group = "com.jashmore"
     version = "4.0.0-M1"
@@ -167,29 +185,36 @@ subprojects {
                     if (plugins.hasPlugin("java")) {
                         from(components["java"])
 
-                        pom {
-                            licenses {
-                                license {
-                                    name.set("MIT License")
-                                    url.set("http://www.opensource.org/licenses/mit-license.php")
-                                }
-                            }
-                            developers {
-                                developer {
-                                    id.set("jaidenashmore")
-                                    name.set("Jaiden Ashmore")
-                                    email.set("jaidenkyleashmore@gmail.com")
-                                    organization {
-                                        name.set("jaidenashmore")
-                                        url.set("https://github.com/jaidenashmore")
+                        // Need to do it last so that the description is properly set in each of the project's gradle build files
+                        afterEvaluate {
+                            pom {
+                                name.set(determineModuleName(project.name))
+                                description.set(project.description)
+                                url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
+
+                                licenses {
+                                    license {
+                                        name.set("MIT License")
+                                        url.set("http://www.opensource.org/licenses/mit-license.php")
                                     }
                                 }
-                            }
-                            scm {
-                                connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
-                                tag.set("HEAD")
+                                developers {
+                                    developer {
+                                        id.set("jaidenashmore")
+                                        name.set("Jaiden Ashmore")
+                                        email.set("jaidenkyleashmore@gmail.com")
+                                        organization {
+                                            name.set("jaidenashmore")
+                                            url.set("https://github.com/jaidenashmore")
+                                        }
+                                    }
+                                }
+                                scm {
+                                    connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                    developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                    url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
+                                    tag.set("HEAD")
+                                }
                             }
                         }
                     }
