@@ -1,40 +1,27 @@
 # Releasing an Artifact
 
-This guide contains the steps to set up the local environment for releasing an artifact to the public Maven repository.
+This library is hosted using the [OSSRH](https://central.sonatype.org/pages/ossrh-guide.html) central repository. To successfully release the application
+each module must be:
+
+1. filled with all necessary information like project name, Source Code Management (SCM) information, etc
+1. include JavaDoc and Sources
+1. Be signed using GPG keys
+
+The developer will release the plugin to a staging repository where it is checked against all of the checks above. If all of these pass it can be released
+to the actual maven central repository. We use GitHub actions to actually perform the releasing so it does not need to be run on a specific machine.
+
+## Releasing to Maven local
+
+To publish to maven local so you can use it for other projects on your local machine you can run `gradle publishToMavenLocal` from the root directory.
+
+## Releasing to Maven Central
+
+To make the module available for consumption.
 
 ## Steps
 
-1. Set up the maven server credentials by updating the `~/.m2/settings.xml` file to include the GPG credentials and
-the server for the maven repository.
-
-    ```xml
-    <settings>
-      <profiles>
-        <profile>
-          <id>java-dynamic-sqs-listener</id>
-          <activation>
-            <activeByDefault>true</activeByDefault>
-          </activation>
-          <properties>
-            <gpg.keyname>${GPG_KEY_HERE}</gpg.keyname>
-            <gpg.passphrase>${GPG_PASSWORD_WITH_MVN_ENCRYPTION}</gpg.passphrase>
-          </properties>
-        </profile>
-      </profiles>
-      <servers>
-        <server>
-          <id>ossrh</id>
-          <username>Ashmore</username>
-          <password>${OSS_JIRA_PASSWORD}</password>
-        </server>
-      </servers>
-    </settings>
-    ```
-
-1. Set the GPG TTY: `export GPG_TTY=$(tty)`
-1. If you haven't uploaded your GPG credentials you can do so by going:
-    ```gpg --keyserver hkp://pool.sks-keyservers.net --send-keys ${KEY_ID}```
-    ```gpg --keyserver hkp://keyserver.ubuntu.com --send-keys ${KEY_ID}```
-1. Reduce the number of times putting your ssh password in by doing `ssh-add`
-1. Run the Maven release process: `mvn clean -DskipTests -Darguments=-DskipTests release:prepare release:perform` (note the requested tag should be in a
-format like v3.1.1)
+1. Change the version in the [build.gradle.kts](../../build.gradle.kts) to the version you want to release, e.g. 4.0.0-SNAPSHOT to 4.0.0.
+1. Commit this change
+1. Create a new release from the branch, e.g. `4.x`, which should have that last commit that you just had
+1. Creating this release will result in the [release github action](../../.github/workflows/release.yml) triggering
+1. Once this is successful make sure to make a new commit changing the version to the next SNAPSHOT version, e.g. 4.0.1-SNAPSHOT
