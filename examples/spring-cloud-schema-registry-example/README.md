@@ -27,21 +27,21 @@ Start each of these applications in new terminals/your IDE:
 
     ```bash
    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer
-   mvn spring-boot:run
+   gradle bootRun
    ```
 
 1. The first SQS producer service
 
    ```bash
    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer
-   mvn spring-boot:run
+   gradle bootRun
    ```
 
 1. The second SQS producer service
 
    ```bash
    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-2
-   mvn spring-boot:run
+   gradle bootRun
    ```
 
 You should now see the consumer receiving messages from both producers and even though the producers are sending

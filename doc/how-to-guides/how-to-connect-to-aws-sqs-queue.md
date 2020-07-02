@@ -29,7 +29,7 @@ used for this guide.
     AWS_REGION={REGION_QUEUE_CREATED_IN_ABOVE} \
     AWS_SECRET_ACCESS_KEY={SECRET_KEY_RECORDED_ABOVE} \
     SQS_QUEUE_URL={FULL_URL_OF_SQS_QUEUE} \
-    mvn spring-boot:run
+    gradle bootRun
     ```
 
 1. Send a message to the Queue by right clicking the queue in the AWS Console and selecting Send Message
