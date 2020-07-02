@@ -13,7 +13,7 @@ An example of setting up Brave Tracing with this library.
 1. Start the application
 
     ```shell script
-    mvn spring-boot:run
+    gradle bootRun
     ```
 
 1. Look in the logs for the server and you should see messages being processed with Trace IDs

@@ -236,13 +236,13 @@ SQS Server so you don't need to do any setting up of queues on AWS to test this 
 1. Build the framework
 
 ```bash
-mvn clean install -DskipTests
+gradle build -x test -x integrationTest
 ```
 
 1. Run the Spring Starer Example Spring Boot app
 
 ```bash
-(cd examples/spring-starter-examples && mvn spring-boot:run)
+(cd examples/spring-starter-examples && gradle bootRun)
 ```
 
 ### Testing locally a dynamic concurrency example
@@ -256,13 +256,13 @@ the rate of concurrency every 10 seconds.
 1. Build the framework
 
 ```bash
-mvn clean install -DskipTests
+gradle build -x test -x integrationTest
 ```
 
 1. Run the Spring Starer Example Spring Boot app
 
 ```bash
-(cd examples/core-examples && mvn exec:java)
+(cd examples/core-examples && gradle runApp)
 ```
 
 ### Connecting to multiple AWS Accounts using the Spring Starter
