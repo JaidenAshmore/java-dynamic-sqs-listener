@@ -44,12 +44,8 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 @Slf4j
 public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
-    private final SqsQueuesConfig sqsQueuesConfig;
-
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
-
-    private final String serverUrl;
 
     public LocalSqsAsyncClientImpl(final SqsQueuesConfig sqsQueuesConfig) {
         this(sqsQueuesConfig, (builder) -> {
@@ -58,8 +54,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
 
     public LocalSqsAsyncClientImpl(final SqsQueuesConfig sqsQueuesConfig,
                                    final Consumer<SqsAsyncClientBuilder> clientBuilderConsumer) {
-        this.sqsQueuesConfig = sqsQueuesConfig;
-        this.serverUrl = Optional.ofNullable(sqsQueuesConfig.getSqsServerUrl())
+        final String serverUrl = Optional.ofNullable(sqsQueuesConfig.getSqsServerUrl())
                 .orElse(DEFAULT_SQS_SERVER_URL);
         log.info("Connecting to local SQS service at {}", serverUrl);
 
@@ -79,7 +74,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
 
         if (!sqsQueuesConfig.getQueues().isEmpty()) {
             try {
-                buildQueues().get();
+                buildQueues(delegate, sqsQueuesConfig).get();
             } catch (InterruptedException interruptedException) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Interrupted waiting for queues to be built", interruptedException);
@@ -87,6 +82,10 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
                 throw new RuntimeException("Error building initial queues", executionException.getCause());
             }
         }
+    }
+
+    public LocalSqsAsyncClientImpl(final SqsAsyncClient delegate) {
+        this.delegate = delegate;
     }
 
     @Override
@@ -112,11 +111,6 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
                     sendMessageRequestBuilderConsumer.accept(builder);
                     builder.queueUrl(queueUrl);
                 }));
-    }
-
-    @Override
-    public String getServerUrl() {
-        return serverUrl;
     }
 
     @Override
@@ -155,14 +149,16 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     /**
      * Build all of the queues that are required for this local client once the bean has been created.
      */
-    private CompletableFuture<List<CreateQueueResponse>> buildQueues() {
+    private static CompletableFuture<List<CreateQueueResponse>> buildQueues(SqsAsyncClient delegate, SqsQueuesConfig sqsQueuesConfig) {
         final List<CompletableFuture<CreateQueueResponse>> queueFutures = sqsQueuesConfig.getQueues().stream()
-                .map(this::buildQueue)
+                .map(queueConfig -> buildQueue(delegate, sqsQueuesConfig, queueConfig))
                 .collect(toList());
         return CompletableFutureUtils.allOf(queueFutures);
     }
 
-    private CompletableFuture<CreateQueueResponse> buildQueue(SqsQueuesConfig.QueueConfig queueConfig) {
+    private static CompletableFuture<CreateQueueResponse> buildQueue(SqsAsyncClient delegate,
+                                                                     SqsQueuesConfig sqsQueuesConfig,
+                                                                     SqsQueuesConfig.QueueConfig queueConfig) {
         log.debug("Creating local queue: {}", queueConfig.getQueueName());
 
         final Map<QueueAttributeName, String> attributes = new HashMap<>();
@@ -176,7 +172,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
                     .orElse(queueConfig.getQueueName() + "-dlq");
             final int maxReceiveCount = Optional.ofNullable(queueConfig.getMaxReceiveCount())
                     .orElse(DEFAULT_MAX_RECEIVE_COUNT);
-            createDeadLetterQueueFuture = createDeadLetterQueue(deadLetterQueueName)
+            createDeadLetterQueueFuture = createDeadLetterQueue(delegate, sqsQueuesConfig, deadLetterQueueName)
                     .thenAccept(deadLetterQueueArn -> attributes.put(
                             QueueAttributeName.REDRIVE_POLICY,
                             String.format("{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}", deadLetterQueueArn, maxReceiveCount)));
@@ -197,7 +193,9 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
      * @param queueName the name of the queue that this dead letter queue is for
      * @return the future with the queue ARN of the dead letter queue created
      */
-    private CompletableFuture<String> createDeadLetterQueue(final String queueName) {
+    private static CompletableFuture<String> createDeadLetterQueue(SqsAsyncClient delegate,
+                                                                   SqsQueuesConfig sqsQueuesConfig,
+                                                                   final String queueName) {
         log.debug("Creating dead letter queue: {}", queueName);
         return delegate.createQueue((builder -> builder.queueName(queueName)))
                 .thenCompose(createQueueResponse -> delegate.getQueueAttributes(builder -> builder

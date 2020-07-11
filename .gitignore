@@ -5,6 +5,7 @@ target/
 # Gradle
 build
 .gradle
+out
 
 # Log file
 *.log

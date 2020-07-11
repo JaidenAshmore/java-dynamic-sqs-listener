@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: my-service
+
+sqs.queue.url: replaceThis
+
+sns.arn: replaceThis

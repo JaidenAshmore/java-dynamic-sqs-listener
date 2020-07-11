@@ -23,7 +23,8 @@ include(
         ":java-dynamic-sqs-listener-spring-starter",
         
         // Extensions
-        ":aws-xray-message-processing-decorator",
+        ":aws-xray-extension-core",
+        ":aws-xray-extension-spring-boot",
         ":brave-message-processing-decorator",
 
         // - Spring Cloud Scheme Registry Extension
@@ -71,7 +72,8 @@ project(":multiple-aws-account-example").projectDir = file("examples/spring-mult
 project(":spring-sleuth-example").projectDir = file("examples/spring-sleuth-example")
 project(":java-dynamic-sqs-listener-spring-starter-examples").projectDir = file("examples/spring-starter-examples")
 project(":sqs-listener-library-comparison").projectDir = file("examples/sqs-listener-library-comparison")
-project(":aws-xray-message-processing-decorator").projectDir = file("extensions/aws-xray-message-processing-decorator")
+project(":aws-xray-extension-core").projectDir = file("extensions/aws-xray-extension/core")
+project(":aws-xray-extension-spring-boot").projectDir = file("extensions/aws-xray-extension/spring-boot")
 project(":brave-message-processing-decorator").projectDir = file("extensions/brave-message-processing-decorator")
 project(":spring-cloud-schema-registry-extension-api").projectDir = file("extensions/spring-cloud-schema-registry-extension/spring-cloud-schema-registry-extension-api")
 project(":avro-spring-cloud-schema-registry-extension").projectDir = file("extensions/spring-cloud-schema-registry-extension/avro-spring-cloud-schema-registry-extension")

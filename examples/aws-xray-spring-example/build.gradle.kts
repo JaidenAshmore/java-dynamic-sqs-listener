@@ -6,10 +6,10 @@ plugins {
 }
 
 dependencies {
+    implementation("software.amazon.awssdk:sns")
     implementation("com.amazonaws:aws-xray-recorder-sdk-spring")
+    implementation("com.amazonaws:aws-xray-recorder-sdk-aws-sdk-v2-instrumentor")
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation(project(":aws-xray-message-processing-decorator"))
+    implementation(project(":aws-xray-extension-spring-boot"))
     implementation(project(":java-dynamic-sqs-listener-spring-starter"))
-    implementation(project(":elasticmq-sqs-client"))
-    compileOnly(project(":documentation-annotations"))
 }

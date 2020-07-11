@@ -16,13 +16,6 @@ import java.util.function.Consumer;
  */
 public interface LocalSqsAsyncClient extends SqsAsyncClient {
     /**
-     * Get the base URL for the SQS server, e.g. the ElasticMQ server.
-     *
-     * @return the base URL
-     */
-    String getServerUrl();
-
-    /**
      * Creates a random queue that can be used for testing, returning the URL for this queue.
      *
      * @return the queue URL of the random queue created
