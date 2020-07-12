@@ -1,6 +1,5 @@
 package com.jashmore.sqs.examples;
 
-import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.config.DaemonConfiguration;
