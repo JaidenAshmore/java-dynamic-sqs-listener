@@ -54,17 +54,6 @@ class LocalSqsAsyncClientImplTest {
     }
 
     @Test
-    void serverUrlCanBeReturnedFromClient() {
-        // act
-        final LocalSqsAsyncClientImpl client = new LocalSqsAsyncClientImpl(SqsQueuesConfig.builder()
-                .sqsServerUrl(queueServerUrl)
-                .build());
-
-        // assert
-        assertThat(client.getServerUrl()).isEqualTo(queueServerUrl);
-    }
-
-    @Test
     void createRandomQueueWillGenerateQueueWithRandomName() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
         final LocalSqsAsyncClientImpl client = new LocalSqsAsyncClientImpl(SqsQueuesConfig.builder()

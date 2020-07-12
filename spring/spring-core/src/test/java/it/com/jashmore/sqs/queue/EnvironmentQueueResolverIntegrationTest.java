@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.queue.QueueResolver;
-import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +27,12 @@ class EnvironmentQueueResolverIntegrationTest {
     private QueueResolver queueResolver;
 
     @Autowired
-    private LocalSqsAsyncClient localSqsAsyncClient;
+    private ElasticMqSqsAsyncClient localSqsAsyncClient;
 
     @Configuration
     public static class TestConfig {
         @Bean
-        public LocalSqsAsyncClient localSqsAsyncClient() {
+        public ElasticMqSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
         }
     }

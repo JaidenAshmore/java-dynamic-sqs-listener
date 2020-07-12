@@ -22,6 +22,7 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
     private final LocalSqsAsyncClient delegate;
 
     private final SQSRestServer sqsRestServer;
+    private final String serverUrl;
 
     public ElasticMqSqsAsyncClient() {
         this(Collections.emptyList());
@@ -59,8 +60,9 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
                 .start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
+        serverUrl = "http://localhost:" + serverBinding.localAddress().getPort();
         final SqsQueuesConfig queuesConfig = SqsQueuesConfig.builder()
-                .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
+                .sqsServerUrl(serverUrl)
                 .queues(queueConfigs)
                 .build();
         delegate = new LocalSqsAsyncClientImpl(queuesConfig, clientBuilderConsumer);
@@ -70,6 +72,10 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
     public String serviceName() {
         // Lombok is being a bit weird and I need to manually define it here
         return delegate.serviceName();
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
     }
 
     @Override

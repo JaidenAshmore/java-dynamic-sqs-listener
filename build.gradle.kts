@@ -94,6 +94,7 @@ subprojects {
             // AWS Xray
             implementation("com.amazonaws:aws-xray-recorder-sdk-core:2.6.1")
             implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.6.1")
+            implementation("com.amazonaws:aws-xray-recorder-sdk-aws-sdk-v2-instrumentor:2.6.1")
         }
     }
 
@@ -156,7 +157,10 @@ subprojects {
 
         violationRules {
             rule {
-                excludes = listOf("com.jashmore.sqs.examples*")
+                excludes = listOf(
+                        "com.jashmore.sqs.examples*",
+                        "com.jashmore.sqs.extensions.xray.client"
+                )
                 element = "PACKAGE"
                 limit {
                     minimum = 0.80.toBigDecimal()

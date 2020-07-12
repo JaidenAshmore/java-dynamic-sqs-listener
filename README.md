@@ -1,6 +1,6 @@
 # Java Dynamic SQS Listener
 
-![Test](https://github.com/JaidenAshmore/functional-futures/workflows/Build%20and%20Test/badge.svg)
+![Build and Test](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/workflows/Build%20and%20Test/badge.svg?branch=4.x)
 [![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=3.x)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=3.x)
 [![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-parent.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
 
