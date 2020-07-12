@@ -23,8 +23,8 @@ public class MyClass {
 
 ### Using the default identifier
 
-When the message listener does not set a custom identifier, a default identifier will be constructed from the class and method name. In the following example, the message listener will
-automatically set `my-class-message-handler` as the identifier.
+When the message listener does not set a custom identifier, a default identifier will be constructed from the class and method name. In the following example,
+the message listener will automatically set `my-class-message-handler` as the identifier.
 
 ```java
 public class MyClass {
