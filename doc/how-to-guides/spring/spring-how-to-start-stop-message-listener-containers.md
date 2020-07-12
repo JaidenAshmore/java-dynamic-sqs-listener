@@ -1,11 +1,12 @@
-# Spring - How to start and stop Queue Listeners
+# Spring - How to start and stop Message Listener Containers
 
-Queue Listeners can be started and stopped while it is executing via the
+[MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) can be started and stopped while the Spring
+application is executing via the
 [MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java).
-To choose a specific queue the unique identifier for the listener must be supplied which was either set on the listener specifically or if none were supplied
-an automatic is supplied.
+Each container has a unique identifier and this can be used to indicate which container to start or stop. The core message listeners allow for a custom
+identifier to be supplied, otherwise a default will be generated from the class and method name of the message listener.
 
-## Setting a Queue Listener's identifier
+## Setting a Message Listener's identifier
 
 ### Setting it explicitly
 
@@ -22,7 +23,8 @@ public class MyClass {
 
 ### Using the default identifier
 
-When no identifier is supplied, a default will be generated for you, for example in the scenario below the identifier built will be `my-class-message-handler`.
+When the message listener does not set a custom identifier, a default identifier will be constructed from the class and method name. In the following example, the message listener will
+automatically set `my-class-message-handler` as the identifier.
 
 ```java
 public class MyClass {

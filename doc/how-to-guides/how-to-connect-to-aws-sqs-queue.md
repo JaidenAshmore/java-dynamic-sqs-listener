@@ -1,9 +1,8 @@
 # How to Connect to an AWS SQS Queue
 
-While most of the examples provided in this library are shown using a local [ElasticMQ](https://github.com/adamw/elasticmq) or
-[Localstack](https://github.com/localstack/localstack) for a mock SQS queue, the real application should be using an actual SQS queue. This provides a very
-high level, generic guide to creating a Queue in AWS which should help you getting started. However, the online documentation provided by Amazon would be a
-better resources for learning about SQS queues, for example I used
+While most of the examples provided in this library use [ElasticMQ](https://github.com/adamw/elasticmq) as the SQS queue, the real application should be
+using an actual SQS queue. This provides a very high level, generic guide to creating a Queue in AWS which should help you get started. However, the
+online documentation provided by Amazon would be a better resources for learning about SQS queues, for example I used
 [AWS Documentation - SQS Setting Up](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-setting-up.html) myself to
 write this guide.
 
@@ -15,7 +14,8 @@ used for this guide.
 
 1. Create a new AWS account. You can Google for links on where to do this.
 1. Create a new SQS Queue in a region near you, e.g. us-east-2 (Ohio). You will need the region and Queue URL.
-1. Create a new IAM user that has full permission to this SQS queue. You will need the Access Key ID and Secret Access Key.
+1. Create a new IAM user that has full permission (for simplicity, otherwise you can put a more restricted permissions) to this SQS queue. You will
+need the Access Key ID and Secret Access Key.
 1. Change directory to the AWS Spring example.
 
     ```bash

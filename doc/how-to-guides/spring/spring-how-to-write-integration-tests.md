@@ -4,8 +4,8 @@ This guide provides details on how to write a simple integration test for a spri
 can be flaky and therefore you should prefer to call your message listener directly in your integration test when testing normal business logic.
 
 For this guide the [Java Dynamic SQS Listener - Spring Integration Test Example](../../../examples/spring-integration-test-example)
-module will be used, which is a very simple application that has a single queue listener that calls out to a service when a message is retrieved. The
-tests written includes test on:
+module will be used, which is a very simple application that has a single message listener that calls out to a service. The
+tests written include:
 
 - The listener receives a message and was able to be successfully processed
 - The listener receives a message, was not able to be processed and through the re-drive policy succeeded the next time
@@ -91,7 +91,7 @@ configuration to set up some initial queues in the SQS Server.
     }
     ```
 
-1. If the Integration Test has multiple tests it is best to purge the queues between tests and you can do this with a JUnit4 `After` or JUnit4 `AfterEach`
+1. If the Integration Test has multiple tests it is best to purge the queues between tests, and you can do this with a JUnit4 `After` or JUnit5 `AfterEach`
 
     ```java
     @AfterEach

@@ -1,15 +1,14 @@
 # Core - How to implement a custom Argument Resolver
 
-When the framework executes the methods for a SQS message, the
-[ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used to build
-the arguments for the method execution from the message being processed.  The default core implementation, the
+The framework uses an
+[ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) to build
+the arguments for the method listener execution.  The default core implementation, the
 [DelegatingArgumentResolverService](../../../core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java),
 uses [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s under the hood to resolve
-each type of argument. Users of the framework may get to a point where the default argument types are insufficient and therefore want to provide their own.
+each type of argument.
 
-To do this, when building your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
-with the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s make sure to add your
-custom resolver.
+You can define your own [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)and include it in your
+[ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) to extend what type of paramters you can consume.
 
 ```java
 new DelegatingArgumentResolverService(ImmutableSet.of(
@@ -21,10 +20,10 @@ new DelegatingArgumentResolverService(ImmutableSet.of(
 
 ## Example Use Case
 
-The payload in a SQS message is deeply nested and it is desirable to only provide the field that is needed instead of passing the entire
-message body into the method. For example, using the sample SQS Message below, only the user's group is necessary and therefore an
-[ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) is wanting to be included
-that will map any method argument annotated with `@UserGroup` to extract just that single field.
+There is a deeply nested payload in the SQS message, and it is desirable to only provide the field that is needed instead of passing the entire
+message body into the method. For example, using the sample SQS Message below, only the user's group is necessary and therefore a custom
+[ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) can be included
+to extract that field to any method parameter annotated with the `@UserGroup` annotation.
 example:
 
 ```java
@@ -50,12 +49,12 @@ public void messageListener(@UserGroup final String userGroup) {
 
 1. Create a new annotation that indicates that this user group should be extracted.
 
-```java
-@Retention(value = RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface UserGroup {
-}
-```
+    ```java
+    @Retention(value = RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface UserGroup {
+    }
+    ```
 
 1. Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
 interface that will be able to resolve these arguments with those annotations.
@@ -72,8 +71,9 @@ interface that will be able to resolve these arguments with those annotations.
         }
 
         @Override
-        public Object resolveArgumentForParameter(QueueProperties queueProperties,
-                                                  MethodParameter methodParameter, Message message) throws ArgumentResolutionException {
+        public String resolveArgumentForParameter(QueueProperties queueProperties,
+                                                  MethodParameter methodParameter,
+                                                  Message message) throws ArgumentResolutionException {
             try {
                 // You could build an actual POJO instead of using this JsonNode
                 final JsonNode node = objectMapper.readTree(message.body());
@@ -93,7 +93,7 @@ interface that will be able to resolve these arguments with those annotations.
 1. Create a method that will use this argument, for example something like:
 
     ```java
-        public void messageListener(@UserGroup final String userGroup, @MessageId final String messageId) {
+        public void messageListener(@UserGroup final String userGroup) {
             // Do something here
         }
     ```

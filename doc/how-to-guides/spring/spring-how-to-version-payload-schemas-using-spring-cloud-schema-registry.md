@@ -62,13 +62,15 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
     }
     ```
 
-1. Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be deserialized from
+1. Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be de-serialised from
 the message payload.
 
     ```java
-    @QueueListener(value = "queueName")
-    public void listen(@SpringCloudSchemaRegistryPayload Book payload) {
-        log.info("Payload: {}", payload);
+    class MyClass {
+        @QueueListener(value = "queueName")
+        public void listen(@SpringCloudSchemaRegistryPayload Book payload) {
+            log.info("Payload: {}", payload);
+        }
     }
     ```
 
@@ -76,7 +78,7 @@ the message payload.
 
 You can wrap your `SqsAsyncClient` with the
 [AvroSchemaRegistrySqsAsyncClient](../../../util/avro-spring-cloud-schema-registry-sqs-client/src/main/java/com/jashmore/sqs/registry/AvroSchemaRegistrySqsAsyncClient.java)
-to be able to more easily send a message that will be serialized using the Avro Schema.  This Avro SQS Client was built for testing purposes and therefore it is
+to be able to more easily send a message that will be serialized using the Avro Schema.  This Avro SQS Client is for testing purposes and therefore it is
 recommended to developer your own logic for sending these messages.
 
 For a full example of building this client, take a look at the

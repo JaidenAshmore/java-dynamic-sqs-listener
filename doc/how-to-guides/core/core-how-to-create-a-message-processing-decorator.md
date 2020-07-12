@@ -168,7 +168,7 @@ public class MetricsMessageProcessingDecorator implements MessageProcessingDecor
 
 As we cannot guarantee that all callbacks will be run on the same thread, instead of using a `ThreadLocal` you can use the
 [MessageProcessingContext](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingContext.java) to set
-attributes in there for your future usage.
+attributes for future usage.
 
 ```java
 @Slf4J
