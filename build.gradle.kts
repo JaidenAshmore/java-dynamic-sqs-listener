@@ -35,7 +35,7 @@ fun determineModuleName(projectName: String): String {
 
 allprojects {
     group = "com.jashmore"
-    version = "4.0.0-M4"
+    version = "4.0.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
