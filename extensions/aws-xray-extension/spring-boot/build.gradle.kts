@@ -1,5 +1,5 @@
 
-description = "Extension for integration AWS Xray into Message Listeners in a Spring Boot Application"
+description = "Extension for integration AWS Xray Tracing into the Message Listeners in a Spring Boot Application"
 
 dependencies {
     api(project(":aws-xray-extension-core"))

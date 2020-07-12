@@ -26,4 +26,4 @@ key and secret key in your ~/.aws/credentials file like:
     AWS_ACCESS_KEY_ID={keyHere} AWS_SECRET_ACCESS_KEY={secretHere} AWS_REGION={sqsRegionHere} gradle bootRun
     ```
 
-1. You should now see messages processing logs for messages directly sent to SQS or via SNS
+1. You should now see messages processing logs for messages directly sent to SQS or via SNS, as well as placing traces into Xray

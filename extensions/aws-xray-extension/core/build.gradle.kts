@@ -1,5 +1,5 @@
 
-description = "Extension for integration AWS Xray into Message Listeners"
+description = "Extension for integration AWS Xray Tracing into the Message Listeners"
 
 dependencies {
     api("com.amazonaws:aws-xray-recorder-sdk-core")
