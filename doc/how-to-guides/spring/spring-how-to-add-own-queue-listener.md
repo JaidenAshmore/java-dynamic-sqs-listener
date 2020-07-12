@@ -5,14 +5,17 @@ used to process bean methods to determine whether they should be used to process
 is via an annotation, for example the following method indicates that it should be wrapped in a basic queue listener:
 
 ```java
-@QueueListener("http://localhost:9432/q/myqueue")
-public void messageConsumer(@Payload final String messagePayload) {
-    // do something with the message
+@Component
+public class MyService {
+    @QueueListener("http://localhost:9432/q/myqueue")
+    public void messageConsumer(@Payload final String messagePayload) {
+        // do something with the message
+    }
 }
 ```
 
 There are only a few core implementations of the [MessageListenerContainerFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
-and therefore there may be use cases that are not covered. Consumers can define their own wrapper that will be used alongside the core ones provided.
+and therefore there may be use cases that are not covered. Consumers can define their own factory that will be used alongside the core ones provided.
 
 ## Example Use Case
 
@@ -20,9 +23,9 @@ An application wants to provide a custom annotation to wrap methods with some me
 
 ## Prerequisites
 
-1. This relies on no [MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java)
+1. This relies on no custom [MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java)
 being provided by the consumer of this framework and therefore the default will be used. See
-[QueueListenerAutoConfiguration](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
+[QueueListenerConfiguration](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/config/QueueListenerConfiguration.java)
 for more information about how the [MessageListenerContainerFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
 are collected.
 
@@ -51,14 +54,14 @@ we wrote.
     ```
 
 1. Implement the [MessageListenerContainerFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
-interface with the custom implementation. As we are using annotations to indicate the method to wrap, we can extend the
-[AbstractAnnotationMessageListenerContainerFactory](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/AbstractAnnotationMessageListenerContainerFactory.java)
+interface with the custom implementation. As we are using annotations to indicate the method to wrap, we can extend
+the [AbstractAnnotationMessageListenerContainerFactory](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/AbstractAnnotationMessageListenerContainerFactory.java)
 to make matching on annotations easier. At this point whenever we enter `wrapMethodContainingAnnotation` we have found a bean with a method
-annotated with `SleepingQueueListener` and now we need to create a
-[MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java)
+annotated with `SleepingQueueListener` and now we need to create
+a [MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java)
 that has the responsibility of handling the spring lifecycle of this queue listener. The
 [CoreMessageListenerContainer](../../../core/src/main/java/com/jashmore/sqs/container/CoreMessageListenerContainer.java)
-is the simplest (and currently only) implementation of this and is the most likely one that would be used.
+is the simplest (and currently only) implementation of this and is the most likely one to use.
 
     ```java
     public class MySleepingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
@@ -78,10 +81,9 @@ is the simplest (and currently only) implementation of this and is the most like
 
         @Override
         protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final SleepingQueueListener annotation) {
-
             // build your container here
             return new CoreMessageListenerContainer(
-                            // components in here
+                   // components in here
             );
         }
     }
@@ -99,5 +101,5 @@ is the simplest (and currently only) implementation of this and is the most like
      }
      ```
 
-To see how the containers fully get built, take a look at the
+To see how the containers get built, take a look at the
 [Spring Core implementations](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container).

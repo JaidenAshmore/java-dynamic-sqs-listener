@@ -6,8 +6,8 @@ SQS Queue).
 ## Returning without exception
 
 The easiest method is to just make your method not throw an exception when it is executed. In this scenario the
-[MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) sees that it was successfully
-processed and it will mark it for being resolved.
+[MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) sees that the processing was successful, by not throwing
+an exception, and it will resolve the message.
 
 ### Example
 
@@ -27,10 +27,12 @@ public class MyClass {
 
 ## Including an Acknowledge Object in the method signature
 
-When the method includes an [Acknowledge](../../../api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) parameter
-then it has been indicated that the method will have the responsibility of deleting the message from the queue when it is finished processing by calling
+When the method includes an [Acknowledge](../../../api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) parameter,
+it is now the message listener's responsibility to manually resolve the message by calling
 `acknowledge.acknowledgeSuccessful()`. If this is never done then the message will not be deleted and will potentially be replaced into the queue
-depending on the redrive policy.
+depending on the re-drive policy.
+
+_Note: that this returns a `CompletableFuture` and will only guarantee to be completed if that future resolves successfully._
 
 ### Example
 
@@ -55,9 +57,10 @@ public class MyClass {
 ## The method returns a CompletableFuture
 
 When the method does not include an [Acknowledge](../../../api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java)
-parameter and it returns a `CompletableFuture` then the message will be successfully resolved when that future resolves.  Note that in this scenario if
-this `CompletableFuture` is never resolved or rejected the [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
-will wait forever and therefore it is important to also have these resolved or rejected.
+parameter, and it returns a `CompletableFuture`, then the message will be successfully resolved when that future resolves.
+
+**Warning: If this `CompletableFuture` is never completed, the [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
+will wait forever and ultimately you will have no more messages processing as all threads are waiting for the future to complete.**
 
 ### Example
 

@@ -4,17 +4,6 @@ _This guide assumes that you have knowledge of Xray and how it works. If not tak
 
 ## Steps
 
-1. Add the [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency which
-will automatically send tracing information when you use the SQS Client (as well as other AWS Clients).
-
-    ```xml
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-            <version>2.6.1</version>
-        </dependency>
-    ```
-
 1. Add the [AWS XRay Core Extension](../../../extensions/aws-xray-extension/core) as a dependency.
 
     ```xml
@@ -22,6 +11,17 @@ will automatically send tracing information when you use the SQS Client (as well
             <groupId>com.jashmore</groupId>
             <artifactId>aws-xray-extension-core</artifactId>
             <version>${dynamic-sqs-listener.version>}</version>
+        </dependency>
+    ```
+
+1. **[Optional]** If you want tracing information to be included when sending messages to AWS, add the
+[AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
+
+    ```xml
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+            <version>2.6.1</version>
         </dependency>
     ```
 
@@ -52,7 +52,7 @@ This will extract the tracing header from the SQS message and begin a Xray Segme
    );
     ```
 
-1. Now when the application runs you should have Xray traces being sent to AWS (assuming you have set up Xray in your application correctly).
+1. Now when the application runs any tracing in the message will be continued in the message listener.
 
 ## Example
 

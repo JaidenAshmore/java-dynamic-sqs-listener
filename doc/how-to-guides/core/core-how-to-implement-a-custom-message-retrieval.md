@@ -1,14 +1,14 @@
 # Core - How to implement custom message retrieval logic
 
 The [MessageRetriever](../../../api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) handles the logic for how to
-get messages from the SQS Queue.  This is the most commonly updated part of the library as this is where the most performance improvements
+get messages from the SQS Queue.  This is the most complicated part of the library as this is where the most performance improvements
 could be utilised.
 
 ## Examples
 
 To learn how to create your own [MessageRetriever](../../../api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) it
-is useful to take a look at how they are built into the core library. It can be not as straight forward to do as it involves dealing with concurrency and
-is written in a non blocking fashion.  The current core implementations can be found in the
+is useful to take a look at how they are built into the core library. It isn't  as straight forward to do as it involves dealing with handling concurrency and
+is written in a non-blocking programming style.  The current core implementations can be found in the
 [retriever package](../../../core/src/main/java/com/jashmore/sqs/retriever).
 
 Once you have built your own retriever you can see how this can be integrated into the framework by looking in the [examples](../../../examples) directory

@@ -19,10 +19,10 @@ The Queue Listener annotations have been written to allow for them to be set via
     spring.profiles: production
     queues:
         my-queue:
-           concurrency: 5
+           concurrency: 10
     ```
 
-1. Use the `{propertyName}String` fields in the annotations to pull data from the environment:
+1. Use the annotations `{propertyName}String` fields in the annotations to pull data from the environment:
 
     ```java
     @QueueListener(value = "http://localhost:9432/q/myqueue", concurrencyLevelString="${queues.my-queue.concurrency}")

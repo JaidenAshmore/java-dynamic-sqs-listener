@@ -6,22 +6,19 @@
 
 The Java Dynamic SQS Listener is a library that simplifies the listening of messages on an [AWS SQS queue](https://aws.amazon.com/sqs/).  It has been
 built from the ground up with the goal of making it easily customisable, allowing each component of the library to be easily interchanged if desired, as well
-as allowing dynamic changes to configuration during runtime, for example the amount of messages being processed concurrently can be changed via a feature flag
-or other configuration properties.
+as allowing dynamic changes to configuration during runtime, for example it could be extended to allow the amount of concurrent processing messages to be
+controlled by a feature flag.
 
-To keep the README minimal and easy to digest, the rest of the documentation is kept in the [doc](./doc/documentation.md) folder which provides a more
-thorough overview of how to use the library.
+## Spring Boot Quick Guide
 
-## Spring Quick Guide
+The following provides some examples using the Spring Boot Starter for this library. *Note that [core](./core) implementation is framework agnostic and
+therefore is not reliant on Spring.*
 
-The following provides some examples using the Spring Starter for this library. *Note that this library is not Spring specific as the main implementations are
-kept in the [core module](./core) which is framework agnostic.*
-
-### Using the Spring Starter
+### Using the Spring Boot Starter
 
 This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
 
-Include the maven dependency in your Spring Boot pom.xml:
+#### Maven
 
 ```xml
 <dependency>
@@ -29,6 +26,14 @@ Include the maven dependency in your Spring Boot pom.xml:
     <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
     <version>${sqs.listener.version}</version>
 </dependency>
+```
+
+#### Gradle
+
+```kotlin
+dependencies {
+    implementation("com.jashmore:java-dynamic-sqs-listener-spring-starter:${sqs.listener.version}")
+}
 ```
 
 In one of your beans, attach a
@@ -45,9 +50,10 @@ public class MyMessageListener {
 }
 ```
 
-This will use any user configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise if none are defined, a default
-will be provided that will look for AWS credentials/region from multiple areas, like the environment variables. See
-[How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
+This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
+will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
+
+See [How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
 
 ## Core Infrastructure
 
@@ -65,94 +71,73 @@ they are needed.
 the processing of a message from the queue by delegating it to the corresponding Java method that handles the message.
 - The [ArgumentResolverService](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) is used by the
 [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) to populate the
-arguments of the method being executed from the message. For example, a parameter with the
+arguments of the message listener method. For example, a parameter with the
 [@Payload](./core/src/main/java/com/jashmore/sqs/argument/payload/Payload.java) annotation will be resolved with the
 body of the message cast to that type (e.g. a POJO).
 - The [MessageBroker](./api/src/main/java/com/jashmore/sqs/broker/MessageBroker.java) is the main container that controls the whole flow
 of messages from the [MessageRetriever](./api/src/main/java/com/jashmore/sqs/retriever/MessageRetriever.java) to the
 [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java). It can determine when more messages
 are to be processed and the rate of concurrency for processing messages.
-- The [MessageResolver](./api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java) is used when the message has been
-successfully processed and it is needed to be removed from the SQS queue so it isn't processed again.
+- The [MessageResolver](./api/src/main/java/com/jashmore/sqs/resolver/MessageResolver.java) is used after successful processing of the message and its
+responsibility is to remove the message from the SQS queue, so it is not processed again if there is a re-drive policy.
 
-See the [Core Implementations Overview](./doc/core-implementations-overview.md) for more information about the core implementations provided by this library.
+For more information about the core implementations provided by this library, see the [Core Implementations Overview](./doc/core-implementations-overview.md).
 
-### Dependencies
+## Dependencies
 
 The framework relies on the following dependencies and therefore it is recommended to upgrade the applications dependencies to a point somewhere near these
 for compatibility.
 
 - [Core Framework](./core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): 2.13.7
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): 2.11.0
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): `2.13.7`
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): `2.11.0`
 - [Spring Framework](./spring)
-  - All of the core dependencies
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): 2.3.1.RELEASE
+  - All the core dependencies above
+  - [Spring Boot](https://github.com/spring-projects/spring-boot): `2.3.1.RELEASE`
 
-### How to Mark the message as successfully processed
+## Common Use Cases/Explanations
 
-When the method executing the message finishes without throwing an exception, the
-[MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) will acknowledge the message
-as a success, therefore removing it from the queue. If any exception is thrown, the message will not be acknowledged and if there is a redrive policy the
-message may be placed back onto the queue for another attempt.
+### How to de-serialise a JSON Payload
 
-Note that if the method contains an
-[Acknowledge](./api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) argument it is now up to the method
-to manually acknowledge the message as a success as the [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
-will not acknowledge the message automatically when the method executes without throwing an exception.
-
-### Setting up a queue listener that batches requests for messages
-
-The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
-a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
-finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
-[@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
-provides the same basic functionality but it also provides a timeout where eventually it will request for more messages even for the threads that are
-ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot messages
-on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
+The core library by default uses [Jackson](https://github.com/FasterXML/jackson-databind) to de-serialise the message payload and therefore you can
+use any Jackson compatible POJO class.
 
 ```java
 @Service
 public class MyMessageListener {
-    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000)
-    public void processMessage(@Payload final String payload) {
+    @QueueListener(value = "${insert.queue.url.here}")
+    public void processMessage(@Payload final MyPojo payload) {
         // process the message payload here
+    }
+
+    public static class MyPojo {
+        private String name;
+
+        public MyPojo() {
+            this.name = null;
+        }
+
+        public MyPojo(String name) {
+            this.name = null;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 }
 ```
-
-In this example above we have set it to process 10 messages at once and when there are threads wanting more messages it will wait for a maximum of 2 seconds
-before requesting messages for threads waiting for another message.
-
-### Setting up a queue listener that prefetches messages
-
-When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
-[@PrefetchingQueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
-annotation can be used to pre-fetch messages in a background thread while processing the existing messages.  The usage is something like this:
-
-```java
-@Service
-public class MyMessageListener {
-    @PrefetchingQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10)
-    public void processMessage(@Payload final String payload) {
-        // process the message payload here
-    }
-}
-```
-
-In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible
-maximum.
-
-*Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
-10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
-not prefetch anymore.*
 
 ### Adding a custom argument resolver
 
 There are some core [ArgumentResolvers](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
-application but if they don't provide the ease required for the application you can define your own. As an example, the following is how we can resolve an
-argument for the method where the payload of the message has been converted to uppercase.
+application but custom ones can be defined if they don't cover your use case. As an example, the following is how we can populate the message listener
+argument with the payload in uppercase.
 
 1. We will use an annotation on the field to indicate how the message should be resolved.
 
@@ -181,7 +166,7 @@ do the logic for converting the message payload to uppercase.
         }
     ```
 
-    You may be curious why a custom `AnnotationUtils.findParameterAnnotation` function is being used instead of getting the annotation directly from the parameter.
+    You may be curious why we use a custom `AnnotationUtils.findParameterAnnotation` function instead of getting the annotation directly from the parameter.
     The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
     CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
     annotations. For more information about this, take a look at the JavaDoc provided in
@@ -205,19 +190,125 @@ context for automatic injection into the
 1. Use the new annotation in your message listener
 
     ```java
-    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS
-    public void processMessage(@UppercasePayload final String uppercasePayload) {
-        // process the message payload here
+    @Component
+    public class MyService {
+        @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS
+        public void processMessage(@UppercasePayload final String uppercasePayload) {
+            // process the message payload here
+        }
     }
     ```
 
 For a more extensive guide for doing this, take a look at
 [Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
 
+### Increasing the concurrency limit
+
+There is no limit to the number of messages that can be processed in the application and therefore you can process as many messages as threads your
+application can handle. Therefore, if you are fine spinning up as many threads as concurrent messages, you can increase
+the concurrency to as high of a value as you wish.
+
+Using the Spring Boot Starter you could increase the number of concurrent messages to 100 like the following:
+
+```java
+@Service
+public class MyMessageListener {
+    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 100)
+    public void processMessage(@Payload final String payload) {
+        // some high IO processing here
+    }
+}
+```
+
+If there are not enough messages to reach this concurrency, there will be a lot of idle threads in the application.
+
+### How to Mark the message as successfully processed
+
+When the method executing the message finishes without throwing an exception, the
+[MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) will acknowledge the message
+as a success, therefore removing it from the queue. When the method throws an exception, the message will not be acknowledged and if there is a re-drive
+policy the queue will perform another attempt of processing the message.
+
+```java
+@Service
+public class MyMessageListener {
+    @QueueListener(value = "queue-name")
+    public void processMessage(@Payload final String payload) {
+        // do nothing; so the message is considered successfully processed
+    }
+}
+```
+
+Note that if the method contains an
+[Acknowledge](./api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) argument it is now up to the method
+to manually acknowledge the message as a success as the [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
+will not acknowledge the message automatically when the method executes without throwing an exception.
+
+```java
+@Service
+public class MyMessageListener {
+    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000)
+    public void processMessage(@Payload final String payload, final Acknowledge acknowledge) {
+        if (someCondition()) {
+            CompletableFuture<?> future = acknowledge.acknowledgeSuccessful();
+            future.get();
+        }
+    }
+}
+```
+
+### Setting up a queue listener that batches requests for messages
+
+The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
+a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
+finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
+[@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+provides the same basic functionality, but it also provides a timeout where eventually it will request for more messages even for the threads that are
+ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot of
+messages on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
+
+```java
+@Service
+public class MyMessageListener {
+    @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000)
+    public void processMessage(@Payload final String payload) {
+        // process the message payload here
+    }
+}
+```
+
+In this example above we have set it to process 10 messages at once and when there are threads wanting more messages it will wait for a maximum of 2 seconds
+before requesting messages for threads waiting for another message.
+
+### Setting up a queue listener that prefetches messages
+
+When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
+[@PrefetchingQueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+annotation can be used to prefetch messages in a background thread while processing the existing messages.  The usage is something like this:
+
+```java
+@Service
+public class MyMessageListener {
+    @PrefetchingQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, desiredMinPrefetchedMessages = 5, maxPrefetchedMessages = 10)
+    public void processMessage(@Payload final String payload) {
+        // process the message payload here
+    }
+}
+```
+
+In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible up
+to the maximum specified.
+
+*Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
+10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
+not prefetch anymore.*
+
 ### Adding Brave Tracing
 
 If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
-[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension. See
+[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension.
+
+See
 [Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and
 [Spring - How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md) for guides on how to add tracing.
 
@@ -226,51 +317,6 @@ If you are using Brave Tracing in your application, for example using Spring Sle
 The core Queue Listener annotations may not provide the exact use case necessary for the application and therefore it can be useful to provide your
 own annotation. See
 [Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
-
-### Testing locally an example Spring Boot app with the Spring Starter
-
-The easiest way to see the framework working is to run one of the examples locally. These all use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
-SQS Server so you don't need to do any setting up of queues on AWS to test this yourself. For example to run a sample Spring Application you can use the
-[Spring Starter Example](examples/spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
-
-1. Build the framework
-
-```bash
-gradle build -x test -x integrationTest
-```
-
-1. Run the Spring Starer Example Spring Boot app
-
-```bash
-(cd examples/spring-starter-examples && gradle bootRun)
-```
-
-### Testing locally a dynamic concurrency example
-
-This shows an example of running the SQS Listener in a Java application that will dynamically change the concurrency
-level while it is executing.
-
-This examples works by having a thread constantly placing new messages while the SQS Listener will randomly change
-the rate of concurrency every 10 seconds.
-
-1. Build the framework
-
-```bash
-gradle build -x test -x integrationTest
-```
-
-1. Run the Spring Starer Example Spring Boot app
-
-```bash
-(cd examples/core-examples && gradle runApp)
-```
-
-### Connecting to multiple AWS Accounts using the Spring Starter
-
-If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
-[SqsAsyncClientProvider](./spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
-which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
-at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md)
 
 ### Versioning Message Payloads using Apache Avro Schemas
 
@@ -292,9 +338,88 @@ If you want to see the difference between this library and others like the
 [Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison)
 module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
 
-### Other examples
+## How to Guides
 
-See [examples](./examples) for all the other available examples.
+1. [How to Connect to an AWS SQS Queue](doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
+1. Core Framework How To Guides
+    1. [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing how the
+    arguments in the method being executed are resolved
+    1. [How to manually acknowledge message](doc/how-to-guides/core/core-how-to-mark-message-as-successfully-processed.md): useful for when you want to mark the
+    message as successfully processed before the method has finished executing
+    1. [How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
+    1. [How to implement a custom MessageRetriever](doc/how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic
+    for obtaining messages from the SQS queue if the core implementations do not provided the required functionality
+    1. [How to extend a message's visibility during processing](doc/how-to-guides/core/core-how-to-extend-message-visibility-during-processing.md): useful for
+    extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
+    1. [How to create a MessageProcessingDecorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md): guide for writing your own
+    decorator to wrap a message listener's processing of a message
+1. Spring How To Guides
+    1. [How to add a custom ArgumentResolver to a Spring application](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
+    integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
+    for how build a new ArgumentResolver from scratch.
+    1. [How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
+    1. [How to add custom MessageProcessingDecorators](doc/how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
+    to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
+    1. [How to provide a custom Object Mapper](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): guide for overriding the default
+    `ObjectMapper` that is used to serialise the message body and attributes
+    1. [How to add your own queue listener](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the
+    queue listening without the verbosity of a custom queue listener
+    1. [How to write Spring Integration Tests](doc/how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
+    writing right?
+    1. [How to Start/Stop Queue Listeners](doc/how-to-guides/spring/spring-how-to-start-stop-message-listener-containers.md): guide for starting and stopping the
+    processing of messages for specific queue listeners
+    1. [How to connect to multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues
+    across multiple AWS Accounts
+    1. [How to version message payload schemas](doc/how-to-guides/spring/spring-how-to-version-payload-schemas-using-spring-cloud-schema-registry.md): guide
+    for versioning payloads using Avro and the Spring Cloud Schema Registry.
+
+## Examples
+
+See [examples](./examples) for all the available examples.
+
+### Testing locally an example Spring Boot app with the Spring Starter
+
+The easiest way to see the framework working is to run one of the examples locally. These use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
+SQS Server to simplify getting started. For example to run a sample Spring Application you can use the
+[Spring Starter Example](examples/spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
+
+1. Build the framework
+
+```bash
+gradle build -x test -x integrationTest
+```
+
+1. Run the Spring Starer Example Spring Boot app
+
+```bash
+(cd examples/spring-starter-examples && gradle bootRun)
+```
+
+### Testing locally a dynamic concurrency example
+
+This shows an example of running the SQS Listener in a Java application that will dynamically change the concurrency level while it is executing.
+
+This examples works by having a thread constantly placing new messages while the SQS Listener will randomly change
+the rate of concurrency every 10 seconds.
+
+1. Build the framework
+
+```bash
+gradle build -x test -x integrationTest
+```
+
+1. Run the Spring Starer Example Spring Boot app
+
+```bash
+(cd examples/core-examples && gradle runApp)
+```
+
+### Connecting to multiple AWS Accounts using the Spring Starter
+
+If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
+[SqsAsyncClientProvider](./spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
+which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
+at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md).
 
 ## Bugs and Feedback
 
@@ -303,6 +428,10 @@ For bugs, questions and discussions please use [Github Issues](https://github.co
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
+
+### Setting up Intellij
+
+If you are contributing and want to set up IntelliJ, you can follow this guide: [Setting up IntelliJ](doc/local-development/setting-up-intellij.md).
 
 ## License
 
