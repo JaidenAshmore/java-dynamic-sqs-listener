@@ -53,7 +53,7 @@ subprojects {
         testImplementation("ch.qos.logback:logback-classic")
 
         // SpotBugs
-        spotbugs("com.github.spotbugs:spotbugs:4.0.2")
+        spotbugs("com.github.spotbugs:spotbugs:4.0.6")
 
         constraints {
             // Jackson
