@@ -1,4 +1,4 @@
-name: Release to Maven Central - V2
+name: Release to Maven Central
 on: [workflow_dispatch]
 
 jobs:
