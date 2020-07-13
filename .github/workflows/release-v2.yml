@@ -1,4 +1,4 @@
-name: Release library to Maven Central
+name: Release to Maven Central - V2
 on: [workflow_dispatch]
 
 jobs:
