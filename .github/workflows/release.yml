@@ -1,8 +1,5 @@
 name: Release to Maven Central
-
-on:
-  release:
-    types: [created]
+on: [workflow_dispatch]
 
 jobs:
   publish:
@@ -13,6 +10,23 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      - name: Set version to release version
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: prepareReleaseVersion
+      - name: Get version to release
+        id: version
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: saveVersionForGitHub
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v4
+        with:
+          add: build.gradle.kts
+          tag: v${{steps.version.outputs.version}}
+          message: Prepare release for ${{steps.version.outputs.version}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
         uses: eskatos/gradle-command-action@v1
         env:
@@ -23,3 +37,19 @@ jobs:
           GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
         with:
           arguments: assemble publishMavenJavaPublicationToMavenRepository closeAndReleaseRepository
+      - name: Set version to next SNAPSHOT version
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: prepareNextSnapshotVersion
+      - name: Get version to release
+        id: nextversion
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: saveVersionForGitHub
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v4
+        with:
+          add: build.gradle.kts
+          message: Prepare for next development iteration with version ${{steps.nextversion.outputs.version}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
