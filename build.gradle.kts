@@ -60,7 +60,7 @@ subprojects {
             implementation("com.fasterxml.jackson.core:jackson-databind:2.11.1")
 
             // Avro/Spring Cloud Schema Registry
-            implementation("org.apache.avro:avro:1.9.2")
+            implementation("org.apache.avro:avro:1.10.0")
             implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.6.RELEASE")
 
             // Proxying
