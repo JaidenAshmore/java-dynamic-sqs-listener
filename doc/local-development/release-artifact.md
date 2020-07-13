@@ -23,5 +23,5 @@ To make the module available for consumption.
 1. Change the version in the [build.gradle.kts](../../build.gradle.kts) to the version you want to release, e.g. 4.0.0-SNAPSHOT to 4.0.0.
 1. Commit this change
 1. Create a new release from the branch, e.g. `4.x`, which should have that last commit that you just had
-1. Creating this release will result in the [release github action](../../.github/workflows/release.yml) triggering
+1. Creating this release will result in the [release github action](../../.github/workflows/release-v2.yml) triggering
 1. Once this is successful make sure to make a new commit changing the version to the next SNAPSHOT version, e.g. 4.0.1-SNAPSHOT
