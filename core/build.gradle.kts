@@ -7,7 +7,7 @@ dependencies {
     compileOnly(project(":documentation-annotations"))
     implementation(project(":common-utils"))
     implementation("org.slf4j:slf4j-api:1.7.30")
-    api("com.fasterxml.jackson.core:jackson-databind:2.11.0")
+    api("com.fasterxml.jackson.core:jackson-databind:2.11.1")
 
     testImplementation(project(":elasticmq-sqs-client"))
     testImplementation(project(":proxy-method-interceptor"))
