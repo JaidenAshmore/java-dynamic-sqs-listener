@@ -35,7 +35,7 @@ fun determineModuleName(projectName: String): String {
 
 allprojects {
     group = "com.jashmore"
-    version = "4.0.0-SNAPSHOT"
+    version = "4.0.0-M5-SNAPSHOT"
 
     repositories {
         mavenCentral()
@@ -316,4 +316,50 @@ nexusStaging {
     password = sonatypePassword
     numberOfRetries = 20
     delayBetweenRetriesInMillis = 10000
+}
+
+/**
+ * Replaces the version in this build version to the version without the -SNAPSHOT suffix. This will be used before releasing the library.
+ */
+tasks.register("prepareReleaseVersion") {
+    doLast {
+        val currentVersion = project.version as String
+        val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
+        println("Changing version $currentVersion to non-snapshot version $nonSnapshotVersion")
+
+        val newBuildFileText = buildFile.readText().replaceFirst("version = \"$currentVersion\"", "version = \"$nonSnapshotVersion\"")
+        buildFile.writeText(newBuildFileText)
+    }
+}
+
+/**
+ * Replaces the version in this build version to be the next SNAPSHOT version. Examples of this are:
+ *
+ * 1.0.0 -> 1.0.1-SNAPSHOT
+ * 1.0.0-SNAPSHOT -> 1.0.1-SNAPSHOT
+ * 1.0.0-M1 -> 1.0.0-M2-SNAPSHOT
+ */
+tasks.register("prepareNextSnapshotVersion") {
+    doLast {
+        val currentVersion = (project.version as String)
+        val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
+        val deliminator = if (nonSnapshotVersion.contains("-M")) "-M" else "."
+        val lastNumber = nonSnapshotVersion.substringAfterLast(deliminator).toInt()
+        val versionPrefix = nonSnapshotVersion.substringBeforeLast(deliminator)
+        val nextSnapshotVersion = "$versionPrefix$deliminator${lastNumber + 1}-SNAPSHOT"
+
+        println("Changing version $currentVersion to snapshot version $nextSnapshotVersion")
+
+        val newBuildFileText = buildFile.readText().replaceFirst("version = \"$currentVersion\"", "version = \"$nextSnapshotVersion\"")
+        buildFile.writeText(newBuildFileText)
+    }
+}
+
+/**
+ * Used to print out the current version so it can be saved as an output variable in a GitHub workflow.
+ */
+tasks.register("saveVersionForGitHub") {
+    doLast {
+        println("::set-output name=version::${project.version}")
+    }
 }
