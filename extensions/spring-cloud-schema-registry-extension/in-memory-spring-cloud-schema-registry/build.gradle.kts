@@ -3,5 +3,5 @@ description = "In Memory implementation of the Spring Cloud Schema Registry that
 
 dependencies {
     compileOnly(project(":documentation-annotations"))
-    implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.3.RELEASE")
+    implementation("org.springframework.cloud:spring-cloud-schema-registry-client")
 }

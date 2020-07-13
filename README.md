@@ -90,11 +90,13 @@ for compatibility.
 
 - [Core Framework](./core)
   - JDK 1.8 or higher
-  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html): `2.13.7`
-  - [Jackson Databind](https://github.com/FasterXML/jackson-databind): `2.11.0`
+  - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
+  - [Jackson Databind](https://github.com/FasterXML/jackson-databind)
 - [Spring Framework](./spring)
   - All the core dependencies above
-  - [Spring Boot](https://github.com/spring-projects/spring-boot): `2.3.1.RELEASE`
+  - [Spring Boot](https://github.com/spring-projects/spring-boot)
+  
+See the [build.gradle.kts](build.gradle.kts) for the specific versions of these dependencies.
 
 ## Common Use Cases/Explanations
 

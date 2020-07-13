@@ -10,29 +10,6 @@ plugins {
     id("io.codearte.nexus-staging") version "0.21.2"
 }
 
-val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
-val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
-val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
-val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
-
-/**
- * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
- */
-fun determineModuleName(projectName: String): String {
-    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
-    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
-    projectName.forEachIndexed { i, c ->
-        if (c == '-') {
-            updatedProjectNameBuilder.setCharAt(i, ' ')
-            if (i + 1 < projectName.length) {
-                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
-            }
-        }
-    }
-
-    return updatedProjectNameBuilder.toString()
-}
-
 allprojects {
     group = "com.jashmore"
     version = "4.0.0-M8-SNAPSHOT"
@@ -52,8 +29,10 @@ subprojects {
     apply(plugin = "signing")
 
     dependencies {
-        // BOMs
+        // AWS
         implementation(platform("software.amazon.awssdk:bom:2.13.7"))
+
+        // Spring Boot
         implementation(platform("org.springframework.boot:spring-boot-dependencies:2.3.1.RELEASE"))
 
         // Lombok
@@ -70,13 +49,20 @@ subprojects {
         testImplementation("org.assertj:assertj-core:3.16.1")
 
         // Logging for tests
-        testImplementation("ch.qos.logback:logback-core:1.2.3")
-        testImplementation("ch.qos.logback:logback-classic:1.2.3")
+        testImplementation("ch.qos.logback:logback-core")
+        testImplementation("ch.qos.logback:logback-classic")
 
         // SpotBugs
         spotbugs("com.github.spotbugs:spotbugs:4.0.2")
 
         constraints {
+            // Jackson
+            implementation("com.fasterxml.jackson.core:jackson-databind:2.11.1")
+
+            // Avro/Spring Cloud Schema Registry
+            implementation("org.apache.avro:avro:1.9.2")
+            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.3.RELEASE")
+
             // Proxying
             implementation("cglib:cglib:3.3.0")
 
@@ -95,6 +81,10 @@ subprojects {
             implementation("com.amazonaws:aws-xray-recorder-sdk-core:2.6.1")
             implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.6.1")
             implementation("com.amazonaws:aws-xray-recorder-sdk-aws-sdk-v2-instrumentor:2.6.1")
+
+            // Logback (for tests)
+            implementation("ch.qos.logback:logback-core:1.2.3")
+            implementation("ch.qos.logback:logback-classic:1.2.3")
         }
     }
 
@@ -110,19 +100,24 @@ subprojects {
         withJavadocJar()
     }
 
-    checkstyle {
-        configFile = file("${project.rootDir}/configuration/checkstyle/google_6_18_checkstyle.xml")
-        maxWarnings = 0
-        maxErrors = 0
-    }
     tasks.withType<Checkstyle> {
         // Needed because this is generated code and I am not good enough with gradle to properly exclude these source files
         // from only the checkstyleTest task
         exclude("**com/jashmore/sqs/extensions/registry/model/*")
     }
 
+    checkstyle {
+        configFile = file("${project.rootDir}/configuration/checkstyle/google_6_18_checkstyle.xml")
+        maxWarnings = 0
+        maxErrors = 0
+    }
+
     spotbugs {
         excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
 
     tasks.test {
@@ -137,10 +132,6 @@ subprojects {
 
     val integrationTestTask = tasks.create<Test>("integrationTest") {
         include("it/com/**")
-    }
-
-    tasks.withType<Test> {
-        useJUnitPlatform()
     }
 
     tasks.jacocoTestReport {
@@ -249,6 +240,29 @@ subprojects {
     }
 }
 
+val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
+val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
+val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
+val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
+
+/**
+ * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
+ */
+fun determineModuleName(projectName: String): String {
+    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
+    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
+    projectName.forEachIndexed { i, c ->
+        if (c == '-') {
+            updatedProjectNameBuilder.setCharAt(i, ' ')
+            if (i + 1 < projectName.length) {
+                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
+            }
+        }
+    }
+
+    return updatedProjectNameBuilder.toString()
+}
+
 // we explicitly exclude the sub-project folders, as well as modules that have no tests and therefore will not generate jacoco reports
 // if we can do this smarter, that would be nice
 val excludedSubprojects = setOf("examples", "extensions", "util",
@@ -272,8 +286,6 @@ val jacocoMerge = tasks.register<JacocoMerge>("jacocoMerge") {
     executionData(jacocoFullReportSubProjects
             .flatMap { it.tasks.withType<JacocoReport>() }
             .flatMap { it.executionData.files })
-
-    println("ExecutionData: ${executionData.map { it.absolutePath }}")
 
     destinationFile = file("$buildDir/jacoco")
 }

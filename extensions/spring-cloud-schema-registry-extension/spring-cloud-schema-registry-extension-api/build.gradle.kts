@@ -3,7 +3,7 @@ description = "API for building a payload parser that has been serialized via th
 
 dependencies {
     api(project(":java-dynamic-sqs-listener-api"))
-    api("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.3.RELEASE") {
+    api("org.springframework.cloud:spring-cloud-schema-registry-client") {
         exclude(group = "org.apache.avro", module = "avro")
     }
 

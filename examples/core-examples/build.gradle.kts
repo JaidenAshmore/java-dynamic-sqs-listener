@@ -13,8 +13,8 @@ dependencies {
     implementation("io.zipkin.brave:brave-context-slf4j")
     implementation(project(":brave-message-processing-decorator"))
     compileOnly(project(":documentation-annotations"))
-    implementation("ch.qos.logback:logback-core:1.2.3")
-    implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("ch.qos.logback:logback-core")
+    implementation("ch.qos.logback:logback-classic")
 }
 
 tasks.create<JavaExec>("runApp") {

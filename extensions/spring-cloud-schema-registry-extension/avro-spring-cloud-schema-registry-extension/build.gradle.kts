@@ -13,7 +13,7 @@ java {
 }
 
 dependencies {
-    api("org.apache.avro:avro:1.9.2")
+    api("org.apache.avro:avro")
     api(project(":spring-cloud-schema-registry-extension-api"))
 
     "springImplementation"("org.springframework:spring-core")
