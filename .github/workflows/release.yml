@@ -26,7 +26,7 @@ jobs:
           tag: v${{steps.version.outputs.version}}
           message: Prepare release for ${{steps.version.outputs.version}}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
         uses: eskatos/gradle-command-action@v1
         env:
@@ -52,4 +52,4 @@ jobs:
           add: build.gradle.kts
           message: Prepare for next development iteration with version ${{steps.nextversion.outputs.version}}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
