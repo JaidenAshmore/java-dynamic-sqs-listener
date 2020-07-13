@@ -30,7 +30,7 @@ subprojects {
 
     dependencies {
         // AWS
-        implementation(platform("software.amazon.awssdk:bom:2.13.7"))
+        implementation(platform("software.amazon.awssdk:bom:2.13.54"))
 
         // Spring Boot
         implementation(platform("org.springframework.boot:spring-boot-dependencies:2.3.1.RELEASE"))
@@ -44,7 +44,7 @@ subprojects {
         // Testing (JUnit, Mockito, etc)
         testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
         testImplementation("org.mockito:mockito-junit-jupiter:3.4.0")
-        testImplementation("org.mockito:mockito-core:3.3.3")
+        testImplementation("org.mockito:mockito-core:3.4.0")
         testImplementation("org.hamcrest:hamcrest:2.2")
         testImplementation("org.assertj:assertj-core:3.16.1")
 
@@ -53,7 +53,7 @@ subprojects {
         testImplementation("ch.qos.logback:logback-classic")
 
         // SpotBugs
-        spotbugs("com.github.spotbugs:spotbugs:4.0.2")
+        spotbugs("com.github.spotbugs:spotbugs:4.0.6")
 
         constraints {
             // Jackson
@@ -61,7 +61,7 @@ subprojects {
 
             // Avro/Spring Cloud Schema Registry
             implementation("org.apache.avro:avro:1.9.2")
-            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.3.RELEASE")
+            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.6.RELEASE")
 
             // Proxying
             implementation("cglib:cglib:3.3.0")
