@@ -1,7 +1,7 @@
 plugins {
     java
     `java-library`
-    id("com.github.spotbugs") version "4.4.2"
+    id("com.github.spotbugs") version "4.4.4"
     checkstyle
     jacoco
     id("com.github.kt3k.coveralls") version "2.10.1"
