@@ -11,14 +11,17 @@ import com.jashmore.sqs.extensions.xray.decorator.BasicXrayMessageProcessingDeco
 import com.jashmore.sqs.extensions.xray.decorator.StaticDecoratorSegmentNamingStrategy;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 @Configuration
+@AutoConfigureBefore(QueueListenerConfiguration.class)
 public class SqsListenerXrayConfiguration {
     @Bean
     @Qualifier("sqsXrayRecorder")

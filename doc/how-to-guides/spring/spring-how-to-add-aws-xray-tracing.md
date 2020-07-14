@@ -2,6 +2,11 @@
 
 _This guide assumes that you have knowledge of Xray and how it works. If not take a look at their tutorials online._
 
+## Internal Background
+
+For more information about each component that this is auto configuring for you, take a look at the
+[Core - How to add AWS Xray Tracing - Internal Details](../core/core-how-to-add-aws-xray-tracing.md#internal-details) section.
+
 ## Steps
 
 1. Add the [AWS XRay Spring Boot Extension](../../../extensions/aws-xray-extension/spring-boot) as a dependency. This will auto configure
@@ -14,7 +19,7 @@ the `SqsAsyncClient` in a
         <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>aws-xray-extension-spring-boot</artifactId>
-            <version>${dynamic-sqs-listener.version>}</version>
+            <version>${dynamic-sqs-listener.version}</version>
         </dependency>
     ```
 
@@ -25,7 +30,7 @@ the `SqsAsyncClient` in a
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-            <version>2.6.1</version>
+            <version>${aws-xray.version}</version>
         </dependency>
     ```
 
@@ -36,6 +41,51 @@ For an example using Spring, look at [aws-xray-spring-example](../../../examples
 
 ## Other guides
 
+This Spring Boot dependency is actually very simple and therefore, if you need to do complicated configurations, I would just recommend depending
+on the [AWS XRay Core Extension](../../../extensions/aws-xray-extension/core) directly and building it similar to how
+the [SqsListenerXrayConfiguration](../../../extensions/aws-xray-extension/spring-boot/src/main/java/com/jashmore/sqs/extensions/xray/spring/SqsListenerXrayConfiguration.java)
+builds the beans.
+
+### Send internal library Xray traces
+By default, all the requests to receive messages and other internal calls by this library will not be sent to Xray. To override this you can define a
+custom [ClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/ClientSegmentMutator.java).
+
+```java
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public ClientSegmentMutator clientSegmentMutator()  {
+        return (segment) -> {
+              // any customisations you want to do here. 
+        };
+    }
+}
+```
+
+This will remove the
+default [UnsampledClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/UnsampledClientSegmentMutator.java)
+that is auto configured.
+
+### Naming the message listener segments
+
+Each segment created will use the `spring.application.name` as the name of the segment and if that is not set it will use `service` as the segment names. If
+you require a custom name, you can build your
+own [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java)
+bean.
+
+```java
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public ClientSegmentMutator clientSegmentMutator()  {
+       return new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+                       .recorder(AWSXRay.getGlobalRecorder())
+                       .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("my-custom-name"))
+                       .build());
+    }
+}
+```
+
 ### Using a custom `AWSXRayRecorder`
 
 By default, the `AWSXRay.getGlobalRecorder()` is used as the recorder for communicating to Xray. If you need to replace this with a custom one, e.g. one
@@ -43,15 +93,18 @@ communicating with a local Xray daemon, you can create a new bean with the `sqsX
 daemon:
 
 ```java
+@Configuration
+public class MyConfiguration {
     @Bean
     @Qualifier("sqsXrayRecorder")
     public AWSXRayRecorder recorder() throws IOException {
         final DaemonConfiguration daemonConfiguration = new DaemonConfiguration();
-        daemonConfiguration.setDaemonAddress("127.0.0.1:2000");
+        daemonConfiguration.setDaemonAddress("127.0.0.1:5678");
         return AWSXRayRecorderBuilder.standard()
                 .withEmitter(Emitter.create(daemonConfiguration))
                 .build();
     }
+}
 ```
 
 ### Communicating with Multiple AWS Accounts
