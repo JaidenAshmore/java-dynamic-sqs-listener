@@ -1,5 +1,6 @@
 package com.jashmore.sqs.examples;
 
+import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.config.DaemonConfiguration;
@@ -26,9 +27,11 @@ public class Application {
     public AWSXRayRecorder recorder() throws IOException {
         final DaemonConfiguration daemonConfiguration = new DaemonConfiguration();
         daemonConfiguration.setDaemonAddress("127.0.0.1:2000");
-        return AWSXRayRecorderBuilder.standard()
+        final AWSXRayRecorder recorder = AWSXRayRecorderBuilder.standard()
                 .withEmitter(Emitter.create(daemonConfiguration))
                 .build();
+        AWSXRay.setGlobalRecorder(recorder);
+        return recorder;
     }
 
     @Bean

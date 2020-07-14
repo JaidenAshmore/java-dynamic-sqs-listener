@@ -2,7 +2,10 @@ package com.jashmore.sqs.extensions.xray.spring;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
+import com.jashmore.sqs.extensions.xray.client.ClientSegmentMutator;
+import com.jashmore.sqs.extensions.xray.client.ClientSegmentNamingStrategy;
 import com.jashmore.sqs.extensions.xray.client.StaticClientSegmentNamingStrategy;
+import com.jashmore.sqs.extensions.xray.client.UnsampledClientSegmentMutator;
 import com.jashmore.sqs.extensions.xray.client.XrayWrappedSqsAsyncClient;
 import com.jashmore.sqs.extensions.xray.decorator.BasicXrayMessageProcessingDecorator;
 import com.jashmore.sqs.extensions.xray.decorator.StaticDecoratorSegmentNamingStrategy;
@@ -25,9 +28,13 @@ public class SqsListenerXrayConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public BasicXrayMessageProcessingDecorator xrayMessageDecorator(@Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
                                                                     @Value("${spring.application.name:service}") final String applicationName) {
-        return new BasicXrayMessageProcessingDecorator(recorder, new StaticDecoratorSegmentNamingStrategy(applicationName));
+        return new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+                .recorder(recorder)
+                .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy(applicationName))
+                .build());
     }
 
     @Configuration
@@ -41,13 +48,27 @@ public class SqsListenerXrayConfiguration {
         }
 
         @Bean
+        @ConditionalOnMissingBean
+        public ClientSegmentNamingStrategy clientSegmentNamingStrategy(@Value("${spring.application.name:service}") final String applicationName) {
+            return new StaticClientSegmentNamingStrategy(applicationName);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public ClientSegmentMutator clientSegmentMutator() {
+            return new UnsampledClientSegmentMutator();
+        }
+
+        @Bean
         public SqsAsyncClientProvider xraySqsAsyncClientProvider(final SqsAsyncClient defaultClient,
-                                                                 @Value("${spring.application.name:service}") final String applicationName,
-                                                                 @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder) {
+                                                                 final ClientSegmentNamingStrategy clientSegmentNamingStrategy,
+                                                                 @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
+                                                                 final ClientSegmentMutator clientSegmentMutator) {
             final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(
                     defaultClient,
                     recorder,
-                    new StaticClientSegmentNamingStrategy(applicationName)
+                    clientSegmentNamingStrategy,
+                    clientSegmentMutator
             );
 
             return new DefaultSqsAsyncClientProvider(xrayDefaultClient);

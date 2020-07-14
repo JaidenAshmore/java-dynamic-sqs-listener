@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class StaticClientSegmentNamingStrategyTest {
+class StaticClientSegmentStrategyTest {
 
     @Test
     void willReturnSameNameForEachCall() {

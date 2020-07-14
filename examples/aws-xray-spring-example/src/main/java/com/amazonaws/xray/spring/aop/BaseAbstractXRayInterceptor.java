@@ -8,7 +8,6 @@ import org.aspectj.lang.annotation.Pointcut;
 
 import java.util.Map;
 
-
 /**
  * Allows for use of this library without Spring Data JPA being in the classpath.
  * For projects using Spring Data JPA, consider using {@link AbstractXRayInterceptor} instead.
@@ -29,7 +28,7 @@ public abstract class BaseAbstractXRayInterceptor {
             }
             return XRayInterceptorUtils.conditionalProceed(pjp);
         } catch (Exception exception) {
-            AWSXRay.getCurrentSegment().addException(exception);
+            AWSXRay.getCurrentSubsegment().addException(exception);
             throw exception;
         } finally {
             AWSXRay.endSubsegment();
