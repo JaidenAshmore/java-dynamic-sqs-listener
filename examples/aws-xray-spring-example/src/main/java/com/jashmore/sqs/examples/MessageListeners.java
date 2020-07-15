@@ -25,7 +25,6 @@ public class MessageListeners {
     public CompletableFuture<Void> sqsListener(final Message message) {
         final Entity currentTraceEntity = AWSXRay.getTraceEntity();
         log.info("Segment ID: {}", AWSXRay.getCurrentSegment().getTraceId());
-        log.info("Message with body: {}", message.body());
         return CompletableFuture.runAsync(() -> {
             AWSXRay.setTraceEntity(currentTraceEntity);
             try {
@@ -34,6 +33,7 @@ public class MessageListeners {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(interruptedException);
             } finally {
+                log.info("Done");
                 AWSXRay.clearTraceEntity();
             }
         });

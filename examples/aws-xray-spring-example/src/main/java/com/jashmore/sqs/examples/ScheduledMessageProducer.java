@@ -23,24 +23,21 @@ public class ScheduledMessageProducer {
     private final SnsAsyncClient snsAsyncClient;
     private final String queueUrl;
     private final String snsArn;
-    private final String serviceName;
     private final AtomicInteger count = new AtomicInteger();
 
     public ScheduledMessageProducer(final SqsAsyncClient sqsAsyncClient,
                                     final SnsAsyncClient snsAsyncClient,
                                     @Value("${sqs.queue.url}") final String queueUrl,
-                                    @Value("${sns.arn}") final String snsArn,
-                                    @Value("${spring.application.name}") final String serviceName) {
+                                    @Value("${sns.arn}") final String snsArn) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.snsAsyncClient = snsAsyncClient;
         this.queueUrl = queueUrl;
         this.snsArn = snsArn;
-        this.serviceName = serviceName;
     }
 
     @Scheduled(initialDelay = 1_000, fixedDelay = 10_000)
     public void addMessageDirectlyToSqs() {
-        final Segment segment = AWSXRay.beginSegment(serviceName);
+        final Segment segment = AWSXRay.beginSegment("some-other-service");
         AWSXRay.beginSubsegment("send-to-sqs");
         log.info("SQS Trace ID: {}", segment.getTraceId());
         final int currentValue = count.incrementAndGet();
@@ -54,7 +51,7 @@ public class ScheduledMessageProducer {
 
     @Scheduled(initialDelay = 6_000, fixedDelay = 10_000)
     public void addMessageToSns() {
-        final Segment segment = AWSXRay.beginSegment(serviceName);
+        final Segment segment = AWSXRay.beginSegment("some-other-service");
         AWSXRay.beginSubsegment("send-to-sns");
         log.info("SNS Trace ID: {}", segment.getTraceId());
         final String uuid = UUID.randomUUID().toString();
