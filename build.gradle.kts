@@ -47,7 +47,6 @@ subprojects {
     apply(plugin = "com.github.spotbugs")
     apply(plugin = "checkstyle")
     apply(plugin = "jacoco")
-    apply(plugin = "com.github.kt3k.coveralls")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
 
@@ -306,6 +305,8 @@ val jacocoRootReportTask = tasks.register<JacocoReport>("jacocoRootReport") {
         csv.isEnabled = false
     }
 }
+
+apply(plugin = "com.github.kt3k.coveralls")
 
 coveralls {
     sourceDirs = jacocoFullReportSubProjects.flatMap { it.sourceSets.main.get().allSource.srcDirs.map { dir -> dir.path } }
