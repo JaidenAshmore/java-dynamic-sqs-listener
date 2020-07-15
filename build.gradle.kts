@@ -10,6 +10,29 @@ plugins {
     id("io.codearte.nexus-staging") version "0.21.2"
 }
 
+val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
+val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
+val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
+val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
+
+/**
+ * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
+ */
+fun determineModuleName(projectName: String): String {
+    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
+    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
+    projectName.forEachIndexed { i, c ->
+        if (c == '-') {
+            updatedProjectNameBuilder.setCharAt(i, ' ')
+            if (i + 1 < projectName.length) {
+                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
+            }
+        }
+    }
+
+    return updatedProjectNameBuilder.toString()
+}
+
 allprojects {
     group = "com.jashmore"
     version = "4.0.0-M8-SNAPSHOT"
@@ -238,29 +261,6 @@ subprojects {
             sign(publishing.publications["mavenJava"])
         }
     }
-}
-
-val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
-val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
-val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
-val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
-
-/**
- * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
- */
-fun determineModuleName(projectName: String): String {
-    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
-    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
-    projectName.forEachIndexed { i, c ->
-        if (c == '-') {
-            updatedProjectNameBuilder.setCharAt(i, ' ')
-            if (i + 1 < projectName.length) {
-                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
-            }
-        }
-    }
-
-    return updatedProjectNameBuilder.toString()
 }
 
 // we explicitly exclude the sub-project folders, as well as modules that have no tests and therefore will not generate jacoco reports
