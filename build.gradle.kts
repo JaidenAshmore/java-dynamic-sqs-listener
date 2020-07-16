@@ -1,36 +1,13 @@
+import com.jashmore.JacocoCoverallsPlugin
+import com.jashmore.ReleasePlugin
+import com.jashmore.release
+
 plugins {
     java
     `java-library`
     id("com.github.spotbugs") version "4.4.4"
     checkstyle
     jacoco
-    id("com.github.kt3k.coveralls") version "2.10.1"
-    `maven-publish`
-    signing
-    id("io.codearte.nexus-staging") version "0.21.2"
-}
-
-val sonatypeUsername: String? = System.getenv("OSS_SONATYPE_USERNAME")
-val sonatypePassword: String? = System.getenv("OSS_SONATYPE_PASSWORD")
-val signingPassword: String? = System.getenv("GPG_SIGNING_PASSWORD")
-val signingKey: String? = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
-
-/**
- * Converts a project name like ':java-dynamic-sqs-listener-api' to be 'Java Dynamic Sqs Listener Api'.
- */
-fun determineModuleName(projectName: String): String {
-    val updatedProjectNameBuilder = StringBuilder(projectName.replace(":", ""))
-    updatedProjectNameBuilder.setCharAt(0, updatedProjectNameBuilder[0].toUpperCase())
-    projectName.forEachIndexed { i, c ->
-        if (c == '-') {
-            updatedProjectNameBuilder.setCharAt(i, ' ')
-            if (i + 1 < projectName.length) {
-                updatedProjectNameBuilder.setCharAt(i + 1, projectName[i + 1].toUpperCase())
-            }
-        }
-    }
-
-    return updatedProjectNameBuilder.toString()
 }
 
 allprojects {
@@ -47,8 +24,6 @@ subprojects {
     apply(plugin = "com.github.spotbugs")
     apply(plugin = "checkstyle")
     apply(plugin = "jacoco")
-    apply(plugin = "maven-publish")
-    apply(plugin = "signing")
 
     dependencies {
         // AWS
@@ -113,13 +88,9 @@ subprojects {
     tasks.withType<JavaCompile> {
         sourceCompatibility = "1.8"
         targetCompatibility = "1.8"
+
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(setOf("-Xlint:all", "-Werror", "-Xlint:-processing", "-Xlint:-serial"))
-    }
-
-    java {
-        withSourcesJar()
-        withJavadocJar()
     }
 
     tasks.withType<Checkstyle> {
@@ -189,183 +160,17 @@ subprojects {
         dependsOn(tasks.jacocoTestCoverageVerification)
         dependsOn(integrationTestTask)
     }
-
-    // We don't want to ever publish example projects as these are standalone Jars/Spring Boot Apps
-    if (!project.projectDir.path.contains("examples")) {
-        publishing {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    groupId = project.group as String
-                    artifactId = project.name.replace(":", "")
-                    version = project.version as String
-
-                    if (plugins.hasPlugin("java")) {
-                        from(components["java"])
-
-                        // Need to do it last so that the description is properly set in each of the project's gradle build files
-                        afterEvaluate {
-                            pom {
-                                name.set(determineModuleName(project.name))
-                                description.set(project.description)
-                                url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
-
-                                licenses {
-                                    license {
-                                        name.set("MIT License")
-                                        url.set("http://www.opensource.org/licenses/mit-license.php")
-                                    }
-                                }
-                                developers {
-                                    developer {
-                                        id.set("jaidenashmore")
-                                        name.set("Jaiden Ashmore")
-                                        email.set("jaidenkyleashmore@gmail.com")
-                                        organization {
-                                            name.set("jaidenashmore")
-                                            url.set("https://github.com/jaidenashmore")
-                                        }
-                                    }
-                                }
-                                scm {
-                                    connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                    developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                    url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
-                                    tag.set("HEAD")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            repositories {
-                maven {
-                    val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-
-                    credentials {
-                        username = sonatypeUsername
-                        password = sonatypePassword
-                    }
-                }
-            }
-        }
-
-        signing {
-            // We only want to sign if we are actually publishing to Maven Central
-            setRequired({ gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenRepository") })
-
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign(publishing.publications["mavenJava"])
-        }
-    }
 }
 
-// we explicitly exclude the sub-project folders, as well as modules that have no tests and therefore will not generate jacoco reports
-// if we can do this smarter, that would be nice
-val excludedSubprojects = setOf("examples", "extensions", "util",
-        "java-dynamic-sqs-listener-api", "java-dynamic-sqs-listener-spring", "sqs-listener-library-comparison",
-        "spring-cloud-schema-registry-extension", "avro-spring-cloud-schema-registry-sqs-client",
-        "documentation-annotations", "elasticmq-sqs-client", "expected-test-exception", "proxy-method-interceptor",
-        "spring-cloud-schema-registry-consumer", "spring-cloud-schema-registry-producer", "spring-cloud-schema-registry-producer-two",
-        "in-memory-spring-cloud-schema-registry"
-)
+apply<JacocoCoverallsPlugin>()
 
-val jacocoFullReportSubProjects = subprojects
-        .filter { excludedSubprojects.none { subProjectName -> it.name.startsWith(subProjectName) } }
-        .filter { !it.name.endsWith("-examples") && !it.name.endsWith("-example") }
-
-// Inspired by: https://stackoverflow.com/a/60636581
-val jacocoMerge = tasks.register<JacocoMerge>("jacocoMerge") {
-    description = "Combine all of the submodule Jacoco execution data files into a single execution data file"
-
-    dependsOn(subprojects.map { it.tasks.test })
-
-    executionData(jacocoFullReportSubProjects
-            .flatMap { it.tasks.withType<JacocoReport>() }
-            .flatMap { it.executionData.files })
-
-    destinationFile = file("$buildDir/jacoco")
-}
-
-val jacocoRootReportTask = tasks.register<JacocoReport>("jacocoRootReport") {
-    description = "Generate a single Jacoco Report from the submodules"
-    dependsOn(jacocoMerge)
-
-    sourceDirectories.from(files(jacocoFullReportSubProjects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs }))
-
-    classDirectories.from(files(jacocoFullReportSubProjects.map { it.the<SourceSetContainer>()["main"].output }))
-
-    executionData(jacocoMerge.get().destinationFile)
-
-    reports {
-        html.isEnabled = true
-        xml.isEnabled = true
-        csv.isEnabled = false
-    }
-}
-
-apply(plugin = "com.github.kt3k.coveralls")
-
-coveralls {
-    sourceDirs = jacocoFullReportSubProjects.flatMap { it.sourceSets.main.get().allSource.srcDirs.map { dir -> dir.path } }
-    jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
-}
-
-tasks.coveralls {
-    group = "coverage reports"
-    description = "Uploads the aggregated coverage report to Coveralls"
-
-    dependsOn(jacocoRootReportTask)
-
-    onlyIf { env["CI"].equals("true", true) }
-}
-
-apply(plugin = "io.codearte.nexus-staging")
-
-nexusStaging {
-    username = sonatypeUsername
-    password = sonatypePassword
-    numberOfRetries = 20
-    delayBetweenRetriesInMillis = 10000
-}
-
-/**
- * Replaces the version in this build version to the version without the -SNAPSHOT suffix. This will be used before releasing the library.
- */
-tasks.register("prepareReleaseVersion") {
-    doLast {
-        val currentVersion = project.version as String
-        val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
-        println("Changing version $currentVersion to non-snapshot version $nonSnapshotVersion")
-
-        val newBuildFileText = buildFile.readText().replaceFirst("version = \"$currentVersion\"", "version = \"$nonSnapshotVersion\"")
-        buildFile.writeText(newBuildFileText)
-    }
-}
-
-/**
- * Replaces the version in this build version to be the next SNAPSHOT version. Examples of this are:
- *
- * 1.0.0 -> 1.0.1-SNAPSHOT
- * 1.0.0-SNAPSHOT -> 1.0.1-SNAPSHOT
- * 1.0.0-M1 -> 1.0.0-M2-SNAPSHOT
- */
-tasks.register("prepareNextSnapshotVersion") {
-    doLast {
-        val currentVersion = (project.version as String)
-        val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
-        val deliminator = if (nonSnapshotVersion.contains("-M")) "-M" else "."
-        val lastNumber = nonSnapshotVersion.substringAfterLast(deliminator).toInt()
-        val versionPrefix = nonSnapshotVersion.substringBeforeLast(deliminator)
-        val nextSnapshotVersion = "$versionPrefix$deliminator${lastNumber + 1}-SNAPSHOT"
-
-        println("Changing version $currentVersion to snapshot version $nextSnapshotVersion")
-
-        val newBuildFileText = buildFile.readText().replaceFirst("version = \"$currentVersion\"", "version = \"$nextSnapshotVersion\"")
-        buildFile.writeText(newBuildFileText)
-    }
+apply<ReleasePlugin>()
+release {
+    buildFile = getBuildFile()
+    sonatypeUsername = System.getenv("OSS_SONATYPE_USERNAME")
+    sonatypePassword = System.getenv("OSS_SONATYPE_PASSWORD")
+    signingKey = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
+    signingPassword = System.getenv("GPG_SIGNING_PASSWORD")
 }
 
 /**

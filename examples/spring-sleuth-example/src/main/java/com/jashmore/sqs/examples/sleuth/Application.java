@@ -16,6 +16,7 @@ public class Application {
     /**
      * Connects to an internal ElasticMQ SQS Server.
      *
+     * @param tracing brave tracing for tracing the request
      * @return client used for communicating a local in-memory SQS
      */
     @Bean
