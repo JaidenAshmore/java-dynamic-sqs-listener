@@ -2,6 +2,11 @@
 
 _This guide assumes that you have knowledge of Xray and how it works. If not take a look at their tutorials online._
 
+## Internal Background
+
+For more information about each component this is auto configuring for you, take a look at the
+[Core - How to add AWS Xray Tracing - Internal Details](../core/core-how-to-add-aws-xray-tracing.md#internal-details) section.
+
 ## Steps
 
 1. Add the [AWS XRay Spring Boot Extension](../../../extensions/aws-xray-extension/spring-boot) as a dependency. This will auto configure
@@ -14,7 +19,7 @@ the `SqsAsyncClient` in a
         <dependency>
             <groupId>com.jashmore</groupId>
             <artifactId>aws-xray-extension-spring-boot</artifactId>
-            <version>${dynamic-sqs-listener.version>}</version>
+            <version>${dynamic-sqs-listener.version}</version>
         </dependency>
     ```
 
@@ -25,16 +30,60 @@ the `SqsAsyncClient` in a
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-            <version>2.6.1</version>
+            <version>${aws-xray.version}</version>
         </dependency>
     ```
 
 ## Example
 
-For an example using Spring, look at [aws-xray-spring-example](../../../examples/aws-xray-spring-example) where the
+For an example using Spring Boot, look at [aws-xray-spring-example](../../../examples/aws-xray-spring-example). The
 [README.md](../../../examples/aws-xray-spring-example/README.md) provides steps to test a full application with Xray.
 
 ## Other guides
+
+This Spring Boot dependency is actually very simple and therefore, if you need to do complicated configurations, I would just recommend depending
+on the [AWS XRay Core Extension](../../../extensions/aws-xray-extension/core) directly and configuring your application similar to how
+the [SqsListenerXrayConfiguration](../../../extensions/aws-xray-extension/spring-boot/src/main/java/com/jashmore/sqs/extensions/xray/spring/SqsListenerXrayConfiguration.java)
+builds the beans.
+
+### Send internal library Xray traces
+By default, all the requests to receive messages and other internal calls by this library will not be sent to Xray. To override this you can define a
+custom [ClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/ClientSegmentMutator.java).
+
+```java
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public ClientSegmentMutator clientSegmentMutator()  {
+        return (segment) -> {
+              // any customisations you want to do here. Nothing is fine too.
+        };
+    }
+}
+```
+
+This will remove the
+default [UnsampledClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/UnsampledClientSegmentMutator.java)
+that is auto configured.
+
+### Naming the message listener segments
+
+Each segment created will use the `spring.application.name` as the name of the segment and if that is not set, it will use `message-listener` as the
+segment names. If you require a custom name, you can build your
+own [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java)
+bean.
+
+```java
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public ClientSegmentMutator clientSegmentMutator()  {
+       return new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+                       .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("my-custom-name"))
+                       .build());
+    }
+}
+```
 
 ### Using a custom `AWSXRayRecorder`
 
@@ -43,22 +92,27 @@ communicating with a local Xray daemon, you can create a new bean with the `sqsX
 daemon:
 
 ```java
+@Configuration
+public class MyConfiguration {
     @Bean
     @Qualifier("sqsXrayRecorder")
     public AWSXRayRecorder recorder() throws IOException {
         final DaemonConfiguration daemonConfiguration = new DaemonConfiguration();
-        daemonConfiguration.setDaemonAddress("127.0.0.1:2000");
+        daemonConfiguration.setDaemonAddress("127.0.0.1:5678");
         return AWSXRayRecorderBuilder.standard()
                 .withEmitter(Emitter.create(daemonConfiguration))
                 .build();
     }
+}
 ```
 
 ### Communicating with Multiple AWS Accounts
 
 As seen in [Spring - How to connect to multiple AWS Accounts](spring-how-to-connect-to-multiple-aws-accounts.md), you can create a custom
 [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java) to communicate with multiple
-SQS queues across multiple accounts. To have this functionality as well as Xray Tracing, you will need to make sure you wrap each `SqsAsyncClient` in a
+SQS queues across multiple accounts. If you are have included
+the [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency you will
+need to make sure to wrap each `SqsAsyncClient` in an
 [XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java).
 
 ```java
@@ -77,10 +131,22 @@ public class MyConfig {
         final SqsAsyncClient secondClient = ...;
 
         return new DefaultSqsAsyncClientProvider(
-            new XrayWrappedSqsAsyncClient(defaultClient, firstAccountRecorder, namingStrategy),
+            new XrayWrappedSqsAsyncClient(Options.builder()
+                    .delegate(defaultClient)
+                    .recorder(firstAccountRecorder)
+                    .clientNamingStrategy(namingStrategy)
+                    .build()),
             ImmutableMap.of(
-                "firstClient", new XrayWrappedSqsAsyncClient(firstClient, firstAccountRecorder, namingStrategy),
-                "secondClient", new XrayWrappedSqsAsyncClient(secondClient, secondAccountRecorder, namingStrategy)  
+                "firstClient", new XrayWrappedSqsAsyncClient(Options.builder()
+                         .delegate(firstClient)
+                         .recorder(firstAccountRecorder)
+                         .clientNamingStrategy(namingStrategy)
+                         .build()),
+                "secondClient", new XrayWrappedSqsAsyncClient(Options.builder()
+                         .delegate(secondClient)
+                         .recorder(secondAccountRecorder)
+                         .clientNamingStrategy(namingStrategy)
+                         .build())
             )
        );
     }
