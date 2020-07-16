@@ -133,8 +133,9 @@ public interface MessageProcessingDecorator {
      * it is not guaranteed that either this or the {@link #onMessageResolvedSuccess(MessageProcessingContext, Message)} will be executed
      * as failure to process the message or not making a call to {@link Acknowledge} will not trigger the message resolving process to be run.
      *
-     * @param context details about the message processing functionality, e.g. identifier for this message processor
-     * @param message the message being processed
+     * @param context   details about the message processing functionality, e.g. identifier for this message processor
+     * @param message   the message being processed
+     * @param throwable the exception that was thrown while resolving the message
      */
     default void onMessageResolvedFailure(MessageProcessingContext context, Message message, Throwable throwable) {
 
