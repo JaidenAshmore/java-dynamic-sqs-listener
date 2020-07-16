@@ -1,7 +1,11 @@
 package com.jashmore.sqs.extensions.xray.client;
 
+import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.entities.Segment;
+import com.jashmore.sqs.util.Preconditions;
+import lombok.Builder;
+import lombok.Value;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.AddPermissionRequest;
 import software.amazon.awssdk.services.sqs.model.AddPermissionResponse;
@@ -65,43 +69,22 @@ import java.util.function.Supplier;
  * name defined by the {@link ClientSegmentNamingStrategy} provided to this.
  */
 public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
+    private static final String DEFAULT_SEGMENT_NAME = "message-listener";
+
     private final SqsAsyncClient delegate;
     private final AWSXRayRecorder recorder;
     private final ClientSegmentNamingStrategy segmentNamingStrategy;
     private final ClientSegmentMutator segmentMutator;
 
-    /**
-     * Constructor.
-     *
-     * @param delegate              the underlying client to use
-     * @param recorder              the recorder used to start and stop segments
-     * @param segmentNamingStrategy the strategy for how to name the segment that is conditionally created when running a method
-     */
-    public XrayWrappedSqsAsyncClient(final SqsAsyncClient delegate,
-                                     final AWSXRayRecorder recorder,
-                                     final ClientSegmentNamingStrategy segmentNamingStrategy) {
-        this.delegate = delegate;
-        this.recorder = recorder;
-        this.segmentNamingStrategy = segmentNamingStrategy;
-        this.segmentMutator = null;
-    }
+    public XrayWrappedSqsAsyncClient(final Options options) {
+        Preconditions.checkNotNull(options.delegate, "delegate must not be null");
 
-    /**
-     * Constructor.
-     *
-     * @param delegate              the underlying client to use
-     * @param recorder              the recorder used to start and stop segments
-     * @param segmentNamingStrategy the strategy for how to name the segment that is conditionally created when running a method
-     * @param segmentMutator        optional consumer that can apply
-     */
-    public XrayWrappedSqsAsyncClient(final SqsAsyncClient delegate,
-                                     final AWSXRayRecorder recorder,
-                                     final ClientSegmentNamingStrategy segmentNamingStrategy,
-                                     final ClientSegmentMutator segmentMutator) {
-        this.delegate = delegate;
-        this.recorder = recorder;
-        this.segmentNamingStrategy = segmentNamingStrategy;
-        this.segmentMutator = segmentMutator;
+        this.delegate = options.delegate;
+        this.recorder = (options.recorder != null) ? options.recorder : AWSXRay.getGlobalRecorder();
+        this.segmentNamingStrategy = (options.segmentNamingStrategy != null)
+                ? options.segmentNamingStrategy
+                : new StaticClientSegmentNamingStrategy(DEFAULT_SEGMENT_NAME);
+        this.segmentMutator = options.segmentMutator;
     }
 
     @Override
@@ -357,5 +340,30 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     @Override
     public void close() {
         delegate.close();
+    }
+
+    @Value
+    @Builder
+    public static class Options {
+        /**
+         * Delegate client that will make the underlying calls to the SQS queues.
+         */
+        SqsAsyncClient delegate;
+        /**
+         * The Xray recorder that will be used to start the segments and subsegments for the message listeners.
+         *
+         * <p>If this is not set, the {@link AWSXRay#getGlobalRecorder()} will be used.
+         */
+        AWSXRayRecorder recorder;
+        /**
+         * Strategy for naming the Segment that will be started when processing a message.
+         *
+         * <p>If this is not set, all segments will have the name {@link #DEFAULT_SEGMENT_NAME}.
+         */
+        ClientSegmentNamingStrategy segmentNamingStrategy;
+        /**
+         * Optional mutator that can be used to add custom configuration for the segment started.
+         */
+        ClientSegmentMutator segmentMutator;
     }
 }

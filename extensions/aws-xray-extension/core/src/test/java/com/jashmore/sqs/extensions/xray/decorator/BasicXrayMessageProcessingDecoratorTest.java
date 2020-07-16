@@ -72,6 +72,21 @@ class BasicXrayMessageProcessingDecoratorTest {
         }
 
         @Test
+        void whenNoRecorderGlobalRecorderIsUsed() {
+            // arrange
+            AWSXRay.setGlobalRecorder(recorder);
+            final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+                    .build());
+            final MessageProcessor processor = createMessageProcessor("message-listener-identifier", decorator);
+
+            // act
+            processor.processMessage(Message.builder().build(), () -> CompletableFuture.completedFuture(null));
+
+            // assert
+            verify(recorder).beginSegment("message-listener");
+        }
+
+        @Test
         void segmentNamingStrategyCanBeUsedToNameSegment() {
             // arrange
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
@@ -193,6 +208,22 @@ class BasicXrayMessageProcessingDecoratorTest {
 
             // assert
             verify(recorder, never()).beginSubsegment(anyString());
+        }
+
+        @Test
+        void willCreateSubsegmentIfGenerateSubsegmentIsNull() {
+            // arrange
+            final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+                    .recorder(recorder)
+                    .generateSubsegment(null)
+                    .build());
+            final MessageProcessor processor = createMessageProcessor("message-listener-identifier", decorator);
+
+            // act
+            processor.processMessage(Message.builder().build(), () -> CompletableFuture.completedFuture(null));
+
+            // assert
+            verify(recorder).beginSubsegment("message-listener-identifier");
         }
 
         @Test

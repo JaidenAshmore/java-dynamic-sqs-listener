@@ -64,15 +64,15 @@ public class SqsListenerXrayConfiguration {
 
         @Bean
         public SqsAsyncClientProvider xraySqsAsyncClientProvider(final SqsAsyncClient defaultClient,
-                                                                 final ClientSegmentNamingStrategy clientSegmentNamingStrategy,
                                                                  @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
+                                                                 final ClientSegmentNamingStrategy clientSegmentNamingStrategy,
                                                                  final ClientSegmentMutator clientSegmentMutator) {
-            final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(
-                    defaultClient,
-                    recorder,
-                    clientSegmentNamingStrategy,
-                    clientSegmentMutator
-            );
+            final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(XrayWrappedSqsAsyncClient.Options.builder()
+                    .delegate(defaultClient)
+                    .recorder(recorder)
+                    .segmentNamingStrategy(clientSegmentNamingStrategy)
+                    .segmentMutator(clientSegmentMutator)
+                    .build());
 
             return new DefaultSqsAsyncClientProvider(xrayDefaultClient);
         }

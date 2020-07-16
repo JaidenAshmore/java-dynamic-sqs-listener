@@ -64,7 +64,6 @@ public class XrayExtensionIntegrationTest {
             return recorder;
         }
 
-
         @Service
         public static class MessageListener {
             @SuppressWarnings("unused")
