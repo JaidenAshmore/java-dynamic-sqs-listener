@@ -39,6 +39,7 @@ public class MessageProcessingContext {
      *
      * @param key the key of the attribute
      * @return the value of the attribute or null if it does not exist
+     * @param <T> the type of the attribute to cast the value to
      */
     @Nullable
     @SuppressWarnings("unchecked")
@@ -48,7 +49,7 @@ public class MessageProcessingContext {
 
     /**
      * Helper method to set an attribute with the given key.
-     *
+     *MessageProcessingDecorat
      * @param key   the key of the attribute
      * @param value the value to set for the attribute
      * @return this object for further chaining if necessary
