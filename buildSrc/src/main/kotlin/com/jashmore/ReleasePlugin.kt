@@ -5,7 +5,6 @@ import io.codearte.gradle.nexus.NexusStagingPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
-import org.gradle.api.plugins.JavaPlatformExtension
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
@@ -62,31 +61,30 @@ open class ReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create<ReleasePluginExtension>("release")
 
-        project.subprojects.forEach { subProject ->
+        // Need to do it last so the extension information as well as subproject description is populated correclty
+        project.afterEvaluate {
+            project.subprojects.forEach { subProject ->
+                val isExamplesModule = subProject.projectDir.path.contains("examples")
+                val moduleCompilesJava = subProject.plugins.hasPlugin("java")
+                if (!isExamplesModule && moduleCompilesJava) {
+                    subProject.pluginManager.apply(MavenPublishPlugin::class.java)
+                    subProject.pluginManager.apply(SigningPlugin::class.java)
 
-            subProject.configure<JavaPluginExtension> {
-                // We need this in our releases
-                withSourcesJar()
-                withJavadocJar()
-            }
+                    subProject.configure<JavaPluginExtension> {
+                        // We need this in our releases
+                        withSourcesJar()
+                        withJavadocJar()
+                    }
 
-            val isExamplesModule = subProject.projectDir.path.contains("examples")
-            val moduleCompilesJava = subProject.plugins.hasPlugin("java")
-            if (!isExamplesModule && moduleCompilesJava) {
-                subProject.pluginManager.apply(MavenPublishPlugin::class.java)
-                subProject.pluginManager.apply(SigningPlugin::class.java)
+                    subProject.configure<PublishingExtension> {
+                        publications {
+                            create<MavenPublication>("mavenJava") {
+                                groupId = subProject.group as String
+                                artifactId = subProject.name.replace(":", "")
+                                version = subProject.version as String
 
-                subProject.configure<PublishingExtension> {
-                    publications {
-                        create<MavenPublication>("mavenJava") {
-                            groupId = subProject.group as String
-                            artifactId = subProject.name.replace(":", "")
-                            version = subProject.version as String
+                                from(subProject.components["java"])
 
-                            from(subProject.components["java"])
-
-                            // Need to do it last so that the description is properly set in each of the project's gradle build files
-                            subProject.afterEvaluate {
                                 pom {
                                     name.set(determineModuleName(subProject.name))
                                     description.set(subProject.description)
@@ -120,35 +118,35 @@ open class ReleasePlugin : Plugin<Project> {
                                 }
                             }
                         }
-                    }
 
-                    repositories {
-                        maven {
-                            url = if (project.version.toString().endsWith("SNAPSHOT")) {
-                                URI("https://oss.sonatype.org/content/repositories/snapshots")
-                            } else {
-                                URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                            }
+                        repositories {
+                            maven {
+                                url = if (project.version.toString().endsWith("SNAPSHOT")) {
+                                    URI("https://oss.sonatype.org/content/repositories/snapshots")
+                                } else {
+                                    URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                                }
 
-                            credentials {
-                                username = extension.sonatypeUsername
-                                password = extension.sonatypePassword
+                                credentials {
+                                    username = extension.sonatypeUsername
+                                    password = extension.sonatypePassword
+                                }
                             }
                         }
                     }
-                }
 
-                subProject.configure<SigningExtension> {
-                    // We only want to sign if we are actually publishing to Maven Central
-                    setRequired({ project.gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenRepository") })
+                    subProject.configure<SigningExtension> {
+                        // We only want to sign if we are actually publishing to Maven Central
+                        setRequired({ project.gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenRepository") })
 
-                    useInMemoryPgpKeys(
-                            extension.signingKey,
-                            extension.signingPassword
-                    )
+                        useInMemoryPgpKeys(
+                                extension.signingKey,
+                                extension.signingPassword
+                        )
 
-                    val publishingExtension = subProject.extensions.getByName("publishing") as PublishingExtension
-                    sign(publishingExtension.publications["mavenJava"])
+                        val publishingExtension = subProject.extensions.getByName("publishing") as PublishingExtension
+                        sign(publishingExtension.publications["mavenJava"])
+                    }
                 }
             }
         }
