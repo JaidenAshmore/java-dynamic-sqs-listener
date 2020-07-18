@@ -16,6 +16,7 @@ import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import java.io.File
 import java.net.URI
+import com.jashmore.utils.isSnapshotVersion
 
 open class ReleasePluginExtension {
     /**
@@ -59,10 +60,13 @@ open class ReleasePluginExtension {
  */
 open class ReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        val projectVersion = project.version as String
         val extension = project.extensions.create<ReleasePluginExtension>("release")
 
-        // Need to do it last so the extension information as well as subproject description is populated correclty
+        // Need to do it last so the extension information as well as subproject description is populated correctly
         project.afterEvaluate {
+            val deploymentTag = if (isSnapshotVersion(projectVersion)) "HEAD" else "v$projectVersion"
+
             project.subprojects.forEach { subProject ->
                 val isExamplesModule = subProject.projectDir.path.contains("examples")
                 val moduleCompilesJava = subProject.plugins.hasPlugin("java")
@@ -81,7 +85,7 @@ open class ReleasePlugin : Plugin<Project> {
                             create<MavenPublication>("mavenJava") {
                                 groupId = subProject.group as String
                                 artifactId = subProject.name.replace(":", "")
-                                version = subProject.version as String
+                                version = projectVersion
 
                                 from(subProject.components["java"])
 
@@ -113,7 +117,7 @@ open class ReleasePlugin : Plugin<Project> {
                                         connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
                                         developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
                                         url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
-                                        tag.set("HEAD")
+                                        tag.set(deploymentTag)
                                     }
                                 }
                             }
@@ -160,25 +164,29 @@ open class ReleasePlugin : Plugin<Project> {
             delayBetweenRetriesInMillis = 10000
         }
 
+        fun updateBuildVersion(buildFile: File?, from: String, to: String) {
+            if (buildFile == null) {
+                throw RuntimeException("Required field 'buildFile' is missing")
+            }
 
-        /**
-         * Replaces the version in this build version to the version without the -SNAPSHOT suffix. This will be used before releasing the library.
-         */
+            val previousText = buildFile.readText()
+            val newBuildFileText = previousText.replaceFirst(Regex("version\\s*=\\s*\"$from\""), "version = \"$to\"")
+            if (previousText == newBuildFileText) {
+                throw RuntimeException("Build file content did not change")
+            }
+            buildFile.writeText(newBuildFileText)
+        }
+
         project.tasks.register("prepareReleaseVersion") {
-            group = "Release tasks"
-
-            val currentVersion = project.version as String
-            val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
+            group = "Release"
+            description = "Remove the SNAPSHOT suffix from the version"
 
             doLast {
-                println("Changing version $currentVersion to non-snapshot version $nonSnapshotVersion")
-                val buildFile = extension.buildFile ?: throw RuntimeException("Required field 'buildFile' is missing")
-                val previousText = buildFile.readText()
-                val newBuildFileText = previousText.replaceFirst(Regex("version\\s*=\\s*\"$currentVersion\""), "version = \"$nonSnapshotVersion\"")
-                if (previousText == newBuildFileText) {
-                    throw RuntimeException("Build file content did not change")
-                }
-                buildFile.writeText(newBuildFileText)
+                val nonSnapshotVersion = projectVersion.replace("-SNAPSHOT", "")
+
+                println("Changing version $projectVersion to non-snapshot version $nonSnapshotVersion")
+
+                updateBuildVersion(extension.buildFile, from = projectVersion, to = nonSnapshotVersion)
             }
         }
 
@@ -190,22 +198,19 @@ open class ReleasePlugin : Plugin<Project> {
          * 1.0.0-M1 -> 1.0.0-M2-SNAPSHOT
          */
         project.tasks.register("prepareNextSnapshotVersion") {
-            group = "Release tasks"
-
-            val currentVersion = (project.version as String)
-            val nonSnapshotVersion = currentVersion.replace("-SNAPSHOT", "")
-            val deliminator = if (nonSnapshotVersion.contains("-M")) "-M" else "."
-            val lastNumber = nonSnapshotVersion.substringAfterLast(deliminator).toInt()
-            val versionPrefix = nonSnapshotVersion.substringBeforeLast(deliminator)
-            val nextSnapshotVersion = "$versionPrefix$deliminator${lastNumber + 1}-SNAPSHOT"
+            group = "Release"
+            description = "Update the version of the application to be the next SNAPSHOT version"
 
             doLast {
-                println("Changing version $currentVersion to snapshot version $nextSnapshotVersion")
+                val nonSnapshotVersion = projectVersion.replace("-SNAPSHOT", "")
+                val deliminator = if (nonSnapshotVersion.contains("-M")) "-M" else "."
+                val lastNumber = nonSnapshotVersion.substringAfterLast(deliminator).toInt()
+                val versionPrefix = nonSnapshotVersion.substringBeforeLast(deliminator)
+                val nextSnapshotVersion = "$versionPrefix$deliminator${lastNumber + 1}-SNAPSHOT"
 
-                val buildFile = extension.buildFile ?: throw RuntimeException("Required field 'buildFile' is missing")
+                println("Changing version $projectVersion to snapshot version $nextSnapshotVersion")
 
-                val newBuildFileText = buildFile.readText().replaceFirst("version = \"$currentVersion\"", "version = \"$nextSnapshotVersion\"")
-                buildFile.writeText(newBuildFileText)
+                updateBuildVersion(extension.buildFile, from = projectVersion, to = nextSnapshotVersion)
             }
         }
     }
