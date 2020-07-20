@@ -10,7 +10,7 @@ of [ArgumentResolvers](../../../api/src/main/java/com/jashmore/sqs/argument/Argu
 
 To override the default `ObjectMapper` being used, you must supply your
 own [SqsListenerObjectMapperSupplier](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/jackson/SqsListenerObjectMapperSupplier.java) that
-will provide the `ObjectMapper`. Once this is done, it will not use the default Jackson
+will provide the `ObjectMapper`.
 
 ```java
 @Configuration
@@ -29,9 +29,7 @@ with the existing `ObjectMappers`, like the Spring Boot auto configured `ObjectM
 
 If you want to customise the entire argument resolution process, you can provide your
 own [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java). This can be useful if you only want
-to support certain argument resolutions or want to have control on how you resolve arguments. To support this, you need to provide
-your own [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) which will stop the construction
-of the default service.
+to support certain argument resolutions or want to have control on how you resolve arguments.
 
 ```java
 @Configuration
@@ -53,7 +51,7 @@ public class MyConfiguration {
 
 If you want to override the [ArgumentResolvers](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) that use an `ObjectMapper`,
 you can supply those resolvers as beans to auto configure them into
-the [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
+the default [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
 
 ```java
 @Configuration
