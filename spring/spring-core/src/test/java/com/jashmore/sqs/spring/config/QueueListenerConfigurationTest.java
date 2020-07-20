@@ -19,6 +19,7 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -34,8 +35,6 @@ import java.util.List;
 
 @SuppressWarnings( {"unchecked", "rawtypes"})
 class QueueListenerConfigurationTest {
-    private static final ObjectMapper USER_OBJECT_MAPPER = new ObjectMapper();
-
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class));
 
@@ -120,23 +119,35 @@ class QueueListenerConfigurationTest {
     @Nested
     class ObjectMapperBean {
         @Test
-        void userConfigurationWithNoObjectMapperWillProvideOwnForArgumentResolvers() {
+        void userConfigurationWithNoObjectMapperSupplierWillProvideOwnForArgumentResolvers() {
             contextRunner
                     .withUserConfiguration(UserConfigurationWithSqsClient.class)
                     .run((context) -> {
-                        final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-                        assertThat(objectMapper).isNotNull();
+                        final SqsListenerObjectMapperSupplier objectMapperSupplier = context.getBean(SqsListenerObjectMapperSupplier.class);
+                        assertThat(objectMapperSupplier.get()).isNotNull();
                     });
         }
 
         @Test
-        void customObjectMapperWillBeAbleToObtainThatObjectMapperWhenRequired() {
+        void objectMapperBeanPresentWillBeUsedInDefaultObjectMapperSupplier() {
+            final ObjectMapper mockObjectMapper = mock(ObjectMapper.class);
             contextRunner
-                    .withUserConfiguration(UserConfigurationWithCustomObjectMapper.class)
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .withBean(ObjectMapper.class, () -> mockObjectMapper)
                     .run((context) -> {
-                        final ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-                        assertThat(objectMapper).isEqualTo(USER_OBJECT_MAPPER);
+                        final SqsListenerObjectMapperSupplier objectMapperSupplier = context.getBean(SqsListenerObjectMapperSupplier.class);
+                        assertThat(objectMapperSupplier.get()).isSameAs(mockObjectMapper);
                     });
+        }
+
+        @Test
+        void customObjectMapperSupplierWillOverwriteDefault() {
+            final ObjectMapper mockObjectMapper = mock(ObjectMapper.class);
+            final SqsListenerObjectMapperSupplier customObjectMapperSupplier = () -> mockObjectMapper;
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .withBean(SqsListenerObjectMapperSupplier.class, () -> customObjectMapperSupplier)
+                    .run((context) -> assertThat(context.getBean(SqsListenerObjectMapperSupplier.class)).isSameAs(customObjectMapperSupplier));
         }
     }
 
@@ -147,10 +158,11 @@ class QueueListenerConfigurationTest {
             contextRunner
                     .withSystemProperties("aws.region:localstack")
                     .run((context) -> {
+                        final SqsListenerObjectMapperSupplier objectMapperSupplier = context.getBean(SqsListenerObjectMapperSupplier.class);
                         assertThat(context).hasSingleBean(PayloadArgumentResolver.class);
                         assertThat(context.getBean(PayloadArgumentResolver.class)).isSameAs(
                                 context.getBean(QueueListenerConfiguration.ArgumentResolutionConfiguration.CoreArgumentResolversConfiguration.class)
-                                        .payloadArgumentResolver(new ObjectMapper()));
+                                        .payloadArgumentResolver(objectMapperSupplier));
                     });
         }
 
@@ -368,15 +380,6 @@ class QueueListenerConfigurationTest {
         @Bean
         MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
             return mock(MessageAttributeArgumentResolver.class);
-        }
-    }
-
-    @Import(UserConfigurationWithSqsClient.class)
-    @Configuration
-    static class UserConfigurationWithCustomObjectMapper {
-        @Bean
-        ObjectMapper myObjectMapper() {
-            return USER_OBJECT_MAPPER;
         }
     }
 

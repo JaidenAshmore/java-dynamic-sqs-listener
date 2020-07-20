@@ -362,8 +362,8 @@ module. This allows you to test the performance and usage of each library for di
     1. [How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
     1. [How to add custom MessageProcessingDecorators](doc/how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
     to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
-    1. [How to provide a custom Object Mapper](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): guide for overriding the default
-    `ObjectMapper` that is used to serialise the message body and attributes
+    1. [How to customise argument resolution](doc/how-to-guides/spring/spring-how-to-customise-argument-resolution.md): guide for overriding the entire
+    argument resolution logic
     1. [How to add your own queue listener](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the
     queue listening without the verbosity of a custom queue listener
     1. [How to write Spring Integration Tests](doc/how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are

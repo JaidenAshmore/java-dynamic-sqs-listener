@@ -19,8 +19,10 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
 import com.jashmore.sqs.spring.queue.QueueResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -113,16 +115,18 @@ public class QueueListenerConfiguration {
          */
         @Configuration
         public static class CoreArgumentResolversConfiguration {
+
             @Bean
-            @ConditionalOnMissingBean(ObjectMapper.class)
-            public ObjectMapper objectMapper() {
-                return new ObjectMapper();
+            @ConditionalOnMissingBean
+            public SqsListenerObjectMapperSupplier objectMapperSupplier(@Autowired(required = false) final ObjectMapper objectMapper) {
+                final ObjectMapper actualObjectMapper = (objectMapper != null) ? objectMapper : new ObjectMapper();
+                return () -> actualObjectMapper;
             }
 
             @Bean
             @ConditionalOnMissingBean(PayloadArgumentResolver.class)
-            public PayloadArgumentResolver payloadArgumentResolver(final ObjectMapper objectMapper) {
-                return new PayloadArgumentResolver(new JacksonPayloadMapper(objectMapper));
+            public PayloadArgumentResolver payloadArgumentResolver(final SqsListenerObjectMapperSupplier objectMapperSupplier) {
+                return new PayloadArgumentResolver(new JacksonPayloadMapper(objectMapperSupplier.get()));
             }
 
             @Bean
@@ -137,8 +141,8 @@ public class QueueListenerConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(MessageAttributeArgumentResolver.class)
-            public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final ObjectMapper objectMapper) {
-                return new MessageAttributeArgumentResolver(objectMapper);
+            public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final SqsListenerObjectMapperSupplier objectMapperSupplier) {
+                return new MessageAttributeArgumentResolver(objectMapperSupplier.get());
             }
 
             @Bean

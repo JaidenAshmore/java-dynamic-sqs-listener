@@ -4,19 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
+import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -24,21 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
-@SpringBootTest(classes = {Application.class, SqsSpringStarterIntegrationTest.TestConfig.class})
-@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {SqsSpringStarterIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
 class SqsSpringStarterIntegrationTest {
     private static final String QUEUE_NAME = "SqsSpringStarterIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(NUMBER_OF_MESSAGES_TO_SEND + 1);
     private static final AtomicInteger messagesProcessed = new AtomicInteger(0);
     private static final int MESSAGE_VISIBILITY_IN_SECONDS = 2;
-
-    @SpringBootApplication
-    public static class Application {
-        public static void main(String[] args) {
-            SpringApplication.run(Application.class);
-        }
-    }
 
     @Autowired
     private LocalSqsAsyncClient localSqsAsyncClient;
