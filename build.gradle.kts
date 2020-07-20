@@ -12,7 +12,7 @@ plugins {
 
 allprojects {
     group = "com.jashmore"
-    version = "4.0.0-M8"
+    version = "4.0.0-M8-SNAPSHOT"
 
     repositories {
         mavenCentral()

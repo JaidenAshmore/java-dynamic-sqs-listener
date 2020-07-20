@@ -1,5 +1,6 @@
 package com.jashmore
 
+import com.jashmore.utils.isSnapshotVersion
 import io.codearte.gradle.nexus.NexusStagingExtension
 import io.codearte.gradle.nexus.NexusStagingPlugin
 import org.gradle.api.Plugin
@@ -16,7 +17,6 @@ import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import java.io.File
 import java.net.URI
-import com.jashmore.utils.isSnapshotVersion
 
 open class ReleasePluginExtension {
     /**
@@ -89,35 +89,38 @@ open class ReleasePlugin : Plugin<Project> {
 
                                 from(subProject.components["java"])
 
-                                pom {
-                                    name.set(determineModuleName(subProject.name))
-                                    description.set(subProject.description)
-                                    url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
+                                // Need to do it last so that the description is properly set in each of the project's gradle build files
+                                subProject.afterEvaluate {
+                                    pom {
+                                        name.set(determineModuleName(subProject.name))
+                                        description.set(subProject.description)
+                                        url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
 
-                                    licenses {
-                                        license {
-                                            name.set("MIT License")
-                                            url.set("http://www.opensource.org/licenses/mit-license.php")
-                                        }
-                                    }
-
-                                    developers {
-                                        developer {
-                                            id.set("jaidenashmore")
-                                            name.set("Jaiden Ashmore")
-                                            email.set("jaidenkyleashmore@gmail.com")
-                                            organization {
-                                                name.set("jaidenashmore")
-                                                url.set("https://github.com/jaidenashmore")
+                                        licenses {
+                                            license {
+                                                name.set("MIT License")
+                                                url.set("http://www.opensource.org/licenses/mit-license.php")
                                             }
                                         }
-                                    }
 
-                                    scm {
-                                        connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                        developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
-                                        url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
-                                        tag.set(deploymentTag)
+                                        developers {
+                                            developer {
+                                                id.set("jaidenashmore")
+                                                name.set("Jaiden Ashmore")
+                                                email.set("jaidenkyleashmore@gmail.com")
+                                                organization {
+                                                    name.set("jaidenashmore")
+                                                    url.set("https://github.com/jaidenashmore")
+                                                }
+                                            }
+                                        }
+
+                                        scm {
+                                            connection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                            developerConnection.set("scm:git:ssh://git@github.com/jaidenashmore/java-dynamic-sqs-listener.git")
+                                            url.set("http://github.com/jaidenashmore/java-dynamic-sqs-listener")
+                                            tag.set(deploymentTag)
+                                        }
                                     }
                                 }
                             }
