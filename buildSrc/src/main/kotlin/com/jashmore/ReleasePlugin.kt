@@ -160,11 +160,13 @@ open class ReleasePlugin : Plugin<Project> {
 
         project.pluginManager.apply(NexusStagingPlugin::class.java)
 
-        project.configure<NexusStagingExtension> {
-            username = extension.sonatypeUsername
-            password = extension.sonatypePassword
-            numberOfRetries = 20
-            delayBetweenRetriesInMillis = 10000
+        project.afterEvaluate {
+            project.configure<NexusStagingExtension> {
+                username = extension.sonatypeUsername
+                password = extension.sonatypePassword
+                numberOfRetries = 20
+                delayBetweenRetriesInMillis = 10000
+            }
         }
 
         fun updateBuildVersion(buildFile: File?, from: String, to: String) {
