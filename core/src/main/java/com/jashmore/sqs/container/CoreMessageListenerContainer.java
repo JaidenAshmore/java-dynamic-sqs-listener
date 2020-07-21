@@ -30,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -152,8 +151,6 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             final MessageBroker messageBroker = messageBrokerSupplier.get();
             final MessageProcessor messageProcessor = messageProcessorSupplier.get();
 
-            final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(identifier + "-message-broker"));
-
             final BlockingRunnable shutdownMessageResolver = startupMessageResolver(messageResolver);
             final ExecutorService messageProcessingExecutorService = buildMessageProcessingExecutorService();
 
@@ -162,16 +159,14 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
 
             final BlockingRunnable shutdownMessageRetriever = startupMessageRetriever(messageRetriever, extraMessages::addAll);
             log.info("Container '{}' is beginning to process messages", identifier);
-            processMessagesFromRetriever(messageBroker, messageRetriever, messageProcessor, messageResolver,
-                    messageBrokerExecutorService, messageProcessingExecutorService);
+            processMessagesFromRetriever(messageBroker, messageRetriever, messageProcessor, messageResolver, messageProcessingExecutorService);
             log.info("Container '{}' is being shutdown", identifier);
             log.debug("Container '{}' is shutting down MessageRetriever", identifier);
             shutdownMessageRetriever.run();
             log.debug("Container '{}' has stopped the MessageRetriever", identifier);
             if (!extraMessages.isEmpty() && shouldProcessAnyExtraRetrievedMessagesOnShutdown()) {
                 log.info("Container '{}' is processing {} extra messages before shutdown", identifier, extraMessages.size());
-                processExtraMessages(messageBroker, messageProcessor, messageResolver, messageBrokerExecutorService,
-                        messageProcessingExecutorService, extraMessages);
+                processExtraMessages(messageBroker, messageProcessor, messageResolver, messageProcessingExecutorService, extraMessages);
             }
             log.debug("Container '{}' is shutting down MessageProcessor threads", identifier);
             shutdownMessageProcessingThreads(messageProcessingExecutorService);
@@ -179,9 +174,6 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             log.debug("Container '{}' is shutting down MessageResolver", identifier);
             shutdownMessageResolver.run();
             log.debug("Container '{}' has shutdown the MessageResolver", identifier);
-            log.debug("Container '{}' is shutting down MessageBroker", identifier);
-            shutdownMessageBroker(messageBrokerExecutorService);
-            log.debug("Container '{}' has shutdown the MessageBroker", identifier);
             log.info("Container '{}' has stopped", identifier);
         } catch (final InterruptedException interruptedException) {
             log.error("Container '{}' was interrupted during the shutdown process.", identifier);
@@ -209,10 +201,9 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
                                               final MessageRetriever messageRetriever,
                                               final MessageProcessor messageProcessor,
                                               final MessageResolver messageResolver,
-                                              final ExecutorService brokerExecutorService,
                                               final ExecutorService messageProcessingExecutorService) throws InterruptedException {
         try {
-            runUntilInterruption(brokerExecutorService, () -> messageBroker.processMessages(
+            runBrokerUntilInterrupted(() -> messageBroker.processMessages(
                     messageProcessingExecutorService,
                     messageRetriever::retrieveMessage,
                     message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
@@ -225,22 +216,21 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
     /**
      * This processes any extra messages that may have been batched by the {@link MessageRetriever}.
      *
-     * @param messageBroker    the broker that handles the concurrent processing of messages and how to flow messages between the components
-     * @param messageProcessor the processor that will execute the message
-     * @param messageResolver  the resolver that will resolve the message on successful processing
-     * @param executorService  the executor service that the message processing will run on
-     * @param messages         the messages to be processed
+     * @param messageBroker                    the broker that handles the concurrent processing of messages and how to flow messages between the components
+     * @param messageProcessor                 the processor that will execute the message
+     * @param messageResolver                  the resolver that will resolve the message on successful processing
+     * @param messageProcessingExecutorService the executor service that the message processing will run on
+     * @param messages                         the messages to be processed
      * @throws InterruptedException if the thread was interrupted during this process
      */
     private void processExtraMessages(final MessageBroker messageBroker,
                                       final MessageProcessor messageProcessor,
                                       final MessageResolver messageResolver,
-                                      final ExecutorService messageBrokerExecutorService,
-                                      final ExecutorService executorService,
+                                      final ExecutorService messageProcessingExecutorService,
                                       final Queue<Message> messages) throws InterruptedException {
         try {
-            runUntilInterruption(messageBrokerExecutorService, () -> messageBroker.processMessages(
-                    executorService,
+            runBrokerUntilInterrupted(() -> messageBroker.processMessages(
+                    messageProcessingExecutorService,
                     () -> !messages.isEmpty(),
                     () -> CompletableFuture.completedFuture(messages.poll()),
                     message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
@@ -251,32 +241,30 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
     }
 
     /**
-     * Run the provided {@link Runnable} on the {@link ExecutorService} and wait until the thread is interrupted in which case the {@link Runnable} should
+     * Run the provided {@link Runnable} on a message broker thread until it is interrupted in which case the {@link Runnable} should
      * also be interrupted.
      *
-     * @param executorService the executor service to execute the runnable
-     * @param runnable        the runnable to run which should keep running until an interruption
+     * @param runnable the runnable to run which should keep running until an interruption
      * @throws InterruptedException if it was interrupted again waiting for the runnable to exit
      * @throws ExecutionException   if there was an error running the runnable
      */
-    private void runUntilInterruption(final ExecutorService executorService, final BlockingRunnable runnable) throws InterruptedException, ExecutionException {
-        final CompletableFuture<?> runnableCompleted = new CompletableFuture<>();
-        Future<?> processingFuture = null;
+    private void runBrokerUntilInterrupted(final BlockingRunnable runnable) throws InterruptedException, ExecutionException {
+        final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(identifier + "-message-broker"));
         try {
-            processingFuture = executorService.submit(() -> {
+            CompletableFuture.runAsync(() -> {
                 try {
                     runnable.run();
                 } catch (final InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
-                } finally {
-                    runnableCompleted.complete(null);
                 }
-            });
-            processingFuture.get();
+            }, messageBrokerExecutorService).get();
         } catch (final InterruptedException interruptedException) {
-            processingFuture.cancel(true);
+            // We are handling this explicitly
+        } finally {
+            log.debug("Container '{}' is shutting down MessageBroker", identifier);
+            shutdownMessageBroker(messageBrokerExecutorService);
+            log.debug("Container '{}' has shutdown the MessageBroker", identifier);
         }
-        runnableCompleted.get();
     }
 
     /**

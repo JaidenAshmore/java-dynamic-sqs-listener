@@ -45,7 +45,6 @@ class CoreMessageListenerContainerTest {
     private static final StaticCoreMessageListenerContainerProperties DEFAULT_PROPERTIES = StaticCoreMessageListenerContainerProperties.builder()
             .shouldInterruptThreadsProcessingMessagesOnShutdown(true)
             .shouldProcessAnyExtraRetrievedMessagesOnShutdown(false)
-            .messageProcessingThreadNameFormat("test-%d")
             .messageProcessingShutdownTimeoutInSeconds(5)
             .messageResolverShutdownTimeoutInSeconds(5)
             .messageRetrieverShutdownTimeoutInSeconds(5)
