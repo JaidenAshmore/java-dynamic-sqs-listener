@@ -1,6 +1,6 @@
-package com.jashmore
+package com.jashmore.gradle
 
-import com.jashmore.utils.isSnapshotVersion
+import com.jashmore.gradle.utils.isSnapshotVersion
 import io.codearte.gradle.nexus.NexusStagingExtension
 import io.codearte.gradle.nexus.NexusStagingPlugin
 import org.gradle.api.Plugin

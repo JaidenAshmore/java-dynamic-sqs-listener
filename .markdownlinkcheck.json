@@ -5,6 +5,9 @@
     },
     {
       "pattern": "mailto:*"
+    },
+    {
+      "pattern": "https://coveralls.io.*"
     }
   ]
 }

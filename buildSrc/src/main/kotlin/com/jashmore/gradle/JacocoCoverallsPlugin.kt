@@ -1,4 +1,4 @@
-package com.jashmore
+package com.jashmore.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project

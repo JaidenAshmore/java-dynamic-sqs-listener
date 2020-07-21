@@ -1,0 +1,87 @@
+package com.jashmore.sqs.core.kotlin.dsl.resolver
+
+import com.jashmore.sqs.QueueProperties
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
+import com.jashmore.sqs.resolver.MessageResolver
+import com.nhaarman.mockitokotlin2.whenever
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import software.amazon.awssdk.services.sqs.SqsAsyncClient
+import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry
+import software.amazon.awssdk.services.sqs.model.Message
+import java.time.Duration
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+
+@ExtendWith(MockitoExtension::class)
+class BatchingMessageResolverDslBuilderTest {
+    private val queueProperties = QueueProperties.builder()
+            .queueUrl("url")
+            .build()
+
+    @Mock
+    lateinit var sqsAsyncClient: SqsAsyncClient
+
+    @Test
+    fun `no bufferingSizeLimit will throw exception`() {
+        val exception = Assertions.assertThrows(RequiredFieldException::class.java) {
+            batchingResolver(sqsAsyncClient, queueProperties) {
+                bufferingTime = { Duration.ofSeconds(2) }
+            }()
+        }
+        assertThat(exception).hasMessage("bufferingSizeLimit is required for BatchingMessageResolver")
+    }
+
+    @Test
+    fun `no bufferingTime will throw exception`() {
+        val exception = Assertions.assertThrows(RequiredFieldException::class.java) {
+            batchingResolver(sqsAsyncClient, queueProperties) {
+                bufferingSizeLimit = { 1 }
+            }()
+        }
+        assertThat(exception).hasMessage("bufferingTime is required for BatchingMessageResolver")
+    }
+
+    @Test
+    fun `buffering message resolver can be correctly built`() {
+        // arrange
+        var isFirstRun = true
+        val batchingResolver = batchingResolver(sqsAsyncClient, queueProperties) {
+            bufferingSizeLimit = {
+                if (isFirstRun) {
+                    isFirstRun = false
+                    2
+                } else {
+                    throw InterruptedException()
+                }
+            }
+            bufferingTime = { Duration.ofMillis(500) }
+        }()
+        whenever(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest::class.java)))
+                .thenReturn(CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
+                        .successful(listOf(DeleteMessageBatchResultEntry.builder()
+                                .id("id")
+                                .build()))
+                        .failed(listOf<BatchResultErrorEntry>())
+                        .build()))
+
+        // act
+        val startTime = System.currentTimeMillis()
+        batchingResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").body("body").build())
+        runResolver(batchingResolver)
+        val endTime = System.currentTimeMillis()
+
+        // assert
+        assertThat(endTime - startTime).isGreaterThanOrEqualTo(500)
+    }
+
+    private fun runResolver(resolver: MessageResolver) = CompletableFuture.runAsync { resolver.run() }.get(5, TimeUnit.SECONDS)
+}
