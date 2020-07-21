@@ -11,9 +11,9 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
     ```kotlin
     implementation("com.jashmore:core-kotlin-dsl:${version}")
     ```
-   
+
    or
-    
+
     ```xml
     <dependency>
         <groupId>com.jashmore</groupId>
@@ -21,7 +21,7 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
         <version>${version}</version>
     </dependency>
     ```
-   
+
 1. Create the [MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) using the Kotlin DSL
 
     ```kotlin
@@ -48,11 +48,12 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
 
 1. Start the container as normal
 
-    ``kotlin
+    ```kotlin
         container.start()
-    ``
+    ```
 
 Check out the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) for more details about the internals of this module and what you can use.
 
 ## Example
+
 A full example of using the Kotlin DSL can be found in the [core-kotlin-example](../../../examples/core-kotlin-example/README.md).
