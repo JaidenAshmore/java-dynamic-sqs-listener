@@ -39,7 +39,7 @@ This will extract the tracing header from the SQS message and begin a Xray Segme
 ## Integration with AWS Xray Instrumentor
 
 If you want tracing information to be included when making client calls to AWS, you can add the
-[AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency. 
+[AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
 
 ```xml
     <dependency>
@@ -87,4 +87,3 @@ application, as all requests out to the SQS server will automatically be traced 
 maintains its own threads and does not start Xray segments, all calls out to SQS will throw exceptions due to a missing segment.
 The [XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java)
 protects against these errors by making sure there is always a segment present when making a call with the client by creating one for you.
-

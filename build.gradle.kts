@@ -1,6 +1,6 @@
-import com.jashmore.JacocoCoverallsPlugin
-import com.jashmore.ReleasePlugin
-import com.jashmore.release
+import com.jashmore.gradle.JacocoCoverallsPlugin
+import com.jashmore.gradle.ReleasePlugin
+import com.jashmore.gradle.release
 
 plugins {
     java
@@ -20,10 +20,13 @@ allprojects {
 }
 
 subprojects {
+    val isKotlinProject = project.name.contains("kotlin")
     apply(plugin = "java-library")
-    apply(plugin = "com.github.spotbugs")
-    apply(plugin = "checkstyle")
     apply(plugin = "jacoco")
+    if (!isKotlinProject) {
+        apply(plugin = "com.github.spotbugs")
+        apply(plugin = "checkstyle")
+    }
 
     dependencies {
         // AWS
@@ -49,8 +52,10 @@ subprojects {
         testImplementation("ch.qos.logback:logback-core")
         testImplementation("ch.qos.logback:logback-classic")
 
-        // SpotBugs
-        spotbugs("com.github.spotbugs:spotbugs:4.0.6")
+        if (!isKotlinProject) {
+            // SpotBugs
+            spotbugs("com.github.spotbugs:spotbugs:4.0.6")
+        }
 
         constraints {
             // Jackson
@@ -93,20 +98,22 @@ subprojects {
         options.compilerArgs.addAll(setOf("-Xlint:all", "-Werror", "-Xlint:-processing", "-Xlint:-serial"))
     }
 
-    tasks.withType<Checkstyle> {
-        // Needed because this is generated code and I am not good enough with gradle to properly exclude these source files
-        // from only the checkstyleTest task
-        exclude("**com/jashmore/sqs/extensions/registry/model/*")
-    }
+    if (!isKotlinProject) {
+        tasks.withType<Checkstyle> {
+            // Needed because this is generated code and I am not good enough with gradle to properly exclude these source files
+            // from only the checkstyleTest task
+            exclude("**com/jashmore/sqs/extensions/registry/model/*")
+        }
 
-    checkstyle {
-        configFile = file("${project.rootDir}/configuration/checkstyle/google_6_18_checkstyle.xml")
-        maxWarnings = 0
-        maxErrors = 0
-    }
+        checkstyle {
+            configFile = file("${project.rootDir}/configuration/checkstyle/google_6_18_checkstyle.xml")
+            maxWarnings = 0
+            maxErrors = 0
+        }
 
-    spotbugs {
-        excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
+        spotbugs {
+            excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
+        }
     }
 
     tasks.withType<Test> {

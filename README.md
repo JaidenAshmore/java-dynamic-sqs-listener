@@ -305,6 +305,38 @@ to the maximum specified.
 10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
 not prefetch anymore.*
 
+### Using the Core Library with a Kotlin DSL
+
+If you are not using Spring and want a way to more easily configure
+a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java), you can use the
+[Core Kotlin DSL](extensions/core-kotlin-dsl) tool.
+
+```kotlin
+val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+    retriever = prefetchingMessageRetriever {
+        desiredPrefetchedMessages = 10
+        maxPrefetchedMessages = 20
+    }
+    processor = coreProcessor {
+        argumentResolverService = coreArgumentResolverService(objectMapper)
+        bean = MessageListener()
+        method = MessageListener::class.java.getMethod("listen", String::class.java)
+    }
+    broker = concurrentBroker {
+        concurrencyLevel = { 10 }
+        concurrencyPollingRate = { Duration.ofSeconds(30) }
+    }
+    resolver = batchingResolver {
+        bufferingSizeLimit = { 5 }
+        bufferingTime = { Duration.ofSeconds(2) }
+    }
+}
+
+container.start()
+```
+
+For more details, see the [Core - How to use the Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md) guide.
+
 ### Adding Brave Tracing
 
 If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
@@ -355,6 +387,8 @@ module. This allows you to test the performance and usage of each library for di
     extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
     1. [How to create a MessageProcessingDecorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md): guide for writing your own
     decorator to wrap a message listener's processing of a message
+    1. [How to use the Core Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md): guide for using the core library easier using a Kotlin
+    DSL for constructing message listeners
 1. Spring How To Guides
     1. [How to add a custom ArgumentResolver to a Spring application](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
     integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)

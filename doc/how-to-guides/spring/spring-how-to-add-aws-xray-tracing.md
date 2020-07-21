@@ -47,6 +47,7 @@ the [SqsListenerXrayConfiguration](../../../extensions/aws-xray-extension/spring
 builds the beans.
 
 ### Send internal library Xray traces
+
 By default, all the requests to receive messages and other internal calls by this library will not be sent to Xray. To override this you can define a
 custom [ClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/ClientSegmentMutator.java).
 

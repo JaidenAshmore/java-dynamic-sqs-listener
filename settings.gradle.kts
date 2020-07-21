@@ -26,6 +26,7 @@ include(
         ":aws-xray-extension-core",
         ":aws-xray-extension-spring-boot",
         ":brave-message-processing-decorator",
+        ":core-kotlin-dsl",
 
         // - Spring Cloud Scheme Registry Extension
         ":spring-cloud-schema-registry-extension-api",
@@ -47,6 +48,7 @@ include(
         ":aws-xray-spring-example",
         ":java-dynamic-sqs-listener-core-examples",
         ":java-dynamic-sqs-listener-spring-aws-example",
+        ":core-kotlin-example",
         ":spring-cloud-schema-registry-consumer",
         ":spring-cloud-schema-registry-producer",
         ":spring-cloud-schema-registry-producer-two",
@@ -63,6 +65,7 @@ project(":java-dynamic-sqs-listener-core").projectDir = file("core")
 project(":aws-xray-spring-example").projectDir = file("examples/aws-xray-spring-example")
 project(":java-dynamic-sqs-listener-core-examples").projectDir = file("examples/core-examples")
 project(":java-dynamic-sqs-listener-spring-aws-example").projectDir = file("examples/spring-aws-example")
+project(":core-kotlin-example").projectDir = file("examples/core-kotlin-example")
 project(":spring-cloud-schema-registry-consumer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer")
 project(":spring-cloud-schema-registry-producer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer")
 project(":spring-cloud-schema-registry-producer-two").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-two")
@@ -75,6 +78,7 @@ project(":sqs-listener-library-comparison").projectDir = file("examples/sqs-list
 project(":aws-xray-extension-core").projectDir = file("extensions/aws-xray-extension/core")
 project(":aws-xray-extension-spring-boot").projectDir = file("extensions/aws-xray-extension/spring-boot")
 project(":brave-message-processing-decorator").projectDir = file("extensions/brave-message-processing-decorator")
+project(":core-kotlin-dsl").projectDir = file("extensions/core-kotlin-dsl")
 project(":spring-cloud-schema-registry-extension-api").projectDir = file("extensions/spring-cloud-schema-registry-extension/spring-cloud-schema-registry-extension-api")
 project(":avro-spring-cloud-schema-registry-extension").projectDir = file("extensions/spring-cloud-schema-registry-extension/avro-spring-cloud-schema-registry-extension")
 project(":in-memory-spring-cloud-schema-registry").projectDir = file("extensions/spring-cloud-schema-registry-extension/in-memory-spring-cloud-schema-registry")
