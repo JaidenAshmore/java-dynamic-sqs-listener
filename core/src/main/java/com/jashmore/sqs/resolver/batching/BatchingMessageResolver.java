@@ -91,7 +91,7 @@ public class BatchingMessageResolver implements MessageResolver {
         final ExecutorService executorService = buildExecutorServiceForSendingBatchDeletion();
         // all of the batches currently being sent so that they can be waited on during shutdown
         final List<CompletableFuture<?>> batchesBeingPublished = new ArrayList<>();
-        while (continueProcessing) {
+        while (!Thread.currentThread().isInterrupted() && continueProcessing) {
             final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
             try {
                 final int batchSize = getBatchSize();
