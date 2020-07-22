@@ -26,6 +26,7 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -203,7 +204,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
         assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
                 .maxPrefetchedMessages(30)
                 .desiredMinPrefetchedMessages(40)
-                .messageVisibilityTimeoutInSeconds(40)
+                .messageVisibilityTimeout(Duration.ofSeconds(40))
                 .build()
         );
     }
@@ -221,7 +222,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
         assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
                 .maxPrefetchedMessages(20)
                 .desiredMinPrefetchedMessages(5)
-                .messageVisibilityTimeoutInSeconds(300)
+                .messageVisibilityTimeout(Duration.ofSeconds(300))
                 .build()
         );
     }

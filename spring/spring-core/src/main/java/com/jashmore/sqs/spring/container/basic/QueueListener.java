@@ -131,7 +131,7 @@ public @interface QueueListener {
      * timeout the current threads waiting for messages will have messages requested for them
      *
      * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingMessageRetrieverProperties#getBatchingPeriodInMs() for more details
+     * @see BatchingMessageRetrieverProperties#getBatchingPeriod() for more details
      */
     long batchingPeriodInMs() default 2000L;
 
@@ -143,7 +143,7 @@ public @interface QueueListener {
      * <pre>batchingPeriodInMsString = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #batchingPeriodInMs()}.
      *
      * @return the period in ms that threads will wait for messages to be requested from SQS
-     * @see BatchingMessageRetrieverProperties#getBatchingPeriodInMs() for more details
+     * @see BatchingMessageRetrieverProperties#getBatchingPeriod() for more details
      * @see #batchingPeriodInMs() for more information about this field
      */
     String batchingPeriodInMsString() default "";
@@ -152,7 +152,7 @@ public @interface QueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 
@@ -163,7 +163,7 @@ public @interface QueueListener {
      * <pre>messageVisibilityTimeoutInSeconds = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #messageVisibilityTimeoutInSeconds()}.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
     String messageVisibilityTimeoutInSecondsString() default "";
 

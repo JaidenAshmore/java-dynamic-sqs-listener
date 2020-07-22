@@ -47,19 +47,22 @@ class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: Sq
                     Supplier(processorBuilder),
                     Supplier(resolverBuilder),
                     object : CoreMessageListenerContainerProperties {
-                        override fun getMessageRetrieverShutdownTimeoutInSeconds(): Int? = shutdown.messageRetrieverShutdownTimeout?.seconds?.toInt()
-
                         override fun shouldInterruptThreadsProcessingMessagesOnShutdown(): Boolean? = shutdown.shouldInterruptThreadsProcessingMessages
-
-                        override fun getMessageResolverShutdownTimeoutInSeconds(): Int? = shutdown.messageResolverShutdownTimeout?.seconds?.toInt()
 
                         override fun shouldProcessAnyExtraRetrievedMessagesOnShutdown(): Boolean? = shutdown.shouldProcessAnyExtraRetrievedMessages
 
-                        override fun getMessageProcessingShutdownTimeoutInSeconds(): Int? = shutdown.messageProcessingShutdownTimeout?.seconds?.toInt()
+                        override fun getMessageBrokerShutdownTimeout(): Duration? = shutdown.messageBrokerShutdownTimeout
+
+                        override fun getMessageProcessingShutdownTimeout(): Duration? = shutdown.messageProcessingShutdownTimeout
+
+                        override fun getMessageResolverShutdownTimeout(): Duration? = shutdown.messageResolverShutdownTimeout
+
+                        override fun getMessageRetrieverShutdownTimeout(): Duration? = shutdown.messageRetrieverShutdownTimeout
                     }
             )
         } else {
-            return CoreMessageListenerContainer(identifier,
+            return CoreMessageListenerContainer(
+                    identifier,
                     Supplier(brokerBuilder),
                     Supplier(retrieverBuilder),
                     Supplier(processorBuilder),
@@ -87,19 +90,19 @@ class ShutdownBuilder {
     /**
      * Set the timeout for how long to wait for the message processing threads to finish.
      *
-     * @see [CoreMessageListenerContainerProperties.getMessageProcessingShutdownTimeoutInSeconds] for more details about this field
+     * @see [CoreMessageListenerContainerProperties.getMessageProcessingShutdownTimeout] for more details about this field
      */
     var messageProcessingShutdownTimeout: Duration? = null
     /**
      * Set the timeout for how long to wait for the [MessageRetriever] background thread to finish.
      *
-     * @see [CoreMessageListenerContainerProperties.getMessageRetrieverShutdownTimeoutInSeconds] for more details about this field
+     * @see [CoreMessageListenerContainerProperties.getMessageRetrieverShutdownTimeout] for more details about this field
      */
     var messageRetrieverShutdownTimeout: Duration? = null
     /**
      * Set the timeout for how to wait for the [MessageResolver] background thread to finish.
      *
-     * @see [CoreMessageListenerContainerProperties.getMessageResolverShutdownTimeoutInSeconds] for more details about this field
+     * @see [CoreMessageListenerContainerProperties.getMessageResolverShutdownTimeout] for more details about this field
      */
     var messageResolverShutdownTimeout: Duration? = null
     /**
@@ -108,7 +111,7 @@ class ShutdownBuilder {
      * Note that if the [ShutdownBuilder.shouldProcessAnyExtraRetrievedMessages] is true and there are extra messages to process, this timeout will
      * be used twice.
      *
-     * @see [CoreMessageListenerContainerProperties.getMessageBrokerShutdownTimeoutInSeconds] for more details about this field
+     * @see [CoreMessageListenerContainerProperties.getMessageBrokerShutdownTimeout] for more details about this field
      */
     var messageBrokerShutdownTimeout: Duration? = null
 }

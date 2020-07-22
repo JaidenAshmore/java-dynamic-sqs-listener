@@ -30,7 +30,7 @@ class ConcurrentMessageBrokerDslBuilder : MessageBrokerDslBuilder {
      * Supplier for getting how long the broker should wait before checking to see if the concurrency rate can be increased if it is
      * already processing the concurrency level limit.
      *
-     * @see [ConcurrentMessageBrokerProperties.getConcurrencyPollingRateInMilliseconds] for in-depth details about this field
+     * @see [ConcurrentMessageBrokerProperties.getConcurrencyPollingRate] for in-depth details about this field
      */
     var concurrencyPollingRate: (() -> Duration?) = { null }
 
@@ -40,7 +40,7 @@ class ConcurrentMessageBrokerDslBuilder : MessageBrokerDslBuilder {
      * This is used to stop it constantly cycling errors and spamming the logs and hopefully the error fixes itself the next time it is
      * attempted.
      *
-     * @see [ConcurrentMessageBrokerProperties.getErrorBackoffTimeInMilliseconds] for in-depth details about this field
+     * @see [ConcurrentMessageBrokerProperties.getErrorBackoffTime] for in-depth details about this field
      */
     var errorBackoffTime: (() -> Duration?) = { null }
 
@@ -48,11 +48,12 @@ class ConcurrentMessageBrokerDslBuilder : MessageBrokerDslBuilder {
         val actualConcurrencyLevel: () -> Int = concurrencyLevel ?: throw RequiredFieldException("concurrencyLevel", "ConcurrentMessageBroker")
         return ConcurrentMessageBroker(
                 object : ConcurrentMessageBrokerProperties {
-                    override fun getErrorBackoffTimeInMilliseconds(): Long? = errorBackoffTime()?.toMillis()
 
                     override fun getConcurrencyLevel(): Int = actualConcurrencyLevel()
 
-                    override fun getConcurrencyPollingRateInMilliseconds(): Long? = concurrencyPollingRate()?.toMillis()
+                    override fun getConcurrencyPollingRate(): Duration? = concurrencyPollingRate()
+
+                    override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
                 }
         )
     }

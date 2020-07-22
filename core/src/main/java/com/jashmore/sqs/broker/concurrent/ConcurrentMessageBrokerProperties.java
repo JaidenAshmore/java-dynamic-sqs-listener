@@ -2,7 +2,10 @@ package com.jashmore.sqs.broker.concurrent;
 
 import com.jashmore.documentation.annotations.NotThreadSafe;
 import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
+
+import java.time.Duration;
 
 /**
  * Properties for dynamically configuring how the {@link ConcurrentMessageBroker} is able to process messages concurrently.
@@ -25,7 +28,7 @@ public interface ConcurrentMessageBrokerProperties {
      * <p>The {@link ConcurrentMessageBroker} will maintain the rate of concurrency by checking that the current concurrency rate is aligned with this value.
      * If there is currently less messages being processed than this value, more requests for messages will be made to meet this value. If there are
      * more messages being processed or requested than this value, this coordinating thread will block until enough messages have been processed.  If a
-     * permit has not be obtained before the timeout defined by {@link #getConcurrencyPollingRateInMilliseconds()}, it will recalculate this
+     * permit has not be obtained before the timeout defined by {@link #getConcurrencyPollingRate()}, it will recalculate this
      * concurrency rate again and wait for a permit.
      *
      * <p>Note that the concurrency rate does not get applied instantly and there are multiple attributing factors for when the rate of concurrency will
@@ -40,7 +43,7 @@ public interface ConcurrentMessageBrokerProperties {
      *     </li>
      *     <li>
      *         The delay in the concurrency rate change may be due to transitioning from allowing zero threads to a number of threads. In a worst
-     *         case scenario there would be a delay of {@link #getConcurrencyPollingRateInMilliseconds()} before the rate of concurrency is changed.
+     *         case scenario there would be a delay of {@link #getConcurrencyPollingRate()} before the rate of concurrency is changed.
      *     </li>
      * </ul>
      *
@@ -50,7 +53,7 @@ public interface ConcurrentMessageBrokerProperties {
     int getConcurrencyLevel();
 
     /**
-     * The number of milliseconds that the coordinating thread will sleep when the maximum rate of concurrency has been reached before checking the
+     * The duration that the coordinating thread will sleep when the maximum rate of concurrency has been reached before checking the
      * concurrency rate again.
      *
      * <p>The reason that this property is needed is because during the processing of messages, which could be a significantly long period, the rate
@@ -62,25 +65,27 @@ public interface ConcurrentMessageBrokerProperties {
      * that the coordinating thread is awoken and is therefore less CPU intensive. However, decreasing this polling period makes it more responsive to changes
      * to the rate of concurrency.
      *
-     * <p>If this value is null or less than zero, {@link ConcurrentMessageBrokerConstants#DEFAULT_CONCURRENCY_POLLING_IN_MS} will be used instead.
+     * <p>If this duration is null or negative, {@link ConcurrentMessageBrokerConstants#DEFAULT_CONCURRENCY_POLLING} will be used instead. It is not
+     * recommended to have a low value as that will result in this background thread constantly trying to determine fi the concurrency rate can be
+     * changed.
      *
-     * @return the number of milliseconds between polls for the concurrency level
+     * @return the amount of time between polls for the concurrency level
      */
     @Nullable
-    @PositiveOrZero
-    Long getConcurrencyPollingRateInMilliseconds();
+    @Positive
+    Duration getConcurrencyPollingRate();
 
     /**
-     * The number of milliseconds that the coordinating thread should backoff if there was an error trying to request a message.
+     * The duration that the coordinating thread should backoff if there was an error trying to request a message.
      *
      * <p>This is needed to stop the background thread from trying again and again over and over causing a flood of error log messages that may make it
      * difficult to debug.
      *
-     * <p>If this value is null or negative, {@link ConcurrentMessageBrokerConstants#DEFAULT_BACKOFF_TIME_IN_MS} will be used as the backoff period.
+     * <p>If this value is null or negative, {@link ConcurrentMessageBrokerConstants#DEFAULT_BACKOFF_TIME} will be used as the backoff period.
      *
-     * @return the number of milliseconds to sleep the thread after an error is thrown
+     * @return the amount of time to sleep the thread after an error is thrown
      */
     @Nullable
     @PositiveOrZero
-    Long getErrorBackoffTimeInMilliseconds();
+    Duration getErrorBackoffTime();
 }

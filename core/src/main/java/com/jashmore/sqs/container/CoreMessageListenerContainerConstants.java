@@ -3,12 +3,14 @@ package com.jashmore.sqs.container;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import lombok.experimental.UtilityClass;
 
+import java.time.Duration;
+
 @UtilityClass
 class CoreMessageListenerContainerConstants {
     /**
-     * The default time that the broker will wait for each background thread to shutdown before giving up.
+     * The default time that the container will wait for a component to shutdown before giving up.
      */
-    static final int DEFAULT_SHUTDOWN_TIME_IN_SECONDS = 60;
+    static final Duration DEFAULT_SHUTDOWN_TIME = Duration.ofSeconds(60);
 
     /**
      * The default setting for whether the current messages being processed should be interrupted when the container is being shut down.

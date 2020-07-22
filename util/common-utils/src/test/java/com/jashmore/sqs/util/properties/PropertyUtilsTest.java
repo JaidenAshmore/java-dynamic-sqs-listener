@@ -1,9 +1,13 @@
 package com.jashmore.sqs.util.properties;
 
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroDuration;
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroIntegerValue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.util.ExpectedTestException;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 class PropertyUtilsTest {
 
@@ -60,12 +64,24 @@ class PropertyUtilsTest {
 
     @Test
     void testSafelyGetPositiveOrZeroIntegerValue() {
-        assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
-        assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> -1, 5)).isEqualTo(5);
-        assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> 0, 5)).isEqualTo(0);
-        assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> null, 5)).isEqualTo(5);
-        assertThat(PropertyUtils.safelyGetPositiveOrZeroIntegerValue("prop", () -> {
+        assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
+        assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> -1, 5)).isEqualTo(5);
+        assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> 0, 5)).isEqualTo(0);
+        assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> null, 5)).isEqualTo(5);
+        assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> {
             throw new ExpectedTestException();
         }, 5)).isEqualTo(5);
+    }
+
+    @Test
+    void getPositiveOrZeroDuration() {
+        final Duration defaultDuration = Duration.ofSeconds(5);
+        assertThat(safelyGetPositiveOrZeroDuration("prop", () -> Duration.ofSeconds(1), defaultDuration)).isEqualTo(Duration.ofSeconds(1));
+        assertThat(safelyGetPositiveOrZeroDuration("prop", () -> Duration.ofSeconds(-1), defaultDuration)).isEqualTo(defaultDuration);
+        assertThat(safelyGetPositiveOrZeroDuration("prop", () -> Duration.ofSeconds(0), defaultDuration)).isEqualTo(Duration.ofSeconds(0));
+        assertThat(safelyGetPositiveOrZeroDuration("prop", () -> null, defaultDuration)).isEqualTo(defaultDuration);
+        assertThat(safelyGetPositiveOrZeroDuration("prop", () -> {
+            throw new ExpectedTestException();
+        }, defaultDuration)).isEqualTo(defaultDuration);
     }
 }

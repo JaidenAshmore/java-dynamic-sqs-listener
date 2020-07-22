@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.time.Duration;
+
 /**
  * Implementation that stores the value as non-mutable field values and therefore will return the same value on every call.
  *
@@ -21,20 +23,18 @@ import lombok.ToString;
 @ThreadSafe
 public final class StaticConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
     private final Integer concurrencyLevel;
-    private final Long preferredConcurrencyPollingRateInMilliseconds;
-    private final Long errorBackoffTimeInMilliseconds;
+    private final Duration preferredConcurrencyPollingRate;
+    private final Duration errorBackoffTime;
 
     public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
-                                                   final Long preferredConcurrencyPollingRateInMilliseconds,
-                                                   final Long errorBackoffTimeInMilliseconds) {
+                                                   final Duration preferredConcurrencyPollingRate,
+                                                   final Duration errorBackoffTime) {
         Preconditions.checkNotNull(concurrencyLevel, "concurrencyLevel should not be null");
         Preconditions.checkPositiveOrZero(concurrencyLevel, "concurrencyLevel should be greater than or equal to zero");
-        Preconditions.checkArgument(preferredConcurrencyPollingRateInMilliseconds == null || preferredConcurrencyPollingRateInMilliseconds >= 0,
-                "preferredConcurrencyPollingRateInMilliseconds should null or greater than or equal to zero");
 
         this.concurrencyLevel = concurrencyLevel;
-        this.preferredConcurrencyPollingRateInMilliseconds = preferredConcurrencyPollingRateInMilliseconds;
-        this.errorBackoffTimeInMilliseconds = errorBackoffTimeInMilliseconds;
+        this.preferredConcurrencyPollingRate = preferredConcurrencyPollingRate;
+        this.errorBackoffTime = errorBackoffTime;
     }
 
     @PositiveOrZero
@@ -43,16 +43,17 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
         return concurrencyLevel;
     }
 
+    @Nullable
     @PositiveOrZero
     @Override
-    public Long getConcurrencyPollingRateInMilliseconds() {
-        return preferredConcurrencyPollingRateInMilliseconds;
+    public Duration getConcurrencyPollingRate() {
+        return preferredConcurrencyPollingRate;
     }
 
     @Nullable
     @PositiveOrZero
     @Override
-    public Long getErrorBackoffTimeInMilliseconds() {
-        return errorBackoffTimeInMilliseconds;
+    public Duration getErrorBackoffTime() {
+        return errorBackoffTime;
     }
 }

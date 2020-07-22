@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -45,10 +46,10 @@ class CoreMessageListenerContainerTest {
     private static final StaticCoreMessageListenerContainerProperties DEFAULT_PROPERTIES = StaticCoreMessageListenerContainerProperties.builder()
             .shouldInterruptThreadsProcessingMessagesOnShutdown(true)
             .shouldProcessAnyExtraRetrievedMessagesOnShutdown(false)
-            .messageProcessingShutdownTimeoutInSeconds(5)
-            .messageResolverShutdownTimeoutInSeconds(5)
-            .messageRetrieverShutdownTimeoutInSeconds(5)
-            .messageBrokerShutdownTimeoutInSeconds(5)
+            .messageProcessingShutdownTimeout(Duration.ofSeconds(5))
+            .messageResolverShutdownTimeout(Duration.ofSeconds(5))
+            .messageRetrieverShutdownTimeout(Duration.ofSeconds(5))
+            .messageBrokerShutdownTimeout(Duration.ofSeconds(5))
             .build();
 
     @Mock
@@ -420,7 +421,7 @@ class CoreMessageListenerContainerTest {
             return null;
         }).when(messageResolver).run();
         final CoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES.toBuilder()
-                .messageRetrieverShutdownTimeoutInSeconds(1)
+                .messageRetrieverShutdownTimeout(Duration.ofSeconds(1))
                 .build();
         final CoreMessageListenerContainer container = buildContainer(
                 "id", new StubMessageBroker(), messageResolver, messageProcessor, messageRetriever, properties);

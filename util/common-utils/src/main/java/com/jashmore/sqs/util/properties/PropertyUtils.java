@@ -3,6 +3,7 @@ package com.jashmore.sqs.util.properties;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -84,6 +85,20 @@ public class PropertyUtils {
      */
     public int safelyGetPositiveOrZeroIntegerValue(final String propertyName, final Supplier<Integer> valueSupplier, final int defaultValue) {
         return safelyGetValue(propertyName, valueSupplier, defaultValue, aInteger -> aInteger >= 0);
+    }
+
+    /**
+     * Get the duration from a property and if it is null or negative, return the default value supplied.
+     *
+     * @param propertyName  the name of the property
+     * @param valueSupplier the supplier to get the property value
+     * @param defaultValue  the default duration
+     * @return the duration for the property
+     */
+    public Duration safelyGetPositiveOrZeroDuration(final String propertyName,
+                                                    final Supplier<Duration> valueSupplier,
+                                                    final Duration defaultValue) {
+        return safelyGetValue(propertyName, valueSupplier, defaultValue, (duration) -> !duration.isNegative());
     }
 
     private <T> T safelyGetValue(final String propertyName,

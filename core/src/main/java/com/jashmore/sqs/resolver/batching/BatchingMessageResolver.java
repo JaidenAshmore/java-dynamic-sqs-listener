@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * {@link MessageResolver} that will batch the deletions of messages into a group to reduce the amount of messages that are being sent to SQS queue.
  *
  * <p>This uses a {@link BlockingQueue} to store all of the messages that need to be resolved and once the timeout provided by
- * {@link BatchingMessageResolverProperties#getBufferingTimeInMs()} is reached or the number of messages goes above
+ * {@link BatchingMessageResolverProperties#getBufferingTime()} is reached or the number of messages goes above
  * {@link BatchingMessageResolverProperties#getBufferingSizeLimit()}, the messages are sent out to be deleted.
  */
 @Slf4j
@@ -56,7 +56,7 @@ public class BatchingMessageResolver implements MessageResolver {
                                    final SqsAsyncClient sqsAsyncClient) {
         this(queueProperties, sqsAsyncClient, StaticBatchingMessageResolverProperties.builder()
                 .bufferingSizeLimit(1)
-                .bufferingTimeInMs(Long.MAX_VALUE)
+                .bufferingTime(Duration.ofHours(1))
                 .build());
     }
 
@@ -95,9 +95,9 @@ public class BatchingMessageResolver implements MessageResolver {
             final List<MessageResolutionBean> batchOfMessagesToResolve = new LinkedList<>();
             try {
                 final int batchSize = getBatchSize();
-                final long bufferingTimeInMs = getBufferingTimeInMs();
-                log.trace("Waiting {}ms for {} messages to be submitted for deletion", bufferingTimeInMs, batchSize);
-                QueueUtils.drain(messagesToBeResolved, batchOfMessagesToResolve, batchSize, Duration.ofMillis(bufferingTimeInMs));
+                final Duration bufferingTime = properties.getBufferingTime();
+                log.trace("Waiting {}ms for {} messages to be submitted for deletion", bufferingTime.toMillis(), batchSize);
+                QueueUtils.drain(messagesToBeResolved, batchOfMessagesToResolve, batchSize, bufferingTime);
             } catch (final InterruptedException interruptedException) {
                 log.info("Shutting down MessageResolver");
                 // Do nothing, we still want to send the current batch of messages
@@ -152,15 +152,6 @@ public class BatchingMessageResolver implements MessageResolver {
             return 1;
         }
         return Math.min(bufferingSizeLimit, MAX_NUMBER_OF_MESSAGES_IN_BATCH);
-    }
-
-    /**
-     * Get the time in milliseconds that the thread should wait for the batch to be filled.
-     *
-     * @return the time to wait in milliseconds
-     */
-    private long getBufferingTimeInMs() {
-        return Math.max(0, properties.getBufferingTimeInMs());
     }
 
     /**

@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -107,7 +108,7 @@ class ConcurrentMessageBrokerIntegrationTest {
                 queueProperties,
                 StaticPrefetchingMessageRetrieverProperties
                         .builder()
-                        .messageVisibilityTimeoutInSeconds(60)
+                        .messageVisibilityTimeout(Duration.ofSeconds(60))
                         .desiredMinPrefetchedMessages(30)
                         .maxPrefetchedMessages(40)
                         .build()
@@ -159,8 +160,8 @@ class ConcurrentMessageBrokerIntegrationTest {
                 elasticMQSqsAsyncClient,
                 StaticBatchingMessageRetrieverProperties.builder()
                         .batchSize(10)
-                        .batchingPeriodInMs(3000L)
-                        .messageVisibilityTimeoutInSeconds(60)
+                        .batchingPeriod(Duration.ofSeconds(3))
+                        .messageVisibilityTimeout(Duration.ofSeconds(60))
                         .build()
         );
         final CountDownLatch messageReceivedLatch = new CountDownLatch(numberOfMessages);

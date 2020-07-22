@@ -9,6 +9,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 
+import java.time.Duration;
+
 @Builder(toBuilder = true)
 @ToString
 @EqualsAndHashCode
@@ -17,8 +19,8 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     private final Integer desiredMinPrefetchedMessages;
     @NonNull
     private final Integer maxPrefetchedMessages;
-    private final Integer messageVisibilityTimeoutInSeconds;
-    private final Integer errorBackoffTimeInMilliseconds;
+    private final Duration messageVisibilityTimeout;
+    private final Duration errorBackoffTime;
 
     @Override
     @Positive
@@ -35,14 +37,14 @@ public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingM
     @Override
     @Nullable
     @Positive
-    public Integer getMessageVisibilityTimeoutInSeconds() {
-        return messageVisibilityTimeoutInSeconds;
+    public Duration getMessageVisibilityTimeout() {
+        return messageVisibilityTimeout;
     }
 
     @Override
     @Nullable
     @PositiveOrZero
-    public Integer getErrorBackoffTimeInMilliseconds() {
-        return errorBackoffTimeInMilliseconds;
+    public Duration getErrorBackoffTime() {
+        return errorBackoffTime;
     }
 }

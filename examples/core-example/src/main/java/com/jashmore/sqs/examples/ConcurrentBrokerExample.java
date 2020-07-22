@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -100,13 +101,13 @@ public class ConcurrentBrokerExample {
                     }
 
                     @Override
-                    public @PositiveOrZero Long getConcurrencyPollingRateInMilliseconds() {
-                        return CONCURRENCY_LEVEL_PERIOD_IN_MS;
+                    public Duration getConcurrencyPollingRate() {
+                        return Duration.ofMillis(CONCURRENCY_LEVEL_PERIOD_IN_MS);
                     }
 
                     @Override
-                    public @PositiveOrZero Long getErrorBackoffTimeInMilliseconds() {
-                        return 500L;
+                    public Duration getErrorBackoffTime() {
+                        return Duration.ofMillis(500);
                     }
                 }),
                 () -> new PrefetchingMessageRetriever(
@@ -132,7 +133,7 @@ public class ConcurrentBrokerExample {
                 () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient,
                         StaticBatchingMessageResolverProperties.builder()
                                 .bufferingSizeLimit(1)
-                                .bufferingTimeInMs(5000)
+                                .bufferingTime(Duration.ofSeconds(5))
                                 .build())
         );
         container.start();

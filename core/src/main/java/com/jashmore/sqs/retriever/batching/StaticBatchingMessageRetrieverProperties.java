@@ -6,6 +6,8 @@ import com.jashmore.documentation.annotations.PositiveOrZero;
 import lombok.Builder;
 import lombok.Value;
 
+import java.time.Duration;
+
 /**
  * Static implementation of the properties that will never change during the processing of the messages.
  */
@@ -13,9 +15,9 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class StaticBatchingMessageRetrieverProperties implements BatchingMessageRetrieverProperties {
     int batchSize;
-    Long batchingPeriodInMs;
-    Integer messageVisibilityTimeoutInSeconds;
-    Long errorBackoffTimeInMilliseconds;
+    Duration batchingPeriod;
+    Duration messageVisibilityTimeout;
+    Duration errorBackoffTime;
 
     @Positive
     @Override
@@ -24,23 +26,23 @@ public class StaticBatchingMessageRetrieverProperties implements BatchingMessage
     }
 
     @Nullable
-    @PositiveOrZero
+    @Positive
     @Override
-    public Long getBatchingPeriodInMs() {
-        return batchingPeriodInMs;
+    public Duration getBatchingPeriod() {
+        return batchingPeriod;
     }
 
     @Nullable
     @Positive
     @Override
-    public Integer getMessageVisibilityTimeoutInSeconds() {
-        return messageVisibilityTimeoutInSeconds;
+    public Duration getMessageVisibilityTimeout() {
+        return messageVisibilityTimeout;
     }
 
     @Nullable
     @PositiveOrZero
     @Override
-    public Long getErrorBackoffTimeInMilliseconds() {
-        return errorBackoffTimeInMilliseconds;
+    public Duration getErrorBackoffTime() {
+        return errorBackoffTime;
     }
 }

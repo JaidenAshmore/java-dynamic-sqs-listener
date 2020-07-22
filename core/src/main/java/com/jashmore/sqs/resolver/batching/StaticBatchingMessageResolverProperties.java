@@ -5,7 +5,10 @@ import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
 import com.jashmore.documentation.annotations.Max;
 import com.jashmore.documentation.annotations.Positive;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
+
+import java.time.Duration;
 
 /**
  * Static implementation that will contain constant size and time limit for the buffer.
@@ -13,19 +16,20 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticBatchingMessageResolverProperties implements BatchingMessageResolverProperties {
-    long bufferingTimeInMs;
     int bufferingSizeLimit;
-
-    @Positive
-    @Override
-    public long getBufferingTimeInMs() {
-        return bufferingTimeInMs;
-    }
+    Duration bufferingTime;
 
     @Positive
     @Max(MAX_NUMBER_OF_MESSAGES_IN_BATCH)
     @Override
     public int getBufferingSizeLimit() {
         return bufferingSizeLimit;
+    }
+
+    @NonNull
+    @Positive
+    @Override
+    public Duration getBufferingTime() {
+        return bufferingTime;
     }
 }

@@ -1,14 +1,14 @@
 package com.jashmore.sqs.retriever.prefetch;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS;
+import static com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverConstants.DEFAULT_ERROR_BACKOFF_TIMEOUT;
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroDuration;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.Preconditions;
 import com.jashmore.sqs.util.collections.CollectionUtils;
-import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkInterruptedException;
@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -161,13 +162,9 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
                 .messageAttributeNames(QueueAttributeName.ALL.toString())
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
                 .maxNumberOfMessages(numberOfMessagesToObtain);
-        final Integer visibilityTimeoutInSeconds = properties.getMessageVisibilityTimeoutInSeconds();
-        if (visibilityTimeoutInSeconds != null) {
-            if (visibilityTimeoutInSeconds <= 0) {
-                log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
-            } else {
-                requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
-            }
+        final Duration visibilityTimeout = properties.getMessageVisibilityTimeout();
+        if (visibilityTimeout != null && visibilityTimeout.getSeconds() > 0) {
+            requestBuilder.visibilityTimeout((int) visibilityTimeout.getSeconds());
         }
 
         return requestBuilder.build();
@@ -175,28 +172,13 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
 
     private void performBackoff() {
         try {
-            final long errorBackoffTimeInMilliseconds = getBackoffTimeInMs();
-            log.debug("Backing off for {}ms", errorBackoffTimeInMilliseconds);
-            Thread.sleep(errorBackoffTimeInMilliseconds);
+            final Duration errorBackoffTime =
+                    safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_ERROR_BACKOFF_TIMEOUT);
+            log.debug("Backing off for {}ms", errorBackoffTime.toMillis());
+            Thread.sleep(errorBackoffTime.toMillis());
         } catch (final InterruptedException interruptedException) {
             log.debug("Thread interrupted during backoff period");
             Thread.currentThread().interrupt();
         }
-    }
-
-    /**
-     * Get the amount of time in milliseconds that the thread should wait after a failure to get messages.
-     *
-     * <p>Visible for testing as testing with the actual default backoff time makes the unit tests slow
-     *
-     * @return the amount of time to backoff on errors in milliseconds
-     */
-    @SuppressWarnings("Duplicates")
-    private int getBackoffTimeInMs() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "errorBackoffTimeInMilliseconds",
-                properties::getErrorBackoffTimeInMilliseconds,
-                DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS
-        );
     }
 }

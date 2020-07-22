@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -38,8 +39,8 @@ class ConcurrentMessageBrokerTest {
     private static final Function<Message, CompletableFuture<?>> MESSAGE_NO_OP = message -> CompletableFuture.completedFuture(null);
     private static final StaticConcurrentMessageBrokerProperties DEFAULT_PROPERTIES = StaticConcurrentMessageBrokerProperties.builder()
             .concurrencyLevel(1)
-            .preferredConcurrencyPollingRateInMilliseconds(100L)
-            .errorBackoffTimeInMilliseconds(0L)
+            .preferredConcurrencyPollingRate(Duration.ofMillis(100))
+            .errorBackoffTime(Duration.ofSeconds(0))
             .build();
 
     @Mock
@@ -86,7 +87,7 @@ class ConcurrentMessageBrokerTest {
         // arrange
         final long concurrencyPollingRateInMs = 100L;
         final ConcurrentMessageBrokerProperties properties = DEFAULT_PROPERTIES.toBuilder()
-                .preferredConcurrencyPollingRateInMilliseconds(concurrencyPollingRateInMs)
+                .preferredConcurrencyPollingRate(Duration.ofMillis(concurrencyPollingRateInMs))
                 .concurrencyLevel(0)
                 .build();
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
@@ -105,7 +106,7 @@ class ConcurrentMessageBrokerTest {
         final long concurrencyPollingRateInMs = 100L;
         final AtomicInteger numberTimesConcurrencyPolled = new AtomicInteger(0);
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
-        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(concurrencyPollingRateInMs);
+        when(properties.getConcurrencyPollingRate()).thenReturn(Duration.ofMillis(concurrencyPollingRateInMs));
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         when(properties.getConcurrencyLevel())
                 .thenAnswer((invocation) -> {
@@ -173,7 +174,7 @@ class ConcurrentMessageBrokerTest {
     void exceptionThrownWhileGettingPropertiesWillStillAllowMoreMessagesToRetrieved() throws InterruptedException {
         // arrange
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
-        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1L);
+        when(properties.getConcurrencyPollingRate()).thenReturn(Duration.ofMillis(1));
         when(properties.getConcurrencyLevel())
                 .thenThrow(new ExpectedTestException())
                 .thenReturn(1);
@@ -217,12 +218,12 @@ class ConcurrentMessageBrokerTest {
         final long backoffTimeInMs = 6000L;
         final ConcurrentMessageBrokerProperties properties = mock(ConcurrentMessageBrokerProperties.class);
         when(properties.getConcurrencyLevel()).thenReturn(2);
-        when(properties.getConcurrencyPollingRateInMilliseconds()).thenReturn(1000L);
+        when(properties.getConcurrencyPollingRate()).thenReturn(Duration.ofMillis(1000));
         final CountDownLatch enteredBackoffSection = new CountDownLatch(1);
-        when(properties.getErrorBackoffTimeInMilliseconds())
+        when(properties.getErrorBackoffTime())
                 .thenAnswer((invocation) -> {
                     enteredBackoffSection.countDown();
-                    return backoffTimeInMs;
+                    return Duration.ofMillis(backoffTimeInMs);
                 });
         when(messageSupplier.get()).thenThrow(new ExpectedTestException());
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
