@@ -145,6 +145,33 @@ class BatchingMessageRetrieverTest {
     }
 
     @Test
+    void whenNegativeVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
+        // arrange
+        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
+                .batchSize(1)
+                .messageVisibilityTimeout(Duration.ofSeconds(-1))
+                .build();
+        final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
+        final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenAnswer(invocation -> {
+                    receiveMessageRequestLatch.countDown();
+                    return mockReceiveMessageResponse(Message.builder().build());
+                });
+
+        // act
+        startRunnableInThread(retriever::run, thread -> {
+            retriever.retrieveMessage();
+            assertThat(receiveMessageRequestLatch.await(2, TimeUnit.SECONDS)).isTrue();
+        });
+
+        // assert
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
+    }
+
+    @Test
     void whenZeroVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()

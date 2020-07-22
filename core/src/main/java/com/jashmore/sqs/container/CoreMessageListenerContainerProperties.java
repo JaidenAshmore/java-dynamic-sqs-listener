@@ -37,7 +37,7 @@ public interface CoreMessageListenerContainerProperties {
      * Gets the amount of time that the container should wait for the {@link com.jashmore.sqs.broker.MessageBroker} to shutdown when the broker is
      * being shutdown.
      *
-     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used for instead.
+     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used instead.
      *
      * @return the amount of time to wait for the message retriever to shutdown
      */
@@ -48,7 +48,7 @@ public interface CoreMessageListenerContainerProperties {
     /**
      * Gets the amount of time that the container should wait for the {@link MessageRetriever} to shutdown when the broker is being shutdown.
      *
-     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used for instead.
+     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used instead.
      *
      * @return the amount of time to wait for the message retriever to shutdown
      */
@@ -62,7 +62,7 @@ public interface CoreMessageListenerContainerProperties {
      * <p>When {@link #shouldProcessAnyExtraRetrievedMessagesOnShutdown()} is true and there are extra messages to be processed, this field will try and
      * put as many messages onto threads to be processed before this limit is hit. If this time limit is reached some messages may not have been processed.
      *
-     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used for instead.
+     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used instead.
      *
      * @return the amount of time to wait for shutdown of message processing threads
      */
@@ -73,7 +73,7 @@ public interface CoreMessageListenerContainerProperties {
     /**
      * Gets the amount of time that the container should wait for the {@link MessageResolver} to shutdown when the broker is being shutdown.
      *
-     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used for instead.
+     * <p>If this value is null or negative, then {@link CoreMessageListenerContainerConstants#DEFAULT_SHUTDOWN_TIME} will be used instead.
      *
      * @return the amount of time to wait for the message resolver to shutdown
      */

@@ -2,6 +2,7 @@ package com.jashmore.sqs.broker.concurrent;
 
 import com.jashmore.documentation.annotations.NotThreadSafe;
 import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 
 import java.time.Duration;
@@ -64,12 +65,14 @@ public interface ConcurrentMessageBrokerProperties {
      * that the coordinating thread is awoken and is therefore less CPU intensive. However, decreasing this polling period makes it more responsive to changes
      * to the rate of concurrency.
      *
-     * <p>If this duration is null or negative, {@link ConcurrentMessageBrokerConstants#DEFAULT_CONCURRENCY_POLLING} will be used instead.
+     * <p>If this duration is null or negative, {@link ConcurrentMessageBrokerConstants#DEFAULT_CONCURRENCY_POLLING} will be used instead. It is not
+     * recommended to have a low value as that will result in this background thread constantly trying to determine fi the concurrency rate can be
+     * changed.
      *
      * @return the amount of time between polls for the concurrency level
      */
     @Nullable
-    @PositiveOrZero
+    @Positive
     Duration getConcurrencyPollingRate();
 
     /**

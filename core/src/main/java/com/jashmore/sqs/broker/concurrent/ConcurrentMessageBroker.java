@@ -90,7 +90,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
     /**
      * Safely get the number of milliseconds that should wait to get a permit for creating a new thread.
      *
-     * @return the durationToWaitFor
+     * @return the duration to wait for an available permit
      * @see ConcurrentMessageBrokerProperties#getConcurrencyPollingRate() for more information
      */
     private Duration getPermitWaitTime() {

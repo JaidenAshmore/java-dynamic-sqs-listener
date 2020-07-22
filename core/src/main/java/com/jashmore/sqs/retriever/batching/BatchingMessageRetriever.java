@@ -130,7 +130,7 @@ public class BatchingMessageRetriever implements MessageRetriever {
     private Queue<CompletableFuture<Message>> obtainRequestForMessagesBatch() throws InterruptedException {
         final Queue<CompletableFuture<Message>> messagesToObtain = new LinkedList<>();
         final int batchSize = getBatchSize();
-        final Duration pollingPeriod = safelyGetPositiveOrZeroDuration("batchingPeriod", properties::getBatchingPeriod, DEFAULT_BACKOFF_TIME);
+        final Duration pollingPeriod = safelyGetPositiveOrZeroDuration("batchingPeriod", properties::getBatchingPeriod, Duration.ZERO);
         if (log.isDebugEnabled()) {
             log.debug("Waiting for {} requests for messages within {}ms. Total currently waiting: {}",
                     batchSize,

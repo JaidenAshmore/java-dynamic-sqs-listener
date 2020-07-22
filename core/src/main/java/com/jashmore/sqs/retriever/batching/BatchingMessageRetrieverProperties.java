@@ -74,7 +74,7 @@ public interface BatchingMessageRetrieverProperties {
      * connection to the SQS throws a 403 or some other error and we don't want to be constantly retrying to make the connection unnecessarily. This
      * therefore sleeps the thread for this period before attempting again.
      *
-     * <p>If this value is null, negative or zero, {@link BatchingMessageRetrieverConstants#DEFAULT_BACKOFF_TIME} will be used as the backoff period.
+     * <p>If this value is null or negative, {@link BatchingMessageRetrieverConstants#DEFAULT_BACKOFF_TIME} will be used as the backoff period.
      *
      * @return the number of milliseconds to sleep the thread after an error is thrown
      */
