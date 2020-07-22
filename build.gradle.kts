@@ -30,7 +30,7 @@ subprojects {
 
     dependencies {
         // AWS
-        implementation(platform("software.amazon.awssdk:bom:2.13.58"))
+        implementation(platform("software.amazon.awssdk:bom:2.13.59"))
         api(platform("software.amazon.awssdk:bom:2.13.58"))
 
         // Spring Boot
