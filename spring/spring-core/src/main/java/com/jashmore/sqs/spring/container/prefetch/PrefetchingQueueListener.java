@@ -143,7 +143,7 @@ public @interface PrefetchingQueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see StaticPrefetchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
+     * @see StaticPrefetchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 
@@ -154,7 +154,7 @@ public @interface PrefetchingQueueListener {
      * <pre>messageVisibilityTimeoutInSeconds = "${my.profile.property}"</pre> instead of having it hardcoded in {@link #messageVisibilityTimeoutInSeconds()}.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeoutInSeconds() for more details and constraints
+     * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
     String messageVisibilityTimeoutInSecondsString() default "";
 

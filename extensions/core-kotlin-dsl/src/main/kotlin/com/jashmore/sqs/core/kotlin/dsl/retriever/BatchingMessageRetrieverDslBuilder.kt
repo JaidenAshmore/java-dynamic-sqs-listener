@@ -30,14 +30,14 @@ class BatchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsyncCli
     /**
      * The maximum amount of time to wait for the number of messages requested to reach the [BatchingMessageRetrieverDslBuilder.batchSize].
      *
-     * @see BatchingMessageRetrieverProperties.getBatchingPeriodInMs for more details about this field
+     * @see BatchingMessageRetrieverProperties.getBatchingPeriod for more details about this field
      */
     var batchingPeriod: (() -> Duration)? = null
 
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
-     * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeoutInSeconds for more details about this field
+     * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
      */
     var messageVisibility: (() -> Duration?)? = null
 
@@ -60,11 +60,11 @@ class BatchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsyncCli
                 object : BatchingMessageRetrieverProperties {
                     override fun getBatchSize(): Int = actualBatchSize()
 
-                    override fun getBatchingPeriodInMs(): Long = actualBatchingPeriod().toMillis()
+                    override fun getBatchingPeriod(): Duration = actualBatchingPeriod()
 
-                    override fun getMessageVisibilityTimeoutInSeconds(): Int? = actualMessageVisibility()?.seconds?.toInt()
+                    override fun getMessageVisibilityTimeout(): Duration? = actualMessageVisibility()
 
-                    override fun getErrorBackoffTimeInMilliseconds(): Long? = actualErrorBackoffTime()?.toMillis()
+                    override fun getErrorBackoffTime(): Duration? = actualErrorBackoffTime()
                 }
         )
     }

@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -313,7 +314,7 @@ class PrefetchingMessageRetrieverTest {
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeoutInSeconds(null)
+                .messageVisibilityTimeout(null)
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -333,7 +334,7 @@ class PrefetchingMessageRetrieverTest {
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeoutInSeconds(-1)
+                .messageVisibilityTimeout(Duration.ofSeconds(-1))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -353,7 +354,7 @@ class PrefetchingMessageRetrieverTest {
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeoutInSeconds(-1)
+                .messageVisibilityTimeout(Duration.ZERO)
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -373,7 +374,7 @@ class PrefetchingMessageRetrieverTest {
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeoutInSeconds(2)
+                .messageVisibilityTimeout(Duration.ofSeconds(2))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -448,7 +449,7 @@ class PrefetchingMessageRetrieverTest {
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
+                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -468,7 +469,7 @@ class PrefetchingMessageRetrieverTest {
                 .thenThrow(new ExpectedTestException());
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
+                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -491,7 +492,7 @@ class PrefetchingMessageRetrieverTest {
                 .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build()));
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
+                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
@@ -511,7 +512,7 @@ class PrefetchingMessageRetrieverTest {
                 .thenReturn(CompletableFutureUtils.completedExceptionally(SdkClientException.builder().cause(new SdkInterruptedException()).build()));
         final int backoffTimeInMilliseconds = 500;
         final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(backoffTimeInMilliseconds)
+                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
                 .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 

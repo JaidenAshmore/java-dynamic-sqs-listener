@@ -34,7 +34,7 @@ class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsync
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
-     * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeoutInSeconds for more details about this field
+     * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
      */
     var messageVisibility: (() -> Duration?)? = null
 
@@ -59,9 +59,9 @@ class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsync
 
                     override fun getMaxPrefetchedMessages(): Int = actualMaxPrefetched
 
-                    override fun getMessageVisibilityTimeoutInSeconds(): Int? = actualMessageVisibility()?.seconds?.toInt()
+                    override fun getMessageVisibilityTimeout(): Duration? = actualMessageVisibility()
 
-                    override fun getErrorBackoffTimeInMilliseconds(): Int? = actualErrorBackoffTime()?.toMillis()?.toInt()
+                    override fun getErrorBackoffTime(): Duration? = actualErrorBackoffTime()
                 }
         )
     }

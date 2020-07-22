@@ -1,13 +1,12 @@
 package com.jashmore.sqs.retriever.batching;
 
 import static com.jashmore.sqs.aws.AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS;
-import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BACKOFF_TIME_IN_MS;
-import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BATCHING_PERIOD_IN_MS;
+import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BACKOFF_TIME;
 import static com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverConstants.DEFAULT_BATCHING_TRIGGER;
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroDuration;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
-import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.collections.QueueUtils;
 import com.jashmore.sqs.util.properties.PropertyUtils;
@@ -130,24 +129,24 @@ public class BatchingMessageRetriever implements MessageRetriever {
 
     private Queue<CompletableFuture<Message>> obtainRequestForMessagesBatch() throws InterruptedException {
         final Queue<CompletableFuture<Message>> messagesToObtain = new LinkedList<>();
-        final int batchSize = getbatchSize();
-        final long pollingPeriod = getMaxBatchingPeriodInMs();
+        final int batchSize = getBatchSize();
+        final Duration pollingPeriod = safelyGetPositiveOrZeroDuration("batchingPeriod", properties::getBatchingPeriod, DEFAULT_BACKOFF_TIME);
         if (log.isDebugEnabled()) {
-            log.debug("Waiting for {} requests for messages {}. Total currently waiting: {}",
+            log.debug("Waiting for {} requests for messages within {}ms. Total currently waiting: {}",
                     batchSize,
-                    pollingPeriod == Long.MAX_VALUE ? "until batch size reached" : "within " + pollingPeriod + "ms",
+                    pollingPeriod.toMillis(),
                     futuresWaitingForMessages.size()
             );
         }
-        QueueUtils.drain(futuresWaitingForMessages, messagesToObtain, batchSize, Duration.ofMillis(pollingPeriod));
+        QueueUtils.drain(futuresWaitingForMessages, messagesToObtain, batchSize, pollingPeriod);
         return messagesToObtain;
     }
 
     private void performBackoff() {
         try {
-            final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
-            log.debug("Backing off for {}ms", errorBackoffTimeInMilliseconds);
-            Thread.sleep(errorBackoffTimeInMilliseconds);
+            final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_BACKOFF_TIME);
+            log.debug("Backing off for {}ms", errorBackoffTime.toMillis());
+            Thread.sleep(errorBackoffTime.toMillis());
         } catch (final InterruptedException interruptedException) {
             log.debug("Thread interrupted during backoff period");
             Thread.currentThread().interrupt();
@@ -155,25 +154,11 @@ public class BatchingMessageRetriever implements MessageRetriever {
     }
 
     /**
-     * Get the number of seconds that the thread should wait when there was an error trying to organise a thread to process.
-     *
-     * @return the backoff time in milliseconds
-     * @see ConcurrentMessageBrokerProperties#getErrorBackoffTimeInMilliseconds() for more information
-     */
-    private long getErrorBackoffTimeInMilliseconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroLongValue(
-                "errorBackoffTimeInMilliseconds",
-                properties::getErrorBackoffTimeInMilliseconds,
-                DEFAULT_BACKOFF_TIME_IN_MS
-        );
-    }
-
-    /**
      * Safely get the total number of threads requiring messages before it sends a batch request for messages.
      *
      * @return the total number of threads for the batching trigger
      */
-    private int getbatchSize() {
+    private int getBatchSize() {
         final int batchSize = PropertyUtils.safelyGetIntegerValue(
                 "batchSize",
                 properties::getBatchSize,
@@ -203,33 +188,14 @@ public class BatchingMessageRetriever implements MessageRetriever {
                 .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
 
         try {
-            final Integer visibilityTimeoutInSeconds = properties.getMessageVisibilityTimeoutInSeconds();
-            if (visibilityTimeoutInSeconds != null) {
-                if (visibilityTimeoutInSeconds <= 0) {
-                    log.warn("Non-positive visibilityTimeoutInSeconds provided: {}", visibilityTimeoutInSeconds);
-                } else {
-                    requestBuilder.visibilityTimeout(visibilityTimeoutInSeconds);
-                }
+            final Duration visibilityTimeout = properties.getMessageVisibilityTimeout();
+            if (visibilityTimeout != null && visibilityTimeout.getSeconds() > 0) {
+                requestBuilder.visibilityTimeout((int) visibilityTimeout.getSeconds());
             }
         } catch (final RuntimeException exception) {
             log.error("Error getting visibility timeout, none will be supplied in request", exception);
         }
 
         return requestBuilder.build();
-    }
-
-    /**
-     * Safely get the polling period in milliseconds, default to zero if no value is defined and logging a warning indicating that not setting a value
-     * could cause this retriever to block forever if the number of threads never reaches
-     * {@link BatchingMessageRetrieverProperties#getBatchSize()}.
-     *
-     * @return the polling period in ms
-     */
-    private long getMaxBatchingPeriodInMs() {
-        return PropertyUtils.safelyGetLongValue(
-                "batchingPeriodInMs",
-                properties::getBatchingPeriodInMs,
-                DEFAULT_BATCHING_PERIOD_IN_MS
-        );
     }
 }

@@ -2,7 +2,8 @@ package com.jashmore.sqs.container;
 
 import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHOULD_INTERRUPT_MESSAGE_PROCESSING_ON_SHUTDOWN;
 import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHOULD_PROCESS_EXTRA_MESSAGES_ON_SHUTDOWN;
-import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHUTDOWN_TIME_IN_SECONDS;
+import static com.jashmore.sqs.container.CoreMessageListenerContainerConstants.DEFAULT_SHUTDOWN_TIME;
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroDuration;
 import static com.jashmore.sqs.util.thread.ThreadUtils.multiNamedThreadFactory;
 import static com.jashmore.sqs.util.thread.ThreadUtils.singleNamedThreadFactory;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -15,7 +16,6 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.Preconditions;
-import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.utils.StringUtils;
@@ -285,10 +285,11 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             executorService.shutdown();
         }
 
-        final int shutdownTimeoutInSeconds = getMessageProcessingShutdownTimeoutInSeconds();
-        final boolean messageProcessingTerminated = executorService.awaitTermination(shutdownTimeoutInSeconds, SECONDS);
+        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageProcessingShutdownTimeout",
+                properties::getMessageProcessingShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+        final boolean messageProcessingTerminated = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
         if (!messageProcessingTerminated) {
-            log.error("Container '{}' did not shutdown MessageProcessor threads within {} seconds", identifier, shutdownTimeoutInSeconds);
+            log.error("Container '{}' did not shutdown MessageProcessor threads within {} seconds", identifier, shutdownTimeout.getSeconds());
         }
     }
 
@@ -301,10 +302,11 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
     private void shutdownMessageBroker(final ExecutorService executorService) throws InterruptedException {
         executorService.shutdownNow();
 
-        final int shutdownTimeoutInSeconds = getMessageBrokerShutdownTimeoutInSeconds();
-        final boolean terminationResult = executorService.awaitTermination(shutdownTimeoutInSeconds, SECONDS);
+        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageBrokerShutdownTimeout",
+                properties::getMessageBrokerShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+        final boolean terminationResult = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
         if (!terminationResult) {
-            log.error("Container '{}' did not shutdown MessageBroker within {} seconds", getIdentifier(), shutdownTimeoutInSeconds);
+            log.error("Container '{}' did not shutdown MessageBroker within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
         }
     }
 
@@ -327,10 +329,11 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         return () -> {
             executorService.shutdownNow();
 
-            final int retrieverShutdownTimeoutInSeconds = getMessageRetrieverShutdownTimeoutInSeconds();
-            final boolean retrieverShutdown = executorService.awaitTermination(retrieverShutdownTimeoutInSeconds, SECONDS);
+            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageRetrieverShutdownTimeout",
+                    properties::getMessageRetrieverShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+            final boolean retrieverShutdown = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
             if (!retrieverShutdown) {
-                log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), retrieverShutdownTimeoutInSeconds);
+                log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
             }
         };
     }
@@ -348,10 +351,11 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         return () -> {
             executorService.shutdownNow();
 
-            final long messageResolverShutdownTimeInSeconds = getMessageResolverShutdownTimeoutInSeconds();
-            final boolean messageResolverShutdown = executorService.awaitTermination(getMessageResolverShutdownTimeoutInSeconds(), SECONDS);
+            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageResolverShutdownTimeout",
+                    properties::getMessageResolverShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+            final boolean messageResolverShutdown = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
             if (!messageResolverShutdown) {
-                log.error("Container '{}' did not shutdown MessageResolver within {} seconds", getIdentifier(), messageResolverShutdownTimeInSeconds);
+                log.error("Container '{}' did not shutdown MessageResolver within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
             }
         };
     }
@@ -363,58 +367,6 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      */
     private ExecutorService buildMessageProcessingExecutorService() {
         return Executors.newCachedThreadPool(multiNamedThreadFactory(getIdentifier() + "-message-processing"));
-    }
-
-    /**
-     * Get the amount of time in seconds that we should wait for the messages that are currently being processed to finish.
-     *
-     * @return the amount of time in seconds to wait for the message processing to finish
-     */
-    private int getMessageProcessingShutdownTimeoutInSeconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "messageProcessingShutdownTimeoutInSeconds",
-                properties::getMessageProcessingShutdownTimeoutInSeconds,
-                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
-        );
-    }
-
-    /**
-     * Get the amount of time in seconds that we should wait for the {@link MessageBroker} to shutdown when requested.
-     *
-     * @return the amount of time in seconds to wait for shutdown
-     */
-    private int getMessageBrokerShutdownTimeoutInSeconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "messageBrokerShutdownTimeoutInSeconds",
-                properties::getMessageBrokerShutdownTimeoutInSeconds,
-                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
-        );
-    }
-
-    /**
-     * Get the amount of time in seconds that we should wait for the {@link MessageRetriever} to shutdown when requested.
-     *
-     * @return the amount of time in seconds to wait for shutdown
-     */
-    private int getMessageRetrieverShutdownTimeoutInSeconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "messageRetrieverShutdownTimeoutInSeconds",
-                properties::getMessageRetrieverShutdownTimeoutInSeconds,
-                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
-        );
-    }
-
-    /**
-     * Get the amount of time in seconds that we should wait for the {@link MessageResolver} to shutdown when requested.
-     *
-     * @return the amount of time in seconds to wait for shutdown
-     */
-    private int getMessageResolverShutdownTimeoutInSeconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "messageResolverShutdownTimeoutInSeconds",
-                properties::getMessageResolverShutdownTimeoutInSeconds,
-                DEFAULT_SHUTDOWN_TIME_IN_SECONDS
-        );
     }
 
     private boolean shouldInterruptMessageProcessingThreadsOnShutdown() {

@@ -32,6 +32,7 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -123,12 +124,12 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
         return Integer.parseInt(environment.resolvePlaceholders(annotation.maxPrefetchedMessagesString()));
     }
 
-    private int getMessageVisibilityTimeoutInSeconds(final PrefetchingQueueListener annotation) {
+    private Duration getMessageVisibilityTimeout(final PrefetchingQueueListener annotation) {
         if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
-            return annotation.messageVisibilityTimeoutInSeconds();
+            return Duration.ofSeconds(annotation.messageVisibilityTimeoutInSeconds());
         }
 
-        return Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()));
+        return Duration.ofSeconds(Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
     }
 
     private int getDesiredMinPrefetchedMessages(final PrefetchingQueueListener annotation) {
@@ -144,7 +145,7 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
         return StaticPrefetchingMessageRetrieverProperties.builder()
                 .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
                 .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
-                .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
+                .messageVisibilityTimeout(getMessageVisibilityTimeout(annotation))
                 .build();
     }
 

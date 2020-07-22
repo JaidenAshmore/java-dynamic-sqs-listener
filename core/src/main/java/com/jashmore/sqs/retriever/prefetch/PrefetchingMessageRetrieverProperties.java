@@ -5,6 +5,8 @@ import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
+import java.time.Duration;
+
 public interface PrefetchingMessageRetrieverProperties {
     /**
      * The minimum number of messages that should be in the queue before it will request more messages.
@@ -46,29 +48,30 @@ public interface PrefetchingMessageRetrieverProperties {
     int getMaxPrefetchedMessages();
 
     /**
-     * The visibility timeout for the message.
+     * The visibility timeout for the message which represents the amount of time a message can be kept before it is assumed that it wasn't
+     * completed successfully.
      *
-     * <p>E.g. the number of seconds that a message can be kept before it is assumed that it wasn't completed and will be put back onto the queue
-     *
-     * <p>If this value is null, no visibility timeout will be set on the message retrieval.
+     * <p>If this value is null or non-positive, no visibility timeout will be set on the message retrieval.  Note that as the AWS API requires
+     * this to be in seconds, this duration will be round to the nearest second.
      *
      * @return the visibility timeout for messages where null means to use the SQS default visibility timeout
      * @see ReceiveMessageRequest#visibilityTimeout() for where this is applied against
      */
     @Nullable
     @Positive
-    Integer getMessageVisibilityTimeoutInSeconds();
+    Duration getMessageVisibilityTimeout();
 
     /**
-     * If there was an error retrieving a message from the remote server, the retriever will backoff and try again after this many milliseconds, which
-     * prevents constant cycling of this thread that achieves nothing.
+     * If there was an error retrieving a message from the remote server, the retriever will backoff and try again after this period.
      *
-     * <p>If this value is null or negative, {@link PrefetchingMessageRetrieverConstants#DEFAULT_ERROR_BACKOFF_TIMEOUT_IN_MILLISECONDS} will be used
+     * <p>This helps reduce a constant cycle of errors being thrown by this retriever.
+     *
+     * <p>If this value is null or negative, {@link PrefetchingMessageRetrieverConstants#DEFAULT_ERROR_BACKOFF_TIMEOUT} will be used
      * as the backoff period.
      *
-     * @return the backoff time in milliseconds or null if the default backoff time should be used
+     * @return the backoff time or null if the default backoff time should be used
      */
     @Nullable
     @PositiveOrZero
-    Integer getErrorBackoffTimeInMilliseconds();
+    Duration getErrorBackoffTime();
 }

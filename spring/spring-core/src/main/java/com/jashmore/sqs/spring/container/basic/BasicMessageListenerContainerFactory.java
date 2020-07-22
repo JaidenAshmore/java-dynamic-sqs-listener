@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -110,8 +111,8 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
     @VisibleForTesting
     BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation) {
         return StaticBatchingMessageRetrieverProperties.builder()
-                .messageVisibilityTimeoutInSeconds(getMessageVisibilityTimeoutInSeconds(annotation))
-                .batchingPeriodInMs(getMaxPeriodBetweenBatchesInMs(annotation))
+                .messageVisibilityTimeout(getMessageVisibilityTimeout(annotation))
+                .batchingPeriod(getMaxPeriodBetweenBatches(annotation))
                 .batchSize(getBatchSize(annotation))
                 .build();
     }
@@ -121,7 +122,7 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
                                                            final SqsAsyncClient sqsAsyncClient) {
         final BatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties.builder()
                 .bufferingSizeLimit(getBatchSize(annotation))
-                .bufferingTimeInMs(getMaxPeriodBetweenBatchesInMs(annotation))
+                .bufferingTime(getMaxPeriodBetweenBatches(annotation))
                 .build();
 
         return () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
@@ -143,20 +144,20 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
         return Integer.parseInt(environment.resolvePlaceholders(annotation.batchSizeString()));
     }
 
-    private long getMaxPeriodBetweenBatchesInMs(final QueueListener annotation) {
+    private Duration getMaxPeriodBetweenBatches(final QueueListener annotation) {
         if (StringUtils.isEmpty(annotation.batchingPeriodInMsString())) {
-            return annotation.batchingPeriodInMs();
+            return Duration.ofMillis(annotation.batchingPeriodInMs());
         }
 
-        return Long.parseLong(environment.resolvePlaceholders(annotation.batchingPeriodInMsString()));
+        return Duration.ofMillis(Long.parseLong(environment.resolvePlaceholders(annotation.batchingPeriodInMsString())));
     }
 
-    private int getMessageVisibilityTimeoutInSeconds(final QueueListener annotation) {
+    private Duration getMessageVisibilityTimeout(final QueueListener annotation) {
         if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
-            return annotation.messageVisibilityTimeoutInSeconds();
+            return Duration.ofSeconds(annotation.messageVisibilityTimeoutInSeconds());
         }
 
-        return Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()));
+        return Duration.ofSeconds(Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
     }
 
     private SqsAsyncClient getSqsAsyncClient(final String sqsClient) {

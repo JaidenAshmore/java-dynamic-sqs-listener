@@ -1,6 +1,8 @@
 package com.jashmore.sqs.broker.concurrent;
 
-import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_BACKOFF_TIME_IN_MS;
+import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_BACKOFF_TIME;
+import static com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerConstants.DEFAULT_CONCURRENCY_POLLING;
+import static com.jashmore.sqs.util.properties.PropertyUtils.safelyGetPositiveOrZeroDuration;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.jashmore.sqs.broker.MessageBroker;
@@ -9,6 +11,7 @@ import com.jashmore.sqs.util.properties.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.time.Duration;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -53,8 +56,8 @@ public class ConcurrentMessageBroker implements MessageBroker {
             try {
                 updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
 
-                final long numberOfMillisecondsToObtainPermit = getNumberOfMillisecondsToObtainPermit();
-                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(numberOfMillisecondsToObtainPermit, MILLISECONDS);
+                final Duration permitWaitTime = getPermitWaitTime();
+                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(permitWaitTime.toMillis(), MILLISECONDS);
                 if (!obtainedPermit) {
                     continue;
                 }
@@ -74,10 +77,11 @@ public class ConcurrentMessageBroker implements MessageBroker {
                     throw runtimeException;
                 }
             } catch (final RuntimeException runtimeException) {
-                final long errorBackoffTimeInMilliseconds = getErrorBackoffTimeInMilliseconds();
-                log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMilliseconds,
+                final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_BACKOFF_TIME);
+                final long errorBackoffTimeInMs = errorBackoffTime.toMillis();
+                log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMs,
                         runtimeException);
-                Thread.sleep(errorBackoffTimeInMilliseconds);
+                Thread.sleep(errorBackoffTimeInMs);
             }
         }
         log.debug("Ending processing of messages");
@@ -86,15 +90,16 @@ public class ConcurrentMessageBroker implements MessageBroker {
     /**
      * Safely get the number of milliseconds that should wait to get a permit for creating a new thread.
      *
-     * @return the number of milliseconds to wait
-     * @see ConcurrentMessageBrokerProperties#getConcurrencyPollingRateInMilliseconds() for more information
+     * @return the durationToWaitFor
+     * @see ConcurrentMessageBrokerProperties#getConcurrencyPollingRate() for more information
      */
-    private long getNumberOfMillisecondsToObtainPermit() {
-        return PropertyUtils.safelyGetPositiveLongValue(
-                "numberOfMillisecondsToObtainPermit",
-                properties::getConcurrencyPollingRateInMilliseconds,
-                DEFAULT_BACKOFF_TIME_IN_MS
-        );
+    private Duration getPermitWaitTime() {
+        final Duration pollingRate = properties.getConcurrencyPollingRate();
+        if (pollingRate != null && !pollingRate.isNegative()) {
+            return pollingRate;
+        }
+
+        return DEFAULT_CONCURRENCY_POLLING;
     }
 
     /**
@@ -121,20 +126,6 @@ public class ConcurrentMessageBroker implements MessageBroker {
                 "concurrencyLevel",
                 properties::getConcurrencyLevel,
                 0
-        );
-    }
-
-    /**
-     * Get the number of seconds that the thread should wait when there was an error trying to organise a thread to process.
-     *
-     * @return the backoff time in milliseconds
-     * @see ConcurrentMessageBrokerProperties#getErrorBackoffTimeInMilliseconds() for more information
-     */
-    private long getErrorBackoffTimeInMilliseconds() {
-        return PropertyUtils.safelyGetPositiveOrZeroLongValue(
-                "errorBackoffTimeInMilliseconds",
-                properties::getErrorBackoffTimeInMilliseconds,
-                DEFAULT_BACKOFF_TIME_IN_MS
         );
     }
 }

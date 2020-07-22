@@ -26,6 +26,7 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -184,8 +185,8 @@ class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .messageVisibilityTimeoutInSeconds(300)
-                .batchingPeriodInMs(40L)
+                .messageVisibilityTimeout(Duration.ofSeconds(300))
+                .batchingPeriod(Duration.ofMillis(40L))
                 .batchSize(10)
                 .build()
         );
@@ -206,8 +207,8 @@ class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .messageVisibilityTimeoutInSeconds(40)
-                .batchingPeriodInMs(30L)
+                .messageVisibilityTimeout(Duration.ofSeconds(40))
+                .batchingPeriod(Duration.ofMillis(30))
                 .batchSize(8)
                 .build()
         );

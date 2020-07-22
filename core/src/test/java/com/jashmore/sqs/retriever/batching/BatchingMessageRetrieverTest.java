@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,11 +40,11 @@ class BatchingMessageRetrieverTest {
             .queueUrl(QUEUE_URL)
             .build();
 
-    private static final long POLLING_PERIOD_IN_MS = 1000L;
+    private static final Duration POLLING_PERIOD = Duration.ofSeconds(1);
     private static final StaticBatchingMessageRetrieverProperties DEFAULT_PROPERTIES = StaticBatchingMessageRetrieverProperties.builder()
-            .messageVisibilityTimeoutInSeconds(10)
+            .messageVisibilityTimeout(Duration.ofSeconds(10))
             .batchSize(2)
-            .batchingPeriodInMs(POLLING_PERIOD_IN_MS)
+            .batchingPeriod(POLLING_PERIOD)
             .build();
 
     @Mock
@@ -94,7 +95,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(2)
-                .batchingPeriodInMs(1000L)
+                .batchingPeriod(Duration.ofSeconds(1))
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
@@ -112,7 +113,7 @@ class BatchingMessageRetrieverTest {
 
             // assert
             final long timeSendingBatch = System.currentTimeMillis();
-            assertThat(timeSendingBatch - timeStarted).isGreaterThanOrEqualTo(retrieverProperties.getBatchingPeriodInMs());
+            assertThat(timeSendingBatch - timeStarted).isGreaterThanOrEqualTo(retrieverProperties.getBatchingPeriod().toMillis());
         });
     }
 
@@ -121,34 +122,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
-                .messageVisibilityTimeoutInSeconds(null)
-                .build();
-        final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
-        final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenAnswer(invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                });
-
-        // act
-        startRunnableInThread(retriever::run, thread -> {
-            retriever.retrieveMessage();
-            assertThat(receiveMessageRequestLatch.await(2, TimeUnit.SECONDS)).isTrue();
-        });
-
-        // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
-        verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
-    }
-
-    @Test
-    void whenNegativeVisibilityTimeoutIncludedTheReceiveMessageRequestWillIncludeNullVisibilityTimeout() {
-        // arrange
-        final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .batchSize(1)
-                .messageVisibilityTimeoutInSeconds(-1)
+                .messageVisibilityTimeout(null)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
@@ -175,7 +149,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
-                .messageVisibilityTimeoutInSeconds(0)
+                .messageVisibilityTimeout(Duration.ZERO)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
@@ -202,7 +176,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
-                .messageVisibilityTimeoutInSeconds(30)
+                .messageVisibilityTimeout(Duration.ofSeconds(30))
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
@@ -229,8 +203,8 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(2)
-                .batchingPeriodInMs(50L)
-                .messageVisibilityTimeoutInSeconds(30)
+                .batchingPeriod(Duration.ofMillis(50L))
+                .messageVisibilityTimeout(Duration.ofSeconds(30))
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch firstRequestMade = new CountDownLatch(1);
@@ -266,7 +240,7 @@ class BatchingMessageRetrieverTest {
     void errorObtainingMessagesWillTryAgainAfterBackingOffPeriod() {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(200L)
+                .errorBackoffTime(Duration.ofMillis(200L))
                 .batchSize(1)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
@@ -286,7 +260,7 @@ class BatchingMessageRetrieverTest {
             final long timeRequestedSecondMessageAfterBackoff = System.currentTimeMillis();
 
             // assert
-            assertThat(timeRequestedSecondMessageAfterBackoff - startTime).isGreaterThanOrEqualTo(retrieverProperties.getErrorBackoffTimeInMilliseconds());
+            assertThat(timeRequestedSecondMessageAfterBackoff - startTime).isGreaterThanOrEqualTo(retrieverProperties.getErrorBackoffTime().toMillis());
         });
     }
 
@@ -295,7 +269,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final long errorBackoffTimeInMilliseconds = 200L;
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
-                .errorBackoffTimeInMilliseconds(errorBackoffTimeInMilliseconds)
+                .errorBackoffTime(Duration.ofMillis(errorBackoffTimeInMilliseconds))
                 .batchSize(1)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
@@ -318,7 +292,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties retrieverProperties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
-                .messageVisibilityTimeoutInSeconds(30)
+                .messageVisibilityTimeout(Duration.ofSeconds(30))
                 .batchSize(MAX_NUMBER_OF_MESSAGES_FROM_SQS + 1)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
@@ -429,7 +403,7 @@ class BatchingMessageRetrieverTest {
         // arrange
         final StaticBatchingMessageRetrieverProperties properties = DEFAULT_PROPERTIES.toBuilder()
                 .batchSize(1)
-                .batchingPeriodInMs(null)
+                .batchingPeriod(null)
                 .build();
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
@@ -453,8 +427,8 @@ class BatchingMessageRetrieverTest {
         // arrange
         final BatchingMessageRetrieverProperties retrieverProperties = mock(BatchingMessageRetrieverProperties.class);
         when(retrieverProperties.getBatchSize()).thenReturn(1);
-        when(retrieverProperties.getBatchingPeriodInMs()).thenReturn(1000L);
-        when(retrieverProperties.getMessageVisibilityTimeoutInSeconds()).thenThrow(new ExpectedTestException());
+        when(retrieverProperties.getBatchingPeriod()).thenReturn(Duration.ofSeconds(1));
+        when(retrieverProperties.getMessageVisibilityTimeout()).thenThrow(new ExpectedTestException());
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))

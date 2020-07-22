@@ -5,12 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 class StaticConcurrentMessageBrokerPropertiesTest {
     @Test
     void concurrencyLevelReturnedFromConstructor() {
         // act
-        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
-                .builder()
+        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties.builder()
                 .concurrencyLevel(1)
                 .build();
 
@@ -21,31 +22,33 @@ class StaticConcurrentMessageBrokerPropertiesTest {
     @Test
     void negativeConcurrencyLevelThrowsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
-                StaticConcurrentMessageBrokerProperties
-                        .builder()
+                StaticConcurrentMessageBrokerProperties.builder()
                         .concurrencyLevel(-1)
                         .build());
     }
 
     @Test
-    void concurrencyPollingLevelReturnedFromConstructor() {
+    void concurrencyPollingRateReturnedFromConstructor() {
         // act
-        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties
-                .builder()
-                .preferredConcurrencyPollingRateInMilliseconds(1L)
+        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties.builder()
+                .preferredConcurrencyPollingRate(Duration.ofMillis(1))
                 .concurrencyLevel(1)
                 .build();
 
         // assert
-        assertThat(retriever.getConcurrencyPollingRateInMilliseconds()).isEqualTo(1);
+        assertThat(retriever.getConcurrencyPollingRate()).isEqualTo(Duration.ofMillis(1));
     }
 
     @Test
-    void negativeConcurrencyPollingRateThrowsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> StaticConcurrentMessageBrokerProperties
-                .builder()
+    void errorBackoffTimeReturnedFromConstructor() {
+        // act
+        final StaticConcurrentMessageBrokerProperties retriever = StaticConcurrentMessageBrokerProperties.builder()
+                .preferredConcurrencyPollingRate(Duration.ofMillis(1))
                 .concurrencyLevel(1)
-                .preferredConcurrencyPollingRateInMilliseconds(-1L)
-                .build());
+                .errorBackoffTime(Duration.ofMillis(2))
+                .build();
+
+        // assert
+        assertThat(retriever.getErrorBackoffTime()).isEqualTo(Duration.ofMillis(2));
     }
 }

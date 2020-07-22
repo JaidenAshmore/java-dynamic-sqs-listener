@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -35,13 +36,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class BatchingMessageResolverTest {
-    private static final int BUFFERING_TIME_IN_MS = 1000;
+    private static final Duration BUFFERING_TIME = Duration.ofSeconds(1);
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
             .queueUrl("queueUrl")
             .build();
 
     private static final StaticBatchingMessageResolverProperties DEFAULT_BATCHING_PROPERTIES = StaticBatchingMessageResolverProperties.builder()
-            .bufferingTimeInMs(BUFFERING_TIME_IN_MS)
+            .bufferingTime(BUFFERING_TIME)
             .bufferingSizeLimit(1)
             .build();
 
@@ -65,7 +66,7 @@ class BatchingMessageResolverTest {
         // arrange
         final long bufferingTimeInMs = 100;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTimeInMs(bufferingTimeInMs)
+                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
                 .bufferingSizeLimit(2)
                 .build();
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
@@ -97,7 +98,7 @@ class BatchingMessageResolverTest {
         // arrange
         final long bufferingTimeInMs = 100_000;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTimeInMs(bufferingTimeInMs)
+                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
                 .bufferingSizeLimit(2)
                 .build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
@@ -125,7 +126,7 @@ class BatchingMessageResolverTest {
         // arrange
         final long bufferingTimeInMs = 100_000;
         final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTimeInMs(bufferingTimeInMs)
+                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
                 .bufferingSizeLimit(2)
                 .build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
@@ -262,7 +263,7 @@ class BatchingMessageResolverTest {
     void interruptingThreadWhileWaitingForTotalMessageBatchWillStillPublishCurrentMessagesObtained() throws Exception {
         // arrange
         final StaticBatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTimeInMs(100_000L)
+                .bufferingTime(Duration.ofMillis(100_000L))
                 .bufferingSizeLimit(2)
                 .build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
