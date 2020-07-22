@@ -12,7 +12,7 @@ is written in a non-blocking programming style.  The current core implementation
 [retriever package](../../../core/src/main/java/com/jashmore/sqs/retriever).
 
 Once you have built your own retriever you can see how this can be integrated into the framework by looking in the [examples](../../../examples) directory
-and more specifically in the [core-examples module](../../../examples/core-examples).
+and more specifically in the [core-example](../../../examples/core-example) module.
 
 ### Integrating the new message retriever into the spring app
 

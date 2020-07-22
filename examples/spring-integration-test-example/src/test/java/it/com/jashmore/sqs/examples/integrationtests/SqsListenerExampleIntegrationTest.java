@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -121,6 +122,6 @@ class SqsListenerExampleIntegrationTest {
     }
 
     private void waitForMessageVisibilityToExpire() throws InterruptedException {
-        Thread.sleep(3000);
+        Thread.sleep(Duration.ofSeconds(VISIBILITY_TIMEOUT_IN_SECONDS + 1).toMillis());
     }
 }

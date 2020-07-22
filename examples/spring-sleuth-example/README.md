@@ -16,5 +16,5 @@ An example of setting up Brave Tracing with this library.
     gradle bootRun
     ```
 
-1. Look in the logs for the server and you should see messages being processed with Trace IDs
-1. Navigate to <http://localhost:9411/zipkin> and type one of the trace IDs into the search bar
+1. Look in the logs for the server to see messages processed with Trace IDs
+1. Navigate to <http://localhost:9411/zipkin> and type one of the trace IDs into the search bar to see the full trace

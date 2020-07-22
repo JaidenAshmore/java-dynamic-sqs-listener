@@ -45,36 +45,30 @@ include(
         ":documentation-annotations",
 
         // Examples
-        ":aws-xray-spring-example",
-        ":java-dynamic-sqs-listener-core-examples",
-        ":java-dynamic-sqs-listener-spring-aws-example",
-        ":core-kotlin-example",
-        ":spring-cloud-schema-registry-consumer",
-        ":spring-cloud-schema-registry-producer",
-        ":spring-cloud-schema-registry-producer-two",
-        ":spring-cloud-schema-registry-example",
-        ":java-dynamic-sqs-listener-spring-integration-test-example",
-        ":multiple-aws-account-example",
-        ":spring-sleuth-example",
-        ":java-dynamic-sqs-listener-spring-starter-examples",
-        ":sqs-listener-library-comparison"
+        ":example:aws-xray-spring-example",
+        ":example:core-example",
+        ":example:spring-aws-example",
+        ":example:core-kotlin-example",
+        ":example:spring-cloud-schema-registry:consumer",
+        ":example:spring-cloud-schema-registry:producer",
+        ":example:spring-cloud-schema-registry:producer-two",
+        ":example:spring-integration-test-example",
+        ":example:spring-multiple-aws-account-example",
+        ":example:spring-sleuth-example",
+        ":example:spring-starter-example",
+        ":example:sqs-listener-library-comparison"
 )
 
+// Core
 project(":java-dynamic-sqs-listener-api").projectDir = file("api")
 project(":java-dynamic-sqs-listener-core").projectDir = file("core")
-project(":aws-xray-spring-example").projectDir = file("examples/aws-xray-spring-example")
-project(":java-dynamic-sqs-listener-core-examples").projectDir = file("examples/core-examples")
-project(":java-dynamic-sqs-listener-spring-aws-example").projectDir = file("examples/spring-aws-example")
-project(":core-kotlin-example").projectDir = file("examples/core-kotlin-example")
-project(":spring-cloud-schema-registry-consumer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer")
-project(":spring-cloud-schema-registry-producer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer")
-project(":spring-cloud-schema-registry-producer-two").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-two")
-project(":spring-cloud-schema-registry-example").projectDir = file("examples/spring-cloud-schema-registry-example")
-project(":java-dynamic-sqs-listener-spring-integration-test-example").projectDir = file("examples/spring-integration-test-example")
-project(":multiple-aws-account-example").projectDir = file("examples/spring-multiple-aws-account-example")
-project(":spring-sleuth-example").projectDir = file("examples/spring-sleuth-example")
-project(":java-dynamic-sqs-listener-spring-starter-examples").projectDir = file("examples/spring-starter-examples")
-project(":sqs-listener-library-comparison").projectDir = file("examples/sqs-listener-library-comparison")
+
+// Spring
+project(":java-dynamic-sqs-listener-spring-api").projectDir = file("spring/spring-api")
+project(":java-dynamic-sqs-listener-spring-core").projectDir = file("spring/spring-core")
+project(":java-dynamic-sqs-listener-spring-starter").projectDir = file("spring/spring-starter")
+
+// Extensions
 project(":aws-xray-extension-core").projectDir = file("extensions/aws-xray-extension/core")
 project(":aws-xray-extension-spring-boot").projectDir = file("extensions/aws-xray-extension/spring-boot")
 project(":brave-message-processing-decorator").projectDir = file("extensions/brave-message-processing-decorator")
@@ -82,15 +76,28 @@ project(":core-kotlin-dsl").projectDir = file("extensions/core-kotlin-dsl")
 project(":spring-cloud-schema-registry-extension-api").projectDir = file("extensions/spring-cloud-schema-registry-extension/spring-cloud-schema-registry-extension-api")
 project(":avro-spring-cloud-schema-registry-extension").projectDir = file("extensions/spring-cloud-schema-registry-extension/avro-spring-cloud-schema-registry-extension")
 project(":in-memory-spring-cloud-schema-registry").projectDir = file("extensions/spring-cloud-schema-registry-extension/in-memory-spring-cloud-schema-registry")
-project(":java-dynamic-sqs-listener-spring-api").projectDir = file("spring/spring-api")
-project(":java-dynamic-sqs-listener-spring-core").projectDir = file("spring/spring-core")
-project(":java-dynamic-sqs-listener-spring-starter").projectDir = file("spring/spring-starter")
+
+// Utils
+project(":annotation-utils").projectDir = file("util/annotation-utils")
 project(":avro-spring-cloud-schema-registry-sqs-client").projectDir = file("util/avro-spring-cloud-schema-registry-sqs-client")
 project(":common-utils").projectDir = file("util/common-utils")
+project(":documentation-annotations").projectDir = file("util/documentation-annotations")
 project(":elasticmq-sqs-client").projectDir = file("util/elasticmq-sqs-client")
 project(":expected-test-exception").projectDir = file("util/expected-test-exception")
 project(":local-sqs-async-client").projectDir = file("util/local-sqs-async-client")
 project(":proxy-method-interceptor").projectDir = file("util/proxy-method-interceptor")
 project(":sqs-brave-tracing").projectDir = file("util/sqs-brave-tracing")
-project(":annotation-utils").projectDir = file("util/annotation-utils")
-project(":documentation-annotations").projectDir = file("util/documentation-annotations")
+
+// Examples
+project(":example:aws-xray-spring-example").projectDir = file("examples/aws-xray-spring-example")
+project(":example:core-example").projectDir = file("examples/core-example")
+project(":example:core-kotlin-example").projectDir = file("examples/core-kotlin-example")
+project(":example:spring-aws-example").projectDir = file("examples/spring-aws-example")
+project(":example:spring-cloud-schema-registry:consumer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer")
+project(":example:spring-cloud-schema-registry:producer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer")
+project(":example:spring-cloud-schema-registry:producer-two").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-two")
+project(":example:spring-integration-test-example").projectDir = file("examples/spring-integration-test-example")
+project(":example:spring-multiple-aws-account-example").projectDir = file("examples/spring-multiple-aws-account-example")
+project(":example:spring-sleuth-example").projectDir = file("examples/spring-sleuth-example")
+project(":example:spring-starter-example").projectDir = file("examples/spring-starter-example")
+project(":example:sqs-listener-library-comparison").projectDir = file("examples/sqs-listener-library-comparison")

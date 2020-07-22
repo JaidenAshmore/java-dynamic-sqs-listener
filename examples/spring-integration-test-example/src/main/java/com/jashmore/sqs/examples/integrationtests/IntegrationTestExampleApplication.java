@@ -9,8 +9,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-@SpringBootApplication
 @Slf4j
+@SuppressWarnings("unused")
+@SpringBootApplication
 public class IntegrationTestExampleApplication {
 
     public static void main(String[] args) {
@@ -24,7 +25,7 @@ public class IntegrationTestExampleApplication {
          *
          * @param payload the payload of the message
          */
-        public void run(@SuppressWarnings("unused") final String payload) {
+        public void run(final String payload) {
             // do nothing
         }
     }

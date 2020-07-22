@@ -5,14 +5,14 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-parent.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
 
 The Java Dynamic SQS Listener is a library that simplifies the listening of messages on an [AWS SQS queue](https://aws.amazon.com/sqs/).  It has been
-built from the ground up with the goal of making it easily customisable, allowing each component of the library to be easily interchanged if desired, as well
-as allowing dynamic changes to configuration during runtime, for example it could be extended to allow the amount of concurrent processing messages to be
+built from the ground up with the goal of making it easily customisable, allowing each component of the library to be interchanged if desired. The listeners
+also allow dynamic changes to the configuration during runtime, for example it could be built to allow the amount of concurrent processing messages to be
 controlled by a feature flag.
 
 ## Spring Boot Quick Guide
 
-The following provides some examples using the Spring Boot Starter for this library. *Note that [core](./core) implementation is framework agnostic and
-therefore is not reliant on Spring.*
+The following provides some examples using the Spring Boot Starter for this library. *Note that the [core](./core) implementation is framework agnostic and
+is not reliant on using Spring.*
 
 ### Using the Spring Boot Starter
 
@@ -43,7 +43,9 @@ annotation to a method indicating that it should process messages from a queue.
 ```java
 @Service
 public class MyMessageListener {
-    @QueueListener("${insert.queue.url.here}") // The queue here can point to your SQS server, e.g. a local SQS server or one on AWS
+    // The queue here can point to your SQS server, e.g. a
+    // local SQS server or one on AWS
+    @QueueListener("${insert.queue.url.here}")
     public void processMessage(@Payload final String payload) {
         // process the message payload here
     }
@@ -57,7 +59,7 @@ See [How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws
 
 ## Core Infrastructure
 
-This library has been divided into four main components each with distinct responsibilities. The following is a diagram describing a simple flow of a
+This library has been divided into isolated components each with distinct responsibilities. The following is a diagram describing a simple flow of a
 single SQS message flowing through each of the components to eventually be executed by some code.
 
 ![Core Framework Architecture Diagram](./doc/resources/architecture_diagram.png "Core Framework Architecture Diagram")
@@ -92,11 +94,49 @@ for compatibility.
   - JDK 1.8 or higher
   - [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
   - [Jackson Databind](https://github.com/FasterXML/jackson-databind)
+  - [SLF4J API](https://github.com/qos-ch/slf4j)
 - [Spring Framework](./spring)
   - All the core dependencies above
   - [Spring Boot](https://github.com/spring-projects/spring-boot)
   
 See the [build.gradle.kts](build.gradle.kts) for the specific versions of these dependencies.
+
+## How to Guides
+
+1. [How to Connect to an AWS SQS Queue](doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
+1. Core Framework How To Guides
+    1. [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing resolution
+    of arguments in the message listener
+    1. [How to manually acknowledge message](doc/how-to-guides/core/core-how-to-mark-message-as-successfully-processed.md): useful for when you want to mark the
+    message as successfully processed before the method has finished executing
+    1. [How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
+    1. [How to implement a custom MessageRetriever](doc/how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic
+    for obtaining messages from the SQS queue if the core implementations do not provided the required functionality
+    1. [How to extend a message's visibility during processing](doc/how-to-guides/core/core-how-to-extend-message-visibility-during-processing.md): useful for
+    extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
+    1. [How to create a MessageProcessingDecorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md): guide for writing your own
+    decorator to wrap a message listener's processing of a message
+    1. [How to use the Core Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md): guide for using the core library easier using a Kotlin
+    DSL for constructing message listeners
+1. Spring How To Guides
+    1. [How to add a custom ArgumentResolver to a Spring application](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
+    integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
+    for how build a new ArgumentResolver from scratch.
+    1. [How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
+    1. [How to add custom MessageProcessingDecorators](doc/how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
+    to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
+    1. [How to customise argument resolution](doc/how-to-guides/spring/spring-how-to-customise-argument-resolution.md): guide for overriding the entire
+    argument resolution logic
+    1. [How to add your own queue listener](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the
+    queue listening without the verbosity of a custom queue listener
+    1. [How to write Spring Integration Tests](doc/how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
+    writing right?
+    1. [How to Start/Stop Queue Listeners](doc/how-to-guides/spring/spring-how-to-start-stop-message-listener-containers.md): guide for starting and stopping the
+    processing of messages for specific queue listeners
+    1. [How to connect to multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues
+    across multiple AWS Accounts
+    1. [How to version message payload schemas](doc/how-to-guides/spring/spring-how-to-version-payload-schemas-using-spring-cloud-schema-registry.md): guide
+    for versioning payloads using Avro and the Spring Cloud Schema Registry.
 
 ## Common Use Cases/Explanations
 
@@ -175,6 +215,8 @@ do the logic for converting the message payload to uppercase.
     [AnnotationUtils](./util/annotation-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
     testing this problem in
     [PayloadArgumentResolver_ProxyClassTest.java](./core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
+
+    Also, as this library is not Spring specific, the Spring Annotation classes can not be used.
 1. Include the custom [ArgumentResolver](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
 context for automatic injection into the
 [ArgumentResolverService](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
@@ -206,8 +248,8 @@ For a more extensive guide for doing this, take a look at
 
 ### Increasing the concurrency limit
 
-There is no limit to the number of messages that can be processed in the application and therefore you can process as many messages as threads your
-application can handle. Therefore, if you are fine spinning up as many threads as concurrent messages, you can increase
+There is no limit to the number of messages that can be processed in the application and therefore you can process as many messages to the limit
+of the threads that the application can handle. Therefore, if you are fine spinning up as many threads as concurrent messages, you can increase
 the concurrency to as high of a value as you wish.
 
 Using the Spring Boot Starter you could increase the number of concurrent messages to 100 like the following:
@@ -221,8 +263,6 @@ public class MyMessageListener {
     }
 }
 ```
-
-If there are not enough messages to reach this concurrency, there will be a lot of idle threads in the application.
 
 ### How to Mark the message as successfully processed
 
@@ -243,8 +283,8 @@ public class MyMessageListener {
 
 Note that if the method contains an
 [Acknowledge](./api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) argument it is now up to the method
-to manually acknowledge the message as a success as the [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
-will not acknowledge the message automatically when the method executes without throwing an exception.
+to manually acknowledge the message as a success. The [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
+has handed off control to the message listener and will not acknowledge the message automatically when the method executes without throwing an exception.
 
 ```java
 @Service
@@ -266,7 +306,9 @@ a set of messages from the SQS and when they are done it will request some more.
 finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
 [@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
 provides the same basic functionality, but it also provides a timeout where eventually it will request for more messages even for the threads that are
-ready for another message. It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot of
+ready for another message.
+
+It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot of
 messages on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
 
 ```java
@@ -307,9 +349,10 @@ not prefetch anymore.*
 
 ### Using the Core Library with a Kotlin DSL
 
-If you are not using Spring and want a way to more easily configure
-a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java), you can use the
-[Core Kotlin DSL](extensions/core-kotlin-dsl) tool.
+If you want a way to more easily build a new
+a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) from scratch, you can use the
+[Core Kotlin DSL](extensions/core-kotlin-dsl) tool. This can be useful if your Kotlin application does not use Spring, or if you are using Spring and you
+want to build your own queue listener annotation.
 
 ```kotlin
 val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
@@ -337,6 +380,13 @@ container.start()
 
 For more details, see the [Core - How to use the Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md) guide.
 
+### Wrapping the Message Listener execution using a MessageProcessingDecorator
+
+If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
+[MessageProcessingDecorator](./api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
+functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
+look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
+
 ### Adding Brave Tracing
 
 If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
@@ -358,12 +408,12 @@ As the application grows, it may be beneficial to allow for versioning of the sc
 different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
 to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
 
-### Wrapping the Message Listener execution using a MessageProcessingDecorator
+### Connecting to multiple AWS Accounts using the Spring Starter
 
-If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
-[MessageProcessingDecorator](./api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
-functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
-look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
+If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
+[SqsAsyncClientProvider](./spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
+which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
+at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md).
 
 ### Comparing Libraries
 
@@ -372,43 +422,6 @@ If you want to see the difference between this library and others like the
 [Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison)
 module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
 
-## How to Guides
-
-1. [How to Connect to an AWS SQS Queue](doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
-1. Core Framework How To Guides
-    1. [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing how the
-    arguments in the method being executed are resolved
-    1. [How to manually acknowledge message](doc/how-to-guides/core/core-how-to-mark-message-as-successfully-processed.md): useful for when you want to mark the
-    message as successfully processed before the method has finished executing
-    1. [How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
-    1. [How to implement a custom MessageRetriever](doc/how-to-guides/core/core-how-to-implement-a-custom-message-retrieval.md): useful for changing the logic
-    for obtaining messages from the SQS queue if the core implementations do not provided the required functionality
-    1. [How to extend a message's visibility during processing](doc/how-to-guides/core/core-how-to-extend-message-visibility-during-processing.md): useful for
-    extending the visibility of a message in the case of long processing so it does not get put back on the queue while processing
-    1. [How to create a MessageProcessingDecorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md): guide for writing your own
-    decorator to wrap a message listener's processing of a message
-    1. [How to use the Core Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md): guide for using the core library easier using a Kotlin
-    DSL for constructing message listeners
-1. Spring How To Guides
-    1. [How to add a custom ArgumentResolver to a Spring application](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md): useful for
-    integrating custom argument resolution code to be included in a Spring Application. See [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md)
-    for how build a new ArgumentResolver from scratch.
-    1. [How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
-    1. [How to add custom MessageProcessingDecorators](doc/how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
-    to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
-    1. [How to customise argument resolution](doc/how-to-guides/spring/spring-how-to-customise-argument-resolution.md): guide for overriding the entire
-    argument resolution logic
-    1. [How to add your own queue listener](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the
-    queue listening without the verbosity of a custom queue listener
-    1. [How to write Spring Integration Tests](doc/how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
-    writing right?
-    1. [How to Start/Stop Queue Listeners](doc/how-to-guides/spring/spring-how-to-start-stop-message-listener-containers.md): guide for starting and stopping the
-    processing of messages for specific queue listeners
-    1. [How to connect to multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues
-    across multiple AWS Accounts
-    1. [How to version message payload schemas](doc/how-to-guides/spring/spring-how-to-version-payload-schemas-using-spring-cloud-schema-registry.md): guide
-    for versioning payloads using Avro and the Spring Cloud Schema Registry.
-
 ## Examples
 
 See [examples](./examples) for all the available examples.
@@ -416,8 +429,8 @@ See [examples](./examples) for all the available examples.
 ### Testing locally an example Spring Boot app with the Spring Starter
 
 The easiest way to see the framework working is to run one of the examples locally. These use an in memory [ElasticMQ](https://github.com/adamw/elasticmq)
-SQS Server to simplify getting started. For example to run a sample Spring Application you can use the
-[Spring Starter Example](examples/spring-starter-examples/src/main/java/com/jashmore/sqs/examples).
+SQS Server to simplify getting started. For example, to run a sample Spring Application you can use
+the [Spring Starter Example](examples/spring-starter-example/src/main/java/com/jashmore/sqs/examples).
 
 1. Build the framework
 
@@ -428,7 +441,7 @@ gradle build -x test -x integrationTest
 1. Run the Spring Starer Example Spring Boot app
 
 ```bash
-(cd examples/spring-starter-examples && gradle bootRun)
+(cd examples/spring-starter-example && gradle bootRun)
 ```
 
 ### Testing locally a dynamic concurrency example
@@ -447,15 +460,8 @@ gradle build -x test -x integrationTest
 1. Run the Spring Starer Example Spring Boot app
 
 ```bash
-(cd examples/core-examples && gradle runApp)
+(cd examples/core-example && gradle runApp)
 ```
-
-### Connecting to multiple AWS Accounts using the Spring Starter
-
-If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
-[SqsAsyncClientProvider](./spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
-which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
-at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md).
 
 ## Bugs and Feedback
 

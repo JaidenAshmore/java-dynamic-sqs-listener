@@ -8,17 +8,19 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.jashmore.sqs.argument.messageid.MessageId
 import com.jashmore.sqs.argument.payload.Payload
+import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker
 import com.jashmore.sqs.core.kotlin.dsl.argument.coreArgumentResolverService
 import com.jashmore.sqs.core.kotlin.dsl.container.coreMessageListener
 import com.jashmore.sqs.core.kotlin.dsl.utils.cached
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient
 import com.jashmore.sqs.extensions.brave.decorator.BraveMessageProcessingDecorator
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
@@ -28,6 +30,16 @@ private const val concurrencyLimit = 10
 
 private val objectMapper = ObjectMapper().registerModule(KotlinModule())
 
+/**
+ * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
+ * [ConcurrentMessageBroker]. The rate of concurrency is randomly changed every 10 seconds to a new value between 0 and 10.
+ *
+ * <p>This example will also show how the performance of the message processing can be improved by prefetching messages via the
+ * [PrefetchingMessageRetriever].
+ *
+ * <p>While this is running you should see the messages being processed and the number of messages that are concurrently being processed. This will highlight
+ * how the concurrency can change during the running of the application.
+ */
 fun main() {
     val sqsAsyncClient = ElasticMqSqsAsyncClient()
     val queueUrl = sqsAsyncClient.createRandomQueue()
@@ -43,6 +55,13 @@ fun main() {
     tracing.isNoop = true
 
     val container = coreMessageListener("core-example-container", sqsAsyncClient, queueUrl) {
+        broker = concurrentBroker {
+            concurrencyLevel = cached(Duration.ofSeconds(10)) {
+                Random.nextInt(concurrencyLimit)
+            }
+            concurrencyPollingRate = { concurrencyLevelPeriod }
+            errorBackoffTime = { Duration.ofMillis(500) }
+        }
         retriever = prefetchingMessageRetriever {
             desiredPrefetchedMessages = 10
             maxPrefetchedMessages = 20
@@ -55,13 +74,6 @@ fun main() {
                 add(BraveMessageProcessingDecorator(tracing))
             }
         }
-        broker = concurrentBroker {
-            concurrencyLevel = cached(Duration.ofSeconds(10)) {
-                Random.nextInt(concurrencyLimit)
-            }
-            concurrencyPollingRate = { concurrencyLevelPeriod }
-            errorBackoffTime = { Duration.ofMinutes(500) }
-        }
         resolver = batchingResolver {
             bufferingSizeLimit = { 1 }
             bufferingTime = { Duration.ofSeconds(5) }
@@ -72,35 +84,28 @@ fun main() {
 
     log.info("Started container")
 
-    CompletableFuture.runAsync {
-        messageProducer(sqsAsyncClient, queueUrl)
-    }
+    val count = AtomicInteger(0)
+    val scheduledExecutorService = Executors.newScheduledThreadPool(1)
+    scheduledExecutorService.scheduleAtFixedRate({
+        sqsAsyncClient.sendMessageBatch { batchBuilder ->
+            batchBuilder.queueUrl(queueUrl)
+                    .entries((0..9).map { index ->
+                        val request = Request("key_${count.getAndIncrement()}")
+                        SendMessageBatchRequestEntry.builder()
+                                .id("$index")
+                                .messageBody(objectMapper.writeValueAsString(request))
+                                .build()
+                    })
+        }
+        log.info("Put 10 messages onto queue")
+    }, 0, 2, TimeUnit.SECONDS)
+
+    log.info("Running application for 3 minutes. Ctrl + C to exit...")
+    Thread.sleep(3 * 60 * 1000.toLong())
+    scheduledExecutorService.shutdownNow()
 }
 
 data class Request(val key: String)
-
-fun messageProducer(sqsAsyncClient: SqsAsyncClient, queueUrl: String) {
-    val count = AtomicInteger(0)
-    while (!Thread.currentThread().isInterrupted) {
-        try {
-            sqsAsyncClient.sendMessageBatch { batchBuilder ->
-                batchBuilder.queueUrl(queueUrl)
-                        .entries((0..9).map { index ->
-                            val request = Request("key_${count.getAndIncrement()}")
-                            SendMessageBatchRequestEntry.builder()
-                                    .id("$index")
-                                    .messageBody(objectMapper.writeValueAsString(request))
-                                    .build()
-                        })
-            }
-            log.info("Put 10 messages onto queue")
-            Thread.sleep(2000)
-        } catch (interruptedException: InterruptedException) {
-            log.info("Producer Thread has been interrupted")
-            break
-        }
-    }
-}
 
 class MessageListener {
     private val concurrentMessagesBeingProcessed = AtomicInteger(0)
