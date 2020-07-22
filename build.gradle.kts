@@ -31,9 +31,10 @@ subprojects {
     dependencies {
         // AWS
         implementation(platform("software.amazon.awssdk:bom:2.13.58"))
+        api(platform("software.amazon.awssdk:bom:2.13.58"))
 
         // Spring Boot
-        implementation(platform("org.springframework.boot:spring-boot-dependencies:2.3.1.RELEASE"))
+        api(platform("org.springframework.boot:spring-boot-dependencies:2.3.1.RELEASE"))
 
         // Lombok
         compileOnly("org.projectlombok:lombok:1.18.12")
