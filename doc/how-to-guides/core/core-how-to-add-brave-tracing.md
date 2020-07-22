@@ -26,7 +26,7 @@ the [DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/pr
 
 ## Example
 
-See the [core-examples](../../../examples/core-examples) for a basic application that is running with tracing enabled automatically.
+See the [core-example](../../../examples/core-example) for a basic application that is running with tracing enabled automatically.
 
 ## Including Brave information in your SQS messages
 

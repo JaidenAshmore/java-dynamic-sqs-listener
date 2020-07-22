@@ -150,8 +150,7 @@ subprojects {
         violationRules {
             rule {
                 excludes = listOf(
-                        "com.jashmore.sqs.examples*",
-                        "com.jashmore.sqs.extensions.xray.client"
+                        "com.jashmore.sqs.examples*"
                 )
                 element = "PACKAGE"
                 limit {
