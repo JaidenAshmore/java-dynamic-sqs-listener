@@ -3,12 +3,12 @@
 ## Steps
 
 1. Make sure you have the brave tracing dependency configured, e.g. via Spring Sleuth. See their documentation on how to do this.
-1. Add the [brave-message-processing-decorator](../../../extensions/brave-message-processing-decorator) module
+1. Add the [brave-extension-spring-boot](../../../extensions/brave-extension/spring-boot) module
 
     ```xml
     <dependency>
         <groupId>com.jashmore</groupId>
-        <artifactId>brave-message-processing-decorator</artifactId>
+        <artifactId>brave-extension-spring-boot</artifactId>
         <version>${library.version}</version>
     </dependency>
     ```

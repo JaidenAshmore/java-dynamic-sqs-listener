@@ -390,7 +390,7 @@ look at [Core - How to create a message processing decorator](doc/how-to-guides/
 ### Adding Brave Tracing
 
 If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
-[brave-message-processing-decorator](extensions/brave-message-processing-decorator) extension.
+[brave-extension](extensions/brave-extension) modules.
 
 See
 [Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and

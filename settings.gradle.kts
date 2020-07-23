@@ -25,7 +25,8 @@ include(
         // Extensions
         ":aws-xray-extension-core",
         ":aws-xray-extension-spring-boot",
-        ":brave-message-processing-decorator",
+        ":brave-extension-core",
+        ":brave-extension-spring-boot",
         ":core-kotlin-dsl",
 
         // - Spring Cloud Scheme Registry Extension
@@ -71,7 +72,8 @@ project(":java-dynamic-sqs-listener-spring-starter").projectDir = file("spring/s
 // Extensions
 project(":aws-xray-extension-core").projectDir = file("extensions/aws-xray-extension/core")
 project(":aws-xray-extension-spring-boot").projectDir = file("extensions/aws-xray-extension/spring-boot")
-project(":brave-message-processing-decorator").projectDir = file("extensions/brave-message-processing-decorator")
+project(":brave-extension-core").projectDir = file("extensions/brave-extension/core")
+project(":brave-extension-spring-boot").projectDir = file("extensions/brave-extension/spring-boot")
 project(":core-kotlin-dsl").projectDir = file("extensions/core-kotlin-dsl")
 project(":spring-cloud-schema-registry-extension-api").projectDir = file("extensions/spring-cloud-schema-registry-extension/spring-cloud-schema-registry-extension-api")
 project(":avro-spring-cloud-schema-registry-extension").projectDir = file("extensions/spring-cloud-schema-registry-extension/avro-spring-cloud-schema-registry-extension")

@@ -10,6 +10,6 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE")
     implementation(project(":java-dynamic-sqs-listener-spring-starter"))
     implementation(project(":elasticmq-sqs-client"))
-    implementation(project(":brave-message-processing-decorator"))
+    implementation(project(":brave-extension-spring-boot"))
     implementation(project(":sqs-brave-tracing"))
 }

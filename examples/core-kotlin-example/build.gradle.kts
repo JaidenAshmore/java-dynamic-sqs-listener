@@ -15,7 +15,7 @@ dependencies {
     implementation(project(":core-kotlin-dsl"))
     implementation("io.zipkin.brave:brave")
     implementation("io.zipkin.brave:brave-context-slf4j")
-    implementation(project(":brave-message-processing-decorator"))
+    implementation(project(":brave-extension-core"))
     implementation("ch.qos.logback:logback-core")
     implementation("ch.qos.logback:logback-classic")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
