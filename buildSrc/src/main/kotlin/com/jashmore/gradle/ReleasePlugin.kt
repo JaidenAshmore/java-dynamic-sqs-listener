@@ -19,8 +19,6 @@ import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import java.io.File
 import java.net.URI
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -75,9 +73,9 @@ open class ReleasePlugin : Plugin<Project> {
 
             project.subprojects.forEach { subProject ->
                 val groupId = subProject.group as String
-                val artifactId = subProject.name.replace(":", "")
+                val artifactId = subProject.name
 
-                val isExamplesModule = subProject.projectDir.path.contains("examples")
+                val isExamplesModule = subProject.path.startsWith(":example")
                 val moduleCompilesJava = subProject.plugins.hasPlugin("java")
                 if (!isExamplesModule && moduleCompilesJava) {
                     subProject.pluginManager.apply(MavenPublishPlugin::class.java)
