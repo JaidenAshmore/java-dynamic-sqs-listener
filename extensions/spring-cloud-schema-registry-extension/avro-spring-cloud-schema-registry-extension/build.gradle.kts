@@ -6,20 +6,9 @@ plugins {
     id("com.commercehub.gradle.plugin.avro-base")
 }
 
-java {
-    registerFeature("spring") {
-        usingSourceSet(sourceSets.main.get())
-    }
-}
-
 dependencies {
     api("org.apache.avro:avro")
     api(project(":spring-cloud-schema-registry-extension-api"))
-
-    "springImplementation"("org.springframework:spring-core")
-    "springImplementation"("org.springframework:spring-context")
-    "springImplementation"("org.springframework.boot:spring-boot-autoconfigure")
-    "springImplementation"("org.springframework.boot:spring-boot-configuration-processor")
 
     compileOnly(project(":documentation-annotations"))
 

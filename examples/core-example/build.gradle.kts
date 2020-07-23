@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":elasticmq-sqs-client"))
     implementation("io.zipkin.brave:brave")
     implementation("io.zipkin.brave:brave-context-slf4j")
-    implementation(project(":brave-message-processing-decorator"))
+    implementation(project(":brave-extension-core"))
     compileOnly(project(":documentation-annotations"))
     implementation("ch.qos.logback:logback-core")
     implementation("ch.qos.logback:logback-classic")
