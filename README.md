@@ -2,7 +2,7 @@
 
 [![Build and Test](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/workflows/Build%20and%20Test/badge.svg?branch=4.x)](https://github.com/JaidenAshmore/java-dynamic-sqs-listener/actions?query=workflow%3A%22Build+and+Test%22+branch%3A4.x)
 [![Coverage Status](https://coveralls.io/repos/github/JaidenAshmore/java-dynamic-sqs-listener/badge.svg?branch=4.x)](https://coveralls.io/github/JaidenAshmore/java-dynamic-sqs-listener?branch=4.x)
-[![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-parent.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-api?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
 
 The Java Dynamic SQS Listener is a library that simplifies the listening of messages on an [AWS SQS queue](https://aws.amazon.com/sqs/).  It has been
 built from the ground up with the goal of making it easily customisable, allowing each component of the library to be interchanged if desired. The listeners
