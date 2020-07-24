@@ -3,7 +3,7 @@ rootProject.name = "java-dynamic-sqs-listener-parent"
 
 pluginManagement {
     plugins {
-        id("org.springframework.boot") version "2.3.1.RELEASE"
+        id("org.springframework.boot") version "2.3.2.RELEASE"
         id("com.commercehub.gradle.plugin.avro-base") version "0.21.0"
     }
     repositories {
