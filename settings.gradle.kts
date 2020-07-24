@@ -57,6 +57,7 @@ include(
         ":example:spring-multiple-aws-account-example",
         ":example:spring-sleuth-example",
         ":example:spring-starter-example",
+        ":example:spring-starter-minimal-example",
         ":example:sqs-listener-library-comparison"
 )
 
@@ -102,4 +103,5 @@ project(":example:spring-integration-test-example").projectDir = file("examples/
 project(":example:spring-multiple-aws-account-example").projectDir = file("examples/spring-multiple-aws-account-example")
 project(":example:spring-sleuth-example").projectDir = file("examples/spring-sleuth-example")
 project(":example:spring-starter-example").projectDir = file("examples/spring-starter-example")
+project(":example:spring-starter-minimal-example").projectDir = file("examples/spring-starter-minimal-example")
 project(":example:sqs-listener-library-comparison").projectDir = file("examples/sqs-listener-library-comparison")
