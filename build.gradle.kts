@@ -44,7 +44,7 @@ subprojects {
 
         // Testing (JUnit, Mockito, etc)
         testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-        testImplementation("org.mockito:mockito-junit-jupiter:3.4.4")
+        testImplementation("org.mockito:mockito-junit-jupiter:3.4.6")
         testImplementation("org.mockito:mockito-core:3.4.4")
         testImplementation("org.hamcrest:hamcrest:2.2")
         testImplementation("org.assertj:assertj-core:3.16.1")
