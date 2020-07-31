@@ -67,16 +67,14 @@ fun main() {
             maxPrefetchedMessages = 20
         }
         processor = coreProcessor {
+            decorators = listOf(BraveMessageProcessingDecorator(tracing))
             argumentResolverService = coreArgumentResolverService(objectMapper)
             bean = MessageListener()
             method = MessageListener::class.java.getMethod("listen", Request::class.java, String::class.java)
-            decorators {
-                add(BraveMessageProcessingDecorator(tracing))
-            }
         }
         resolver = batchingResolver {
-            bufferingSizeLimit = { 1 }
-            bufferingTime = { Duration.ofSeconds(5) }
+            batchSize = { 1 }
+            batchingPeriod = { Duration.ofSeconds(5) }
         }
     }
 

@@ -31,23 +31,23 @@ class BatchingMessageResolverDslBuilderTest {
     lateinit var sqsAsyncClient: SqsAsyncClient
 
     @Test
-    fun `no bufferingSizeLimit will throw exception`() {
+    fun `no batchSize will throw exception`() {
         val exception = Assertions.assertThrows(RequiredFieldException::class.java) {
             batchingResolver(sqsAsyncClient, queueProperties) {
-                bufferingTime = { Duration.ofSeconds(2) }
+                batchingPeriod = { Duration.ofSeconds(2) }
             }()
         }
-        assertThat(exception).hasMessage("bufferingSizeLimit is required for BatchingMessageResolver")
+        assertThat(exception).hasMessage("batchSize is required for BatchingMessageResolver")
     }
 
     @Test
-    fun `no bufferingTime will throw exception`() {
+    fun `no batchingPeriod will throw exception`() {
         val exception = Assertions.assertThrows(RequiredFieldException::class.java) {
             batchingResolver(sqsAsyncClient, queueProperties) {
-                bufferingSizeLimit = { 1 }
+                batchSize = { 1 }
             }()
         }
-        assertThat(exception).hasMessage("bufferingTime is required for BatchingMessageResolver")
+        assertThat(exception).hasMessage("batchingPeriod is required for BatchingMessageResolver")
     }
 
     @Test
@@ -55,7 +55,7 @@ class BatchingMessageResolverDslBuilderTest {
         // arrange
         var isFirstRun = true
         val batchingResolver = batchingResolver(sqsAsyncClient, queueProperties) {
-            bufferingSizeLimit = {
+            batchSize = {
                 if (isFirstRun) {
                     isFirstRun = false
                     2
@@ -63,7 +63,7 @@ class BatchingMessageResolverDslBuilderTest {
                     throw InterruptedException()
                 }
             }
-            bufferingTime = { Duration.ofMillis(500) }
+            batchingPeriod = { Duration.ofMillis(500) }
         }()
         whenever(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest::class.java)))
                 .thenReturn(CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()

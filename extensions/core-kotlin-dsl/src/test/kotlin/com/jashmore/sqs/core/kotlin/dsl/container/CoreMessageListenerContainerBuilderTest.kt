@@ -2,12 +2,15 @@ package com.jashmore.sqs.core.kotlin.dsl.container
 
 import com.jashmore.sqs.container.MessageListenerContainer
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient
+import com.jashmore.sqs.processor.argument.VisibilityExtender
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class CoreMessageListenerContainerBuilderTest {
 
@@ -36,8 +39,8 @@ class CoreMessageListenerContainerBuilderTest {
                 maxPrefetchedMessages = 2
             }
             resolver = batchingResolver {
-                bufferingSizeLimit = { 1 }
-                bufferingTime = { Duration.ofSeconds(1) }
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(1) }
             }
             broker = concurrentBroker {
                 concurrencyLevel = { 1 }
@@ -49,7 +52,6 @@ class CoreMessageListenerContainerBuilderTest {
         // assert
         assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
     }
-
 
     @Test
     fun `can configure batching message retriever`() {
@@ -69,8 +71,8 @@ class CoreMessageListenerContainerBuilderTest {
                 batchingPeriod = { Duration.ofSeconds(5) }
             }
             resolver = batchingResolver {
-                bufferingSizeLimit = { 1 }
-                bufferingTime = { Duration.ofSeconds(1) }
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(1) }
             }
             broker = concurrentBroker {
                 concurrencyLevel = { 1 }
@@ -101,8 +103,8 @@ class CoreMessageListenerContainerBuilderTest {
                 maxPrefetchedMessages = 2
             }
             resolver = batchingResolver {
-                bufferingSizeLimit = { 1 }
-                bufferingTime = { Duration.ofSeconds(1) }
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(1) }
             }
             broker = concurrentBroker {
                 concurrencyLevel = { 1 }
@@ -119,6 +121,79 @@ class CoreMessageListenerContainerBuilderTest {
         container?.start()
         container?.stop()
         sqsAsyncClient.close()
+    }
+
+    @Nested
+    inner class LambdaProcessing {
+
+        @Test
+        fun `lambda functions can be used to process messages`() {
+            // arrange
+            val sqsAsyncClient = ElasticMqSqsAsyncClient()
+            val queueUrl = sqsAsyncClient.createRandomQueue().get().queueUrl()
+            val countDownLatch = CountDownLatch(1)
+
+            // act
+            container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+                processor = lambdaProcessor {
+                    method { _ ->
+                        countDownLatch.countDown()
+                    }
+                }
+                retriever = prefetchingMessageRetriever {
+                    desiredPrefetchedMessages = 1
+                    maxPrefetchedMessages = 2
+                }
+                resolver = batchingResolver {
+                    batchSize = { 1 }
+                    batchingPeriod = { Duration.ofSeconds(1) }
+                }
+                broker = concurrentBroker {
+                    concurrencyLevel = { 1 }
+                }
+            }
+            container?.start()
+            sqsAsyncClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }
+
+            // assert
+            assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
+        }
+
+        @Test
+        fun `lambda functions can include visibility extender`() {
+            // arrange
+            val sqsAsyncClient = ElasticMqSqsAsyncClient()
+            val queueUrl = sqsAsyncClient.createRandomQueue().get().queueUrl()
+            val visibilityExtenderReference = AtomicReference<VisibilityExtender>()
+            val countDownLatch = CountDownLatch(1)
+
+            // act
+            container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+                processor = lambdaProcessor {
+                    methodWithVisibilityExtender { _, visibilityExtender ->
+                        visibilityExtenderReference.set(visibilityExtender)
+                        countDownLatch.countDown()
+                    }
+                }
+                retriever = prefetchingMessageRetriever {
+                    desiredPrefetchedMessages = 1
+                    maxPrefetchedMessages = 2
+                }
+                resolver = batchingResolver {
+                    batchSize = { 1 }
+                    batchingPeriod = { Duration.ofSeconds(1) }
+                }
+                broker = concurrentBroker {
+                    concurrencyLevel = { 1 }
+                }
+            }
+            container?.start()
+            sqsAsyncClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }
+
+            // assert
+            assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
+            assertThat(visibilityExtenderReference.get()).isNotNull()
+        }
     }
 
     inner class MessageListener(private val countDownLatch: CountDownLatch) {

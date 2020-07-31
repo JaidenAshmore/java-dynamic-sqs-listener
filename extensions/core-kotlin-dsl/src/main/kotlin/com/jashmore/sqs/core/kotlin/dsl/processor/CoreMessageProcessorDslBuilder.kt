@@ -6,15 +6,12 @@ import com.jashmore.sqs.argument.ArgumentResolverService
 import com.jashmore.sqs.argument.CoreArgumentResolverService
 import com.jashmore.sqs.core.kotlin.dsl.ArgumentResolverServiceDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
-import com.jashmore.sqs.core.kotlin.dsl.MessageProcessingDecoratorsDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.argument.CoreArgumentResolverServiceDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.decorators.CoreMessageProcessingDecoratorsDslDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.decorator.MessageProcessingDecorator
 import com.jashmore.sqs.processor.CoreMessageProcessor
-import com.jashmore.sqs.processor.DecoratingMessageProcessor
 import com.jashmore.sqs.processor.MessageProcessor
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.lang.reflect.Method
@@ -43,37 +40,30 @@ class CoreMessageProcessorDslBuilder(private val listenerIdentifier: String,
      */
     var method: Method? = null
 
-    private var decorators: MessageProcessingDecoratorsDslBuilder = CoreMessageProcessingDecoratorsDslDslBuilder()
-
     /**
-     * Add [MessageProcessingDecorator]s to the [MessageProcessor].
-     *
-     * @param init the kotlin DSL function for adding decorators
+     * The list of [MessageProcessingDecorator]s that will wrap the processing of the message.
      */
-    fun decorators(init: MessageProcessingDecoratorsDslBuilder.() -> Unit) {
-        decorators.init()
-    }
+    var decorators = listOf<MessageProcessingDecorator>()
 
     override fun invoke(): MessageProcessor {
-        val delegate = CoreMessageProcessor(
-                argumentResolverService.invoke(),
-                queueProperties,
-                sqsAsyncClient,
-                method ?: throw RequiredFieldException("method", "CoreMessageProcessor"),
-                bean ?: throw RequiredFieldException("bean", "CoreMessageProcessor")
-        )
-        val messageProcessingDecorators = decorators()
-        if (messageProcessingDecorators.isEmpty()) {
-            return delegate
-        }
-        return DecoratingMessageProcessor(
+        return optionalDecoratedProcessor(
                 listenerIdentifier,
                 queueProperties,
-                messageProcessingDecorators,
-                delegate
+                decorators,
+                CoreMessageProcessor(
+                        argumentResolverService.invoke(),
+                        queueProperties,
+                        sqsAsyncClient,
+                        method ?: throw RequiredFieldException("method", "CoreMessageProcessor"),
+                        bean ?: throw RequiredFieldException("bean", "CoreMessageProcessor")
+
+                )
         )
     }
 }
 
-fun coreProcessor(identifier: String, sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: CoreMessageProcessorDslBuilder.() -> Unit)
+fun coreProcessor(identifier: String,
+                  sqsAsyncClient: SqsAsyncClient,
+                  queueProperties: QueueProperties,
+                  init: CoreMessageProcessorDslBuilder.() -> Unit)
         = initComponent(CoreMessageProcessorDslBuilder(identifier, sqsAsyncClient, queueProperties), init)

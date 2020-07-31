@@ -2,13 +2,13 @@ package com.jashmore.sqs.processor;
 
 import static java.util.stream.Collectors.toList;
 
+import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
-import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
@@ -22,6 +22,8 @@ import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -32,122 +34,99 @@ import java.util.stream.IntStream;
 @Slf4j
 @ThreadSafe
 public class CoreMessageProcessor implements MessageProcessor {
-    private final QueueProperties queueProperties;
-    private final SqsAsyncClient sqsAsyncClient;
-    private final Method messageConsumerMethod;
-    private final Object messageConsumerBean;
-
-    // These are calculated in the constructor so that it is not recalculated each time a message is processed
-    private final List<InternalArgumentResolver> methodArgumentResolvers;
-    private final boolean hasAcknowledgeParameter;
-    private final boolean returnsCompletableFuture;
+    private final MessageProcessor delegate;
 
     public CoreMessageProcessor(final ArgumentResolverService argumentResolverService,
                                 final QueueProperties queueProperties,
                                 final SqsAsyncClient sqsAsyncClient,
                                 final Method messageConsumerMethod,
                                 final Object messageConsumerBean) {
-        this.queueProperties = queueProperties;
-        this.sqsAsyncClient = sqsAsyncClient;
-        this.messageConsumerMethod = messageConsumerMethod;
-        this.messageConsumerBean = messageConsumerBean;
+        final boolean hasAcknowledgeParameter = hasAcknowledgeParameter(messageConsumerMethod);
+        final boolean isAsynchronous = CompletableFuture.class.isAssignableFrom(messageConsumerMethod.getReturnType());
+        final ArgumentResolvers argumentResolvers = determineArgumentResolvers(argumentResolverService, queueProperties, messageConsumerMethod);
 
-        this.methodArgumentResolvers = getArgumentResolvers(argumentResolverService);
-        this.hasAcknowledgeParameter = hasAcknowledgeParameter();
-        this.returnsCompletableFuture = CompletableFuture.class.isAssignableFrom(messageConsumerMethod.getReturnType());
-    }
+        if (isAsynchronous) {
+            final Function<Object[], CompletableFuture<?>> messageExecutor = (arguments) -> {
+                try {
+                    return (CompletableFuture<?>) messageConsumerMethod.invoke(messageConsumerBean, arguments);
+                } catch (IllegalAccessException exception) {
+                    return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception));
+                } catch (InvocationTargetException exception) {
+                    return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
+                }
+            };
 
-    @Override
-    public CompletableFuture<?> processMessage(final Message message, final Supplier<CompletableFuture<?>> resolveMessageCallback) {
-        final Object[] arguments;
-        try {
-            arguments = getArguments(message, resolveMessageCallback);
-        } catch (RuntimeException runtimeException) {
-            throw new MessageProcessingException("Error building arguments for the message listener", runtimeException);
-        }
-
-        final Object result;
-        try {
-            result = messageConsumerMethod.invoke(messageConsumerBean, arguments);
-        } catch (IllegalAccessException exception) {
-            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception));
-        } catch (InvocationTargetException exception) {
-            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException(exception.getCause()));
-        }
-
-        if (hasAcknowledgeParameter) {
-            // If the method has the Acknowledge parameter it is up to them to resolve the message
-            return CompletableFuture.completedFuture(null);
-        }
-
-        final CompletableFuture<?> resultCompletableFuture;
-        if (returnsCompletableFuture) {
-            if (result == null) {
-                return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Method returns CompletableFuture but null was returned"));
+            if (hasAcknowledgeParameter) {
+                this.delegate = new AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, (message, acknowledge, visibilityExtender) -> {
+                    final Object[] arguments = argumentResolvers.resolveArgument(message, acknowledge, visibilityExtender);
+                    return messageExecutor.apply(arguments);
+                });
+            } else {
+                this.delegate = new AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, false, (message, visibilityExtender) -> {
+                    final Object[] arguments = argumentResolvers.resolveArgument(message, null, visibilityExtender);
+                    return messageExecutor.apply(arguments);
+                });
             }
-            resultCompletableFuture = (CompletableFuture<?>) result;
         } else {
-            resultCompletableFuture = CompletableFuture.completedFuture(null);
-        }
+            final Consumer<Object[]> messageExecutor = (arguments) -> {
+                try {
+                    messageConsumerMethod.invoke(messageConsumerBean, arguments);
+                } catch (IllegalAccessException illegalAccessException) {
+                    throw new MessageProcessingException(illegalAccessException);
+                } catch (InvocationTargetException exception) {
+                    throw new MessageProcessingException(exception.getCause());
+                }
+            };
 
-        final Runnable resolveCallbackLoggingErrorsOnly = () -> {
-            try {
-                resolveMessageCallback.get()
-                        .handle((i, throwable) -> {
-                            if (throwable != null) {
-                                log.error("Error resolving successfully processed message", throwable);
-                            }
-                            return null;
-                        });
-            } catch (RuntimeException runtimeException) {
-                log.error("Failed to trigger message resolving", runtimeException);
+            if (hasAcknowledgeParameter) {
+                this.delegate = new LambdaMessageProcessor(sqsAsyncClient, queueProperties, (message, acknowledge, visibilityExtender) -> {
+                    final Object[] arguments = argumentResolvers.resolveArgument(message, acknowledge, visibilityExtender);
+                    messageExecutor.accept(arguments);
+                });
+            } else {
+                this.delegate = new LambdaMessageProcessor(sqsAsyncClient, queueProperties, false, (message, visibilityExtender) -> {
+                    final Object[] arguments = argumentResolvers.resolveArgument(message, null, visibilityExtender);
+                    messageExecutor.accept(arguments);
+                });
             }
-        };
-
-        return resultCompletableFuture
-                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.run());
+        }
     }
 
-    /**
-     * Get the arguments for the method for the message that is being processed.
-     *
-     * @param message     the message to populate the arguments from
-     * @return the array of arguments to call the method with
-     */
-    private Object[] getArguments(final Message message, final  Supplier<CompletableFuture<?>> resolveMessageCallback) {
-        return methodArgumentResolvers.stream()
-                .map(resolver -> resolver.resolveArgument(message, resolveMessageCallback))
-                .toArray(Object[]::new);
-    }
-
-    private List<InternalArgumentResolver> getArgumentResolvers(final ArgumentResolverService argumentResolverService) {
-        final Parameter[] parameters = messageConsumerMethod.getParameters();
-        return IntStream.range(0, parameters.length)
+    private static ArgumentResolvers determineArgumentResolvers(final ArgumentResolverService argumentResolverService,
+                                                                final QueueProperties queueProperties,
+                                                                final Method method) {
+        final Parameter[] parameters = method.getParameters();
+        List<InternalArgumentResolver> argumentResolvers = IntStream.range(0, parameters.length)
                 .<InternalArgumentResolver>mapToObj(parameterIndex -> {
                     final Parameter parameter = parameters[parameterIndex];
 
                     final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                            .method(messageConsumerMethod)
+                            .method(method)
                             .parameter(parameter)
                             .parameterIndex(parameterIndex)
                             .build();
 
                     if (isAcknowledgeParameter(parameter)) {
-                        return (message, resolveMessageCallback) -> (Acknowledge) resolveMessageCallback::get;
+                        return (message, acknowledge, visibilityExtender) -> acknowledge;
                     }
 
                     if (isVisibilityExtenderParameter(parameter)) {
-                        return (message, resolveMessageCallback) -> new DefaultVisibilityExtender(sqsAsyncClient, queueProperties, message);
+                        return (message, acknowledge, visibilityExtender) -> visibilityExtender;
                     }
 
                     final ArgumentResolver<?> argumentResolver = argumentResolverService.getArgumentResolver(methodParameter);
-                    return (message, resolveMessageCallback) -> argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
+                    return (message, acknowledge, visibilityExtender)
+                            -> argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
                 })
                 .collect(toList());
+
+        return (message, acknowledge, visibilityExtender) -> argumentResolvers.stream()
+                .map(argumentResolver -> argumentResolver.resolveArgument(message, acknowledge, visibilityExtender))
+                .toArray(Object[]::new);
     }
 
-    private boolean hasAcknowledgeParameter() {
-        return Arrays.stream(messageConsumerMethod.getParameters())
+    private static boolean hasAcknowledgeParameter(final Method method) {
+        return Arrays.stream(method.getParameters())
                 .anyMatch(CoreMessageProcessor::isAcknowledgeParameter);
     }
 
@@ -159,18 +138,24 @@ public class CoreMessageProcessor implements MessageProcessor {
         return VisibilityExtender.class.isAssignableFrom(parameter.getType());
     }
 
+    @Override
+    public CompletableFuture<?> processMessage(final Message message, final Supplier<CompletableFuture<?>> resolveMessageCallback) {
+        return delegate.processMessage(message, resolveMessageCallback);
+    }
+
     /**
      * Internal resolver for resolving the argument given the message.
      */
     @FunctionalInterface
     interface InternalArgumentResolver {
-        /**
-         * Resolve the argument of the method.
-         *
-         * @param message the message that is being processed
-         * @param resolveMessageCallback the callback that should be executed when the message has successfully been processed
-         * @return the argument that should be used for the corresponding parameter
-         */
-        Object resolveArgument(final Message message, final Supplier<CompletableFuture<?>> resolveMessageCallback);
+        Object resolveArgument(final Message message, @Nullable final Acknowledge acknowledge, @Nullable final VisibilityExtender visibilityExtender);
+    }
+
+    /**
+     * Resolve all of the arguments for this message.
+     */
+    @FunctionalInterface
+    interface ArgumentResolvers {
+        Object[] resolveArgument(final Message message, @Nullable final Acknowledge acknowledge, @Nullable final VisibilityExtender visibilityExtender);
     }
 }

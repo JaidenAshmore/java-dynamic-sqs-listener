@@ -42,6 +42,11 @@ default implementation that calls out to a `ArgumentResolverService` to resolve 
 - [DecoratingMessageProcessor](../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java): implementation that allows for the
 message processing to be decorated with [MessageProcessingDecorator](../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) logic.
 This can be useful for adding tracing, metrics or other extra functionality in the message processing.
+- [LambdaMessageProcessor](../core/src/main/java/com/jashmore/sqs/processor/LambdaMessageProcessor.java): implementation that
+will use a lambda/functional synchronous methods to process the message. This does not support any argument resolution using an `ArgumentResolverService`.
+- [AsyncLambdaMessageProcessor](../core/src/main/java/com/jashmore/sqs/processor/AsyncLambdaMessageProcessor.java): implementation that
+will use a lambda/functional asynchronous methods (returns a `CompletableFuture`) to process the message. This does not support any argument
+resolution using an `ArgumentResolverService`.
 
 ### ArgumentResolverService
 

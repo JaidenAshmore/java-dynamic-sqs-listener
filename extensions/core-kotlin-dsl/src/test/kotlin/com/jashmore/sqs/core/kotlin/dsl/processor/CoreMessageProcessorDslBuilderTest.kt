@@ -119,9 +119,7 @@ class CoreMessageProcessorDslBuilderTest {
             }
             bean = CoreMessageProcessorDslBuilderTest()
             method = CoreMessageProcessorDslBuilderTest::class.java.getMethod("myMethod", String::class.java)
-            decorators {
-                add(mockDecorator)
-            }
+            decorators = listOf(mockDecorator)
         }()
 
         val message = Message.builder().body("test").build()

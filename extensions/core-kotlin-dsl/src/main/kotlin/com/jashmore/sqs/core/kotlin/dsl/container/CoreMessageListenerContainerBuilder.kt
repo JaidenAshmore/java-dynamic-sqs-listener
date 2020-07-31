@@ -2,7 +2,6 @@ package com.jashmore.sqs.core.kotlin.dsl.container
 
 import com.jashmore.sqs.core.kotlin.dsl.MessageBrokerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
-import com.jashmore.sqs.core.kotlin.dsl.MessageListenerContainerBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageResolverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageRetrieverDslBuilder
@@ -10,11 +9,19 @@ import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.broker.MessageBroker
+import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker
 import com.jashmore.sqs.container.CoreMessageListenerContainer
 import com.jashmore.sqs.container.CoreMessageListenerContainerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
+import com.jashmore.sqs.core.kotlin.dsl.broker.ConcurrentMessageBrokerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.resolver.BatchingMessageResolverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.retriever.BatchingMessageRetrieverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.retriever.PrefetchingMessageRetrieverDslBuilder
 import com.jashmore.sqs.resolver.MessageResolver
+import com.jashmore.sqs.resolver.batching.BatchingMessageResolver
 import com.jashmore.sqs.retriever.MessageRetriever
+import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.time.Duration
 import java.util.function.Supplier
@@ -25,7 +32,79 @@ import java.util.function.Supplier
 @MessageListenerComponentDslMarker
 class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties)
     : MessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties) {
+    var broker: MessageBrokerDslBuilder? = null
+    var resolver: MessageResolverDslBuilder? = null
+    var retriever: MessageRetrieverDslBuilder? = null
     private var shutdownBuilder: ShutdownBuilder? = null
+
+    /**
+     * Use the [ConcurrentMessageBroker] as the [MessageBroker] in this container.
+     *
+     * Usage:
+     * ```kotlin
+     * val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+     *     broker = concurrentBroker {
+     *        // configure here
+     *     }
+     *     // other configuration
+     * }
+     * ```
+     */
+    fun concurrentBroker(init: ConcurrentMessageBrokerDslBuilder.() -> Unit) = com.jashmore.sqs.core.kotlin.dsl.broker.concurrentBroker(init)
+
+    /**
+     * Use the [BatchingMessageRetriever] as the [MessageRetriever] for this container.
+     *
+     * Usage:
+     * ```kotlin
+     * val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+     *     retriever = batchingMessageRetriever {
+     *        // configure here
+     *     }
+     *     // other configuration
+     * }
+     * ```
+     *
+     * @param init the DSL function for configuring this resolver
+     */
+    fun batchingMessageRetriever(init: BatchingMessageRetrieverDslBuilder.() -> Unit)
+            = com.jashmore.sqs.core.kotlin.dsl.retriever.batchingMessageRetriever(sqsAsyncClient, queueProperties, init)
+
+    /**
+     * Use the [PrefetchingMessageRetriever] as the [MessageRetriever] for this container.
+     *
+     * Usage:
+     * ```kotlin
+     * val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+     *     retriever = prefetchingMessageRetriever {
+     *        // configure here
+     *     }
+     *     // other configuration
+     * }
+     * ```
+     *
+     * @param init the DSL function for configuring this resolver
+     */
+    fun prefetchingMessageRetriever(init: PrefetchingMessageRetrieverDslBuilder.() -> Unit)
+            = com.jashmore.sqs.core.kotlin.dsl.retriever.prefetchingMessageRetriever(sqsAsyncClient, queueProperties, init)
+
+    /**
+     * Use the [BatchingMessageResolver] as the [MessageResolver] for this container.
+     *
+     * Usage:
+     * ```kotlin
+     * val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+     *     resolver = batchingResolver {
+     *        // configure here
+     *     }
+     *     // other configuration
+     * }
+     * ```
+     *
+     * @param init the DSL function for configuring this resolver
+     */
+    fun batchingResolver(init: BatchingMessageResolverDslBuilder.() -> Unit = {})
+            = com.jashmore.sqs.core.kotlin.dsl.resolver.batchingResolver(sqsAsyncClient, queueProperties, init)
 
     /**
      * Configure the shutdown properties for this container.
@@ -178,5 +257,5 @@ fun coreMessageListener(identifier: String,
 
     val listener = CoreMessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
-    return listener.invoke()
+    return listener()
 }
