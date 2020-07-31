@@ -64,7 +64,7 @@ subprojects {
 
             // Avro/Spring Cloud Schema Registry
             implementation("org.apache.avro:avro:1.10.0")
-            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.6.RELEASE")
+            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.7.RELEASE")
 
             // Proxying
             implementation("cglib:cglib:3.3.0")
