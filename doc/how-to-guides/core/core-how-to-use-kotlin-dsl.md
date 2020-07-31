@@ -54,6 +54,19 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
 
 Check out the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) for more details about the internals of this module and what you can use.
 
+## Using a lambda for the message processing
+
+```kotlin
+val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+    processor = lambdaProcessor {
+        method { message -> 
+            log.info("Message received: {}", message.body())
+        }
+    }
+    // other configuration
+}
+```
+
 ## Example
 
 A full example of using the Kotlin DSL can be found in the [core-kotlin-example](../../../examples/core-kotlin-example/README.md).
