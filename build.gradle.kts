@@ -5,7 +5,7 @@ import com.jashmore.gradle.release
 plugins {
     java
     `java-library`
-    id("com.github.spotbugs") version "4.4.5"
+    id("com.github.spotbugs") version "4.1.1"
     checkstyle
     jacoco
 }
@@ -55,7 +55,7 @@ subprojects {
 
         if (!isKotlinProject) {
             // SpotBugs
-            spotbugs("com.github.spotbugs:spotbugs:4.0.6")
+            spotbugs("com.github.spotbugs:spotbugs:4.1.1")
         }
 
         constraints {
