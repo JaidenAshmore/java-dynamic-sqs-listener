@@ -67,6 +67,46 @@ val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
 }
 ```
 
+## Using the batchingMessageListener
+
+This is equivalent to
+the [@QueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java) annotation
+used in a Spring Boot application which will set up a container that will request for messages in batches.
+
+```kotlin
+batchingMessageListener("identifier", sqsAsyncClient, "url") {
+    concurrencyLevel = { 10 }
+    batchSize = { 5 }
+    batchingPeriod =  { Duration.ofSeconds(5) }
+
+    processor = lambdaProcessor {
+        method { message ->
+            log.info("Message: {}", message.body())
+        }
+    }
+}
+```
+
+## Using the prefetchingMessageListener
+
+This is equivalent to
+the [@PrefetchingQueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java) annotation
+used in a Spring Boot application which will set up a container that will prefetch messages for processing.
+
+```kotlin
+prefetchingMessageListener("identifier", sqsAsyncClient, "url") {
+    concurrencyLevel = { 2 }
+    desiredPrefetchedMessages = 5
+    maxPrefetchedMessages = 10
+
+    processor = lambdaProcessor {
+        method { message ->
+            log.info("Message: {}", message.body())
+        }
+    }
+}
+```
+
 ## Example
 
 A full example of using the Kotlin DSL can be found in the [core-kotlin-example](../../../examples/core-kotlin-example/README.md).
