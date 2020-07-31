@@ -69,5 +69,6 @@ public class LambdaMessageProcessorIntegrationTest {
 
         // assert
         assertThat(countDownLatch.await(20, TimeUnit.SECONDS)).isTrue();
+        coreMessageListenerContainer.stop();
     }
 }
