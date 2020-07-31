@@ -131,10 +131,11 @@ class CoreMessageProcessorTest {
             final MessageProcessor processor = new CoreMessageProcessor(argumentResolverService, QUEUE_PROPERTIES, sqsAsyncClient, method, syncMessageListener);
 
             // act
-            final MessageProcessingException exception = assertThrows(MessageProcessingException.class, () -> processor.processMessage(MESSAGE, NO_OP));
+            final ExecutionException exception = assertThrows(ExecutionException.class, () -> processor.processMessage(MESSAGE, NO_OP).get());
 
             // assert
-            assertThat(exception).hasCauseInstanceOf(ExpectedTestException.class);
+            assertThat(exception).hasCauseInstanceOf(MessageProcessingException.class);
+            assertThat(exception.getCause()).hasCauseInstanceOf(ExpectedTestException.class);
         }
     }
 

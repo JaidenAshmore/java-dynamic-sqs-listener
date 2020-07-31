@@ -21,27 +21,39 @@ class BatchingMessageResolverDslBuilder(private val sqsAsyncClient: SqsAsyncClie
      *
      * @see [BatchingMessageResolverProperties.getBufferingSizeLimit] for in-depth details about this field
      */
-    var bufferingSizeLimit: (() -> Int)? = null
+    var batchSize: (() -> Int)? = null
     /**
      * Supplier for getting the amount of time to wait for the buffer to fill to the limit before sending out any currently buffered messages.
      *
      * @see [BatchingMessageResolverProperties.getBufferingTime] for in-depth details about this field
      */
-    var bufferingTime: (() -> Duration)? = null
+    var batchingPeriod: (() -> Duration)? = null
 
     override fun invoke(): MessageResolver {
-        val actualBufferingSizeLimit: () -> Int = bufferingSizeLimit ?: throw RequiredFieldException("bufferingSizeLimit", "BatchingMessageResolver")
-        val actualBufferingTime: () -> Duration = bufferingTime ?: throw RequiredFieldException("bufferingTime", "BatchingMessageResolver")
+        val actualBatchSize = batchSize
+        val actualBatchingPeriod = batchingPeriod
 
-        return BatchingMessageResolver(
-                queueProperties,
-                sqsAsyncClient,
-                object : BatchingMessageResolverProperties {
-                    override fun getBufferingSizeLimit(): Int = actualBufferingSizeLimit()
+        if (actualBatchSize == null && actualBatchingPeriod == null) {
+            return BatchingMessageResolver(
+                    queueProperties,
+                    sqsAsyncClient
+            )
+        }
+        else if (actualBatchSize != null && actualBatchingPeriod != null) {
+            return BatchingMessageResolver(
+                    queueProperties,
+                    sqsAsyncClient,
+                    object : BatchingMessageResolverProperties {
+                        override fun getBufferingSizeLimit(): Int = actualBatchSize()
 
-                    override fun getBufferingTime(): Duration = actualBufferingTime()
-                }
-        )
+                        override fun getBufferingTime(): Duration = actualBatchingPeriod()
+                    }
+            )
+        } else if (actualBatchSize == null) {
+            throw RequiredFieldException("batchSize", "BatchingMessageResolver")
+        } else {
+            throw RequiredFieldException("batchingPeriod", "BatchingMessageResolver")
+        }
     }
 }
 

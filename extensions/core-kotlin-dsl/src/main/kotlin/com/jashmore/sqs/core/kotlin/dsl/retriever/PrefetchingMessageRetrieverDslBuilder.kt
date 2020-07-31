@@ -36,20 +36,18 @@ class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsync
      *
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
      */
-    var messageVisibility: (() -> Duration?)? = null
+    var messageVisibility: (() -> Duration?) = { null }
 
     /**
      * Function for obtaining the error backoff time if there is an error retrieving messages.
      *
      * This helps stop the application constantly throwing errors if there was a problem.
      */
-    var errorBackoffTime: (() -> Duration?)? = null
+    var errorBackoffTime: (() -> Duration?) = { null }
 
     override fun invoke(): MessageRetriever {
         val actualDesiredPrefetchedMessages: Int = desiredPrefetchedMessages ?: throw RequiredFieldException("desiredPrefetchedMessages", "PrefetchingMessageRetriever")
         val actualMaxPrefetched: Int = maxPrefetchedMessages ?: throw RequiredFieldException("maxPrefetchedMessages", "PrefetchingMessageRetriever")
-        val actualMessageVisibility: () -> Duration? = messageVisibility ?: { null }
-        val actualErrorBackoffTime: () -> Duration? = errorBackoffTime ?: { null }
 
         return PrefetchingMessageRetriever(
                 sqsAsyncClient,
@@ -59,9 +57,9 @@ class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsync
 
                     override fun getMaxPrefetchedMessages(): Int = actualMaxPrefetched
 
-                    override fun getMessageVisibilityTimeout(): Duration? = actualMessageVisibility()
+                    override fun getMessageVisibilityTimeout(): Duration? = messageVisibility()
 
-                    override fun getErrorBackoffTime(): Duration? = actualErrorBackoffTime()
+                    override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
                 }
         )
     }
