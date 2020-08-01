@@ -5,7 +5,7 @@ import com.jashmore.gradle.release
 plugins {
     java
     `java-library`
-    id("com.github.spotbugs") version "4.1.1"
+    id("com.github.spotbugs") version "4.4.5"
     checkstyle
     jacoco
 }
