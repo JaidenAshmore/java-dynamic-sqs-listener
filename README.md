@@ -137,6 +137,9 @@ See the [build.gradle.kts](build.gradle.kts) for the specific versions of these 
     across multiple AWS Accounts
     1. [How to version message payload schemas](doc/how-to-guides/spring/spring-how-to-version-payload-schemas-using-spring-cloud-schema-registry.md): guide
     for versioning payloads using Avro and the Spring Cloud Schema Registry.
+1. Ktor How to Guides
+    1. [How to Register Message Listeners](doc/how-to-guides/ktor/ktor-how-to-register-message-listeners.md): guide for include message listeners into a
+    Ktor application.
 
 ## Common Use Cases/Explanations
 

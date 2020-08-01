@@ -20,7 +20,7 @@ allprojects {
 }
 
 subprojects {
-    val isKotlinProject = project.name.contains("kotlin")
+    val isKotlinProject = project.name.contains("kotlin") || project.name.contains("ktor")
     apply(plugin = "java-library")
     apply(plugin = "jacoco")
     if (!isKotlinProject) {

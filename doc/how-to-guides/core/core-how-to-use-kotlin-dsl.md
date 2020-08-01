@@ -59,7 +59,7 @@ Check out the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) for more de
 ```kotlin
 val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
     processor = lambdaProcessor {
-        method { message -> 
+        method { message ->
             log.info("Message received: {}", message.body())
         }
     }
@@ -74,7 +74,7 @@ the [@QueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/
 used in a Spring Boot application which will set up a container that will request for messages in batches.
 
 ```kotlin
-batchingMessageListener("identifier", sqsAsyncClient, "url") {
+val container = batchingMessageListener("identifier", sqsAsyncClient, "url") {
     concurrencyLevel = { 10 }
     batchSize = { 5 }
     batchingPeriod =  { Duration.ofSeconds(5) }
@@ -94,7 +94,7 @@ the [@PrefetchingQueueListener](../../../spring/spring-core/src/main/java/com/ja
 used in a Spring Boot application which will set up a container that will prefetch messages for processing.
 
 ```kotlin
-prefetchingMessageListener("identifier", sqsAsyncClient, "url") {
+val container = prefetchingMessageListener("identifier", sqsAsyncClient, "url") {
     concurrencyLevel = { 2 }
     desiredPrefetchedMessages = 5
     maxPrefetchedMessages = 10
