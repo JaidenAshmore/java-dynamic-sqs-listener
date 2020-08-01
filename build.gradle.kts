@@ -75,7 +75,7 @@ subprojects {
             // Brave
             implementation("io.zipkin.brave:brave:5.12.3")
             implementation("io.zipkin.brave:brave-context-slf4j:5.12.3")
-            implementation("io.zipkin.brave:brave-tests:5.12.3")
+            implementation("io.zipkin.brave:brave-tests:5.12.4")
 
             // ElasticMQ
             implementation("org.elasticmq:elasticmq-rest-sqs_2.12:0.15.6")
