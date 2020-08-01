@@ -55,7 +55,7 @@ subprojects {
 
         if (!isKotlinProject) {
             // SpotBugs
-            spotbugs("com.github.spotbugs:spotbugs:4.0.6")
+            spotbugs("com.github.spotbugs:spotbugs:4.1.1")
         }
 
         constraints {
