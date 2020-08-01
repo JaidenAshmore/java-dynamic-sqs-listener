@@ -1,22 +1,22 @@
 package com.jashmore.sqs.core.kotlin.dsl.container
 
-import com.jashmore.sqs.core.kotlin.dsl.MessageBrokerDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
-import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageResolverDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageRetrieverDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.initComponent
-import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.broker.MessageBroker
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker
 import com.jashmore.sqs.container.CoreMessageListenerContainer
 import com.jashmore.sqs.container.CoreMessageListenerContainerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
+import com.jashmore.sqs.core.kotlin.dsl.MessageBrokerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
+import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.MessageResolverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.MessageRetrieverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.broker.ConcurrentMessageBrokerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.core.kotlin.dsl.resolver.BatchingMessageResolverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.retriever.BatchingMessageRetrieverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.retriever.PrefetchingMessageRetrieverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.resolver.MessageResolver
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver
 import com.jashmore.sqs.retriever.MessageRetriever
@@ -27,11 +27,11 @@ import java.time.Duration
 import java.util.function.Supplier
 
 /**
- * [MessageListenerContainerBuilder] that will construct a [MessageListenerContainer] for usage in this container.
+ * [AbstractMessageListenerContainerDslBuilder] that will construct a [MessageListenerContainer] for usage in this container.
  */
 @MessageListenerComponentDslMarker
-class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties)
-    : MessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties) {
+class CoreMessageListenerContainerDslBuilder(identifier: String, sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties) :
+    AbstractMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties) {
     var broker: MessageBrokerDslBuilder? = null
     var resolver: MessageResolverDslBuilder? = null
     var retriever: MessageRetrieverDslBuilder? = null
@@ -67,8 +67,8 @@ class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: Sq
      *
      * @param init the DSL function for configuring this resolver
      */
-    fun batchingMessageRetriever(init: BatchingMessageRetrieverDslBuilder.() -> Unit)
-            = com.jashmore.sqs.core.kotlin.dsl.retriever.batchingMessageRetriever(sqsAsyncClient, queueProperties, init)
+    fun batchingMessageRetriever(init: BatchingMessageRetrieverDslBuilder.() -> Unit) =
+        com.jashmore.sqs.core.kotlin.dsl.retriever.batchingMessageRetriever(sqsAsyncClient, queueProperties, init)
 
     /**
      * Use the [PrefetchingMessageRetriever] as the [MessageRetriever] for this container.
@@ -85,8 +85,8 @@ class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: Sq
      *
      * @param init the DSL function for configuring this resolver
      */
-    fun prefetchingMessageRetriever(init: PrefetchingMessageRetrieverDslBuilder.() -> Unit)
-            = com.jashmore.sqs.core.kotlin.dsl.retriever.prefetchingMessageRetriever(sqsAsyncClient, queueProperties, init)
+    fun prefetchingMessageRetriever(init: PrefetchingMessageRetrieverDslBuilder.() -> Unit) =
+        com.jashmore.sqs.core.kotlin.dsl.retriever.prefetchingMessageRetriever(sqsAsyncClient, queueProperties, init)
 
     /**
      * Use the [BatchingMessageResolver] as the [MessageResolver] for this container.
@@ -103,8 +103,8 @@ class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: Sq
      *
      * @param init the DSL function for configuring this resolver
      */
-    fun batchingResolver(init: BatchingMessageResolverDslBuilder.() -> Unit = {})
-            = com.jashmore.sqs.core.kotlin.dsl.resolver.batchingResolver(sqsAsyncClient, queueProperties, init)
+    fun batchingResolver(init: BatchingMessageResolverDslBuilder.() -> Unit = {}) =
+        com.jashmore.sqs.core.kotlin.dsl.resolver.batchingResolver(sqsAsyncClient, queueProperties, init)
 
     /**
      * Configure the shutdown properties for this container.
@@ -120,32 +120,33 @@ class CoreMessageListenerContainerBuilder(identifier: String, sqsAsyncClient: Sq
         val resolverBuilder: MessageResolverDslBuilder = resolver ?: throw RequiredFieldException("resolver", "CoreMessageListenerContainer")
         val shutdown = shutdownBuilder
         if (shutdown != null) {
-            return CoreMessageListenerContainer(identifier,
-                    Supplier(brokerBuilder),
-                    Supplier(retrieverBuilder),
-                    Supplier(processorBuilder),
-                    Supplier(resolverBuilder),
-                    object : CoreMessageListenerContainerProperties {
-                        override fun shouldInterruptThreadsProcessingMessagesOnShutdown(): Boolean? = shutdown.shouldInterruptThreadsProcessingMessages
+            return CoreMessageListenerContainer(
+                identifier,
+                Supplier(brokerBuilder),
+                Supplier(retrieverBuilder),
+                Supplier(processorBuilder),
+                Supplier(resolverBuilder),
+                object : CoreMessageListenerContainerProperties {
+                    override fun shouldInterruptThreadsProcessingMessagesOnShutdown(): Boolean? = shutdown.shouldInterruptThreadsProcessingMessages
 
-                        override fun shouldProcessAnyExtraRetrievedMessagesOnShutdown(): Boolean? = shutdown.shouldProcessAnyExtraRetrievedMessages
+                    override fun shouldProcessAnyExtraRetrievedMessagesOnShutdown(): Boolean? = shutdown.shouldProcessAnyExtraRetrievedMessages
 
-                        override fun getMessageBrokerShutdownTimeout(): Duration? = shutdown.messageBrokerShutdownTimeout
+                    override fun getMessageBrokerShutdownTimeout(): Duration? = shutdown.messageBrokerShutdownTimeout
 
-                        override fun getMessageProcessingShutdownTimeout(): Duration? = shutdown.messageProcessingShutdownTimeout
+                    override fun getMessageProcessingShutdownTimeout(): Duration? = shutdown.messageProcessingShutdownTimeout
 
-                        override fun getMessageResolverShutdownTimeout(): Duration? = shutdown.messageResolverShutdownTimeout
+                    override fun getMessageResolverShutdownTimeout(): Duration? = shutdown.messageResolverShutdownTimeout
 
-                        override fun getMessageRetrieverShutdownTimeout(): Duration? = shutdown.messageRetrieverShutdownTimeout
-                    }
+                    override fun getMessageRetrieverShutdownTimeout(): Duration? = shutdown.messageRetrieverShutdownTimeout
+                }
             )
         } else {
             return CoreMessageListenerContainer(
-                    identifier,
-                    Supplier(brokerBuilder),
-                    Supplier(retrieverBuilder),
-                    Supplier(processorBuilder),
-                    Supplier(resolverBuilder)
+                identifier,
+                Supplier(brokerBuilder),
+                Supplier(retrieverBuilder),
+                Supplier(processorBuilder),
+                Supplier(resolverBuilder)
             )
         }
     }
@@ -214,15 +215,17 @@ class ShutdownBuilder {
  * }
  * ```
  *
- * @param identifier     the identifier that uniquely identifies this container
+ * @param identifier the identifier that uniquely identifies this container
  * @param sqsAsyncClient the client for communicating with the SQS server
- * @param queueUrl       the URL of the SQS queue to listen to
- * @param init           the function to configure this container
+ * @param queueUrl the URL of the SQS queue to listen to
+ * @param init the function to configure this container
  */
-fun coreMessageListener(identifier: String,
-                        sqsAsyncClient: SqsAsyncClient,
-                        queueUrl: String,
-                        init: CoreMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun coreMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueUrl: String,
+    init: CoreMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
     return coreMessageListener(identifier, sqsAsyncClient, QueueProperties.builder().queueUrl(queueUrl).build(), init)
 }
 
@@ -245,17 +248,19 @@ fun coreMessageListener(identifier: String,
  * }
  * ```
  *
- * @param identifier      the identifier that uniquely identifies this container
- * @param sqsAsyncClient  the client for communicating with the SQS server
+ * @param identifier the identifier that uniquely identifies this container
+ * @param sqsAsyncClient the client for communicating with the SQS server
  * @param queueProperties details about the queue that is being listened to
- * @param init            the function to configure this container
+ * @param init the function to configure this container
  */
-fun coreMessageListener(identifier: String,
-                        sqsAsyncClient: SqsAsyncClient,
-                        queueProperties: QueueProperties,
-                        init: CoreMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun coreMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: CoreMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
 
-    val listener = CoreMessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties)
+    val listener = CoreMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()
 }

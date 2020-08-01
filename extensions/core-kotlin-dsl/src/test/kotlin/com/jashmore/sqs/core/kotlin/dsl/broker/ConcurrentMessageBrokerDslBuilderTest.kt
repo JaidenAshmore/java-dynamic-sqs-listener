@@ -19,7 +19,6 @@ class ConcurrentMessageBrokerDslBuilderTest {
         // act
         val exception = assertThrows(RequiredFieldException::class.java) {
             concurrentBroker {
-
             }()
         }
 
@@ -39,14 +38,16 @@ class ConcurrentMessageBrokerDslBuilderTest {
         }()
         val executorService = Executors.newSingleThreadExecutor()
         try {
-            CompletableFuture.runAsync(Runnable {
-                broker.processMessages(
+            CompletableFuture.runAsync(
+                Runnable {
+                    broker.processMessages(
                         Executors.newCachedThreadPool(),
                         Supplier { CompletableFuture.completedFuture(Message.builder().build()) },
                         processingMessageWillBlockUntilInterrupted(latch)
-                )
-            }, executorService)
-
+                    )
+                },
+                executorService
+            )
 
             // assert
             assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue()
@@ -59,18 +60,23 @@ class ConcurrentMessageBrokerDslBuilderTest {
         return processingMessageWillBlockUntilInterrupted(messageProcessingLatch, Runnable {})
     }
 
-    private fun processingMessageWillBlockUntilInterrupted(messageProcessingLatch: CountDownLatch?,
-                                                           runnableCalledOnMessageProcessing: Runnable): Function<Message?, CompletableFuture<*>?>? {
+    private fun processingMessageWillBlockUntilInterrupted(
+        messageProcessingLatch: CountDownLatch?,
+        runnableCalledOnMessageProcessing: Runnable
+    ): Function<Message?, CompletableFuture<*>?>? {
         return Function {
-            CompletableFuture.runAsync(Runnable {
-                runnableCalledOnMessageProcessing.run()
-                messageProcessingLatch?.countDown()
-                try {
-                    Thread.sleep(Long.MAX_VALUE)
-                } catch (interruptedException: InterruptedException) {
-                    //expected
-                }
-            }, Executors.newCachedThreadPool())
+            CompletableFuture.runAsync(
+                Runnable {
+                    runnableCalledOnMessageProcessing.run()
+                    messageProcessingLatch?.countDown()
+                    try {
+                        Thread.sleep(Long.MAX_VALUE)
+                    } catch (interruptedException: InterruptedException) {
+                        // expected
+                    }
+                },
+                Executors.newCachedThreadPool()
+            )
         }
     }
 }

@@ -20,9 +20,11 @@ import java.lang.reflect.Method
  * [MessageProcessorDslBuilder] that will construct a [CoreMessageProcessor] for usage in this container.
  */
 @MessageListenerComponentDslMarker
-class CoreMessageProcessorDslBuilder(private val listenerIdentifier: String,
-                                     private val sqsAsyncClient: SqsAsyncClient,
-                                     private val queueProperties: QueueProperties) : MessageProcessorDslBuilder {
+class CoreMessageProcessorDslBuilder(
+    private val listenerIdentifier: String,
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageProcessorDslBuilder {
     /**
      * The builder for instantiating the [ArgumentResolverService] to be used.
      *
@@ -47,23 +49,25 @@ class CoreMessageProcessorDslBuilder(private val listenerIdentifier: String,
 
     override fun invoke(): MessageProcessor {
         return optionalDecoratedProcessor(
-                listenerIdentifier,
+            listenerIdentifier,
+            queueProperties,
+            decorators,
+            CoreMessageProcessor(
+                argumentResolverService.invoke(),
                 queueProperties,
-                decorators,
-                CoreMessageProcessor(
-                        argumentResolverService.invoke(),
-                        queueProperties,
-                        sqsAsyncClient,
-                        method ?: throw RequiredFieldException("method", "CoreMessageProcessor"),
-                        bean ?: throw RequiredFieldException("bean", "CoreMessageProcessor")
+                sqsAsyncClient,
+                method ?: throw RequiredFieldException("method", "CoreMessageProcessor"),
+                bean ?: throw RequiredFieldException("bean", "CoreMessageProcessor")
 
-                )
+            )
         )
     }
 }
 
-fun coreProcessor(identifier: String,
-                  sqsAsyncClient: SqsAsyncClient,
-                  queueProperties: QueueProperties,
-                  init: CoreMessageProcessorDslBuilder.() -> Unit)
-        = initComponent(CoreMessageProcessorDslBuilder(identifier, sqsAsyncClient, queueProperties), init)
+fun coreProcessor(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: CoreMessageProcessorDslBuilder.() -> Unit
+) =
+    initComponent(CoreMessageProcessorDslBuilder(identifier, sqsAsyncClient, queueProperties), init)

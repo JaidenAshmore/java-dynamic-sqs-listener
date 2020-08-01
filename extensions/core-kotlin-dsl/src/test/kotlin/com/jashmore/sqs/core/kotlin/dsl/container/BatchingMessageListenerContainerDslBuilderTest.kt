@@ -9,7 +9,7 @@ import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class PrefetchingMessageListenerContainerBuilderTest {
+class BatchingMessageListenerContainerDslBuilderTest {
 
     var container: MessageListenerContainer? = null
 
@@ -26,10 +26,10 @@ class PrefetchingMessageListenerContainerBuilderTest {
         val countDownLatch = CountDownLatch(1)
 
         // act
-        container = prefetchingMessageListener("identifier", sqsAsyncClient, queueUrl) {
+        container = batchingMessageListener("identifier", sqsAsyncClient, queueUrl) {
             concurrencyLevel = { 1 }
-            desiredPrefetchedMessages = 5
-            maxPrefetchedMessages = 10
+            batchSize = { 5 }
+            batchingPeriod = { Duration.ofSeconds(1) }
             processor = lambdaProcessor {
                 method { _ ->
                     countDownLatch.countDown()

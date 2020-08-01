@@ -8,18 +8,20 @@ import com.jashmore.sqs.processor.MessageProcessor
 /**
  * Wrap the delegate [MessageProcessor] in a [DecoratingMessageProcessor] if the list of decorators is not empty.
  */
-fun optionalDecoratedProcessor(identifier: String,
-                               queueProperties: QueueProperties,
-                               decorators: List<MessageProcessingDecorator>,
-                               delegate: MessageProcessor): MessageProcessor {
+fun optionalDecoratedProcessor(
+    identifier: String,
+    queueProperties: QueueProperties,
+    decorators: List<MessageProcessingDecorator>,
+    delegate: MessageProcessor
+): MessageProcessor {
     if (decorators.isEmpty()) {
         return delegate
     }
 
     return DecoratingMessageProcessor(
-            identifier,
-            queueProperties,
-            decorators,
-            delegate
+        identifier,
+        queueProperties,
+        decorators,
+        delegate
     )
 }

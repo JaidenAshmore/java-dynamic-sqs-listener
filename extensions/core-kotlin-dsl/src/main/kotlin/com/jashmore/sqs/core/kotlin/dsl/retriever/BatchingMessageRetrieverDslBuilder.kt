@@ -13,13 +13,14 @@ import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.time.Duration
 
-
 /**
  * The [MessageRetrieverDslBuilder] hat will construct a [PrefetchingMessageRetriever] for usage in this container.
  */
 @MessageListenerComponentDslMarker
-class BatchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsyncClient,
-                                         private val queueProperties: QueueProperties) : MessageRetrieverDslBuilder {
+class BatchingMessageRetrieverDslBuilder(
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageRetrieverDslBuilder {
     /**
      * The batch size for the number of messages to receive at once
      *
@@ -55,19 +56,20 @@ class BatchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsyncCli
         val actualErrorBackoffTime: () -> Duration? = errorBackoffTime ?: { null }
 
         return BatchingMessageRetriever(
-                queueProperties,
-                sqsAsyncClient,
-                object : BatchingMessageRetrieverProperties {
-                    override fun getBatchSize(): Int = actualBatchSize()
+            queueProperties,
+            sqsAsyncClient,
+            object : BatchingMessageRetrieverProperties {
+                override fun getBatchSize(): Int = actualBatchSize()
 
-                    override fun getBatchingPeriod(): Duration = actualBatchingPeriod()
+                override fun getBatchingPeriod(): Duration = actualBatchingPeriod()
 
-                    override fun getMessageVisibilityTimeout(): Duration? = actualMessageVisibility()
+                override fun getMessageVisibilityTimeout(): Duration? = actualMessageVisibility()
 
-                    override fun getErrorBackoffTime(): Duration? = actualErrorBackoffTime()
-                }
+                override fun getErrorBackoffTime(): Duration? = actualErrorBackoffTime()
+            }
         )
     }
 }
 
-fun batchingMessageRetriever(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: BatchingMessageRetrieverDslBuilder.() -> Unit) = initComponent(BatchingMessageRetrieverDslBuilder(sqsAsyncClient, queueProperties), init)
+fun batchingMessageRetriever(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: BatchingMessageRetrieverDslBuilder.() -> Unit) =
+    initComponent(BatchingMessageRetrieverDslBuilder(sqsAsyncClient, queueProperties), init)

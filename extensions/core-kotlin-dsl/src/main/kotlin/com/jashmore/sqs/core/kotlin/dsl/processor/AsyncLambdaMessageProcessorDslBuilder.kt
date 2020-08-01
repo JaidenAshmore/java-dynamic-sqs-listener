@@ -15,9 +15,11 @@ import software.amazon.awssdk.services.sqs.model.Message
 import java.util.concurrent.CompletableFuture
 
 @MessageListenerComponentDslMarker
-class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
-                                            private val sqsAsyncClient: SqsAsyncClient,
-                                            private val queueProperties: QueueProperties) : MessageProcessorDslBuilder {
+class AsyncLambdaMessageProcessorDslBuilder(
+    private val listenerIdentifier: String,
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageProcessorDslBuilder {
 
     var decorators = mutableListOf<MessageProcessingDecorator>()
 
@@ -26,10 +28,10 @@ class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: Stri
     fun method(func: (message: Message) -> CompletableFuture<*>) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -37,10 +39,10 @@ class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: Stri
     fun method(func: (message: Message, acknowledge: Acknowledge) -> CompletableFuture<*>) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -48,10 +50,10 @@ class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: Stri
     fun method(func: (message: Message, acknowledge: Acknowledge, visibilityExtender: VisibilityExtender) -> CompletableFuture<*>) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -59,10 +61,10 @@ class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: Stri
     fun methodWithVisibilityExtender(func: (message: Message, visibilityExtender: VisibilityExtender) -> CompletableFuture<*>) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, true, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, true, func)
             )
         }
     }
@@ -70,11 +72,11 @@ class AsyncLambdaMessageProcessorDslBuilder(private val listenerIdentifier: Stri
     override fun invoke(): MessageProcessor = processorBuilder()
 }
 
-
-
-fun asyncLambdaProcessor(identifier: String,
-                         sqsAsyncClient: SqsAsyncClient,
-                         queueProperties: QueueProperties,
-                         init: AsyncLambdaMessageProcessorDslBuilder.() -> Unit): MessageProcessorDslBuilder {
+fun asyncLambdaProcessor(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: AsyncLambdaMessageProcessorDslBuilder.() -> Unit
+): MessageProcessorDslBuilder {
     return initComponent(AsyncLambdaMessageProcessorDslBuilder(identifier, sqsAsyncClient, queueProperties), init)
 }

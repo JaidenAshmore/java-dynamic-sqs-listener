@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 private val queueProperties = QueueProperties.builder()
-        .queueUrl("url")
-        .build()
+    .queueUrl("url")
+    .build()
 private val message = Message.builder().receiptHandle("handle").build()
 
 @ExtendWith(MockitoExtension::class)
@@ -85,18 +85,20 @@ class LambdaMessageProcessorDslBuilderTest {
 
         // assert
         assertThat(future).isCompleted()
-        verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest.builder()
+        verify(sqsAsyncClient).changeMessageVisibility(
+            ChangeMessageVisibilityRequest.builder()
                 .visibilityTimeout(VisibilityExtender.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
                 .queueUrl("url")
                 .receiptHandle("handle")
-                .build())
+                .build()
+        )
     }
 
     @Test
     fun `can provide a lambda with a message and visibility extender`() {
         // arrange
         val processor = lambdaProcessor("identifier", sqsAsyncClient, queueProperties) {
-            methodWithVisibilityExtender { _, _ ->  }
+            methodWithVisibilityExtender { _, _ -> }
         }()
 
         // act

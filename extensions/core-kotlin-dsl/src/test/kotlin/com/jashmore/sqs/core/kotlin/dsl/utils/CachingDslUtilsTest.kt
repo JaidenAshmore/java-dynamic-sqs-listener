@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
-class CachingDslUtilsKtTest {
+class CachingDslUtilsTest {
 
     @Nested
     inner class Cached {

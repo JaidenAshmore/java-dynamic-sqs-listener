@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-class CoreMessageListenerContainerBuilderTest {
+class CoreMessageListenerContainerDslBuilderTest {
 
     var container: MessageListenerContainer? = null
 
@@ -93,7 +93,7 @@ class CoreMessageListenerContainerBuilderTest {
         val countDownLatch = CountDownLatch(1)
 
         // act
-         container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+        container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
             processor = coreProcessor {
                 bean = MessageListener(countDownLatch)
                 method = MessageListener::class.java.getMethod("processMessage")

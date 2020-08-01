@@ -1,10 +1,10 @@
 package com.jashmore.sqs.core.kotlin.dsl.resolver
 
+import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.MessageResolverDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
-import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.core.kotlin.dsl.initComponent
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.resolver.MessageResolver
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolverProperties
@@ -35,19 +35,18 @@ class BatchingMessageResolverDslBuilder(private val sqsAsyncClient: SqsAsyncClie
 
         if (actualBatchSize == null && actualBatchingPeriod == null) {
             return BatchingMessageResolver(
-                    queueProperties,
-                    sqsAsyncClient
+                queueProperties,
+                sqsAsyncClient
             )
-        }
-        else if (actualBatchSize != null && actualBatchingPeriod != null) {
+        } else if (actualBatchSize != null && actualBatchingPeriod != null) {
             return BatchingMessageResolver(
-                    queueProperties,
-                    sqsAsyncClient,
-                    object : BatchingMessageResolverProperties {
-                        override fun getBufferingSizeLimit(): Int = actualBatchSize()
+                queueProperties,
+                sqsAsyncClient,
+                object : BatchingMessageResolverProperties {
+                    override fun getBufferingSizeLimit(): Int = actualBatchSize()
 
-                        override fun getBufferingTime(): Duration = actualBatchingPeriod()
-                    }
+                    override fun getBufferingTime(): Duration = actualBatchingPeriod()
+                }
             )
         } else if (actualBatchSize == null) {
             throw RequiredFieldException("batchSize", "BatchingMessageResolver")
@@ -57,5 +56,5 @@ class BatchingMessageResolverDslBuilder(private val sqsAsyncClient: SqsAsyncClie
     }
 }
 
-fun batchingResolver(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: BatchingMessageResolverDslBuilder.() -> Unit)
-        = initComponent(BatchingMessageResolverDslBuilder(sqsAsyncClient, queueProperties), init)
+fun batchingResolver(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: BatchingMessageResolverDslBuilder.() -> Unit) =
+    initComponent(BatchingMessageResolverDslBuilder(sqsAsyncClient, queueProperties), init)

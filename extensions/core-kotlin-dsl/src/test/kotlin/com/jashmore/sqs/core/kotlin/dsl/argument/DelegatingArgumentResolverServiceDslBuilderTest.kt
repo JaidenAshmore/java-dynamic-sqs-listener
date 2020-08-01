@@ -26,8 +26,10 @@ import java.lang.reflect.Parameter
 class DelegatingArgumentResolverServiceDslBuilderTest {
     private val objectMapper = ObjectMapper().registerModule(KotlinModule())
     private val queueProperties = QueueProperties.builder().queueUrl("url").build()
-    private val method: Method = DelegatingArgumentResolverServiceDslBuilderTest::class.java.getMethod("myMethod",
-            User::class.java, String::class.java, User::class.java, String::class.java, Message::class.java)
+    private val method: Method = DelegatingArgumentResolverServiceDslBuilderTest::class.java.getMethod(
+        "myMethod",
+        User::class.java, String::class.java, User::class.java, String::class.java, Message::class.java
+    )
 
     @Test
     fun `custom ArgumentResolver can be included`() {
@@ -54,7 +56,7 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
 
         // assert
         assertThat(argumentResolverService.getArgumentResolver(MethodParameterRecord(method, parameterIndex = 1)))
-                .isInstanceOf(MessageIdArgumentResolver::class.java)
+            .isInstanceOf(MessageIdArgumentResolver::class.java)
     }
 
     @Test
@@ -67,7 +69,7 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
 
         // assert
         assertThat(argumentResolverService.getArgumentResolver(MethodParameterRecord(method, parameterIndex = 4)))
-                .isInstanceOf(MessageArgumentResolver::class.java)
+            .isInstanceOf(MessageArgumentResolver::class.java)
     }
 
     @Test
@@ -112,13 +114,16 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
     fun `messageAttributeResolver can be be included without a custom ObjectMapper`() {
         // arrange
         val message = Message.builder()
-                .messageAttributes(mapOf("user" to MessageAttributeValue.builder()
+            .messageAttributes(
+                mapOf(
+                    "user" to MessageAttributeValue.builder()
                         .dataType("String")
                         .stringValue(objectMapper.writeValueAsString(User("name")))
                         .build()
-                ))
-                .body("body")
-                .build()
+                )
+            )
+            .body("body")
+            .build()
         val mockObjectMapper = mock(ObjectMapper::class.java)
         val methodParameter = MethodParameterRecord(method, parameterIndex = 2)
         whenever(mockObjectMapper.readValue(anyString(), any(Class::class.java))).thenReturn(User("my-username"))
@@ -139,13 +144,16 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
     fun `messageAttributeResolver can be be included with a custom ObjectMapper`() {
         // arrange
         val message = Message.builder()
-                .messageAttributes(mapOf("user" to MessageAttributeValue.builder()
+            .messageAttributes(
+                mapOf(
+                    "user" to MessageAttributeValue.builder()
                         .dataType("String")
                         .stringValue(objectMapper.writeValueAsString(User("name")))
                         .build()
-                ))
-                .body("body")
-                .build()
+                )
+            )
+            .body("body")
+            .build()
         val methodParameter = MethodParameterRecord(method, parameterIndex = 2)
 
         // act
@@ -170,16 +178,17 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
 
         // assert
         assertThat(argumentResolverService.getArgumentResolver(MethodParameterRecord(method, parameterIndex = 3)))
-                .isInstanceOf(MessageSystemAttributeArgumentResolver::class.java)
+            .isInstanceOf(MessageSystemAttributeArgumentResolver::class.java)
     }
 
     @Suppress("unused", "UNUSED_PARAMETER")
-    fun myMethod(@Payload payload: User,
-                 @MessageId id: String,
-                 @MessageAttribute("user") userAttribute: User,
-                 @MessageSystemAttribute(MessageSystemAttributeName.AWS_TRACE_HEADER) systemAttribute: String,
-                 message: Message) {
-
+    fun myMethod(
+        @Payload payload: User,
+        @MessageId id: String,
+        @MessageAttribute("user") userAttribute: User,
+        @MessageSystemAttribute(MessageSystemAttributeName.AWS_TRACE_HEADER) systemAttribute: String,
+        message: Message
+    ) {
     }
 
     private class MethodParameterRecord(private val method: Method, private val parameterIndex: Int) : MethodParameter {

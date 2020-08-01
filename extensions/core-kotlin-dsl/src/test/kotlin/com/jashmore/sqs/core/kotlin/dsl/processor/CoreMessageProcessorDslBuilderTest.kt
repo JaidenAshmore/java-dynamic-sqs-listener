@@ -29,8 +29,8 @@ private val payloadReference: AtomicReference<String> = AtomicReference()
 @ExtendWith(MockitoExtension::class)
 class CoreMessageProcessorDslBuilderTest {
     private val queueProperties = QueueProperties.builder()
-            .queueUrl("url")
-            .build()
+        .queueUrl("url")
+        .build()
 
     @Mock
     lateinit var sqsAsyncClient: SqsAsyncClient
@@ -88,9 +88,11 @@ class CoreMessageProcessorDslBuilderTest {
                 add(object : ArgumentResolver<String> {
                     override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
 
-                    override fun resolveArgumentForParameter(queueProperties: QueueProperties,
-                                                             methodParameter: MethodParameter,
-                                                             message: Message): String = "some value"
+                    override fun resolveArgumentForParameter(
+                        queueProperties: QueueProperties,
+                        methodParameter: MethodParameter,
+                        message: Message
+                    ): String = "some value"
                 })
             }
             bean = CoreMessageProcessorDslBuilderTest()
@@ -112,9 +114,11 @@ class CoreMessageProcessorDslBuilderTest {
                 add(object : ArgumentResolver<String> {
                     override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
 
-                    override fun resolveArgumentForParameter(queueProperties: QueueProperties,
-                                                             methodParameter: MethodParameter,
-                                                             message: Message): String = "some value"
+                    override fun resolveArgumentForParameter(
+                        queueProperties: QueueProperties,
+                        methodParameter: MethodParameter,
+                        message: Message
+                    ): String = "some value"
                 })
             }
             bean = CoreMessageProcessorDslBuilderTest()

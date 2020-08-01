@@ -1,6 +1,8 @@
 import com.jashmore.gradle.JacocoCoverallsPlugin
 import com.jashmore.gradle.ReleasePlugin
 import com.jashmore.gradle.release
+import io.gitlab.arturbosch.detekt.detekt
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
@@ -8,6 +10,9 @@ plugins {
     id("com.github.spotbugs") version "4.4.5"
     checkstyle
     jacoco
+    kotlin("jvm") version "1.3.72" apply false
+    id("org.jlleitschuh.gradle.ktlint") apply false
+    id("io.gitlab.arturbosch.detekt") version "1.10.0" apply false
 }
 
 allprojects {
@@ -16,6 +21,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter()
     }
 }
 
@@ -26,6 +32,14 @@ subprojects {
     if (!isKotlinProject) {
         apply(plugin = "com.github.spotbugs")
         apply(plugin = "checkstyle")
+    } else {
+        apply(plugin = "kotlin")
+        apply(plugin = "org.jlleitschuh.gradle.ktlint")
+        apply(plugin = "io.gitlab.arturbosch.detekt")
+
+        tasks.withType<KotlinCompile>().configureEach {
+            kotlinOptions.jvmTarget = "1.8"
+        }
     }
 
     dependencies {
@@ -115,6 +129,12 @@ subprojects {
         spotbugs {
             excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
         }
+    } else {
+        detekt {
+            failFast = true
+            buildUponDefaultConfig = true
+            config = files("${project.rootDir}/configuration/detekt/detekt-configuration.yml")
+        }
     }
 
     tasks.withType<Test> {
@@ -150,7 +170,7 @@ subprojects {
         violationRules {
             rule {
                 excludes = listOf(
-                        "com.jashmore.sqs.examples*"
+                    "com.jashmore.sqs.examples*"
                 )
                 element = "PACKAGE"
                 limit {

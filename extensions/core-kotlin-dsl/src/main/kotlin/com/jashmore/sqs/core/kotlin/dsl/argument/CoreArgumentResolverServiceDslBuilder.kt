@@ -17,8 +17,8 @@ class CoreArgumentResolverServiceDslBuilder(private val objectMapper: ObjectMapp
 
     override fun invoke(): ArgumentResolverService {
         return CoreArgumentResolverService(
-                JacksonPayloadMapper(objectMapper),
-                objectMapper
+            JacksonPayloadMapper(objectMapper),
+            objectMapper
         )
     }
 }
@@ -33,5 +33,5 @@ class CoreArgumentResolverServiceDslBuilder(private val objectMapper: ObjectMapp
  *
  * @param init the DSL function for configuring this processor
  */
-fun coreArgumentResolverService(objectMapper: ObjectMapper = ObjectMapper(), init: CoreArgumentResolverServiceDslBuilder.() -> Unit = { })
-        = initComponent(CoreArgumentResolverServiceDslBuilder(objectMapper), init)
+fun coreArgumentResolverService(objectMapper: ObjectMapper = ObjectMapper(), init: CoreArgumentResolverServiceDslBuilder.() -> Unit = { }) =
+    initComponent(CoreArgumentResolverServiceDslBuilder(objectMapper), init)
