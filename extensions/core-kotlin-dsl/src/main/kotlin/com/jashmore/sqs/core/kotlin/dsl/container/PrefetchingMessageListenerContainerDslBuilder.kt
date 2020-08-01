@@ -13,9 +13,15 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.time.Duration
 
 @MessageListenerComponentDslMarker
-class PrefetchingMessageListenerContainerBuilder(identifier: String,
-                                                 sqsAsyncClient: SqsAsyncClient,
-                                                 queueProperties: QueueProperties) : MessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties) {
+class PrefetchingMessageListenerContainerDslBuilder(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties
+) : AbstractMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties) {
+    companion object {
+        private val DEFAULT_MESSAGE_VISIBILITY = Duration.ofSeconds(30)
+    }
+
     /**
      * Supplier for getting the number of messages that should be processed concurrently.
      *
@@ -42,8 +48,9 @@ class PrefetchingMessageListenerContainerBuilder(identifier: String,
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
+     * @see DEFAULT_MESSAGE_VISIBILITY for the default value for the message visiblity
      */
-    var messageVisibility: (() -> Duration?) = { Duration.ofSeconds(30) }
+    var messageVisibility: (() -> Duration?) = { DEFAULT_MESSAGE_VISIBILITY }
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *
@@ -59,19 +66,19 @@ class PrefetchingMessageListenerContainerBuilder(identifier: String,
 
     override fun invoke(): MessageListenerContainer {
         return coreMessageListener(identifier, sqsAsyncClient, queueProperties) {
-            processor = this@PrefetchingMessageListenerContainerBuilder.processor
+            processor = this@PrefetchingMessageListenerContainerDslBuilder.processor
             broker = concurrentBroker {
-                concurrencyLevel = this@PrefetchingMessageListenerContainerBuilder.concurrencyLevel
+                concurrencyLevel = this@PrefetchingMessageListenerContainerDslBuilder.concurrencyLevel
             }
             retriever = prefetchingMessageRetriever {
-                desiredPrefetchedMessages = this@PrefetchingMessageListenerContainerBuilder.desiredPrefetchedMessages
-                maxPrefetchedMessages = this@PrefetchingMessageListenerContainerBuilder.maxPrefetchedMessages
-                messageVisibility = this@PrefetchingMessageListenerContainerBuilder.messageVisibility
+                desiredPrefetchedMessages = this@PrefetchingMessageListenerContainerDslBuilder.desiredPrefetchedMessages
+                maxPrefetchedMessages = this@PrefetchingMessageListenerContainerDslBuilder.maxPrefetchedMessages
+                messageVisibility = this@PrefetchingMessageListenerContainerDslBuilder.messageVisibility
             }
             resolver = batchingResolver()
             shutdown {
-                shouldInterruptThreadsProcessingMessages = this@PrefetchingMessageListenerContainerBuilder.interruptThreadsProcessingMessagesOnShutdown
-                shouldProcessAnyExtraRetrievedMessages = this@PrefetchingMessageListenerContainerBuilder.processExtraMessagesOnShutdown
+                shouldInterruptThreadsProcessingMessages = this@PrefetchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
+                shouldProcessAnyExtraRetrievedMessages = this@PrefetchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
             }
         }
     }
@@ -94,16 +101,18 @@ class PrefetchingMessageListenerContainerBuilder(identifier: String,
  * }
  * ```
  *
- * @param identifier      the identifier that uniquely identifies this container
- * @param sqsAsyncClient  the client for communicating with the SQS server
- * @param queueUrl        the URL of the queue to listen to this
- * @param init            the function to configure this container
+ * @param identifier the identifier that uniquely identifies this container
+ * @param sqsAsyncClient the client for communicating with the SQS server
+ * @param queueUrl the URL of the queue to listen to this
+ * @param init the function to configure this container
  * @return the message listener container
  */
-fun prefetchingMessageListener(identifier: String,
-                               sqsAsyncClient: SqsAsyncClient,
-                               queueUrl: String,
-                               init: PrefetchingMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun prefetchingMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueUrl: String,
+    init: PrefetchingMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
     return prefetchingMessageListener(identifier, sqsAsyncClient, QueueProperties.builder().queueUrl(queueUrl).build(), init)
 }
 
@@ -124,18 +133,20 @@ fun prefetchingMessageListener(identifier: String,
  * }
  * ```
  *
- * @param identifier      the identifier that uniquely identifies this container
- * @param sqsAsyncClient  the client for communicating with the SQS server
+ * @param identifier the identifier that uniquely identifies this container
+ * @param sqsAsyncClient the client for communicating with the SQS server
  * @param queueProperties details about the queue that is being listened to
- * @param init            the function to configure this container
+ * @param init the function to configure this container
  * @return the message listener container
  */
-fun prefetchingMessageListener(identifier: String,
-                               sqsAsyncClient: SqsAsyncClient,
-                               queueProperties: QueueProperties,
-                               init: PrefetchingMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun prefetchingMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: PrefetchingMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
 
-    val listener = PrefetchingMessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties)
+    val listener = PrefetchingMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()
 }

@@ -5,11 +5,10 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class BatchingMessageListenerContainerBuilderTest {
+class PrefetchingMessageListenerContainerDslBuilderTest {
 
     var container: MessageListenerContainer? = null
 
@@ -26,10 +25,10 @@ class BatchingMessageListenerContainerBuilderTest {
         val countDownLatch = CountDownLatch(1)
 
         // act
-        container = batchingMessageListener("identifier", sqsAsyncClient, queueUrl) {
+        container = prefetchingMessageListener("identifier", sqsAsyncClient, queueUrl) {
             concurrencyLevel = { 1 }
-            batchSize = { 5 }
-            batchingPeriod = { Duration.ofSeconds(1) }
+            desiredPrefetchedMessages = 5
+            maxPrefetchedMessages = 10
             processor = lambdaProcessor {
                 method { _ ->
                     countDownLatch.countDown()

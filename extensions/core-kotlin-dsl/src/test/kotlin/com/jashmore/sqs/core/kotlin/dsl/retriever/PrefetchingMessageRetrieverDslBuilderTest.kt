@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(MockitoExtension::class)
 class PrefetchingMessageRetrieverDslBuilderTest {
     private val queueProperties = QueueProperties.builder()
-            .queueUrl("url")
-            .build()
+        .queueUrl("url")
+        .build()
 
     @Mock
     lateinit var sqsAsyncClient: SqsAsyncClient
@@ -60,7 +60,7 @@ class PrefetchingMessageRetrieverDslBuilderTest {
     fun `setting visibility timeout using supplier will be included in request to SQS`() {
         // arrange
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer(runReceiveMessageOnce())
+            .thenAnswer(runReceiveMessageOnce())
         var firstRequest = true
 
         // act
@@ -89,7 +89,7 @@ class PrefetchingMessageRetrieverDslBuilderTest {
     fun `setting error backoff time using supplier will wait that amount of time`() {
         // arrange
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer(runReceiveMessageFailure(times = 2))
+            .thenAnswer(runReceiveMessageFailure(times = 2))
         var isFirst = true
 
         // act
@@ -119,9 +119,11 @@ class PrefetchingMessageRetrieverDslBuilderTest {
         return Answer {
             if (count < times) {
                 ++count
-                CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
+                CompletableFuture.completedFuture(
+                    ReceiveMessageResponse.builder()
                         .messages(listOf())
-                        .build())
+                        .build()
+                )
             } else {
                 throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
             }

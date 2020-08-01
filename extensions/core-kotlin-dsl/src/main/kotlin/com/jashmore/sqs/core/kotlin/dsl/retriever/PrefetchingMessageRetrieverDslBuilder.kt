@@ -1,8 +1,8 @@
 package com.jashmore.sqs.core.kotlin.dsl.retriever
 
+import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.MessageRetrieverDslBuilder
-import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.retriever.MessageRetriever
@@ -15,8 +15,10 @@ import java.time.Duration
  * The [MessageRetrieverDslBuilder] hat will construct a [PrefetchingMessageRetriever] for usage in this container.
  */
 @MessageListenerComponentDslMarker
-class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsyncClient,
-                                            private val queueProperties: QueueProperties) : MessageRetrieverDslBuilder {
+class PrefetchingMessageRetrieverDslBuilder(
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageRetrieverDslBuilder {
     /**
      * The desired messages to be prefetched.
      *
@@ -46,24 +48,26 @@ class PrefetchingMessageRetrieverDslBuilder(private val sqsAsyncClient: SqsAsync
     var errorBackoffTime: (() -> Duration?) = { null }
 
     override fun invoke(): MessageRetriever {
-        val actualDesiredPrefetchedMessages: Int = desiredPrefetchedMessages ?: throw RequiredFieldException("desiredPrefetchedMessages", "PrefetchingMessageRetriever")
-        val actualMaxPrefetched: Int = maxPrefetchedMessages ?: throw RequiredFieldException("maxPrefetchedMessages", "PrefetchingMessageRetriever")
+        val actualDesiredPrefetchedMessages = desiredPrefetchedMessages
+            ?: throw RequiredFieldException("desiredPrefetchedMessages", "PrefetchingMessageRetriever")
+        val actualMaxPrefetched = maxPrefetchedMessages
+            ?: throw RequiredFieldException("maxPrefetchedMessages", "PrefetchingMessageRetriever")
 
         return PrefetchingMessageRetriever(
-                sqsAsyncClient,
-                queueProperties,
-                object : PrefetchingMessageRetrieverProperties {
-                    override fun getDesiredMinPrefetchedMessages(): Int = actualDesiredPrefetchedMessages
+            sqsAsyncClient,
+            queueProperties,
+            object : PrefetchingMessageRetrieverProperties {
+                override fun getDesiredMinPrefetchedMessages(): Int = actualDesiredPrefetchedMessages
 
-                    override fun getMaxPrefetchedMessages(): Int = actualMaxPrefetched
+                override fun getMaxPrefetchedMessages(): Int = actualMaxPrefetched
 
-                    override fun getMessageVisibilityTimeout(): Duration? = messageVisibility()
+                override fun getMessageVisibilityTimeout(): Duration? = messageVisibility()
 
-                    override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
-                }
+                override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
+            }
         )
     }
 }
 
-fun prefetchingMessageRetriever(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: PrefetchingMessageRetrieverDslBuilder.() -> Unit)
-        = initComponent(PrefetchingMessageRetrieverDslBuilder(sqsAsyncClient, queueProperties), init)
+fun prefetchingMessageRetriever(sqsAsyncClient: SqsAsyncClient, queueProperties: QueueProperties, init: PrefetchingMessageRetrieverDslBuilder.() -> Unit) =
+    initComponent(PrefetchingMessageRetrieverDslBuilder(sqsAsyncClient, queueProperties), init)

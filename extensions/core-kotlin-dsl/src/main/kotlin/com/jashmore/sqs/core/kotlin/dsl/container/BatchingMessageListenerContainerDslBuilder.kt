@@ -15,9 +15,17 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.time.Duration
 
 @MessageListenerComponentDslMarker
-class BatchingMessageListenerContainerBuilder(identifier: String,
-                                              sqsAsyncClient: SqsAsyncClient,
-                                              queueProperties: QueueProperties) : MessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties) {
+class BatchingMessageListenerContainerDslBuilder(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties
+) : AbstractMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties) {
+    companion object {
+        private const val DEFAULT_BATCH_SIZE = 5
+        private val DEFAULT_BATCHING_PERIOD = Duration.ofSeconds(2)
+        private val DEFAULT_MESSAGE_VISIBILITY = Duration.ofSeconds(30)
+    }
+
     /**
      * Supplier for getting the number of messages that should be processed concurrently.
      *
@@ -33,21 +41,24 @@ class BatchingMessageListenerContainerBuilder(identifier: String,
      *
      * @see BatchingMessageRetrieverProperties.getBatchSize for more details about this field
      * @see BatchingMessageResolverProperties.getBufferingSizeLimit for more details about this field
+     * @see DEFAULT_BATCH_SIZE for the default batch size
      */
-    var batchSize: (() -> Int) = { 5 }
+    var batchSize: (() -> Int) = { DEFAULT_BATCH_SIZE }
     /**
      * The maximum amount of time to wait for the number of messages requested to reach the [BatchingMessageRetrieverDslBuilder.batchSize].
      *
      * @see BatchingMessageRetrieverProperties.getBatchingPeriod for more details about this field
      * @see BatchingMessageResolverProperties.getBufferingTime for more details about this field
+     * @see DEFAULT_BATCHING_PERIOD for the default batching period
      */
-    var batchingPeriod: (() -> Duration) = { Duration.ofSeconds(2) }
+    var batchingPeriod: (() -> Duration) = { DEFAULT_BATCHING_PERIOD }
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
+     * @see DEFAULT_MESSAGE_VISIBILITY for the default message visibility
      */
-    var messageVisibility: (() -> Duration?) = { Duration.ofSeconds(30) }
+    var messageVisibility: (() -> Duration?) = { DEFAULT_MESSAGE_VISIBILITY }
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *
@@ -63,22 +74,22 @@ class BatchingMessageListenerContainerBuilder(identifier: String,
 
     override fun invoke(): MessageListenerContainer {
         return coreMessageListener(identifier, sqsAsyncClient, queueProperties) {
-            processor = this@BatchingMessageListenerContainerBuilder.processor
+            processor = this@BatchingMessageListenerContainerDslBuilder.processor
             broker = concurrentBroker {
-                concurrencyLevel = this@BatchingMessageListenerContainerBuilder.concurrencyLevel
+                concurrencyLevel = this@BatchingMessageListenerContainerDslBuilder.concurrencyLevel
             }
             retriever = batchingMessageRetriever {
-                batchSize = this@BatchingMessageListenerContainerBuilder.batchSize
-                batchingPeriod = this@BatchingMessageListenerContainerBuilder.batchingPeriod
-                messageVisibility = this@BatchingMessageListenerContainerBuilder.messageVisibility
+                batchSize = this@BatchingMessageListenerContainerDslBuilder.batchSize
+                batchingPeriod = this@BatchingMessageListenerContainerDslBuilder.batchingPeriod
+                messageVisibility = this@BatchingMessageListenerContainerDslBuilder.messageVisibility
             }
             resolver = batchingResolver {
-                batchSize = this@BatchingMessageListenerContainerBuilder.batchSize
-                batchingPeriod = this@BatchingMessageListenerContainerBuilder.batchingPeriod
+                batchSize = this@BatchingMessageListenerContainerDslBuilder.batchSize
+                batchingPeriod = this@BatchingMessageListenerContainerDslBuilder.batchingPeriod
             }
             shutdown {
-                shouldInterruptThreadsProcessingMessages = this@BatchingMessageListenerContainerBuilder.interruptThreadsProcessingMessagesOnShutdown
-                shouldProcessAnyExtraRetrievedMessages = this@BatchingMessageListenerContainerBuilder.processExtraMessagesOnShutdown
+                shouldInterruptThreadsProcessingMessages = this@BatchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
+                shouldProcessAnyExtraRetrievedMessages = this@BatchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
             }
         }
     }
@@ -101,16 +112,18 @@ class BatchingMessageListenerContainerBuilder(identifier: String,
  * }
  * ```
  *
- * @param identifier      the identifier that uniquely identifies this container
- * @param sqsAsyncClient  the client for communicating with the SQS server
- * @param queueUrl        the URL of the queue to listen to this
- * @param init            the function to configure this container
+ * @param identifier the identifier that uniquely identifies this container
+ * @param sqsAsyncClient the client for communicating with the SQS server
+ * @param queueUrl the URL of the queue to listen to this
+ * @param init the function to configure this container
  * @return the message listener container
  */
-fun batchingMessageListener(identifier: String,
-                            sqsAsyncClient: SqsAsyncClient,
-                            queueUrl: String,
-                            init: BatchingMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun batchingMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueUrl: String,
+    init: BatchingMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
     return batchingMessageListener(identifier, sqsAsyncClient, QueueProperties.builder().queueUrl(queueUrl).build(), init)
 }
 
@@ -131,18 +144,20 @@ fun batchingMessageListener(identifier: String,
  * }
  * ```
  *
- * @param identifier      the identifier that uniquely identifies this container
- * @param sqsAsyncClient  the client for communicating with the SQS server
+ * @param identifier the identifier that uniquely identifies this container
+ * @param sqsAsyncClient the client for communicating with the SQS server
  * @param queueProperties details about the queue that is being listened to
- * @param init            the function to configure this container
+ * @param init the function to configure this container
  * @return the message listener container
  */
-fun batchingMessageListener(identifier: String,
-                            sqsAsyncClient: SqsAsyncClient,
-                            queueProperties: QueueProperties,
-                            init: BatchingMessageListenerContainerBuilder.() -> Unit): MessageListenerContainer {
+fun batchingMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: BatchingMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
 
-    val listener = BatchingMessageListenerContainerBuilder(identifier, sqsAsyncClient, queueProperties)
+    val listener = BatchingMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()
 }

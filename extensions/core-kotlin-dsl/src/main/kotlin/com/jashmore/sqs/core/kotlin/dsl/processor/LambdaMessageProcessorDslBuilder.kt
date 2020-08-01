@@ -14,16 +14,18 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.Message
 
 @MessageListenerComponentDslMarker
-class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
-                                       private val sqsAsyncClient: SqsAsyncClient,
-                                       private val queueProperties: QueueProperties) : MessageProcessorDslBuilder {
+class LambdaMessageProcessorDslBuilder(
+    private val listenerIdentifier: String,
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageProcessorDslBuilder {
 
     /**
      * The list of [MessageProcessingDecorator]s that will wrap the processing of the message.
      */
     var decorators = listOf<MessageProcessingDecorator>()
 
-    private var processorBuilder: () -> MessageProcessor = { throw RequiredFieldException("method", "LambdaMessageProcessor")}
+    private var processorBuilder: () -> MessageProcessor = { throw RequiredFieldException("method", "LambdaMessageProcessor") }
 
     /**
      * Set the lambda as a method that just consumes the [Message].
@@ -31,10 +33,10 @@ class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
     fun method(func: (message: Message) -> Unit) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -46,10 +48,10 @@ class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
     fun method(func: (message: Message, acknowledge: Acknowledge) -> Unit) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -62,10 +64,10 @@ class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
     fun method(func: (message: Message, acknowledge: Acknowledge, visibilityExtender: VisibilityExtender) -> Unit) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                LambdaMessageProcessor(sqsAsyncClient, queueProperties, func)
             )
         }
     }
@@ -78,10 +80,10 @@ class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
     fun methodWithVisibilityExtender(func: (message: Message, visibilityExtender: VisibilityExtender) -> Unit) {
         processorBuilder = {
             optionalDecoratedProcessor(
-                    listenerIdentifier,
-                    queueProperties,
-                    decorators,
-                    LambdaMessageProcessor(sqsAsyncClient, queueProperties, true, func)
+                listenerIdentifier,
+                queueProperties,
+                decorators,
+                LambdaMessageProcessor(sqsAsyncClient, queueProperties, true, func)
             )
         }
     }
@@ -89,9 +91,11 @@ class LambdaMessageProcessorDslBuilder(private val listenerIdentifier: String,
     override fun invoke(): MessageProcessor = processorBuilder()
 }
 
-fun lambdaProcessor(identifier: String,
-                    sqsAsyncClient: SqsAsyncClient,
-                    queueProperties: QueueProperties,
-                    init: LambdaMessageProcessorDslBuilder.() -> Unit): MessageProcessorDslBuilder {
+fun lambdaProcessor(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueProperties: QueueProperties,
+    init: LambdaMessageProcessorDslBuilder.() -> Unit
+): MessageProcessorDslBuilder {
     return initComponent(LambdaMessageProcessorDslBuilder(identifier, sqsAsyncClient, queueProperties), init)
 }

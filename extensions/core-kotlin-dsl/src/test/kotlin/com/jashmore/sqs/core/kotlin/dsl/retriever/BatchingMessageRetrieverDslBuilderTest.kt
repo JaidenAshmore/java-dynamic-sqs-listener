@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicReference
 @ExtendWith(MockitoExtension::class)
 class BatchingMessageRetrieverDslBuilderTest {
     private val queueProperties = QueueProperties.builder()
-            .queueUrl("url")
-            .build()
+        .queueUrl("url")
+        .build()
 
     @Mock
     lateinit var sqsAsyncClient: SqsAsyncClient
@@ -58,15 +58,18 @@ class BatchingMessageRetrieverDslBuilderTest {
         // arrange
         var count = 0
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer {
-                    ++count
-                    when (count) {
-                        1 -> CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
+            .thenAnswer {
+                ++count
+                when (count) {
+                    1 ->
+                        CompletableFuture.completedFuture(
+                            ReceiveMessageResponse.builder()
                                 .messages(listOf())
-                                .build())
-                        else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
-                    }
+                                .build()
+                        )
+                    else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
                 }
+            }
 
         // act
         val retriever = batchingMessageRetriever(sqsAsyncClient, queueProperties) {
@@ -87,15 +90,18 @@ class BatchingMessageRetrieverDslBuilderTest {
         // arrange
         var count = 0
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer {
-                    ++count
-                    when (count) {
-                        1 -> CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
+            .thenAnswer {
+                ++count
+                when (count) {
+                    1 ->
+                        CompletableFuture.completedFuture(
+                            ReceiveMessageResponse.builder()
                                 .messages(listOf())
-                                .build())
-                        else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
-                    }
+                                .build()
+                        )
+                    else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
                 }
+            }
 
         // act
         val retriever = batchingMessageRetriever(sqsAsyncClient, queueProperties) {
@@ -117,13 +123,13 @@ class BatchingMessageRetrieverDslBuilderTest {
         // arrange
         var count = 0
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer {
-                    ++count
-                    when (count) {
-                        1 -> throw ExpectedTestException()
-                        else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
-                    }
+            .thenAnswer {
+                ++count
+                when (count) {
+                    1 -> throw ExpectedTestException()
+                    else -> throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
                 }
+            }
 
         // act
         val retriever = batchingMessageRetriever(sqsAsyncClient, queueProperties) {
@@ -145,10 +151,10 @@ class BatchingMessageRetrieverDslBuilderTest {
         // arrange
         val actualRequest = AtomicReference<ReceiveMessageRequest>()
         whenever(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest::class.java)))
-                .thenAnswer {
-                    actualRequest.set(it.arguments[0] as ReceiveMessageRequest)
-                    throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
-                }
+            .thenAnswer {
+                actualRequest.set(it.arguments[0] as ReceiveMessageRequest)
+                throw SdkClientException.create("Expected Test Error", SdkInterruptedException())
+            }
 
         // act
         val retriever = batchingMessageRetriever(sqsAsyncClient, queueProperties) {

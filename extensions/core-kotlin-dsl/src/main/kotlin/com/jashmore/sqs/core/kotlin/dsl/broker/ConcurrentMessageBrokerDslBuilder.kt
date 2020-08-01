@@ -1,13 +1,13 @@
 package com.jashmore.sqs.core.kotlin.dsl.broker
 
-import com.jashmore.sqs.core.kotlin.dsl.MessageBrokerDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
-import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.broker.MessageBroker
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
+import com.jashmore.sqs.core.kotlin.dsl.MessageBrokerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.initComponent
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import java.time.Duration
 
 /**
@@ -47,14 +47,14 @@ class ConcurrentMessageBrokerDslBuilder : MessageBrokerDslBuilder {
     override fun invoke(): MessageBroker {
         val actualConcurrencyLevel: () -> Int = concurrencyLevel ?: throw RequiredFieldException("concurrencyLevel", "ConcurrentMessageBroker")
         return ConcurrentMessageBroker(
-                object : ConcurrentMessageBrokerProperties {
+            object : ConcurrentMessageBrokerProperties {
 
-                    override fun getConcurrencyLevel(): Int = actualConcurrencyLevel()
+                override fun getConcurrencyLevel(): Int = actualConcurrencyLevel()
 
-                    override fun getConcurrencyPollingRate(): Duration? = concurrencyPollingRate()
+                override fun getConcurrencyPollingRate(): Duration? = concurrencyPollingRate()
 
-                    override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
-                }
+                override fun getErrorBackoffTime(): Duration? = errorBackoffTime()
+            }
         )
     }
 }

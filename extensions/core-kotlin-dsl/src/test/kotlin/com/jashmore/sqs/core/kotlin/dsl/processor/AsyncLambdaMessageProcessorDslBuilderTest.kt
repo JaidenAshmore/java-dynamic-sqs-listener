@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 private val queueProperties = QueueProperties.builder()
-        .queueUrl("url")
-        .build()
+    .queueUrl("url")
+    .build()
 private val message = Message.builder().receiptHandle("handle").build()
 
 @ExtendWith(MockitoExtension::class)
@@ -91,11 +91,13 @@ class AsyncLambdaMessageProcessorDslBuilderTest {
 
         // assert
         Assertions.assertThat(future).isCompleted()
-        Mockito.verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest.builder()
+        Mockito.verify(sqsAsyncClient).changeMessageVisibility(
+            ChangeMessageVisibilityRequest.builder()
                 .visibilityTimeout(VisibilityExtender.DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
                 .queueUrl("url")
                 .receiptHandle("handle")
-                .build())
+                .build()
+        )
     }
 
     @Test

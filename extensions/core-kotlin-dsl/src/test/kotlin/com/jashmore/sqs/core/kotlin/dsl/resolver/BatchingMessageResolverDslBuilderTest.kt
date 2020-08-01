@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(MockitoExtension::class)
 class BatchingMessageResolverDslBuilderTest {
     private val queueProperties = QueueProperties.builder()
-            .queueUrl("url")
-            .build()
+        .queueUrl("url")
+        .build()
 
     @Mock
     lateinit var sqsAsyncClient: SqsAsyncClient
@@ -66,12 +66,20 @@ class BatchingMessageResolverDslBuilderTest {
             batchingPeriod = { Duration.ofMillis(500) }
         }()
         whenever(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest::class.java)))
-                .thenReturn(CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-                        .successful(listOf(DeleteMessageBatchResultEntry.builder()
-                                .id("id")
-                                .build()))
+            .thenReturn(
+                CompletableFuture.completedFuture(
+                    DeleteMessageBatchResponse.builder()
+                        .successful(
+                            listOf(
+                                DeleteMessageBatchResultEntry.builder()
+                                    .id("id")
+                                    .build()
+                            )
+                        )
                         .failed(listOf<BatchResultErrorEntry>())
-                        .build()))
+                        .build()
+                )
+            )
 
         // act
         val startTime = System.currentTimeMillis()

@@ -5,64 +5,66 @@ pluginManagement {
     plugins {
         id("org.springframework.boot") version "2.3.2.RELEASE"
         id("com.commercehub.gradle.plugin.avro-base") version "0.21.0"
+        id("org.jlleitschuh.gradle.ktlint") version "9.3.0"
     }
     repositories {
         gradlePluginPortal()
-        maven (url="https://dl.bintray.com/gradle/gradle-plugins")
+        jcenter()
+        maven(url = "https://dl.bintray.com/gradle/gradle-plugins")
     }
 }
 
 include(
-        // Core
-        ":java-dynamic-sqs-listener-api",
-        ":java-dynamic-sqs-listener-core",
-        
-        // Spring
-        ":java-dynamic-sqs-listener-spring-api",
-        ":java-dynamic-sqs-listener-spring-core",
-        ":java-dynamic-sqs-listener-spring-starter",
+    // Core
+    ":java-dynamic-sqs-listener-api",
+    ":java-dynamic-sqs-listener-core",
 
-        // Ktor
-        ":java-dynamic-sqs-listener-ktor-core",
-        
-        // Extensions
-        ":aws-xray-extension-core",
-        ":aws-xray-extension-spring-boot",
-        ":brave-extension-core",
-        ":brave-extension-spring-boot",
-        ":core-kotlin-dsl",
+    // Spring
+    ":java-dynamic-sqs-listener-spring-api",
+    ":java-dynamic-sqs-listener-spring-core",
+    ":java-dynamic-sqs-listener-spring-starter",
 
-        // - Spring Cloud Scheme Registry Extension
-        ":spring-cloud-schema-registry-extension-api",
-        ":avro-spring-cloud-schema-registry-extension",
-        ":in-memory-spring-cloud-schema-registry",
-        
-        // Utils
-        ":avro-spring-cloud-schema-registry-sqs-client",
-        ":common-utils",
-        ":elasticmq-sqs-client",
-        ":expected-test-exception",
-        ":local-sqs-async-client",
-        ":proxy-method-interceptor",
-        ":sqs-brave-tracing",
-        ":annotation-utils",
-        ":documentation-annotations",
+    // Ktor
+    ":java-dynamic-sqs-listener-ktor-core",
 
-        // Examples
-        ":example:aws-xray-spring-example",
-        ":example:core-example",
-        ":example:spring-aws-example",
-        ":example:core-kotlin-example",
-        ":example:ktor-example",
-        ":example:spring-cloud-schema-registry:consumer",
-        ":example:spring-cloud-schema-registry:producer",
-        ":example:spring-cloud-schema-registry:producer-two",
-        ":example:spring-integration-test-example",
-        ":example:spring-multiple-aws-account-example",
-        ":example:spring-sleuth-example",
-        ":example:spring-starter-example",
-        ":example:spring-starter-minimal-example",
-        ":example:sqs-listener-library-comparison"
+    // Extensions
+    ":aws-xray-extension-core",
+    ":aws-xray-extension-spring-boot",
+    ":brave-extension-core",
+    ":brave-extension-spring-boot",
+    ":core-kotlin-dsl",
+
+    // - Spring Cloud Scheme Registry Extension
+    ":spring-cloud-schema-registry-extension-api",
+    ":avro-spring-cloud-schema-registry-extension",
+    ":in-memory-spring-cloud-schema-registry",
+
+    // Utils
+    ":avro-spring-cloud-schema-registry-sqs-client",
+    ":common-utils",
+    ":elasticmq-sqs-client",
+    ":expected-test-exception",
+    ":local-sqs-async-client",
+    ":proxy-method-interceptor",
+    ":sqs-brave-tracing",
+    ":annotation-utils",
+    ":documentation-annotations",
+
+    // Examples
+    ":example:aws-xray-spring-example",
+    ":example:core-example",
+    ":example:spring-aws-example",
+    ":example:core-kotlin-example",
+    ":example:ktor-example",
+    ":example:spring-cloud-schema-registry:consumer",
+    ":example:spring-cloud-schema-registry:producer",
+    ":example:spring-cloud-schema-registry:producer-two",
+    ":example:spring-integration-test-example",
+    ":example:spring-multiple-aws-account-example",
+    ":example:spring-sleuth-example",
+    ":example:spring-starter-example",
+    ":example:spring-starter-minimal-example",
+    ":example:sqs-listener-library-comparison"
 )
 
 // Core

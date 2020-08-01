@@ -3,7 +3,6 @@ package com.jashmore.sqs.core.kotlin.dsl.container
 import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.container.MessageListenerContainer
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.processor.AsyncLambdaMessageProcessorDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.processor.CoreMessageProcessorDslBuilder
@@ -19,9 +18,8 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
  *
  * <p>This only provides access to the processor object
  */
-@MessageListenerComponentDslMarker
-abstract class MessageListenerContainerBuilder(val identifier: String, val sqsAsyncClient: SqsAsyncClient, val queueProperties: QueueProperties)
-    : MessageListenerComponentDslBuilder<MessageListenerContainer> {
+abstract class AbstractMessageListenerContainerDslBuilder(val identifier: String, val sqsAsyncClient: SqsAsyncClient, val queueProperties: QueueProperties) :
+    MessageListenerComponentDslBuilder<MessageListenerContainer> {
     var processor: MessageProcessorDslBuilder? = null
 
     /**
@@ -39,8 +37,8 @@ abstract class MessageListenerContainerBuilder(val identifier: String, val sqsAs
      *
      * @param init the DSL function for configuring this processor
      */
-    fun coreProcessor(init: CoreMessageProcessorDslBuilder.() -> Unit)
-            = com.jashmore.sqs.core.kotlin.dsl.processor.coreProcessor(identifier, sqsAsyncClient, queueProperties, init)
+    fun coreProcessor(init: CoreMessageProcessorDslBuilder.() -> Unit) =
+        com.jashmore.sqs.core.kotlin.dsl.processor.coreProcessor(identifier, sqsAsyncClient, queueProperties, init)
 
     /**
      * Use the [LambdaMessageProcessor] as the [MessageProcessor] in this container.
@@ -55,8 +53,8 @@ abstract class MessageListenerContainerBuilder(val identifier: String, val sqsAs
      * }
      * ```
      */
-    fun lambdaProcessor(init: LambdaMessageProcessorDslBuilder.() -> Unit)
-            = com.jashmore.sqs.core.kotlin.dsl.processor.lambdaProcessor(identifier, sqsAsyncClient, queueProperties, init)
+    fun lambdaProcessor(init: LambdaMessageProcessorDslBuilder.() -> Unit) =
+        com.jashmore.sqs.core.kotlin.dsl.processor.lambdaProcessor(identifier, sqsAsyncClient, queueProperties, init)
 
     /**
      * Use the [AsyncLambdaMessageProcessor] as the [MessageProcessor] in this container.
@@ -73,6 +71,6 @@ abstract class MessageListenerContainerBuilder(val identifier: String, val sqsAs
      * }
      * ```
      */
-    fun asyncLambdaProcessor(init: AsyncLambdaMessageProcessorDslBuilder.() -> Unit)
-            = com.jashmore.sqs.core.kotlin.dsl.processor.asyncLambdaProcessor(identifier, sqsAsyncClient, queueProperties, init)
+    fun asyncLambdaProcessor(init: AsyncLambdaMessageProcessorDslBuilder.() -> Unit) =
+        com.jashmore.sqs.core.kotlin.dsl.processor.asyncLambdaProcessor(identifier, sqsAsyncClient, queueProperties, init)
 }

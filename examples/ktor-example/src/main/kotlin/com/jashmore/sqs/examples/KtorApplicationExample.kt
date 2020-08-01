@@ -1,4 +1,5 @@
 @file:JvmName("KtorApplicationExample")
+@file:Suppress("MagicNumber")
 package com.jashmore.sqs.examples
 
 import com.jashmore.sqs.container.MessageListenerContainer
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 import software.amazon.awssdk.services.sqs.model.Message
 import java.time.Duration
 
+@Suppress("LongMethod", "ComplexMethod")
 fun main() {
     val sqsAsyncClient = ElasticMqSqsAsyncClient()
 
@@ -66,7 +68,7 @@ fun main() {
         val thirdContainer = batchingMessageListener("batching-listener", sqsAsyncClient, thirdQueueUrl) {
             concurrencyLevel = { 2 }
             batchSize = { 5 }
-            batchingPeriod =  { Duration.ofSeconds(5) }
+            batchingPeriod = { Duration.ofSeconds(5) }
 
             processor = asyncLambdaProcessor {
                 method { message ->
@@ -116,9 +118,8 @@ fun main() {
 
                 container.start()
 
-                call.respondText("Container ${queueIdentifier} started", ContentType.Text.Html)
+                call.respondText("Container $queueIdentifier started", ContentType.Text.Html)
             }
-
 
             get("/stop/{queue}") {
                 val queueIdentifier = call.parameters["queue"]
@@ -136,14 +137,16 @@ fun main() {
 
                 container.stop()
 
-                call.respondText("Container ${queueIdentifier} stopped", ContentType.Text.Html)
+                call.respondText("Container $queueIdentifier stopped", ContentType.Text.Html)
             }
         }
     }
     server.start()
-    Runtime.getRuntime().addShutdownHook(Thread {
-        server.stop(1, 30_000)
-    })
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            server.stop(1, 30_000)
+        }
+    )
     Thread.currentThread().join()
 }
 

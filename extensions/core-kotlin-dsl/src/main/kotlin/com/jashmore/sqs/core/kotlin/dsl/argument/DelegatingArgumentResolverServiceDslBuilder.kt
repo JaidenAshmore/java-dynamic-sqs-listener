@@ -1,9 +1,6 @@
 package com.jashmore.sqs.core.kotlin.dsl.argument
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.jashmore.sqs.core.kotlin.dsl.ArgumentResolverServiceDslBuilder
-import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
-import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.argument.ArgumentResolver
 import com.jashmore.sqs.argument.ArgumentResolverService
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService
@@ -13,6 +10,9 @@ import com.jashmore.sqs.argument.message.MessageArgumentResolver
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper
+import com.jashmore.sqs.core.kotlin.dsl.ArgumentResolverServiceDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
+import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.processor.MessageProcessor
 
 /**
@@ -73,7 +73,7 @@ class DelegatingArgumentResolverServiceDslBuilder : ArgumentResolverServiceDslBu
 
     override fun invoke(): ArgumentResolverService {
         return DelegatingArgumentResolverService(
-                argumentResolvers
+            argumentResolvers
         )
     }
 }
@@ -91,5 +91,5 @@ class DelegatingArgumentResolverServiceDslBuilder : ArgumentResolverServiceDslBu
  *
  * @param init the DSL function for configuring this processor
  */
-fun delegatingArgumentResolverService(init: DelegatingArgumentResolverServiceDslBuilder.() -> Unit)
-        = initComponent(DelegatingArgumentResolverServiceDslBuilder(), init)
+fun delegatingArgumentResolverService(init: DelegatingArgumentResolverServiceDslBuilder.() -> Unit) =
+    initComponent(DelegatingArgumentResolverServiceDslBuilder(), init)
