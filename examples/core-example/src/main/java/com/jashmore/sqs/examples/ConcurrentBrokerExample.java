@@ -2,14 +2,15 @@ package com.jashmore.sqs.examples;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
 import brave.Tracing;
 import brave.context.slf4j.MDCScopeDecorator;
 import brave.propagation.ThreadLocalCurrentTraceContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.CoreArgumentResolverService;
@@ -163,9 +164,17 @@ public class ConcurrentBrokerExample {
             log.info("Put 10 messages onto queue");
         }, 0, 2, TimeUnit.SECONDS);
 
-        log.info("Running application for 3 minutes. Ctrl + C to exit...");
-        Thread.sleep(3 * 60 * 1000);
-        scheduledExecutorService.shutdownNow();
+        log.info("Running application. Ctrl + C to exit...");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            scheduledExecutorService.shutdownNow();
+            try {
+                scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+            container.stop();
+        }));
+        Thread.currentThread().join();
     }
 
     @Data

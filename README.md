@@ -5,57 +5,236 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.jashmore/java-dynamic-sqs-listener-api?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.jashmore%22%20AND%20%22java-dynamic-sqs-listener%22)
 
 The Java Dynamic SQS Listener is a library that simplifies the listening of messages on an [AWS SQS queue](https://aws.amazon.com/sqs/).  It has been
-built from the ground up with the goal of making it easily customisable, allowing each component of the library to be interchanged if desired. The listeners
-also allow dynamic changes to the configuration during runtime, for example it could be built to allow the amount of concurrent processing messages to be
-controlled by a feature flag.
+built from the ground up with the goal of making it framework agnostic, easily customisable and allow for dynamic changes to the configuration during runtime.
 
-## Spring Boot Quick Guide
+## Getting Started
 
-The following provides some examples using the Spring Boot Starter for this library. *Note that the [core](./core) implementation is framework agnostic and
-is not reliant on using Spring.*
+The following provides some examples using the library with different languages or frameworks.
 
-### Using the Spring Boot Starter
+### Spring Boot Quick Guide
 
-This guide will give a quick guide to getting started for Spring Boot using the Spring Stater.
+1. Include the dependency:
 
-#### Maven
+    ```xml
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
+        <version>${sqs.listener.version}</version>
+    </dependency>
+    ```
 
-```xml
-<dependency>
-    <groupId>com.jashmore</groupId>
-    <artifactId>java-dynamic-sqs-listener-spring-starter</artifactId>
-    <version>${sqs.listener.version}</version>
-</dependency>
-```
+    or
 
-#### Gradle
+    ```kotlin
+    dependencies {
+        implementation("com.jashmore:java-dynamic-sqs-listener-spring-starter:${sqs.listener.version}")
+    }
+    ```
 
-```kotlin
-dependencies {
-    implementation("com.jashmore:java-dynamic-sqs-listener-spring-starter:${sqs.listener.version}")
-}
-```
-
-In one of your beans, attach a
+1. In one of your beans, attach a
 [@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
 annotation to a method indicating that it should process messages from a queue.
 
-```java
-@Service
-public class MyMessageListener {
-    // The queue here can point to your SQS server, e.g. a
-    // local SQS server or one on AWS
-    @QueueListener("${insert.queue.url.here}")
-    public void processMessage(@Payload final String payload) {
-        // process the message payload here
+    ```java
+    @Service
+    public class MyMessageListener {
+        // The queue here can point to your SQS server, e.g. a
+        // local SQS server or one on AWS
+        @QueueListener("${insert.queue.url.here}")
+        public void processMessage(@Payload final String payload) {
+            // process the message payload here
+        }
     }
-}
-```
+    ```
 
-This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
-will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
+    This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
+    will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
 
-See [How to connect to AWS SQS Queues](./doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md) for information about connecting to an actual queue in SQS.
+See [Spring Starter Minimal Example](examples/spring-starter-minimal-example) for a minimal example of configuring in a Spring Boot
+application with a local ElasticMQ SQS Server.
+
+### Java Core Quick Guide
+
+1. Include the dependency:
+
+    ```xml
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>java-dynamic-sqs-listener-core</artifactId>
+        <version>${sqs.listener.version}</version>
+    </dependency>
+    ```
+
+    or
+
+    ```kotlin
+    dependencies {
+        implementation("com.jashmore:java-dynamic-sqs-listener-core:${sqs.listener.version}")
+    }
+    ```
+
+1. Create a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) for a specific queue.
+
+    ```java
+    public class MyClass {
+        public static void main(String[] args) throws InterruptedException {
+            final SqsAsyncClient sqsAsyncClient = SqsAsyncClient.create(); // or your own custom client
+            final QueueProperties queueProperties = QueueProperties.builder()
+                    .queueUrl("${insert.queue.url.here}")
+                    .build();
+            final MessageListenerContainer container = new CoreMessageListenerContainer(
+                    "listener-identifier",
+                    () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder()
+                            .concurrencyLevel(10)
+                            .build()),
+                    () -> new PrefetchingMessageRetriever(
+                            sqsAsyncClient,
+                            queueProperties,
+                            StaticPrefetchingMessageRetrieverProperties.builder()
+                                    .desiredMinPrefetchedMessages(10)
+                                    .maxPrefetchedMessages(20)
+                                    .build()
+                    ),
+                    () -> new LambdaMessageProcessor(
+                            sqsAsyncClient,
+                            queueProperties,
+                            (message) -> {
+                                // process the message here
+                            }
+                    ),
+                    () -> new BatchingMessageResolver(
+                            queueProperties,
+                            sqsAsyncClient,
+                            StaticBatchingMessageResolverProperties.builder()
+                                    .bufferingSizeLimit(1)
+                                    .bufferingTime(Duration.ofSeconds(5))
+                                    .build())
+            );
+            container.start();
+            Runtime.getRuntime().addShutdownHook(new Thread(container::stop));
+            Thread.currentThread().join();
+        }
+    }
+    ```
+
+See the [Core Example](examples/core-example) for a more complicated example that uses a local ElasticMQ server and dynamically changes the concurrency
+of message processing while the app is running.
+
+### Kotlin Quick Guide
+
+1. Include the dependency:
+
+    ```xml
+    <dependencies>
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>java-dynamic-sqs-listener-core</artifactId>
+            <version>${sqs.listener.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jashmore</groupId>
+            <artifactId>core-kotlin-dsl</artifactId>
+            <version>${sqs.listener.version}</version>
+        </dependency>
+    </dependencies>
+    ```
+
+    or
+
+    ```kotlin
+    dependencies {
+        implementation("com.jashmore:java-dynamic-sqs-listener-core:${sqs.listener.version}")
+        implementation("com.jashmore:core-kotlin-dsl:${sqs.listener.version}")
+    }
+    ```
+
+1. Create a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) for a specific queue.
+  
+    ```kotlin
+    fun main() {
+        val sqsAsyncClient = SqsAsyncClient.create()
+
+        val container = coreMessageListener("listener-identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+            broker = concurrentBroker {
+                concurrencyLevel = { 10 }
+            }
+            retriever = prefetchingMessageRetriever {
+                desiredPrefetchedMessages = 10
+                maxPrefetchedMessages = 20
+            }
+            processor = lambdaProcessor {
+                method { message ->
+                    // process the message here
+                }
+            }
+            resolver = batchingResolver {
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(5) }
+            }
+        }
+
+        container.start()
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                container.stop()
+            }
+        )
+        Thread.currentThread().join()
+    }
+    ```
+
+See the [Core Kotlin Example](examples/core-kotlin-example) for a full example running a Kotlin App that listens to a local ElasticMQ SQS Server.
+
+### Ktor Quick Guide
+
+1. Include the dependency:
+
+    ```xml
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>java-dynamic-sqs-listener-ktor-core</artifactId>
+        <version>${sqs.listener.version}</version>
+    </dependency>
+    ```
+
+    or
+
+    ```kotlin
+    dependencies {
+        implementation("com.jashmore:java-dynamic-sqs-listener-ktor-core:${sqs.listener.version}")
+    }
+    ```
+
+1. Add a message listener to the server
+
+    ```kotlin
+    fun main() {
+        val sqsAsyncClient = SqsAsyncClient.create() // replace with however you want to configure this client
+        val queueUrl = "replaceWithQueueUrl"
+        val server = embeddedServer(Netty, 8080) {
+             prefetchingMessageListener("listener-identifier", sqsAsyncClient, queueUrl) {
+                  concurrencyLevel = { 10 }
+                  desiredPrefetchedMessages = 10
+                  maxPrefetchedMessages = 20
+
+                  processor = lambdaProcessor {
+                      method { message ->
+                          // process the message payload here
+                      }
+                  }
+             }
+        }
+        server.start()
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                server.stop(1, 30_000)
+            }
+        )
+        Thread.currentThread().join()
+    }
+    ```
+
+See the [Ktor Core Example](examples/ktor-example) for a full example running a Ktor framework that listens to a local ElasticMQ SQS Server.
 
 ## Core Infrastructure
 
@@ -98,14 +277,20 @@ for compatibility.
 - [Spring Framework](./spring)
   - All the core dependencies above
   - [Spring Boot](https://github.com/spring-projects/spring-boot)
+- [Ktor Framework](./ktor)
+  - All the core dependencies above
+  - [Kotlin](https://github.com/JetBrains/kotlin)
+  - [Ktor](https://github.com/ktorio/ktor)
   
 See the [build.gradle.kts](build.gradle.kts) for the specific versions of these dependencies.
 
 ## How to Guides
 
+More in-depth guides on how configure this library:
+
 1. [How to Connect to an AWS SQS Queue](doc/how-to-guides/how-to-connect-to-aws-sqs-queue.md): necessary for actually using this framework in live environments
 1. Core Framework How To Guides
-    1. [How to implement a custom ArgumentResolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md): useful for changing resolution
+    1. [How to implement a custom ArgumentResolver:](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md) useful for changing resolution
     of arguments in the message listener
     1. [How to manually acknowledge message](doc/how-to-guides/core/core-how-to-mark-message-as-successfully-processed.md): useful for when you want to mark the
     message as successfully processed before the method has finished executing
@@ -143,10 +328,11 @@ See the [build.gradle.kts](build.gradle.kts) for the specific versions of these 
 
 ## Common Use Cases/Explanations
 
-### How to de-serialise a JSON Payload
+### Core Processor - How to de-serialise a JSON Payload
 
-The core library by default uses [Jackson](https://github.com/FasterXML/jackson-databind) to de-serialise the message payload and therefore you can
-use any Jackson compatible POJO class.
+When you are using the reflection based [CoreMessageProcessor](core/src/main/java/com/jashmore/sqs/processor/CoreMessageProcessor.java) (which is the default for
+Spring Boot applications), the payload of the message is de-serialised by default using [Jackson](https://github.com/FasterXML/jackson-databind) and
+therefore any Jackson compatible POJO class can be used with the [@Payload](core/src/main/java/com/jashmore/sqs/argument/payload/Payload.java) annotation.
 
 ```java
 @Service
@@ -178,7 +364,7 @@ public class MyMessageListener {
 }
 ```
 
-### Adding a custom argument resolver
+### Spring - Adding a custom argument resolver
 
 There are some core [ArgumentResolvers](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
 application but custom ones can be defined if they don't cover your use case. As an example, the following is how we can populate the message listener
@@ -219,7 +405,8 @@ do the logic for converting the message payload to uppercase.
     testing this problem in
     [PayloadArgumentResolver_ProxyClassTest.java](./core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
 
-    Also, as this library is not Spring specific, the Spring Annotation classes can not be used.
+    Also, as this library is not Spring specific, the Spring Annotation classes cannot be used.
+
 1. Include the custom [ArgumentResolver](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
 context for automatic injection into the
 [ArgumentResolverService](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
@@ -247,7 +434,10 @@ context for automatic injection into the
     ```
 
 For a more extensive guide for doing this, take a look at
-[Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md).
+[Spring - How to add a custom Argument Resolver](doc/how-to-guides/spring/spring-how-to-add-custom-argument-resolver.md). If you are using the core
+or Ktor library, you can look at
+the [Core - How to Implement a Custom Argument Resolver](doc/how-to-guides/core/core-how-to-implement-a-custom-argument-resolver.md) for a guide on creating
+a new argument resolver.
 
 ### Increasing the concurrency limit
 
@@ -255,16 +445,52 @@ There is no limit to the number of messages that can be processed in the applica
 of the threads that the application can handle. Therefore, if you are fine spinning up as many threads as concurrent messages, you can increase
 the concurrency to as high of a value as you wish.
 
-Using the Spring Boot Starter you could increase the number of concurrent messages to 100 like the following:
+#### Core
+
+```java
+public class SomeClass {
+    public MessageListenerContainer container() {
+        return new CoreMessageListenerContainer(
+            "identifier",
+            () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder()
+                  .concurrencyLevel(100)
+                  .build())
+            // other configuration
+        );
+    }
+}
+```
+
+#### Spring Boot
 
 ```java
 @Service
 public class MyMessageListener {
     @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 100)
     public void processMessage(@Payload final String payload) {
-        // some high IO processing here
+        // process message here
     }
 }
+```
+
+#### Kotlin DSL/Ktor
+
+```kotlin
+    coreMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+        broker = concurrentBroker {
+            concurrencyLevel = { 100 }
+        }
+        // other configuration
+    }
+```
+
+or
+
+```kotlin
+    batchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+        concurrencyLevel = { 100 }
+        // other configuration
+    }
 ```
 
 ### How to Mark the message as successfully processed
@@ -275,22 +501,30 @@ as a success, therefore removing it from the queue. When the method throws an ex
 policy the queue will perform another attempt of processing the message.
 
 ```java
-@Service
 public class MyMessageListener {
     @QueueListener(value = "queue-name")
     public void processMessage(@Payload final String payload) {
-        // do nothing; so the message is considered successfully processed
+        // if this does not throw an exception it will be considered successfully processed
     }
 }
 ```
 
-Note that if the method contains an
+or
+
+```kotlin
+lambdaProcessor {
+    method { message ->
+        // if this does not throw an exception it will be considered successfully processed
+    }
+}
+```
+
+If the method contains an
 [Acknowledge](./api/src/main/java/com/jashmore/sqs/processor/argument/Acknowledge.java) argument it is now up to the method
 to manually acknowledge the message as a success. The [MessageProcessor](./api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java)
 has handed off control to the message listener and will not acknowledge the message automatically when the method executes without throwing an exception.
 
 ```java
-@Service
 public class MyMessageListener {
     @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000)
     public void processMessage(@Payload final String payload, final Acknowledge acknowledge) {
@@ -302,20 +536,30 @@ public class MyMessageListener {
 }
 ```
 
+or
+
+```kotlin
+lambdaProcessor {
+    method { message, acknowledge ->
+        if (someCondition()) {
+            acknowledge.acknowledgeSuccessful().get()
+        }
+    }
+}
+```
+
 ### Setting up a queue listener that batches requests for messages
 
 The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
 a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
 finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
 [@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
-provides the same basic functionality, but it also provides a timeout where eventually it will request for more messages even for the threads that are
+provides the same basic functionality, but it also provides a timeout where it will eventually request for more messages when there are threads that are
 ready for another message.
 
-It will also batch the removal of messages from the queue and therefore with a concurrency level of 10, if there are a lot of
-messages on the queue, only 2 requests would be made to SQS for retrieval and deletion of messages. The usage is something like this:
+#### Core/Spring Boot
 
 ```java
-@Service
 public class MyMessageListener {
     @QueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10, maxPeriodBetweenBatchesInMs = 2000)
     public void processMessage(@Payload final String payload) {
@@ -324,13 +568,37 @@ public class MyMessageListener {
 }
 ```
 
+#### Kotlin/Ktor
+
+```kotlin
+    batchingMessageListener("listener-identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+        concurrencyLevel = { 10 }
+        batchSize = { 10 }
+        batchingPeriod = { Duration.ofSeconds(2) }
+        processor = lambdaProcessor {
+            method { message ->
+              // process the message payload here
+            }
+        }
+    }
+```
+
 In this example above we have set it to process 10 messages at once and when there are threads wanting more messages it will wait for a maximum of 2 seconds
 before requesting messages for threads waiting for another message.
 
 ### Setting up a queue listener that prefetches messages
 
-When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. The
-[@PrefetchingQueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+When the amount of messages for a service is extremely high, prefetching messages may be a way to optimise the throughput of the application. In this
+example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible up
+to the maximum specified.
+
+*Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
+10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
+not prefetch anymore.*
+
+#### Spring Boot
+
+The [@PrefetchingQueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
 annotation can be used to prefetch messages in a background thread while processing the existing messages.  The usage is something like this:
 
 ```java
@@ -343,87 +611,29 @@ public class MyMessageListener {
 }
 ```
 
-In this example, if the amount of prefetched messages is below the desired amount of prefetched messages it will try to get as many messages as possible up
-to the maximum specified.
-
-*Note: because of the limit of the number of messages that can be obtained from SQS at once (10), having the maxPrefetchedMessages more than
-10 above the desiredMinPrefetchedMessages will not provide much value as once it has prefetched more than the desired prefetched messages it will
-not prefetch anymore.*
-
-### Using the Core Library with a Kotlin DSL
-
-If you want a way to more easily build a new
-a [MessageListenerContainer](api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) from scratch, you can use the
-[Core Kotlin DSL](extensions/core-kotlin-dsl) tool. This can be useful if your Kotlin application does not use Spring, or if you are using Spring and you
-want to build your own queue listener annotation.
+#### Kotlin DSL/Ktor
 
 ```kotlin
-val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
-    retriever = prefetchingMessageRetriever {
-        desiredPrefetchedMessages = 10
-        maxPrefetchedMessages = 20
-    }
-    processor = coreProcessor {
-        argumentResolverService = coreArgumentResolverService(objectMapper)
-        bean = MessageListener()
-        method = MessageListener::class.java.getMethod("listen", String::class.java)
-    }
-    broker = concurrentBroker {
+    prefetchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
         concurrencyLevel = { 10 }
-        concurrencyPollingRate = { Duration.ofSeconds(30) }
-    }
-    resolver = batchingResolver {
-        bufferingSizeLimit = { 5 }
-        bufferingTime = { Duration.ofSeconds(2) }
-    }
-}
+        desiredPrefetchedMessages = 5
+        maxPrefetchedMessages = 10
 
-container.start()
+        processor = lambdaProcessor {
+            methodWithVisibilityExtender { message, _ ->
+                // process the message payload here
+            }
+        }
+    }
 ```
 
-For more details, see the [Core - How to use the Kotlin DSL](doc/how-to-guides/core/core-how-to-use-kotlin-dsl.md) guide.
+### Comparing other SQS Libraries
 
-### Wrapping the Message Listener execution using a MessageProcessingDecorator
-
-If you require to wrap the message listeners with some custom logic, like metrics, logging or other functionality, you can do this using a
-[MessageProcessingDecorator](./api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java). This provides callback
-functions that will be executed at certain stages of the message processing lifecycle.  For more information on use cases and implementations, take a
-look at [Core - How to create a message processing decorator](doc/how-to-guides/core/core-how-to-create-a-message-processing-decorator.md).
-
-### Adding Brave Tracing
-
-If you are using Brave Tracing in your application, for example using Spring Sleuth, you can hook into this system by including the
-[brave-extension](extensions/brave-extension) modules.
-
-See
-[Core - How to add Brave Tracing](doc/how-to-guides/core/core-how-to-add-brave-tracing.md) and
-[Spring - How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md) for guides on how to add tracing.
-
-### Building a custom queue listener annotation
-
-The core Queue Listener annotations may not provide the exact use case necessary for the application and therefore it can be useful to provide your
-own annotation. See
-[Spring - How to add a custom queue wrapper](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md) for a guide to doing this.
-
-### Versioning Message Payloads using Apache Avro Schemas
-
-As the application grows, it may be beneficial to allow for versioning of the schema so that the consumer can still serialize messages from producers sending
-different versions of the schema. To allow for this the [spring-cloud-schema-registry-extension](extensions/spring-cloud-schema-registry-extension) was written
-to support this functionality. See the [README.md](extensions/spring-cloud-schema-registry-extension/README.md) for this extension for more details.
-
-### Connecting to multiple AWS Accounts using the Spring Starter
-
-If the Spring Boot application needs to connect to SQS queues across multiple AWS Accounts, you will need to provide a
-[SqsAsyncClientProvider](./spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
-which will be able to obtain a specific `SqsAsyncClient` based on an identifier. For more information on how to do this, take a look at the documentation
-at [How To Connect to Multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md).
-
-### Comparing Libraries
-
-If you want to see the difference between this library and others like the
+If you want to see the difference in usage between this library and others like the
 [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and
-[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison)
-module. This allows you to test the performance and usage of each library for different scenarios, such as heavy IO message processing, etc.
+[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at
+the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison) module. This allows you to test the performance and usage of
+each library for different scenarios, such as heavy IO message processing, etc.
 
 ## Examples
 
@@ -474,16 +684,12 @@ For bugs, questions and discussions please use [Github Issues](https://github.co
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
 
-### Setting up Intellij
-
-If you are contributing and want to set up IntelliJ, you can follow this guide: [Setting up IntelliJ](doc/local-development/setting-up-intellij.md).
-
 ## License
 
 ```text
 MIT License
 
-Copyright (c) 2018 JaidenAshmore
+Copyright (c) 2018 Jaiden Ashmore
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
