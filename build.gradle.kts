@@ -1,3 +1,4 @@
+import com.jashmore.gradle.GithubReleaseNotesTask
 import com.jashmore.gradle.JacocoCoverallsPlugin
 import com.jashmore.gradle.ReleasePlugin
 import com.jashmore.gradle.release
@@ -199,6 +200,65 @@ release {
     sonatypePassword = System.getenv("OSS_SONATYPE_PASSWORD")
     signingKey = System.getenv("GPG_SIGNING_KEY_ASCII_ARMORED_FORMAT")
     signingPassword = System.getenv("GPG_SIGNING_PASSWORD")
+}
+
+val milestonePropertyName = "milestoneVersion"
+val generateReleaseNotesTaskName = "generateReleaseNotes"
+
+tasks.register<GithubReleaseNotesTask>(generateReleaseNotesTaskName) {
+    group = "release"
+    description = "Task for generating the release notes from the issues in a GitHub milestone"
+
+    doLast {
+        if (!project.hasProperty(milestonePropertyName)) {
+            throw RuntimeException(
+                """
+                    Required property $milestonePropertyName has not been set.
+        
+                    Usage: ./gradlew $generateReleaseNotesTaskName -P$milestonePropertyName=4.0.0
+                    """.trimIndent()
+            )
+        }
+        milestoneVersion = project.properties[milestonePropertyName] as String
+        githubUser = "JaidenAshmore"
+        repositoryName = "java-dynamic-sqs-listener"
+        groupings = {
+            group {
+                title = "Enhancements"
+                filter = {
+                    labels.any { it.name == "enhancement" }
+                }
+                renderer = {
+                    """
+                |### $title [GH-$number]
+                |
+                |${body.substringAfter("### Release Notes")}
+                |
+                """.trimMargin()
+                }
+            }
+
+            group {
+                title = "Bug Fixes"
+                filter = { labels.any { it.name == "bug" } }
+                renderer = {
+                    """
+                | - [GH-$number]: $title
+                """.trimMargin()
+                }
+            }
+
+            group {
+                title = "Documentation"
+                filter = { labels.any { it.name == "documentation" } }
+                renderer = {
+                    """
+                | - [GH-$number]: $title
+                """.trimMargin()
+                }
+            }
+        }
+    }
 }
 
 /**
