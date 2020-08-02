@@ -8,12 +8,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     java
     `java-library`
-    id("com.github.spotbugs") version "4.4.5"
     checkstyle
     jacoco
-    kotlin("jvm") version "1.3.72" apply false
+    id("com.github.spotbugs")
+    kotlin("jvm") apply false
     id("org.jlleitschuh.gradle.ktlint") apply false
-    id("io.gitlab.arturbosch.detekt") version "1.10.0" apply false
+    id("io.gitlab.arturbosch.detekt") apply false
 }
 
 allprojects {
@@ -26,6 +26,13 @@ allprojects {
         jcenter()
     }
 }
+
+val assertJVersion: String by project
+val junitJupiterVersion: String by project
+val logbackVersion: String by project
+val lombokVersion: String by project
+val mockitoVersion: String by project
+val spotbugsVersion: String by project
 
 subprojects {
     val isKotlinProject = project.name.contains("kotlin") || project.name.contains("ktor")
@@ -45,65 +52,25 @@ subprojects {
     }
 
     dependencies {
-        // AWS
-        implementation(platform("software.amazon.awssdk:bom:2.13.66"))
-        api(platform("software.amazon.awssdk:bom:2.13.58"))
-
-        // Spring Boot
-        api(platform("org.springframework.boot:spring-boot-dependencies:2.3.2.RELEASE"))
-
         // Lombok
-        compileOnly("org.projectlombok:lombok:1.18.12")
-        annotationProcessor("org.projectlombok:lombok:1.18.12")
-        testCompileOnly("org.projectlombok:lombok:1.18.12")
-        testAnnotationProcessor("org.projectlombok:lombok:1.18.12")
+        compileOnly("org.projectlombok:lombok:$lombokVersion")
+        annotationProcessor("org.projectlombok:lombok:$lombokVersion")
+        testCompileOnly("org.projectlombok:lombok:$lombokVersion")
+        testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
 
         // Testing (JUnit, Mockito, etc)
-        testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-        testImplementation("org.mockito:mockito-junit-jupiter:3.4.6")
-        testImplementation("org.mockito:mockito-core:3.4.6")
-        testImplementation("org.hamcrest:hamcrest:2.2")
-        testImplementation("org.assertj:assertj-core:3.16.1")
+        testImplementation("org.assertj:assertj-core:$assertJVersion")
+        testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
+        testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+        testImplementation("org.mockito:mockito-core:$mockitoVersion")
 
         // Logging for tests
-        testImplementation("ch.qos.logback:logback-core")
-        testImplementation("ch.qos.logback:logback-classic")
+        testImplementation("ch.qos.logback:logback-core:$logbackVersion")
+        testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
 
         if (!isKotlinProject) {
             // SpotBugs
-            spotbugs("com.github.spotbugs:spotbugs:4.1.1")
-        }
-
-        constraints {
-            // Jackson
-            implementation("com.fasterxml.jackson.core:jackson-databind:2.11.1")
-
-            // Avro/Spring Cloud Schema Registry
-            implementation("org.apache.avro:avro:1.10.0")
-            implementation("org.springframework.cloud:spring-cloud-schema-registry-client:1.0.7.RELEASE")
-
-            // Proxying
-            implementation("cglib:cglib:3.3.0")
-
-            // Slf4j
-            implementation("org.slf4j:slf4j-api:1.7.30")
-
-            // Brave
-            implementation("io.zipkin.brave:brave:5.12.4")
-            implementation("io.zipkin.brave:brave-context-slf4j:5.12.4")
-            implementation("io.zipkin.brave:brave-tests:5.12.4")
-
-            // ElasticMQ
-            implementation("org.elasticmq:elasticmq-rest-sqs_2.12:0.15.6")
-
-            // AWS Xray
-            implementation("com.amazonaws:aws-xray-recorder-sdk-core:2.6.1")
-            implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.6.1")
-            implementation("com.amazonaws:aws-xray-recorder-sdk-aws-sdk-v2-instrumentor:2.6.1")
-
-            // Logback (for tests)
-            implementation("ch.qos.logback:logback-core:1.2.3")
-            implementation("ch.qos.logback:logback-classic:1.2.3")
+            spotbugs("com.github.spotbugs:spotbugs:$spotbugsVersion")
         }
     }
 

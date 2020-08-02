@@ -1,7 +1,11 @@
 
 description = "Extension for integration AWS Xray Tracing into the Message Listeners in a Spring Boot Application"
 
+val springBootVersion: String by project
+
 dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+
     api(project(":aws-xray-extension-core"))
     implementation("org.springframework:spring-context")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
