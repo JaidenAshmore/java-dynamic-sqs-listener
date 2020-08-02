@@ -1,10 +1,14 @@
 
 description = "Helper Util for adding Tracing information to the message attributes of outbound SQS messages"
 
-dependencies {
-    api("io.zipkin.brave:brave")
-    implementation("software.amazon.awssdk:sqs")
+val awsVersion: String by project
+val braveVersion: String by project
 
-    testImplementation("io.zipkin.brave:brave-tests")
+dependencies {
+    api(platform("software.amazon.awssdk:bom:$awsVersion"))
+    implementation("software.amazon.awssdk:sqs")
+    api("io.zipkin.brave:brave:$braveVersion")
+
+    testImplementation("io.zipkin.brave:brave-tests:$braveVersion")
     testImplementation(project(":elasticmq-sqs-client"))
 }

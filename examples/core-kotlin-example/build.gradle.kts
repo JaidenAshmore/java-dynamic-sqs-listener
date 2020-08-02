@@ -1,17 +1,21 @@
 
 description = "Example of using the Core library with the Kotlin DSL, this should be equivalent to the core-examples."
 
+val braveVersion: String by project
+val jacksonVersion: String by project
+val logbackVersion: String by project
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(project(":java-dynamic-sqs-listener-core"))
     implementation(project(":elasticmq-sqs-client"))
     implementation(project(":core-kotlin-dsl"))
-    implementation("io.zipkin.brave:brave")
-    implementation("io.zipkin.brave:brave-context-slf4j")
+    implementation("io.zipkin.brave:brave:$braveVersion")
+    implementation("io.zipkin.brave:brave-context-slf4j:$braveVersion")
     implementation(project(":brave-extension-core"))
-    implementation("ch.qos.logback:logback-core")
-    implementation("ch.qos.logback:logback-classic")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("ch.qos.logback:logback-core:$logbackVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
 }
 
 tasks.create<JavaExec>("runApp") {
