@@ -176,7 +176,41 @@ tasks.register<GithubReleaseNotesTask>(generateReleaseNotesTaskName) {
     group = "release"
     description = "Task for generating the release notes from the issues in a GitHub milestone"
 
-    doLast {
+    githubUser = "JaidenAshmore"
+    repositoryName = "java-dynamic-sqs-listener"
+    groupings = {
+        group {
+            title = "Enhancements"
+            filter = {
+                labels.any { it.name == "enhancement" }
+            }
+            renderer = { issue, comments ->
+                val releaseNotes = comments
+                    .filter { it.body.contains("### Release Notes") }
+                    .map { it.body.substringAfter("### Release Notes") }
+                    .firstOrNull() ?: issue.body.substringAfter("### Release Notes")
+
+                """### ${issue.title} [GH-${issue.number}]
+                |
+                |${releaseNotes.trim()}
+                |
+                """.trimMargin()
+            }
+        }
+
+        group {
+            title = "Bug Fixes"
+            filter = { labels.any { it.name == "bug" } }
+            renderer = { issue, _ -> "- [GH-${issue.number}]: ${issue.title}" }
+        }
+
+        group {
+            title = "Documentation"
+            filter = { labels.any { it.name == "documentation" } }
+            renderer = { issue, _ -> "- [GH-${issue.number}]: ${issue.title}" }
+        }
+    }
+    doFirst {
         if (!project.hasProperty(milestonePropertyName)) {
             throw RuntimeException(
                 """
@@ -187,44 +221,6 @@ tasks.register<GithubReleaseNotesTask>(generateReleaseNotesTaskName) {
             )
         }
         milestoneVersion = project.properties[milestonePropertyName] as String
-        githubUser = "JaidenAshmore"
-        repositoryName = "java-dynamic-sqs-listener"
-        groupings = {
-            group {
-                title = "Enhancements"
-                filter = {
-                    labels.any { it.name == "enhancement" }
-                }
-                renderer = {
-                    """
-                |### $title [GH-$number]
-                |
-                |${body.substringAfter("### Release Notes")}
-                |
-                """.trimMargin()
-                }
-            }
-
-            group {
-                title = "Bug Fixes"
-                filter = { labels.any { it.name == "bug" } }
-                renderer = {
-                    """
-                | - [GH-$number]: $title
-                """.trimMargin()
-                }
-            }
-
-            group {
-                title = "Documentation"
-                filter = { labels.any { it.name == "documentation" } }
-                renderer = {
-                    """
-                | - [GH-$number]: $title
-                """.trimMargin()
-                }
-            }
-        }
     }
 }
 

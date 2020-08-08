@@ -1,5 +1,6 @@
 package com.jashmore.gradle
 
+import org.eclipse.egit.github.core.Comment
 import org.eclipse.egit.github.core.Issue
 import org.eclipse.egit.github.core.client.GitHubClient
 import org.eclipse.egit.github.core.service.IssueService
@@ -9,7 +10,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-typealias IssueRenderer = (issue: Issue) -> String
+typealias IssueRenderer = (issue: Issue, comments: List<Comment>) -> String
 
 data class IssueGrouping(val title: String, val description: String?, val renderer: IssueRenderer, val filter: (issue: Issue) -> Boolean)
 
@@ -31,7 +32,7 @@ class GroupingDsl {
     /**
      * The renderer that will be able to render the release note informatiion for the issue in the group.
      */
-    var renderer: (Issue.() -> String)? = null
+    var renderer: IssueRenderer? = null
 
     /**
      * The filter to determine if the issue should be present in this group.
@@ -68,7 +69,7 @@ open class GithubReleaseNotesTask : DefaultTask() {
      * The name of the milestone to obtain issues for, e.g. 4.0.0.
      */
     @get:Input
-    var milestoneVersion: String? = null
+    var milestoneVersion: String = ""
 
     /**
      * The username of the GitHub user that owns the repository, e.g. JaidenAshmore.
@@ -98,7 +99,10 @@ open class GithubReleaseNotesTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val milestoneVersion = this@GithubReleaseNotesTask.milestoneVersion ?: throw IllegalArgumentException("Required field milestoneVersion is not set")
+        val milestoneVersion = this@GithubReleaseNotesTask.milestoneVersion
+        if (milestoneVersion.isBlank()) {
+            throw IllegalArgumentException("Required field milestoneVersion is not set")
+        }
         val githubUser = this@GithubReleaseNotesTask.githubUser ?: throw IllegalArgumentException("Required field githubUser is not set")
         val repositoryName = this@GithubReleaseNotesTask.repositoryName ?: throw IllegalArgumentException("Required field repositoryName is not set")
 
@@ -108,36 +112,44 @@ open class GithubReleaseNotesTask : DefaultTask() {
         }
         val repository = RepositoryService(client).getRepository(githubUser, repositoryName)
         val milestone = MilestoneService(client).getMilestones(repository, "all")
-                .first { it.title == milestoneVersion }
+            .firstOrNull { it.title == milestoneVersion }
+
+        if (milestone == null) {
+            throw IllegalArgumentException("No milestone found with value: ${milestone}")
+        }
 
         val groupingsDsl = GroupingsDsl()
         groupingsDsl.groupings()
 
-        val issues = IssueService(client).getIssues(repository, mutableMapOf(
-                "milestone" to milestone.number.toString(),
-                "state" to "closed"
+        val issueService = IssueService(client)
+        val issues = issueService.getIssues(repository, mutableMapOf(
+            "milestone" to milestone.number.toString(),
+            "state" to "closed"
         ))
 
         val issuesRendered = mutableSetOf<Issue>()
 
         val releaseMarkdown = groupingsDsl.groups.joinToString("\n") {
             val matchingIssues = issues
-                    .filter(it.filter)
-                    .filterNot(issuesRendered::contains)
+                .filter(it.filter)
+                .filterNot(issuesRendered::contains)
 
             if (matchingIssues.isEmpty()) {
                 return@joinToString ""
             }
 
             val renderedIssueInformation = matchingIssues
-                    .onEach(issuesRendered::add)
-                    .joinToString("\n", postfix = "\n") { issue -> it.renderer(issue) }
+                .onEach(issuesRendered::add)
+                .joinToString("\n", postfix = "\n") { issue ->
+                    val comments = issueService.getComments(repository, issue.number)
+                    it.renderer(issue, comments)
+                }
             """
-            |## ${it.title}
-            |${it.description ?: ""}
-            |
-            |$renderedIssueInformation
-            """.trimMargin()
+        |## ${it.title}
+        |${it.description ?: ""}
+        |
+        |$renderedIssueInformation
+        """.trimMargin()
         }
 
         println("MD: \n$releaseMarkdown")
