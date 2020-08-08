@@ -3,6 +3,7 @@ package com.jashmore.sqs.spring.config;
 import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolver;
@@ -15,6 +16,7 @@ import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinatorProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
@@ -65,8 +67,6 @@ class QueueListenerConfigurationTest {
 
     @Nested
     class SqsAsyncClientProviderBean {
-
-
         @Test
         void whenNoSqsAsyncClientProviderADefaultImplementationIsCreated() {
             contextRunner
@@ -284,6 +284,32 @@ class QueueListenerConfigurationTest {
                     .run((context) -> {
                         assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
                         assertThat(context.getBean(MessageListenerContainerCoordinator.class)).isInstanceOf(DefaultMessageListenerContainerCoordinator.class);
+                    });
+        }
+
+        @Test
+        void defaultCoordinatorPropertiesWillAutoStartAllContainers() {
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .run((context) -> {
+                        final DefaultMessageListenerContainerCoordinatorProperties properties
+                                = context.getBean(DefaultMessageListenerContainerCoordinatorProperties.class);
+                        assertThat(properties.isAutoStartContainersEnabled()).isTrue();
+                    });
+        }
+
+        @Test
+        void customDefaultCoordinatorPropertiesWillOverrideDefault() {
+            final DefaultMessageListenerContainerCoordinatorProperties customProperties = mock(DefaultMessageListenerContainerCoordinatorProperties.class);
+            when(customProperties.isAutoStartContainersEnabled()).thenReturn(false);
+            contextRunner
+                    .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                    .withBean(DefaultMessageListenerContainerCoordinatorProperties.class, () -> customProperties)
+                    .run((context) -> {
+                        final DefaultMessageListenerContainerCoordinatorProperties properties
+                                = context.getBean(DefaultMessageListenerContainerCoordinatorProperties.class);
+                        assertThat(properties).isSameAs(customProperties);
+                        assertThat(context.getBean(DefaultMessageListenerContainerCoordinator.class).isAutoStartup()).isFalse();
                     });
         }
 
