@@ -3,7 +3,6 @@ package com.jashmore.sqs.spring.container;
 import com.jashmore.documentation.annotations.GuardedBy;
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.ThreadSafe;
-import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -34,6 +33,7 @@ import java.util.function.Supplier;
 @Slf4j
 @ThreadSafe
 public class DefaultMessageListenerContainerCoordinator implements MessageListenerContainerCoordinator, ApplicationContextAware, SmartLifecycle {
+    private final DefaultMessageListenerContainerCoordinatorProperties properties;
     /**
      * These {@link MessageListenerContainerFactory}s should be injected by the spring application and therefore to add more wrappers into the
      * system a corresponding bean with this interface must be included in the application.
@@ -57,7 +57,9 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public DefaultMessageListenerContainerCoordinator(final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+    public DefaultMessageListenerContainerCoordinator(final DefaultMessageListenerContainerCoordinatorProperties properties,
+                                                      final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+        this.properties = properties;
         this.messageListenerContainerFactories = messageListenerContainerFactories;
         this.containersLazilyLoadedCache = null;
     }
@@ -67,6 +69,11 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
         synchronized (this) {
             this.applicationContext = applicationContext;
         }
+    }
+
+    @Override
+    public Set<MessageListenerContainer> getContainers() {
+        return Collections.unmodifiableSet((new HashSet<>(getContainerMap().values())));
     }
 
     @Override
@@ -124,7 +131,7 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
 
     @Override
     public boolean isAutoStartup() {
-        return true;
+        return properties.isAutoStartContainersEnabled();
     }
 
     @Override
@@ -159,11 +166,6 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
     @Override
     public synchronized int getPhase() {
         return Integer.MAX_VALUE;
-    }
-
-    @VisibleForTesting
-    Set<MessageListenerContainer> getContainers() {
-        return Collections.unmodifiableSet((new HashSet<>(getContainerMap().values())));
     }
 
     /**

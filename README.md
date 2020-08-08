@@ -316,6 +316,8 @@ More in-depth guides on how configure this library:
     queue listening without the verbosity of a custom queue listener
     1. [How to write Spring Integration Tests](doc/how-to-guides/spring/spring-how-to-write-integration-tests.md): you actually want to test what you are
     writing right?
+    1. [How to prevent listeners from starting on startup](doc/how-to-guides/spring/spring-how-to-prevent-containers-starting-on-startup.md): guide for
+    preventing containers from starting when the Spring application has started up.
     1. [How to Start/Stop Queue Listeners](doc/how-to-guides/spring/spring-how-to-start-stop-message-listener-containers.md): guide for starting and stopping the
     processing of messages for specific queue listeners
     1. [How to connect to multiple AWS Accounts](doc/how-to-guides/spring/spring-how-to-connect-to-multiple-aws-accounts.md): guide for listening to queues

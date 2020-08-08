@@ -15,8 +15,10 @@ import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinatorProperties;
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.StaticDefaultMessageListenerContainerCoordinatorProperties;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
@@ -174,6 +176,18 @@ public class QueueListenerConfiguration {
     @Configuration
     @ConditionalOnMissingBean(MessageListenerContainerCoordinator.class)
     public static class QueueWrappingConfiguration {
+        /**
+         * The configuration properties for the {@link DefaultMessageListenerContainerCoordinator}.
+         *
+         * @return the default configuration properties for the coordinator
+         */
+        @Bean
+        @ConditionalOnMissingBean(DefaultMessageListenerContainerCoordinatorProperties.class)
+        public DefaultMessageListenerContainerCoordinatorProperties defaultMessageListenerContainerCoordinatorProperties() {
+            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder()
+                    .isAutoStartContainersEnabled(true)
+                    .build();
+        }
 
         /**
          * The default {@link MessageListenerContainerCoordinator} that will be provided if it has not been overridden by the consumer.
@@ -181,19 +195,22 @@ public class QueueListenerConfiguration {
          * <p>This will use any {@link MessageListenerContainerFactory}s defined in the spring context to wrap any bean methods with a
          * {@link MessageListenerContainer}.
          *
+         * @param properties                        the configuration properties for this coordinator
          * @param messageListenerContainerFactories the wrappers provided in the context
          * @return the default {@link MessageListenerContainerCoordinator}
          */
         @Bean
-        public MessageListenerContainerCoordinator queueContainerService(final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
-            return new DefaultMessageListenerContainerCoordinator(messageListenerContainerFactories);
+        public MessageListenerContainerCoordinator messageListenerContainerCoordinator(
+                final DefaultMessageListenerContainerCoordinatorProperties properties,
+                final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+            return new DefaultMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
         }
 
         /**
          * Contains all of the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
          *
          * <p>The consumer can provide any other {@link MessageListenerContainerFactory} beans in their context and these will be included in the automatic
-         * wrapping of the methods by the {@link #queueContainerService(List)} bean.
+         * wrapping of the methods by the {@link #messageListenerContainerCoordinator(DefaultMessageListenerContainerCoordinatorProperties, List)} bean.
          */
         @Configuration
         public static class MessageListenerContainerFactoryConfiguration {
