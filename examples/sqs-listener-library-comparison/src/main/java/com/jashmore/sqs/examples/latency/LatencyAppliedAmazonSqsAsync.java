@@ -27,7 +27,6 @@ public class LatencyAppliedAmazonSqsAsync implements AmazonSQSAsync {
         return delegate.receiveMessage(request);
     }
 
-
     /**
      * Needed for {@link Delegate} to allow overriding.
      */

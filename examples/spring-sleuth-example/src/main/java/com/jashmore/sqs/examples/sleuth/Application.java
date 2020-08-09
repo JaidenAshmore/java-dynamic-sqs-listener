@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Slf4j
 @SpringBootApplication
 public class Application {
+
     /**
      * Connects to an internal ElasticMQ SQS Server.
      *
@@ -21,11 +22,16 @@ public class Application {
      */
     @Bean
     public SqsAsyncClient sqsAsyncClient(Tracing tracing) {
-        return new ElasticMqSqsAsyncClient("test", (sqsAsyncClientBuilder) ->
-                sqsAsyncClientBuilder.overrideConfiguration(overrideConfigurationBuilder -> overrideConfigurationBuilder
-                        .addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
-                        .addExecutionInterceptor(new SendMessageBatchTracingExecutionInterceptor(tracing))
-                ));
+        return new ElasticMqSqsAsyncClient(
+            "test",
+            sqsAsyncClientBuilder ->
+                sqsAsyncClientBuilder.overrideConfiguration(
+                    overrideConfigurationBuilder ->
+                        overrideConfigurationBuilder
+                            .addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
+                            .addExecutionInterceptor(new SendMessageBatchTracingExecutionInterceptor(tracing))
+                )
+        );
     }
 
     public static void main(String[] args) {

@@ -12,6 +12,10 @@ import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import brave.test.TestSpanHandler;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,16 +32,9 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResultEntry;
 import software.amazon.awssdk.utils.ImmutableMap;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 public class SendMessageBatchTracingExecutionInterceptorTest {
     private final TestSpanHandler spanHandler = new TestSpanHandler();
-    private final Tracing tracing = Tracing.newBuilder()
-            .addSpanHandler(spanHandler)
-            .build();
+    private final Tracing tracing = Tracing.newBuilder().addSpanHandler(spanHandler).build();
 
     private SendMessageBatchTracingExecutionInterceptor interceptor;
 
@@ -54,10 +51,11 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void beforeExecutionWillPerformNoActionForNonSendMessageBatchRequests() {
         // arrange
-        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
-                .queueUrl("queueUrl")
-                .receiptHandle("receiptHandle")
-                .build();
+        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .receiptHandle("receiptHandle")
+            .build();
 
         // act
         interceptor.beforeExecution(() -> deleteMessageRequest, new ExecutionAttributes());
@@ -69,18 +67,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void beforeExecutionWhenNoCurrentSpanANewOneWillBeCreatedForEachMessage() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
 
         // act
@@ -95,18 +89,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void beforeExecutionWhenASpanExistsTheMessageSpanWillBeAChildOfThisSpan() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
 
         // act
@@ -126,18 +116,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void beforeExecutionMessageSpansWillBePopulatedWithDefaultQueueInformation() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
 
         // act
@@ -146,60 +132,65 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         spans.values().forEach(Span::finish);
 
         // assert
-        assertThat(spanHandler.spans()).allSatisfy((span) -> {
-            assertThat(span.kind()).isEqualTo(Span.Kind.PRODUCER);
-            assertThat(span.name()).isEqualTo("sqs-send-message-batch");
-            assertThat(span.remoteServiceName()).isEqualTo("aws-sqs");
-            assertThat(span.tag("queue.url")).isEqualTo("queueUrl");
-        });
+        assertThat(spanHandler.spans())
+            .allSatisfy(
+                span -> {
+                    assertThat(span.kind()).isEqualTo(Span.Kind.PRODUCER);
+                    assertThat(span.name()).isEqualTo("sqs-send-message-batch");
+                    assertThat(span.remoteServiceName()).isEqualTo("aws-sqs");
+                    assertThat(span.tag("queue.url")).isEqualTo("queueUrl");
+                }
+            );
     }
 
     @Test
     public void beforeExecutionRequestSpanInformationCanBeOverwritten() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
-        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator =
-                new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-                    @Override
-                    public void decorateMessageSpan(SendMessageBatchRequest request,
-                                                    SendMessageBatchRequestEntry entry, Span span) {
-                        span.tag("test", "value");
-                    }
-                };
+        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
+
+            @Override
+            public void decorateMessageSpan(SendMessageBatchRequest request, SendMessageBatchRequestEntry entry, Span span) {
+                span.tag("test", "value");
+            }
+        };
 
         // act
-        final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(tracing, spanDecorator);
+        final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(
+            tracing,
+            spanDecorator
+        );
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Map<String, Span> spans = executionAttributes.getAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE);
         spans.values().forEach(Span::finish);
 
         // assert
-        assertThat(spanHandler.spans()).allSatisfy((span) -> {
-            assertThat(span.name()).isNull();
-            assertThat(span.remoteServiceName()).isNull();
-            assertThat(span.tag("test")).isEqualTo("value");
-        });
+        assertThat(spanHandler.spans())
+            .allSatisfy(
+                span -> {
+                    assertThat(span.name()).isNull();
+                    assertThat(span.remoteServiceName()).isNull();
+                    assertThat(span.tag("test")).isEqualTo("value");
+                }
+            );
     }
 
     @Test
     public void modifyRequestWillNotUpdateRequestIfNotSendMessageRequest() {
         // arrange
-        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
-                .queueUrl("queueUrl")
-                .receiptHandle("receiptHandle")
-                .build();
+        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .receiptHandle("receiptHandle")
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
 
         // act
@@ -212,18 +203,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void modifyRequestWillAddSpanInformationToMessageAttributes() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final TraceContext.Extractor<Map<String, MessageAttributeValue>> extractor = SendMessageRemoteGetter.create(tracing);
@@ -234,31 +221,30 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         spans.values().forEach(Span::finish);
 
         // assert
-        assertThat(newRequest.entries()).allSatisfy((entry) -> {
-            assertThat(entry.messageAttributes()).containsKeys("b3");
-            final TraceContextOrSamplingFlags traceContextOrSamplingFlags = extractor.extract(entry.messageAttributes());
-            assertThat(traceContextOrSamplingFlags).isNotNull();
-            final Span entrySpan = spans.get(entry.id());
-            assertThat(traceContextOrSamplingFlags.context().traceIdString()).isEqualTo(entrySpan.context().traceIdString());
-            assertThat(traceContextOrSamplingFlags.context().spanIdString()).isEqualTo(entrySpan.context().spanIdString());
-        });
+        assertThat(newRequest.entries())
+            .allSatisfy(
+                entry -> {
+                    assertThat(entry.messageAttributes()).containsKeys("b3");
+                    final TraceContextOrSamplingFlags traceContextOrSamplingFlags = extractor.extract(entry.messageAttributes());
+                    assertThat(traceContextOrSamplingFlags).isNotNull();
+                    final Span entrySpan = spans.get(entry.id());
+                    assertThat(traceContextOrSamplingFlags.context().traceIdString()).isEqualTo(entrySpan.context().traceIdString());
+                    assertThat(traceContextOrSamplingFlags.context().spanIdString()).isEqualTo(entrySpan.context().spanIdString());
+                }
+            );
     }
 
     @Test
     public void modifyRequestWhenSpanDeletedFromExecutionContextWillReturnOriginalRequest() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         executionAttributes.putAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE, null);
@@ -273,12 +259,12 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void afterExecutionWillDoNothingIfNotSendMessageRequest() {
         // arrange
-        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
-                .queueUrl("queueUrl")
-                .receiptHandle("receiptHandle")
-                .build();
-        final Context.AfterExecution afterExecution =
-                mockAfterExecutionFailure(deleteMessageRequest, 400);
+        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .receiptHandle("receiptHandle")
+            .build();
+        final Context.AfterExecution afterExecution = mockAfterExecutionFailure(deleteMessageRequest, 400);
         final Span span = tracing.tracer().nextSpan();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         executionAttributes.putAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE, ImmutableMap.of("test", span));
@@ -293,18 +279,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void afterExecutionWillDoNothingIfNotSpanIsNotPresentInExecutionAttributes() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 400);
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
@@ -320,27 +302,17 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void afterExecutionWillFinishSpan() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final List<SendMessageBatchResultEntry> successfulMessages = new ArrayList<>();
-        successfulMessages.add(SendMessageBatchResultEntry.builder()
-                .id("first")
-                .messageId("first-message-id")
-                .build());
-        successfulMessages.add(SendMessageBatchResultEntry.builder()
-                .id("second")
-                .messageId("second-message-id")
-                .build());
+        successfulMessages.add(SendMessageBatchResultEntry.builder().id("first").messageId("first-message-id").build());
+        successfulMessages.add(SendMessageBatchResultEntry.builder().id("second").messageId("second-message-id").build());
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionSuccess(request, successfulMessages, new ArrayList<>());
@@ -355,27 +327,17 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void afterExecutionSuccessfulPublishingOfMessageWillIncludeMessageIdTag() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final List<SendMessageBatchResultEntry> successfulMessages = new ArrayList<>();
-        successfulMessages.add(SendMessageBatchResultEntry.builder()
-                .id("first")
-                .messageId("first-message-id")
-                .build());
-        successfulMessages.add(SendMessageBatchResultEntry.builder()
-                .id("second")
-                .messageId("second-message-id")
-                .build());
+        successfulMessages.add(SendMessageBatchResultEntry.builder().id("first").messageId("first-message-id").build());
+        successfulMessages.add(SendMessageBatchResultEntry.builder().id("second").messageId("second-message-id").build());
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionSuccess(request, successfulMessages, new ArrayList<>());
@@ -387,25 +349,23 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(spanHandler.spans()).hasSize(2);
-        assertThat(spanHandler.spans()).anyMatch(span -> span.tag("message.request.id").equals("first") && span.tag("message.id").equals("first-message-id"));
-        assertThat(spanHandler.spans()).anyMatch(span -> span.tag("message.request.id").equals("second") && span.tag("message.id").equals("second-message-id"));
+        assertThat(spanHandler.spans())
+            .anyMatch(span -> span.tag("message.request.id").equals("first") && span.tag("message.id").equals("first-message-id"));
+        assertThat(spanHandler.spans())
+            .anyMatch(span -> span.tag("message.request.id").equals("second") && span.tag("message.id").equals("second-message-id"));
     }
 
     @Test
     public void afterExecutionOnFailureWillErrorOutTheSpan() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 400);
@@ -415,41 +375,42 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(spanHandler.spans()).hasSize(2);
-        assertThat(spanHandler.spans()).allSatisfy(span -> {
-            assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
-            assertThat(span.tag("response.code")).isEqualTo("400");
-        });
+        assertThat(spanHandler.spans())
+            .allSatisfy(
+                span -> {
+                    assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
+                    assertThat(span.tag("response.code")).isEqualTo("400");
+                }
+            );
     }
 
     @Test
     public void afterExecutionCustomSpanDecoratorWillRunAfterExecutionForFailures() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 500);
-        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator =
-                new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-                    @Override
-                    public void decorateRequestFailedMessageSpan(SendMessageBatchRequest request,
-                                                                 SdkHttpResponse httpResponse, Span span) {
-                        span.tag("test", "value");
-                    }
-                };
+        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
+
+            @Override
+            public void decorateRequestFailedMessageSpan(SendMessageBatchRequest request, SdkHttpResponse httpResponse, Span span) {
+                span.tag("test", "value");
+            }
+        };
 
         // act
-        final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(tracing, spanDecorator);
+        final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(
+            tracing,
+            spanDecorator
+        );
         interceptor.afterExecution(afterExecution, executionAttributes);
 
         // assert
@@ -460,28 +421,18 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
     @Test
     public void failureToProcessIndividualMessagesWillErrorOutThatSpan() {
         // arrange
-        final SendMessageBatchRequest request = SendMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(SendMessageBatchRequestEntry.builder()
-                                .id("first")
-                                .messageBody("body")
-                                .build(),
-                        SendMessageBatchRequestEntry.builder()
-                                .id("second")
-                                .messageBody("body")
-                                .build()
-                )
-                .build();
+        final SendMessageBatchRequest request = SendMessageBatchRequest
+            .builder()
+            .queueUrl("queueUrl")
+            .entries(
+                SendMessageBatchRequestEntry.builder().id("first").messageBody("body").build(),
+                SendMessageBatchRequestEntry.builder().id("second").messageBody("body").build()
+            )
+            .build();
         final List<SendMessageBatchResultEntry> successfulMessages = new ArrayList<>();
-        successfulMessages.add(SendMessageBatchResultEntry.builder()
-                .id("first")
-                .messageId("first-message-id")
-                .build());
+        successfulMessages.add(SendMessageBatchResultEntry.builder().id("first").messageId("first-message-id").build());
         final List<BatchResultErrorEntry> failingMessages = new ArrayList<>();
-        failingMessages.add(BatchResultErrorEntry.builder()
-                .id("second")
-                .code("some error code")
-                .build());
+        failingMessages.add(BatchResultErrorEntry.builder().id("second").code("some error code").build());
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionSuccess(request, successfulMessages, failingMessages);
@@ -493,30 +444,32 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(spanHandler.spans()).hasSize(2);
-        assertThat(spanHandler.spans()).anyMatch(span -> span.tag("message.request.id").equals("first") && span.tag("message.id").equals("first-message-id"));
-        assertThat(spanHandler.spans()).anySatisfy(span -> {
-            assertThat(span.tag("message.request.id")).isEqualTo("second");
-            assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
-        });
+        assertThat(spanHandler.spans())
+            .anyMatch(span -> span.tag("message.request.id").equals("first") && span.tag("message.id").equals("first-message-id"));
+        assertThat(spanHandler.spans())
+            .anySatisfy(
+                span -> {
+                    assertThat(span.tag("message.request.id")).isEqualTo("second");
+                    assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
+                }
+            );
     }
 
-    private Context.AfterExecution mockAfterExecutionSuccess(final SdkRequest request,
-                                                             final Collection<SendMessageBatchResultEntry> successful,
-                                                             final Collection<BatchResultErrorEntry> failed) {
+    private Context.AfterExecution mockAfterExecutionSuccess(
+        final SdkRequest request,
+        final Collection<SendMessageBatchResultEntry> successful,
+        final Collection<BatchResultErrorEntry> failed
+    ) {
         final Context.AfterExecution afterExecution = mock(Context.AfterExecution.class);
         final SdkHttpResponse sdkHttpResponse = mock(SdkHttpResponse.class);
         when(afterExecution.httpResponse()).thenReturn(sdkHttpResponse);
         when(afterExecution.request()).thenReturn(request);
         when(sdkHttpResponse.isSuccessful()).thenReturn(true);
-        when(afterExecution.response()).thenReturn(SendMessageBatchResponse.builder()
-                .successful(successful)
-                .failed(failed)
-                .build());
+        when(afterExecution.response()).thenReturn(SendMessageBatchResponse.builder().successful(successful).failed(failed).build());
         return afterExecution;
     }
 
-    private Context.AfterExecution mockAfterExecutionFailure(final SdkRequest request,
-                                                             final int statusCode) {
+    private Context.AfterExecution mockAfterExecutionFailure(final SdkRequest request, final int statusCode) {
         final Context.AfterExecution afterExecution = mock(Context.AfterExecution.class);
         final SdkHttpResponse sdkHttpResponse = mock(SdkHttpResponse.class);
         when(afterExecution.httpResponse()).thenReturn(sdkHttpResponse);

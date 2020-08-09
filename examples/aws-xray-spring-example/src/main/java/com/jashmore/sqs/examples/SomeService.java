@@ -2,10 +2,9 @@ package com.jashmore.sqs.examples;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Subsegment;
+import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Random;
 
 @Slf4j
 @Component

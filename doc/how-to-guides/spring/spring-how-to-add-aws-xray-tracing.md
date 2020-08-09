@@ -9,29 +9,29 @@ For more information about each component this is auto configuring for you, take
 
 ## Steps
 
-1. Add the [AWS XRay Spring Boot Extension](../../../extensions/aws-xray-extension/spring-boot) as a dependency. This will auto configure
-a [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java)
-and a [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java) which will wrap
-the `SqsAsyncClient` in a
-[XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java).
+1.  Add the [AWS XRay Spring Boot Extension](../../../extensions/aws-xray-extension/spring-boot) as a dependency. This will auto configure
+    a [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java)
+    and a [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java) which will wrap
+    the `SqsAsyncClient` in a
+    [XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java).
 
     ```xml
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>aws-xray-extension-spring-boot</artifactId>
-            <version>${dynamic-sqs-listener.version}</version>
-        </dependency>
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>aws-xray-extension-spring-boot</artifactId>
+        <version>${dynamic-sqs-listener.version}</version>
+    </dependency>
     ```
 
-1. **[Optional]** If you want tracing information to be included when sending messages to AWS, add the
-[AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
+1.  **[Optional]** If you want tracing information to be included when sending messages to AWS, add the
+    [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
 
     ```xml
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-            <version>${aws-xray.version}</version>
-        </dependency>
+    <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+        <version>${aws-xray.version}</version>
+    </dependency>
     ```
 
 ## Example
@@ -54,10 +54,11 @@ custom [ClientSegmentMutator](../../../extensions/aws-xray-extension/core/src/ma
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
-    public ClientSegmentMutator clientSegmentMutator()  {
-        return (segment) -> {
-              // any customisations you want to do here. Nothing is fine too.
+    public ClientSegmentMutator clientSegmentMutator() {
+        return segment -> {
+            // any customisations you want to do here. Nothing is fine too.
         };
     }
 }
@@ -77,11 +78,15 @@ bean.
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
-    public ClientSegmentMutator clientSegmentMutator()  {
-       return new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
-                       .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("my-custom-name"))
-                       .build());
+    public ClientSegmentMutator clientSegmentMutator() {
+        return new BasicXrayMessageProcessingDecorator(
+            BasicXrayMessageProcessingDecorator
+                .Options.builder()
+                .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("my-custom-name"))
+                .build()
+        );
     }
 }
 ```
@@ -95,14 +100,13 @@ daemon:
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
     @Qualifier("sqsXrayRecorder")
     public AWSXRayRecorder recorder() throws IOException {
         final DaemonConfiguration daemonConfiguration = new DaemonConfiguration();
         daemonConfiguration.setDaemonAddress("127.0.0.1:5678");
-        return AWSXRayRecorderBuilder.standard()
-                .withEmitter(Emitter.create(daemonConfiguration))
-                .build();
+        return AWSXRayRecorderBuilder.standard().withEmitter(Emitter.create(daemonConfiguration)).build();
     }
 }
 ```

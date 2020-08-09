@@ -1,7 +1,7 @@
 formatting:
-  MaximumLineLength:
-    maxLineLength: 160
+    MaximumLineLength:
+        maxLineLength: 160
 
 style:
-  MaxLineLength:
-    maxLineLength: 160
+    MaxLineLength:
+        maxLineLength: 160

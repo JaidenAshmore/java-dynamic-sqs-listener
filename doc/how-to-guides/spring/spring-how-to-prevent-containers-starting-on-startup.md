@@ -6,18 +6,17 @@ if this is not desirable, you can supply your own properties to disable this fun
 
 ## Steps
 
-1. Define your own
-[DefaultMessageListenerCoordinatorProperties](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/DefaultMessageListenerContainerCoordinatorProperties.java)
-with the configuration you desire.
+1.  Define your own
+    [DefaultMessageListenerCoordinatorProperties](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/DefaultMessageListenerContainerCoordinatorProperties.java)
+    with the configuration you desire.
 
     ```java
     @Configuration
     class MyConfiguration {
+
         @Bean
         DefaultMessageListenerCoordinatorProperties defaultMessageListenerCoordinatorProperties() {
-             return StaticDefaultMessageListenerContainerCoordinatorProperties.builder()
-                         .isAutoStartContainersEnabled(false)
-                         .build();
+            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(false).build();
         }
     }
     ```

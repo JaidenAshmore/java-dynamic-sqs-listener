@@ -7,7 +7,7 @@ An example that uses the [spring starter](../../spring/spring-starter) module to
 1. Create a new AWS account. You can Google for links on where to do this.
 1. Create a new SQS Queue in a region near you, e.g. us-east-2 (Ohio). You will need the region and Queue URL.
 1. Create a new IAM user that has full permission (for simplicity, otherwise you can put a more restricted permissions) to this SQS queue. You will
-need the Access Key ID and Secret Access Key.
+   need the Access Key ID and Secret Access Key.
 1. Change directory to the AWS Spring example.
 
     ```bash

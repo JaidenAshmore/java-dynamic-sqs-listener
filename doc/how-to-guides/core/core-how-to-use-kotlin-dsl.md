@@ -12,7 +12,7 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
     implementation("com.jashmore:core-kotlin-dsl:${version}")
     ```
 
-   or
+    or
 
     ```xml
     <dependency>
@@ -25,31 +25,31 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
 1. Create the [MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) using the Kotlin DSL
 
     ```kotlin
-        val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
-            retriever = prefetchingMessageRetriever {
-                desiredPrefetchedMessages = 10
-                maxPrefetchedMessages = 20
-            }
-            processor = coreProcessor {
-                argumentResolverService = coreArgumentResolverService(objectMapper)
-                bean = MessageListener()
-                method = MessageListener::class.java.getMethod("listen", String::class.java)
-            }
-            broker = concurrentBroker {
-                concurrencyLevel = { 10 }
-                concurrencyPollingRate = { Duration.ofSeconds(30) }
-            }
-            resolver = batchingResolver {
-                bufferingSizeLimit = { 5 }
-                bufferingTime = { Duration.ofSeconds(2) }
-            }
+    val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+        retriever = prefetchingMessageRetriever {
+            desiredPrefetchedMessages = 10
+            maxPrefetchedMessages = 20
         }
+        processor = coreProcessor {
+            argumentResolverService = coreArgumentResolverService(objectMapper)
+            bean = MessageListener()
+            method = MessageListener::class.java.getMethod("listen", String::class.java)
+        }
+        broker = concurrentBroker {
+            concurrencyLevel = { 10 }
+            concurrencyPollingRate = { Duration.ofSeconds(30) }
+        }
+        resolver = batchingResolver {
+            bufferingSizeLimit = { 5 }
+            bufferingTime = { Duration.ofSeconds(2) }
+        }
+    }
     ```
 
 1. Start the container as normal
 
     ```kotlin
-        container.start()
+    container.start()
     ```
 
 Check out the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) for more details about the internals of this module and what you can use.

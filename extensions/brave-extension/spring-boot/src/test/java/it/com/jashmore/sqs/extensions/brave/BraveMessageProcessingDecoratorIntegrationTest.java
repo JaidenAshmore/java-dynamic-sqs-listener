@@ -14,6 +14,10 @@ import com.jashmore.sqs.extensions.brave.spring.BraveMessageProcessingDecoratorC
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,16 +29,13 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-@SpringBootTest(classes = {
+@SpringBootTest(
+    classes = {
         BraveMessageProcessingDecoratorConfiguration.class,
         BraveMessageProcessingDecoratorIntegrationTest.TestConfig.class,
         QueueListenerConfiguration.class
-})
+    }
+)
 public class BraveMessageProcessingDecoratorIntegrationTest {
     private static final String QUEUE_NAME = "BraveMessageProcessingDecoratorIntegrationTest";
 
@@ -49,20 +50,24 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient(final Tracing tracing) {
-            return new ElasticMqSqsAsyncClient(QUEUE_NAME, clientBuilder ->
-                    clientBuilder.overrideConfiguration(overrideBuilder
-                            -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing)))
+            return new ElasticMqSqsAsyncClient(
+                QUEUE_NAME,
+                clientBuilder ->
+                    clientBuilder.overrideConfiguration(
+                        overrideBuilder -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
+                    )
             );
         }
 
         @Bean
         public MessageProcessingDecorator messageFinishedDecorator() {
             return new MessageProcessingDecorator() {
+
                 @Override
-                public void onMessageResolvedSuccess(final MessageProcessingContext context,
-                                                     final Message message) {
+                public void onMessageResolvedSuccess(final MessageProcessingContext context, final Message message) {
                     messageResolvedLatch.countDown();
                 }
             };
@@ -70,9 +75,7 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
 
         @Bean
         public Tracing tracing() {
-            return Tracing.newBuilder()
-                    .addSpanHandler(spanHandler)
-                    .build();
+            return Tracing.newBuilder().addSpanHandler(spanHandler).build();
         }
 
         @Service
@@ -111,8 +114,12 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
     void allTheSpanInformationIsCorrectlyJoinedTogether() throws Exception {
         // arrange
         final ScopedSpan scopedSenderSpan = tracing.tracer().startScopedSpan("sender-span");
-        final GetQueueUrlResponse queueUrlResponse = localSqsAsyncClient.getQueueUrl(builder -> builder.queueName(QUEUE_NAME)).get(5, TimeUnit.SECONDS);
-        localSqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrlResponse.queueUrl()).messageBody("test")).get(5, TimeUnit.SECONDS);
+        final GetQueueUrlResponse queueUrlResponse = localSqsAsyncClient
+            .getQueueUrl(builder -> builder.queueName(QUEUE_NAME))
+            .get(5, TimeUnit.SECONDS);
+        localSqsAsyncClient
+            .sendMessage(builder -> builder.queueUrl(queueUrlResponse.queueUrl()).messageBody("test"))
+            .get(5, TimeUnit.SECONDS);
 
         // act
         assertThat(messageResolvedLatch.await(5, TimeUnit.SECONDS)).isTrue();

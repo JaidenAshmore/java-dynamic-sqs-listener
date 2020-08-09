@@ -8,9 +8,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.util.ResizableSemaphore;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.time.Duration;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Broker that will allow for messages to be processed concurrently up to a certain limit that can change dynamically.
@@ -47,40 +46,56 @@ public class ConcurrentMessageBroker implements MessageBroker {
     }
 
     @Override
-    public void processMessages(final ExecutorService messageProcessingExecutorService,
-                                final BooleanSupplier keepProcessingMessages,
-                                final Supplier<CompletableFuture<Message>> messageSupplier,
-                                final Function<Message, CompletableFuture<?>> messageProcessor) throws InterruptedException {
+    public void processMessages(
+        final ExecutorService messageProcessingExecutorService,
+        final BooleanSupplier keepProcessingMessages,
+        final Supplier<CompletableFuture<Message>> messageSupplier,
+        final Function<Message, CompletableFuture<?>> messageProcessor
+    )
+        throws InterruptedException {
         log.debug("Beginning processing of messages");
         while (!Thread.currentThread().isInterrupted() && keepProcessingMessages.getAsBoolean()) {
             try {
                 updateConcurrencyLevelIfChanged(concurrentMessagesBeingProcessedSemaphore);
 
                 final Duration permitWaitTime = getPermitWaitTime();
-                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(permitWaitTime.toMillis(), MILLISECONDS);
+                final boolean obtainedPermit = concurrentMessagesBeingProcessedSemaphore.tryAcquire(
+                    permitWaitTime.toMillis(),
+                    MILLISECONDS
+                );
                 if (!obtainedPermit) {
                     continue;
                 }
 
                 try {
-                    messageSupplier.get()
-                            .thenComposeAsync(messageProcessor::apply, messageProcessingExecutorService)
-                            .whenComplete((ignoredResult, throwable) -> {
+                    messageSupplier
+                        .get()
+                        .thenComposeAsync(messageProcessor::apply, messageProcessingExecutorService)
+                        .whenComplete(
+                            (ignoredResult, throwable) -> {
                                 if (throwable != null && !(throwable.getCause() instanceof CancellationException)) {
                                     log.error("Error processing message", throwable.getCause());
                                 }
                                 concurrentMessagesBeingProcessedSemaphore.release();
-                            });
+                            }
+                        );
                 } catch (final RuntimeException runtimeException) {
                     concurrentMessagesBeingProcessedSemaphore.release();
                     // bubble the exception to deal with backing off, as we don't want to duplicate that code
                     throw runtimeException;
                 }
             } catch (final RuntimeException runtimeException) {
-                final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_BACKOFF_TIME);
+                final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration(
+                    "errorBackoffTime",
+                    properties::getErrorBackoffTime,
+                    DEFAULT_BACKOFF_TIME
+                );
                 final long errorBackoffTimeInMs = errorBackoffTime.toMillis();
-                log.error("Error thrown while organising threads to process messages. Backing off for {}ms", errorBackoffTimeInMs,
-                        runtimeException);
+                log.error(
+                    "Error thrown while organising threads to process messages. Backing off for {}ms",
+                    errorBackoffTimeInMs,
+                    runtimeException
+                );
                 Thread.sleep(errorBackoffTimeInMs);
             }
         }
@@ -122,10 +137,6 @@ public class ConcurrentMessageBroker implements MessageBroker {
      * @return the expected concurrency level
      */
     private int getConcurrencyLevel() {
-        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue(
-                "concurrencyLevel",
-                properties::getConcurrencyLevel,
-                0
-        );
+        return PropertyUtils.safelyGetPositiveOrZeroIntegerValue("concurrencyLevel", properties::getConcurrencyLevel, 0);
     }
 }

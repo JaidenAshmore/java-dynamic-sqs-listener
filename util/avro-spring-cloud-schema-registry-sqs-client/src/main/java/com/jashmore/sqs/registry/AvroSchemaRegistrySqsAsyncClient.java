@@ -4,6 +4,16 @@ import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.cloud.schema.registry.avro.AvroSchemaRegistryClientMessageConverter.AVRO_FORMAT;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Delegate;
@@ -24,17 +34,6 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import software.amazon.awssdk.utils.SdkAutoCloseable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.Base64;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 /**
  * Helper client that is able to serialize a Pojo using Avro.
  *
@@ -46,15 +45,18 @@ import java.util.stream.Stream;
 public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
+
     private final SchemaRegistryClient schemaRegistryClient;
     private final AvroSchemaServiceManager avroSchemaServiceManager;
     private final Map<Class<?>, RegisteredSchema> schemaCache;
 
-    public AvroSchemaRegistrySqsAsyncClient(final SqsAsyncClient delegate,
-                                            final SchemaRegistryClient schemaRegistryClient,
-                                            final AvroSchemaServiceManager avroSchemaServiceManager,
-                                            final List<Resource> schemaImports,
-                                            final List<Resource> schemaLocations) {
+    public AvroSchemaRegistrySqsAsyncClient(
+        final SqsAsyncClient delegate,
+        final SchemaRegistryClient schemaRegistryClient,
+        final AvroSchemaServiceManager avroSchemaServiceManager,
+        final List<Resource> schemaImports,
+        final List<Resource> schemaLocations
+    ) {
         this.delegate = delegate;
         this.schemaRegistryClient = schemaRegistryClient;
         this.avroSchemaServiceManager = avroSchemaServiceManager;
@@ -73,29 +75,45 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
      * @param <T>                  the type of the payload
      * @return the future containing the response for sending the message
      */
-    public <T> CompletableFuture<SendMessageResponse> sendAvroMessage(final String contentTypePrefix,
-                                                                      final String messageAttributeName,
-                                                                      final T payload,
-                                                                      final Consumer<SendMessageRequest.Builder> requestBuilder) {
+    public <T> CompletableFuture<SendMessageResponse> sendAvroMessage(
+        final String contentTypePrefix,
+        final String messageAttributeName,
+        final T payload,
+        final Consumer<SendMessageRequest.Builder> requestBuilder
+    ) {
         final RegisteredSchema registeredSchema = schemaCache.get(payload.getClass());
         final SchemaReference reference = registeredSchema.reference;
 
-        return delegate.sendMessage(builder -> builder.applyMutation(requestBuilder)
-                .messageAttributes(singletonMap(messageAttributeName, MessageAttributeValue.builder()
-                        .dataType("String")
-                        .stringValue(generateContentType(contentTypePrefix, reference))
-                        .build()))
-                .messageBody(serializeObject(payload, registeredSchema.schema)));
+        return delegate.sendMessage(
+            builder ->
+                builder
+                    .applyMutation(requestBuilder)
+                    .messageAttributes(
+                        singletonMap(
+                            messageAttributeName,
+                            MessageAttributeValue
+                                .builder()
+                                .dataType("String")
+                                .stringValue(generateContentType(contentTypePrefix, reference))
+                                .build()
+                        )
+                    )
+                    .messageBody(serializeObject(payload, registeredSchema.schema))
+        );
     }
 
-    private Map<Class<?>, RegisteredSchema> parseAvailableSchemas(final List<Resource> schemaImports,
-                                                                  final List<Resource> schemaLocations) {
+    private Map<Class<?>, RegisteredSchema> parseAvailableSchemas(
+        final List<Resource> schemaImports,
+        final List<Resource> schemaLocations
+    ) {
         final Schema.Parser schemaParser = new Schema.Parser();
-        return Stream.of(schemaImports, schemaLocations)
-                .filter(arr -> !ObjectUtils.isEmpty(arr))
-                .distinct()
-                .flatMap(List::stream)
-                .flatMap(resource -> {
+        return Stream
+            .of(schemaImports, schemaLocations)
+            .filter(arr -> !ObjectUtils.isEmpty(arr))
+            .distinct()
+            .flatMap(List::stream)
+            .flatMap(
+                resource -> {
                     final Schema schema;
                     try {
                         schema = schemaParser.parse(resource.getInputStream());
@@ -107,15 +125,15 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
                     } else {
                         return Stream.of(schema);
                     }
-                })
-                .map(this::createObjectMapping)
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+                }
+            )
+            .map(this::createObjectMapping)
+            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private Map.Entry<Class<?>, RegisteredSchema> createObjectMapping(final Schema schema) {
-        final SchemaRegistrationResponse response = this.schemaRegistryClient.register(
-                schema.getName().toLowerCase(Locale.ENGLISH), AVRO_FORMAT, schema.toString()
-        );
+        final SchemaRegistrationResponse response =
+            this.schemaRegistryClient.register(schema.getName().toLowerCase(Locale.ENGLISH), AVRO_FORMAT, schema.toString());
         log.info("Schema {} registered with id {}", schema.getName(), response.getId());
         final Class<?> clazz;
         try {
@@ -124,10 +142,10 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
             throw new RuntimeException(classNotFoundException);
         }
 
-        return new AbstractMap.SimpleImmutableEntry<>(clazz, RegisteredSchema.builder()
-                .schema(schema)
-                .reference(response.getSchemaReference())
-                .build());
+        return new AbstractMap.SimpleImmutableEntry<>(
+            clazz,
+            RegisteredSchema.builder().schema(schema).reference(response.getSchemaReference()).build()
+        );
     }
 
     private <T> String serializeObject(final T payload, final Schema schema) {

@@ -4,25 +4,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.jashmore.sqs.util.ExpectedTestException;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class CompletableFutureUtilsTest {
+
     @Nested
     class CompletedExceptionally {
+
         @Test
         void completedExceptionallyReturnsCompletableFutureThatIsCompletedExceptionally() {
             // arrange
             final RuntimeException exception = new RuntimeException("test");
 
             // act
-            final ExecutionException exceptionThrown =
-                    assertThrows(ExecutionException.class, () -> CompletableFutureUtils.completedExceptionally(exception).get());
+            final ExecutionException exceptionThrown = assertThrows(
+                ExecutionException.class,
+                () -> CompletableFutureUtils.completedExceptionally(exception).get()
+            );
 
             // assert
             assertThat(exceptionThrown.getCause()).isSameAs(exception);
@@ -31,6 +34,7 @@ class CompletableFutureUtilsTest {
 
     @Nested
     class AllOf {
+
         @Test
         void willOnlyResolveWhenAllFuturesResolve() {
             // arrange

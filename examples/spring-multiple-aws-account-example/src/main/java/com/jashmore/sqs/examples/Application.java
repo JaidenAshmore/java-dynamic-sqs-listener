@@ -3,15 +3,14 @@ package com.jashmore.sqs.examples;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @SpringBootApplication
 @EnableScheduling

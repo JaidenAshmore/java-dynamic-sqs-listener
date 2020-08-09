@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * Indicates that the given field is protected from concurrency problems by the given object.
  */
 @Documented
-@Target({FIELD})
+@Target({ FIELD })
 @Retention(SOURCE)
 public @interface GuardedBy {
     String value();

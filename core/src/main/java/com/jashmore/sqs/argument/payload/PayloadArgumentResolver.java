@@ -27,9 +27,12 @@ public class PayloadArgumentResolver implements ArgumentResolver<Object> {
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
+    public Object resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
         try {
             return payloadMapper.map(message, methodParameter.getParameter().getType());
         } catch (final PayloadMappingException payloadMappingException) {

@@ -1,6 +1,6 @@
 # SQS Listener Library Comparison
 
-This module has the Spring Cloud, JMS and Java Dynamic SQS Listener libraries all integrated into a Spring Boot application.  This can be used
+This module has the Spring Cloud, JMS and Java Dynamic SQS Listener libraries all integrated into a Spring Boot application. This can be used
 to compare the performance of each of the types of libraries with different types of messages being processed. For example, a message that has a lot of
 IO or to test what happens if the time to get new messages from the queue is large.
 
@@ -29,9 +29,9 @@ Ordered from fastest to slowest:
 
 ### Configuration
 
-- Message latency = 100ms
-- Message IO time = 100ms
-- Commit ID = `a1bdde0d3c96d71997c3001cecc3ddba0d98c709`
+-   Message latency = 100ms
+-   Message IO time = 100ms
+-   Commit ID = `a1bdde0d3c96d71997c3001cecc3ddba0d98c709`
 
 ### Raw Results
 

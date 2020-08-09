@@ -11,16 +11,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
 @ExtendWith(MockitoExtension.class)
 class DelegatingArgumentResolverServiceTest {
-
     @Mock
     private MethodParameter methodParameter;
 
@@ -34,12 +32,17 @@ class DelegatingArgumentResolverServiceTest {
         when(methodParameter.getParameterIndex()).thenReturn(1);
 
         // act
-        final UnsupportedArgumentResolutionException exception = assertThrows(UnsupportedArgumentResolutionException.class,
-                () -> new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter));
+        final UnsupportedArgumentResolutionException exception = assertThrows(
+            UnsupportedArgumentResolutionException.class,
+            () -> new DelegatingArgumentResolverService(resolvers).getArgumentResolver(methodParameter)
+        );
 
         // assert
-        assertThat(exception).hasMessage("No eligible ArgumentResolver for parameter[1] for method: "
-                + "com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#someMethod");
+        assertThat(exception)
+            .hasMessage(
+                "No eligible ArgumentResolver for parameter[1] for method: " +
+                "com.jashmore.sqs.argument.DelegatingArgumentResolverServiceTest#someMethod"
+            );
     }
 
     @Test
@@ -73,7 +76,5 @@ class DelegatingArgumentResolverServiceTest {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public void someMethod() {
-
-    }
+    public void someMethod() {}
 }

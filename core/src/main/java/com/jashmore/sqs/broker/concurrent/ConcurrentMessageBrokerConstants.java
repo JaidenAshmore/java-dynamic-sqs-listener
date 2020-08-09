@@ -1,8 +1,7 @@
 package com.jashmore.sqs.broker.concurrent;
 
-import lombok.experimental.UtilityClass;
-
 import java.time.Duration;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class ConcurrentMessageBrokerConstants {

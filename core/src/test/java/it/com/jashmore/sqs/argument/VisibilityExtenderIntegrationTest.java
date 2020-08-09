@@ -24,17 +24,16 @@ import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.util.CreateRandomQueueResponse;
 import com.jashmore.sqs.util.SqsQueuesConfig;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 class VisibilityExtenderIntegrationTest {
@@ -43,19 +42,24 @@ class VisibilityExtenderIntegrationTest {
     private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
     private static final int ORIGINAL_MESSAGE_VISIBILITY = 2;
 
-    private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient(singletonList(
-            SqsQueuesConfig.QueueConfig.builder()
-                    .queueName("VisibilityExtenderIntegrationTest")
-                    .visibilityTimeout(ORIGINAL_MESSAGE_VISIBILITY)
-                    .maxReceiveCount(2) // make sure it will try multiple times
-                    .build()
-    ));
+    private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient(
+        singletonList(
+            SqsQueuesConfig
+                .QueueConfig.builder()
+                .queueName("VisibilityExtenderIntegrationTest")
+                .visibilityTimeout(ORIGINAL_MESSAGE_VISIBILITY)
+                .maxReceiveCount(2) // make sure it will try multiple times
+                .build()
+        )
+    );
 
     private QueueProperties queueProperties;
 
     @BeforeEach
     void setUp() throws InterruptedException, ExecutionException, TimeoutException {
-        queueProperties = elasticMQSqsAsyncClient.createRandomQueue()
+        queueProperties =
+            elasticMQSqsAsyncClient
+                .createRandomQueue()
                 .thenApply(CreateRandomQueueResponse::queueUrl)
                 .thenApply(url -> QueueProperties.builder().queueUrl(url).build())
                 .get(5, SECONDS);
@@ -70,41 +74,37 @@ class VisibilityExtenderIntegrationTest {
     void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
         // arrange
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
-                queueProperties,
-                elasticMQSqsAsyncClient,
-                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
+            queueProperties,
+            elasticMQSqsAsyncClient,
+            StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
         final AtomicInteger numberTimesMessageProcessed = new AtomicInteger(0);
         final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, numberTimesMessageProcessed);
         final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, elasticMQSqsAsyncClient);
         final MessageProcessor messageProcessor = new CoreMessageProcessor(
-                ARGUMENT_RESOLVER_SERVICE,
-                queueProperties,
-                elasticMQSqsAsyncClient,
-                MessageConsumer.class.getMethod("consume", VisibilityExtender.class),
-                messageConsumer
+            ARGUMENT_RESOLVER_SERVICE,
+            queueProperties,
+            elasticMQSqsAsyncClient,
+            MessageConsumer.class.getMethod("consume", VisibilityExtender.class),
+            messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                StaticConcurrentMessageBrokerProperties.builder()
-                        .concurrencyLevel(1)
-                        .build()
+            StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(1).build()
         );
         final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
-                "id",
-                () -> messageBroker,
-                () -> messageRetriever,
-                () -> messageProcessor,
-                () -> messageResolver
+            "id",
+            () -> messageBroker,
+            () -> messageRetriever,
+            () -> messageProcessor,
+            () -> messageResolver
         );
         coreMessageListenerContainer.start();
 
         // act
-        elasticMQSqsAsyncClient.sendMessage(SendMessageRequest.builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .messageBody("test")
-                .build())
-                .get(2, SECONDS);
+        elasticMQSqsAsyncClient
+            .sendMessage(SendMessageRequest.builder().queueUrl(queueProperties.getQueueUrl()).messageBody("test").build())
+            .get(2, SECONDS);
 
         assertThat(messageProcessedLatch.await(ORIGINAL_MESSAGE_VISIBILITY * 3, SECONDS)).isTrue();
         coreMessageListenerContainer.stop();

@@ -2,6 +2,10 @@ package com.jashmore.sqs.spring.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,11 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 class DefaultSqsAsyncClientProviderTest {
     @Mock
@@ -24,6 +23,7 @@ class DefaultSqsAsyncClientProviderTest {
     @Nested
     @DisplayName("constructor")
     class Constructor {
+
         @Test
         void nullClientMapThrowsException() {
             Assertions.assertThrows(NullPointerException.class, () -> new DefaultSqsAsyncClientProvider(null, null));
@@ -33,6 +33,7 @@ class DefaultSqsAsyncClientProviderTest {
     @Nested
     @DisplayName("getDefaultClient")
     class GetDefaultClient {
+
         @Test
         void whenNoDefaultSqsAsyncClientProvidedGettingDefaultReturnsEmptyOptional() {
             // arrange
@@ -73,10 +74,14 @@ class DefaultSqsAsyncClientProviderTest {
     @Nested
     @DisplayName("getClient")
     class GetClient {
+
         @Test
         void whenClientMapProvidedOneCanBeObtainedViaTheIdentifier() {
             // arrange
-            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, Collections.singletonMap("id", client));
+            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(
+                null,
+                Collections.singletonMap("id", client)
+            );
 
             // act
             final Optional<SqsAsyncClient> optionalDefaultClient = sqsAsyncClientProvider.getClient("id");
@@ -88,7 +93,10 @@ class DefaultSqsAsyncClientProviderTest {
         @Test
         void whenClientMapProvidedUsingAnIdentifierThatDoesNotExistReturnsEmptyOptional() {
             // arrange
-            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(null, Collections.singletonMap("id", client));
+            final SqsAsyncClientProvider sqsAsyncClientProvider = new DefaultSqsAsyncClientProvider(
+                null,
+                Collections.singletonMap("id", client)
+            );
 
             // act
             final Optional<SqsAsyncClient> optionalDefaultClient = sqsAsyncClientProvider.getClient("unknownid");

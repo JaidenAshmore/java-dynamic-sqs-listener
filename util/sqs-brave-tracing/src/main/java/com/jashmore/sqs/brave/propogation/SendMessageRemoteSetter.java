@@ -6,9 +6,8 @@ import brave.Span;
 import brave.Tracing;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-
 import java.util.Map;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 /**
  * Used to set the tracing information into the message attributes of a SQS message.
@@ -24,10 +23,7 @@ public class SendMessageRemoteSetter implements Propagation.RemoteSetter<Map<Str
 
     @Override
     public void put(final Map<String, MessageAttributeValue> carrier, final String fieldName, final String value) {
-        carrier.put(fieldName, MessageAttributeValue.builder()
-                .dataType("String")
-                .stringValue(value)
-                .build());
+        carrier.put(fieldName, MessageAttributeValue.builder().dataType("String").stringValue(value).build());
     }
 
     /**

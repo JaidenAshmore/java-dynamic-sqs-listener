@@ -4,11 +4,10 @@ import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.util.Preconditions;
+import java.time.Duration;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.time.Duration;
 
 /**
  * Implementation that stores the value as non-mutable field values and therefore will return the same value on every call.
@@ -26,9 +25,11 @@ public final class StaticConcurrentMessageBrokerProperties implements Concurrent
     private final Duration preferredConcurrencyPollingRate;
     private final Duration errorBackoffTime;
 
-    public StaticConcurrentMessageBrokerProperties(final Integer concurrencyLevel,
-                                                   final Duration preferredConcurrencyPollingRate,
-                                                   final Duration errorBackoffTime) {
+    public StaticConcurrentMessageBrokerProperties(
+        final Integer concurrencyLevel,
+        final Duration preferredConcurrencyPollingRate,
+        final Duration errorBackoffTime
+    ) {
         Preconditions.checkNotNull(concurrencyLevel, "concurrencyLevel should not be null");
         Preconditions.checkPositiveOrZero(concurrencyLevel, "concurrencyLevel should be greater than or equal to zero");
 

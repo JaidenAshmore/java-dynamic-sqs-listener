@@ -24,6 +24,8 @@ import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerCont
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
 import com.jashmore.sqs.spring.queue.QueueResolver;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,15 +34,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * The configuration for the application has been designed to allow for replacements by the consumer so that they can extend the framework, integrate into
  * existing beans in the application or replace implementations of the framework with their own.
  */
 @Configuration
 public class QueueListenerConfiguration {
+
     /**
      * The default {@link SqsAsyncClient} that will be used if the application does not provide their own.
      *
@@ -52,7 +52,7 @@ public class QueueListenerConfiguration {
      * @see SqsAsyncClient#create() for more details about how to use this default client
      */
     @Bean(destroyMethod = "close")
-    @ConditionalOnMissingBean({SqsAsyncClient.class, SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean({ SqsAsyncClient.class, SqsAsyncClientProvider.class })
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.create();
     }
@@ -71,7 +71,7 @@ public class QueueListenerConfiguration {
      * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
      */
     @Bean
-    @ConditionalOnMissingBean({SqsAsyncClientProvider.class})
+    @ConditionalOnMissingBean({ SqsAsyncClientProvider.class })
     public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
         return new DefaultSqsAsyncClientProvider(defaultClient, Collections.emptyMap());
     }
@@ -97,6 +97,7 @@ public class QueueListenerConfiguration {
     @AutoConfigureAfter(QueueListenerConfiguration.class)
     @ConditionalOnMissingBean(ArgumentResolverService.class)
     public static class ArgumentResolutionConfiguration {
+
         /**
          * The {@link ArgumentResolverService} used if none are defined by the consumer of this framework.
          *
@@ -143,7 +144,9 @@ public class QueueListenerConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(MessageAttributeArgumentResolver.class)
-            public MessageAttributeArgumentResolver messageAttributeArgumentResolver(final SqsListenerObjectMapperSupplier objectMapperSupplier) {
+            public MessageAttributeArgumentResolver messageAttributeArgumentResolver(
+                final SqsListenerObjectMapperSupplier objectMapperSupplier
+            ) {
                 return new MessageAttributeArgumentResolver(objectMapperSupplier.get());
             }
 
@@ -176,6 +179,7 @@ public class QueueListenerConfiguration {
     @Configuration
     @ConditionalOnMissingBean(MessageListenerContainerCoordinator.class)
     public static class QueueWrappingConfiguration {
+
         /**
          * The configuration properties for the {@link DefaultMessageListenerContainerCoordinator}.
          *
@@ -184,9 +188,7 @@ public class QueueListenerConfiguration {
         @Bean
         @ConditionalOnMissingBean(DefaultMessageListenerContainerCoordinatorProperties.class)
         public DefaultMessageListenerContainerCoordinatorProperties defaultMessageListenerContainerCoordinatorProperties() {
-            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder()
-                    .isAutoStartContainersEnabled(true)
-                    .build();
+            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(true).build();
         }
 
         /**
@@ -201,8 +203,9 @@ public class QueueListenerConfiguration {
          */
         @Bean
         public MessageListenerContainerCoordinator messageListenerContainerCoordinator(
-                final DefaultMessageListenerContainerCoordinatorProperties properties,
-                final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+            final DefaultMessageListenerContainerCoordinatorProperties properties,
+            final List<MessageListenerContainerFactory> messageListenerContainerFactories
+        ) {
             return new DefaultMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
         }
 
@@ -214,24 +217,39 @@ public class QueueListenerConfiguration {
          */
         @Configuration
         public static class MessageListenerContainerFactoryConfiguration {
+
             @Bean
-            public MessageListenerContainerFactory basicMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
-                                                                                        final SqsAsyncClientProvider sqsAsyncClientProvider,
-                                                                                        final QueueResolver queueResolver,
-                                                                                        final Environment environment,
-                                                                                        final List<MessageProcessingDecorator> decorators) {
-                return new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                        queueResolver, environment, decorators);
+            public MessageListenerContainerFactory basicMessageListenerContainerFactory(
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final Environment environment,
+                final List<MessageProcessingDecorator> decorators
+            ) {
+                return new BasicMessageListenerContainerFactory(
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    environment,
+                    decorators
+                );
             }
 
             @Bean
-            public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
-                                                                                              final SqsAsyncClientProvider sqsAsyncClientProvider,
-                                                                                              final QueueResolver queueResolver,
-                                                                                              final Environment environment,
-                                                                                              final List<MessageProcessingDecorator> decorators) {
-                return new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                        queueResolver, environment, decorators);
+            public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final Environment environment,
+                final List<MessageProcessingDecorator> decorators
+            ) {
+                return new PrefetchingMessageListenerContainerFactory(
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    environment,
+                    decorators
+                );
             }
         }
     }

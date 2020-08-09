@@ -40,7 +40,6 @@ subprojects {
     apply(plugin = "jacoco")
     if (!isKotlinProject) {
         apply(plugin = "com.github.spotbugs")
-        apply(plugin = "checkstyle")
     } else {
         apply(plugin = "kotlin")
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
@@ -83,18 +82,6 @@ subprojects {
     }
 
     if (!isKotlinProject) {
-        tasks.withType<Checkstyle> {
-            // Needed because this is generated code and I am not good enough with gradle to properly exclude these source files
-            // from only the checkstyleTest task
-            exclude("**com/jashmore/sqs/extensions/registry/model/*")
-        }
-
-        checkstyle {
-            configFile = file("${project.rootDir}/configuration/checkstyle/google_6_18_checkstyle.xml")
-            maxWarnings = 0
-            maxErrors = 0
-        }
-
         spotbugs {
             excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
         }
@@ -111,7 +98,7 @@ subprojects {
     }
 
     tasks.test {
-        // We don't want integration tests to run in the "test" task and instead run in "integrationTest"
+        // We don"t want integration tests to run in the "test" task and instead run in "integrationTest"
         exclude("it/com/**")
 
         // Only run Jacoco in the test phase, not the integration test phase

@@ -1,10 +1,9 @@
 package com.jashmore.sqs.extensions.registry;
 
 import com.jashmore.documentation.annotations.ThreadSafe;
-import org.springframework.cloud.schema.registry.SchemaReference;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.cloud.schema.registry.SchemaReference;
 
 /**
  * In memory cache implementation that can be used to reduce the number of times that the schema

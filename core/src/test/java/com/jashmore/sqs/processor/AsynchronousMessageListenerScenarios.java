@@ -2,13 +2,12 @@ package com.jashmore.sqs.processor;
 
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.util.ExpectedTestException;
-import lombok.extern.slf4j.Slf4j;
-
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SuppressWarnings( {"unused", "WeakerAccess"})
+@SuppressWarnings({ "unused", "WeakerAccess" })
 public class AsynchronousMessageListenerScenarios {
 
     public CompletableFuture<?> methodReturningResolvedFuture() {
@@ -20,24 +19,28 @@ public class AsynchronousMessageListenerScenarios {
     }
 
     public CompletableFuture<?> methodReturnFutureSubsequentlyResolved() {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException interruptedException) {
-                // ignore
+        return CompletableFuture.runAsync(
+            () -> {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException interruptedException) {
+                    // ignore
+                }
             }
-        });
+        );
     }
 
     public CompletableFuture<?> methodReturnFutureSubsequentlyRejected() {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException interruptedException) {
-                // ignore
+        return CompletableFuture.runAsync(
+            () -> {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException interruptedException) {
+                    // ignore
+                }
+                throw new ExpectedTestException();
             }
-            throw new ExpectedTestException();
-        });
+        );
     }
 
     public CompletableFuture<?> methodThatThrowsException() {

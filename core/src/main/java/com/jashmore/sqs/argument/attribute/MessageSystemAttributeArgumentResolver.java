@@ -9,32 +9,39 @@ import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
-
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 public class MessageSystemAttributeArgumentResolver implements ArgumentResolver<Object> {
+
     @Override
     public boolean canResolveParameter(final MethodParameter methodParameter) {
         return AnnotationUtils.findParameterAnnotation(methodParameter, MessageSystemAttribute.class).isPresent();
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
-        final MessageSystemAttribute annotation = AnnotationUtils.findParameterAnnotation(methodParameter, MessageSystemAttribute.class)
-                .orElseThrow(() -> new ArgumentResolutionException(
+    public Object resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
+        final MessageSystemAttribute annotation = AnnotationUtils
+            .findParameterAnnotation(methodParameter, MessageSystemAttribute.class)
+            .orElseThrow(
+                () ->
+                    new ArgumentResolutionException(
                         "Parameter passed in does not contain the MessageSystemAttribute annotation when it should"
-                ));
+                    )
+            );
 
         final MessageSystemAttributeName messageSystemAttributeName = annotation.value();
         final Optional<String> optionalAttributeValue = Optional.ofNullable(message.attributes().get(messageSystemAttributeName));
 
-        if (!optionalAttributeValue.isPresent() ) {
+        if (!optionalAttributeValue.isPresent()) {
             if (annotation.required()) {
                 throw new ArgumentResolutionException("Missing system attribute with name: " + messageSystemAttributeName.toString());
             }
@@ -64,13 +71,16 @@ public class MessageSystemAttributeArgumentResolver implements ArgumentResolver<
             return handleTimeStampAttributes(methodParameter.getParameter().getType(), messageSystemAttributeName, attributeValue);
         }
 
-        throw new ArgumentResolutionException("Unsupported parameter type " + parameterType.getName()
-                + " for system attribute " + messageSystemAttributeName.toString());
+        throw new ArgumentResolutionException(
+            "Unsupported parameter type " + parameterType.getName() + " for system attribute " + messageSystemAttributeName.toString()
+        );
     }
 
-    private Object handleTimeStampAttributes(final Class<?> parameterType,
-                                             final MessageSystemAttributeName messageSystemAttributeName,
-                                             final String attributeValue) {
+    private Object handleTimeStampAttributes(
+        final Class<?> parameterType,
+        final MessageSystemAttributeName messageSystemAttributeName,
+        final String attributeValue
+    ) {
         if (parameterType == Instant.class) {
             return Instant.ofEpochMilli(Long.parseLong(attributeValue));
         }
@@ -79,7 +89,8 @@ public class MessageSystemAttributeArgumentResolver implements ArgumentResolver<
             return OffsetDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(attributeValue)), UTC);
         }
 
-        throw new ArgumentResolutionException("Unsupported parameter type " + parameterType.getName()
-                + " for system attribute " + messageSystemAttributeName.toString());
+        throw new ArgumentResolutionException(
+            "Unsupported parameter type " + parameterType.getName() + " for system attribute " + messageSystemAttributeName.toString()
+        );
     }
 }

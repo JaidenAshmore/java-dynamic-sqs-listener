@@ -12,6 +12,10 @@ import com.jashmore.sqs.extensions.registry.model.Book;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -21,11 +25,6 @@ import org.springframework.cloud.schema.registry.avro.AvroSchemaServiceManager;
 import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @SpringBootTest(classes = AvroSpringCloudSchemaRegistryIntegrationTest.Application.class)
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -50,6 +49,7 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
     @SpringBootApplication
     @EnableSchemaRegistrySqsExtension
     public static class Application {
+
         public static void main(String[] args) {
             SpringApplication.run(Application.class);
         }
@@ -77,11 +77,11 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
     void name() throws ExecutionException, InterruptedException {
         // arrange
         final AvroSchemaRegistrySqsAsyncClient avroClient = new AvroSchemaRegistrySqsAsyncClient(
-                localSqsAsyncClient,
-                schemaRegistryClient,
-                avroSchemaServiceManager,
-                avroSpringCloudSchemaProperties.getSchemaImports(),
-                avroSpringCloudSchemaProperties.getSchemaLocations()
+            localSqsAsyncClient,
+            schemaRegistryClient,
+            avroSchemaServiceManager,
+            avroSpringCloudSchemaProperties.getSchemaImports(),
+            avroSpringCloudSchemaProperties.getSchemaLocations()
         );
         final String queueUrl = avroClient.getQueueUrl(builder -> builder.queueName(QUEUE_NAME)).get().queueUrl();
         final Book book = new Book("id", "name", new Author("firstname", "lastname"));

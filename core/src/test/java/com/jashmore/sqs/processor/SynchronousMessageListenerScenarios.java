@@ -4,10 +4,9 @@ import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.util.ExpectedTestException;
-
 import java.lang.reflect.Method;
 
-@SuppressWarnings( {"unused", "WeakerAccess"})
+@SuppressWarnings({ "unused", "WeakerAccess" })
 public class SynchronousMessageListenerScenarios {
 
     public void methodWithNoArguments() {

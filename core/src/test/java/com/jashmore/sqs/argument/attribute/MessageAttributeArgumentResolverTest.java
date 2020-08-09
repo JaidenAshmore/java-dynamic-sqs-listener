@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
+import java.lang.reflect.Method;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -18,29 +19,35 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
-import java.lang.reflect.Method;
-
 @Slf4j
 @SuppressWarnings("checkstyle:ParameterName")
 class MessageAttributeArgumentResolverTest {
-    private final MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(new ObjectMapper());
+    private final MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(
+        new ObjectMapper()
+    );
 
     @Test
     void stringMessageAttributesCanBeObtainedFromMessage() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "string", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.STRING.getValue())
-                                .stringValue("my attribute value")
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "string",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.STRING.getValue())
+                        .stringValue("my attribute value")
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", String.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -51,24 +58,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void unknownDataTypeWillThrowArgumentResolutionException() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "string", MessageAttributeValue.builder()
-                                .dataType("Unknown")
-                                .stringValue("my attribute value")
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap("string", MessageAttributeValue.builder().dataType("Unknown").stringValue("my attribute value").build())
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", String.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
-        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
-                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+        final ArgumentResolutionException exception = Assertions.assertThrows(
+            ArgumentResolutionException.class,
+            () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message)
+        );
 
         // assert
         assertThat(exception).hasMessage("Cannot parse message attribute due to unknown data type 'Unknown'");
@@ -76,15 +84,14 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void missingMessageAttributeWillReturnNullWhenNotRequired() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(emptyMap())
-                .build();
+        final Message message = Message.builder().messageAttributes(emptyMap()).build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", String.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -95,19 +102,20 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void missingMessageAttributeWillThrowArgumentResolutionExceptionWhenRequired() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(emptyMap())
-                .build();
+        final Message message = Message.builder().messageAttributes(emptyMap()).build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeWithRequiredAttribute", String.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
-        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
-                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+        final ArgumentResolutionException exception = Assertions.assertThrows(
+            ArgumentResolutionException.class,
+            () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message)
+        );
 
         // assert
         assertThat(exception).hasMessage("Required Message Attribute 'string' is missing from message");
@@ -115,21 +123,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void floatCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "float", MessageAttributeValue.builder()
-                                .dataType("Number.float")
-                                .stringValue("1.0")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", float.class, int.class,
-                long.class, byte.class, short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("float", MessageAttributeValue.builder().dataType("Number.float").stringValue("1.0").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    float.class,
+                    int.class,
+                    long.class,
+                    byte.class,
+                    short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Float value = (Float) messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -140,21 +152,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void integerCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "int", MessageAttributeValue.builder()
-                                .dataType("Number.int")
-                                .stringValue("1.0")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", float.class, int.class,
-                long.class, byte.class, short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[1])
-                .parameterIndex(1)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("int", MessageAttributeValue.builder().dataType("Number.int").stringValue("1.0").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    float.class,
+                    int.class,
+                    long.class,
+                    byte.class,
+                    short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[1])
+            .parameterIndex(1)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -165,21 +181,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void longCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "long", MessageAttributeValue.builder()
-                                .dataType("Number.long")
-                                .stringValue("1234")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", float.class, int.class,
-                long.class, byte.class, short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[2])
-                .parameterIndex(2)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("long", MessageAttributeValue.builder().dataType("Number.long").stringValue("1234").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    float.class,
+                    int.class,
+                    long.class,
+                    byte.class,
+                    short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[2])
+            .parameterIndex(2)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -190,21 +210,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void byteCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "byte", MessageAttributeValue.builder()
-                                .dataType("Number.byte")
-                                .stringValue("1")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", float.class, int.class,
-                long.class, byte.class, short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[3])
-                .parameterIndex(3)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("byte", MessageAttributeValue.builder().dataType("Number.byte").stringValue("1").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    float.class,
+                    int.class,
+                    long.class,
+                    byte.class,
+                    short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[3])
+            .parameterIndex(3)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -213,24 +237,27 @@ class MessageAttributeArgumentResolverTest {
         assertThat(value).isEqualTo(new Byte("1"));
     }
 
-
     @Test
     void shortCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "short", MessageAttributeValue.builder()
-                                .dataType("Number.short")
-                                .stringValue("1")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", float.class, int.class,
-                long.class, byte.class, short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[4])
-                .parameterIndex(4)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("short", MessageAttributeValue.builder().dataType("Number.short").stringValue("1").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    float.class,
+                    int.class,
+                    long.class,
+                    byte.class,
+                    short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[4])
+            .parameterIndex(4)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -241,21 +268,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void floatClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "float", MessageAttributeValue.builder()
-                                .dataType("Number.float")
-                                .stringValue("1.0")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", Float.class, Integer.class,
-                Long.class, Byte.class, Short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("float", MessageAttributeValue.builder().dataType("Number.float").stringValue("1.0").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    Float.class,
+                    Integer.class,
+                    Long.class,
+                    Byte.class,
+                    Short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Float value = (Float) messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -266,21 +297,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void integerClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "int", MessageAttributeValue.builder()
-                                .dataType("Number.int")
-                                .stringValue("1.0")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", Float.class, Integer.class,
-                Long.class, Byte.class, Short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[1])
-                .parameterIndex(1)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("int", MessageAttributeValue.builder().dataType("Number.int").stringValue("1.0").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    Float.class,
+                    Integer.class,
+                    Long.class,
+                    Byte.class,
+                    Short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[1])
+            .parameterIndex(1)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -291,21 +326,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void longClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "long", MessageAttributeValue.builder()
-                                .dataType("Number.long")
-                                .stringValue("1234")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", Float.class, Integer.class,
-                Long.class, Byte.class, Short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[2])
-                .parameterIndex(2)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("long", MessageAttributeValue.builder().dataType("Number.long").stringValue("1234").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    Float.class,
+                    Integer.class,
+                    Long.class,
+                    Byte.class,
+                    Short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[2])
+            .parameterIndex(2)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -316,21 +355,25 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void byteClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "byte", MessageAttributeValue.builder()
-                                .dataType("Number.byte")
-                                .stringValue("12")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", Float.class, Integer.class,
-                Long.class, Byte.class, Short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[3])
-                .parameterIndex(3)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("byte", MessageAttributeValue.builder().dataType("Number.byte").stringValue("12").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    Float.class,
+                    Integer.class,
+                    Long.class,
+                    Byte.class,
+                    Short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[3])
+            .parameterIndex(3)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -342,21 +385,25 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void shortClassCanBeCreatedFromNumberMessageAttributes() throws Exception {
         // arrange
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "short", MessageAttributeValue.builder()
-                                .dataType("Number.short")
-                                .stringValue("12")
-                                .build()
-                ))
-                .build();
-        final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consumeNumbers", Float.class, Integer.class,
-                Long.class, Byte.class, Short.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[4])
-                .parameterIndex(4)
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(singletonMap("short", MessageAttributeValue.builder().dataType("Number.short").stringValue("12").build()))
+            .build();
+        final Method method =
+            MessageAttributeArgumentResolverTest.class.getMethod(
+                    "consumeNumbers",
+                    Float.class,
+                    Integer.class,
+                    Long.class,
+                    Byte.class,
+                    Short.class
+                );
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[4])
+            .parameterIndex(4)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -368,20 +415,26 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void pojoCanBeDeserialisedFromMessageAttribute() throws Exception {
         final MyPojo pojo = MyPojo.builder().name("name").build();
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "pojo", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.STRING.getValue())
-                                .stringValue(new ObjectMapper().writeValueAsString(pojo))
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "pojo",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.STRING.getValue())
+                        .stringValue(new ObjectMapper().writeValueAsString(pojo))
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", MyPojo.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -392,24 +445,32 @@ class MessageAttributeArgumentResolverTest {
 
     @Test
     void attributeThatCannotBeProperlyParsedThrowsArgumentResolutionException() throws Exception {
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "pojo", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.STRING.getValue())
-                                .stringValue("Expected Test Exception")
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "pojo",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.STRING.getValue())
+                        .stringValue("Expected Test Exception")
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", MyPojo.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
-        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
-                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+        final ArgumentResolutionException exception = Assertions.assertThrows(
+            ArgumentResolutionException.class,
+            () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message)
+        );
 
         // assert
         assertThat(exception).hasMessage("Error parsing Message Attribute 'pojo'");
@@ -418,20 +479,26 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void canExtractBytesFromBinaryMessageAttribute() throws Exception {
         final byte[] binaryBytes = "some string".getBytes();
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "bytes", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.BINARY.getValue())
-                                .binaryValue(SdkBytes.fromByteArray(binaryBytes))
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "bytes",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.BINARY.getValue())
+                        .binaryValue(SdkBytes.fromByteArray(binaryBytes))
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", byte[].class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object object = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -443,20 +510,26 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void canParseStringFromBinaryMessageAttribute() throws Exception {
         final String expectedString = "some string";
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "string", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.BINARY.getValue())
-                                .binaryValue(SdkBytes.fromByteArray(expectedString.getBytes()))
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "string",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.BINARY.getValue())
+                        .binaryValue(SdkBytes.fromByteArray(expectedString.getBytes()))
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", String.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object object = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -468,20 +541,26 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void canParseObjectFromBinaryMessageAttribute() throws Exception {
         final MyPojo myPojo = MyPojo.builder().name("name").build();
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "pojo", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.BINARY.getValue())
-                                .binaryValue(SdkBytes.fromByteArray(new ObjectMapper().writeValueAsBytes(myPojo)))
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "pojo",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.BINARY.getValue())
+                        .binaryValue(SdkBytes.fromByteArray(new ObjectMapper().writeValueAsBytes(myPojo)))
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", MyPojo.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
         final Object object = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
@@ -493,63 +572,66 @@ class MessageAttributeArgumentResolverTest {
     @Test
     void failureParseObjectFromBinaryMessageAttributeWillThrowArgumentResolutionException() throws Exception {
         // arrange
-        final Message message = Message.builder()
-                .messageAttributes(singletonMap(
-                        "pojo", MessageAttributeValue.builder()
-                                .dataType(MessageAttributeDataTypes.BINARY.getValue())
-                                .binaryValue(SdkBytes.fromByteArray("My String".getBytes()))
-                                .build()
-                ))
-                .build();
+        final Message message = Message
+            .builder()
+            .messageAttributes(
+                singletonMap(
+                    "pojo",
+                    MessageAttributeValue
+                        .builder()
+                        .dataType(MessageAttributeDataTypes.BINARY.getValue())
+                        .binaryValue(SdkBytes.fromByteArray("My String".getBytes()))
+                        .build()
+                )
+            )
+            .build();
         final Method method = MessageAttributeArgumentResolverTest.class.getMethod("consume", MyPojo.class);
-        final MethodParameter methodParameter = DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build();
+        final MethodParameter methodParameter = DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[0])
+            .parameterIndex(0)
+            .build();
 
         // act
-        final ArgumentResolutionException exception = Assertions.assertThrows(ArgumentResolutionException.class,
-                () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message));
+        final ArgumentResolutionException exception = Assertions.assertThrows(
+            ArgumentResolutionException.class,
+            () -> messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message)
+        );
 
         // assert
         assertThat(exception).hasMessage("Failure to parse binary bytes to '" + MyPojo.class.getName() + "'");
     }
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consumeWithRequiredAttribute(@MessageAttribute(value = "string", required = true) final String messageAttribute) {
-    }
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consumeWithRequiredAttribute(@MessageAttribute(value = "string", required = true) final String messageAttribute) {}
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consumeNumbers(@MessageAttribute("float") float f,
-                               @MessageAttribute("int") int i,
-                               @MessageAttribute("long") long l,
-                               @MessageAttribute("byte") byte b,
-                               @MessageAttribute("short") short s) {
-    }
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consumeNumbers(
+        @MessageAttribute("float") float f,
+        @MessageAttribute("int") int i,
+        @MessageAttribute("long") long l,
+        @MessageAttribute("byte") byte b,
+        @MessageAttribute("short") short s
+    ) {}
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consumeNumbers(@MessageAttribute("float") Float f,
-                               @MessageAttribute("int") Integer i,
-                               @MessageAttribute("long") Long l,
-                               @MessageAttribute("byte") Byte b,
-                               @MessageAttribute("short") Short s) {
-    }
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consumeNumbers(
+        @MessageAttribute("float") Float f,
+        @MessageAttribute("int") Integer i,
+        @MessageAttribute("long") Long l,
+        @MessageAttribute("byte") Byte b,
+        @MessageAttribute("short") Short s
+    ) {}
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consume(@MessageAttribute("string") final String messageAttribute) {
-    }
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consume(@MessageAttribute("string") final String messageAttribute) {}
 
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consume(@MessageAttribute("pojo") final MyPojo pojo) {}
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consume(@MessageAttribute("pojo") final MyPojo pojo) {
-
-    }
-
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public void consume(@MessageAttribute("bytes") final byte[] b) {
-
-    }
+    @SuppressWarnings({ "unused", "WeakerAccess" })
+    public void consume(@MessageAttribute("bytes") final byte[] b) {}
 
     @Value
     @Builder

@@ -6,6 +6,11 @@ import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,15 +24,9 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {MultipleSqsAsyncClientIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { MultipleSqsAsyncClientIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 class MultipleSqsAsyncClientIntegrationTest {
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(3);
@@ -40,6 +39,7 @@ class MultipleSqsAsyncClientIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient firstClient() {
             return new ElasticMqSqsAsyncClient("firstClientQueueName");
@@ -60,6 +60,7 @@ class MultipleSqsAsyncClientIntegrationTest {
 
         @Service
         public static class MessageListeners {
+
             @QueueListener(value = "firstClientQueueName", sqsClient = "firstClient")
             public void firstClientMessageListener(final Message message) throws BrokenBarrierException, InterruptedException {
                 log.info("Obtained first client message: {}", message);
@@ -77,14 +78,12 @@ class MultipleSqsAsyncClientIntegrationTest {
     @Test
     void shouldBeAbleToProcessMessagesFromMultipleAwsAccounts() throws Exception {
         // arrange
-        firstClient.sendMessage("firstClientQueueName", SendMessageRequest.builder()
-                .messageBody("message")
-                .build())
-                .get(5, TimeUnit.SECONDS);
-        secondClient.sendMessage("secondClientQueueName", SendMessageRequest.builder()
-                .messageBody("message")
-                .build())
-                .get(5, TimeUnit.SECONDS);
+        firstClient
+            .sendMessage("firstClientQueueName", SendMessageRequest.builder().messageBody("message").build())
+            .get(5, TimeUnit.SECONDS);
+        secondClient
+            .sendMessage("secondClientQueueName", SendMessageRequest.builder().messageBody("message").build())
+            .get(5, TimeUnit.SECONDS);
 
         // act
         CYCLIC_BARRIER.await(20, TimeUnit.SECONDS);

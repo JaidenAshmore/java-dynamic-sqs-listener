@@ -2,14 +2,13 @@ package com.jashmore.sqs.examples.latency;
 
 import static com.jashmore.sqs.examples.ExampleConstants.MESSAGE_RETRIEVAL_LATENCY_IN_MS;
 
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.experimental.Delegate;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.utils.SdkAutoCloseable;
-
-import java.util.concurrent.CompletableFuture;
 
 @AllArgsConstructor
 public class LatencyAppliedSqsAsyncClient implements SqsAsyncClient {
@@ -29,10 +28,7 @@ public class LatencyAppliedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public void close() {
-
-    }
-
+    public void close() {}
 
     /**
      * Needed for {@link Delegate} to allow overriding.
@@ -41,4 +37,3 @@ public class LatencyAppliedSqsAsyncClient implements SqsAsyncClient {
         CompletableFuture<ReceiveMessageResponse> receiveMessage(ReceiveMessageRequest receiveMessageRequest);
     }
 }
-

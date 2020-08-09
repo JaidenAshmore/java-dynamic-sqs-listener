@@ -16,10 +16,6 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.Preconditions;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.utils.StringUtils;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
@@ -32,6 +28,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.utils.StringUtils;
 
 /**
  * Container that allows for the safe start and stop of all the components for the SQS Library.
@@ -58,33 +57,38 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      */
     @GuardedBy("this")
     private ExecutorService executorService;
+
     /**
      * Future that will be resolved when the container's thread has finished.
      */
     @GuardedBy("this")
     private CompletableFuture<?> containerFuture;
 
-    public CoreMessageListenerContainer(final String identifier,
-                                        final Supplier<MessageBroker> messageBrokerSupplier,
-                                        final Supplier<MessageRetriever> messageRetrieverSupplier,
-                                        final Supplier<MessageProcessor> messageProcessorSupplier,
-                                        final Supplier<MessageResolver> messageResolverSupplier) {
+    public CoreMessageListenerContainer(
+        final String identifier,
+        final Supplier<MessageBroker> messageBrokerSupplier,
+        final Supplier<MessageRetriever> messageRetrieverSupplier,
+        final Supplier<MessageProcessor> messageProcessorSupplier,
+        final Supplier<MessageResolver> messageResolverSupplier
+    ) {
         this(
-                identifier,
-                messageBrokerSupplier,
-                messageRetrieverSupplier,
-                messageProcessorSupplier,
-                messageResolverSupplier,
-                StaticCoreMessageListenerContainerProperties.builder().build()
+            identifier,
+            messageBrokerSupplier,
+            messageRetrieverSupplier,
+            messageProcessorSupplier,
+            messageResolverSupplier,
+            StaticCoreMessageListenerContainerProperties.builder().build()
         );
     }
 
-    public CoreMessageListenerContainer(final String identifier,
-                                        final Supplier<MessageBroker> messageBrokerSupplier,
-                                        final Supplier<MessageRetriever> messageRetrieverSupplier,
-                                        final Supplier<MessageProcessor> messageProcessorSupplier,
-                                        final Supplier<MessageResolver> messageResolverSupplier,
-                                        final CoreMessageListenerContainerProperties properties) {
+    public CoreMessageListenerContainer(
+        final String identifier,
+        final Supplier<MessageBroker> messageBrokerSupplier,
+        final Supplier<MessageRetriever> messageRetrieverSupplier,
+        final Supplier<MessageProcessor> messageProcessorSupplier,
+        final Supplier<MessageResolver> messageResolverSupplier,
+        final CoreMessageListenerContainerProperties properties
+    ) {
         Preconditions.checkArgument(StringUtils.isNotBlank(identifier), "identifier should not be empty");
 
         this.identifier = identifier;
@@ -159,7 +163,13 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
 
             final BlockingRunnable shutdownMessageRetriever = startupMessageRetriever(messageRetriever, extraMessages::addAll);
             log.info("Container '{}' is beginning to process messages", identifier);
-            processMessagesFromRetriever(messageBroker, messageRetriever, messageProcessor, messageResolver, messageProcessingExecutorService);
+            processMessagesFromRetriever(
+                messageBroker,
+                messageRetriever,
+                messageProcessor,
+                messageResolver,
+                messageProcessingExecutorService
+            );
             log.info("Container '{}' is being shutdown", identifier);
             log.debug("Container '{}' is shutting down MessageRetriever", identifier);
             shutdownMessageRetriever.run();
@@ -197,17 +207,23 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @param messageResolver                  the resolver that will resolve the message on successful processing
      * @param messageProcessingExecutorService the executor service that the message processing will run on
      */
-    private void processMessagesFromRetriever(final MessageBroker messageBroker,
-                                              final MessageRetriever messageRetriever,
-                                              final MessageProcessor messageProcessor,
-                                              final MessageResolver messageResolver,
-                                              final ExecutorService messageProcessingExecutorService) throws InterruptedException {
+    private void processMessagesFromRetriever(
+        final MessageBroker messageBroker,
+        final MessageRetriever messageRetriever,
+        final MessageProcessor messageProcessor,
+        final MessageResolver messageResolver,
+        final ExecutorService messageProcessingExecutorService
+    )
+        throws InterruptedException {
         try {
-            runBrokerUntilInterrupted(() -> messageBroker.processMessages(
-                    messageProcessingExecutorService,
-                    messageRetriever::retrieveMessage,
-                    message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
-            ));
+            runBrokerUntilInterrupted(
+                () ->
+                    messageBroker.processMessages(
+                        messageProcessingExecutorService,
+                        messageRetriever::retrieveMessage,
+                        message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
+                    )
+            );
         } catch (final ExecutionException executionException) {
             log.error("Error processing messages", executionException.getCause());
         }
@@ -223,18 +239,24 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @param messages                         the messages to be processed
      * @throws InterruptedException if the thread was interrupted during this process
      */
-    private void processExtraMessages(final MessageBroker messageBroker,
-                                      final MessageProcessor messageProcessor,
-                                      final MessageResolver messageResolver,
-                                      final ExecutorService messageProcessingExecutorService,
-                                      final Queue<Message> messages) throws InterruptedException {
+    private void processExtraMessages(
+        final MessageBroker messageBroker,
+        final MessageProcessor messageProcessor,
+        final MessageResolver messageResolver,
+        final ExecutorService messageProcessingExecutorService,
+        final Queue<Message> messages
+    )
+        throws InterruptedException {
         try {
-            runBrokerUntilInterrupted(() -> messageBroker.processMessages(
-                    messageProcessingExecutorService,
-                    () -> !messages.isEmpty(),
-                    () -> CompletableFuture.completedFuture(messages.poll()),
-                    message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
-            ));
+            runBrokerUntilInterrupted(
+                () ->
+                    messageBroker.processMessages(
+                        messageProcessingExecutorService,
+                        () -> !messages.isEmpty(),
+                        () -> CompletableFuture.completedFuture(messages.poll()),
+                        message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
+                    )
+            );
         } catch (final ExecutionException executionException) {
             log.error("Exception thrown processing extra messages", executionException.getCause());
         }
@@ -249,15 +271,22 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @throws ExecutionException   if there was an error running the runnable
      */
     private void runBrokerUntilInterrupted(final BlockingRunnable runnable) throws InterruptedException, ExecutionException {
-        final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(identifier + "-message-broker"));
+        final ExecutorService messageBrokerExecutorService = Executors.newSingleThreadExecutor(
+            singleNamedThreadFactory(identifier + "-message-broker")
+        );
         try {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    runnable.run();
-                } catch (final InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-            }, messageBrokerExecutorService).get();
+            CompletableFuture
+                .runAsync(
+                    () -> {
+                        try {
+                            runnable.run();
+                        } catch (final InterruptedException interruptedException) {
+                            Thread.currentThread().interrupt();
+                        }
+                    },
+                    messageBrokerExecutorService
+                )
+                .get();
         } catch (final InterruptedException interruptedException) {
             // We are handling this explicitly
         } finally {
@@ -285,11 +314,18 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
             executorService.shutdown();
         }
 
-        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageProcessingShutdownTimeout",
-                properties::getMessageProcessingShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration(
+            "messageProcessingShutdownTimeout",
+            properties::getMessageProcessingShutdownTimeout,
+            DEFAULT_SHUTDOWN_TIME
+        );
         final boolean messageProcessingTerminated = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
         if (!messageProcessingTerminated) {
-            log.error("Container '{}' did not shutdown MessageProcessor threads within {} seconds", identifier, shutdownTimeout.getSeconds());
+            log.error(
+                "Container '{}' did not shutdown MessageProcessor threads within {} seconds",
+                identifier,
+                shutdownTimeout.getSeconds()
+            );
         }
     }
 
@@ -302,8 +338,11 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
     private void shutdownMessageBroker(final ExecutorService executorService) throws InterruptedException {
         executorService.shutdownNow();
 
-        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageBrokerShutdownTimeout",
-                properties::getMessageBrokerShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+        final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration(
+            "messageBrokerShutdownTimeout",
+            properties::getMessageBrokerShutdownTimeout,
+            DEFAULT_SHUTDOWN_TIME
+        );
         final boolean terminationResult = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
         if (!terminationResult) {
             log.error("Container '{}' did not shutdown MessageBroker within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
@@ -321,19 +360,29 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @param extraMessagesConsumer the callback for consuming leftover messages
      * @return the method for shutting down the retriever background thread
      */
-    private BlockingRunnable startupMessageRetriever(final MessageRetriever messageRetriever,
-                                                     final Consumer<List<Message>> extraMessagesConsumer) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(getIdentifier() + "-message-retriever"));
-        CompletableFuture.supplyAsync(messageRetriever::run, executorService)
-                .thenAccept(extraMessagesConsumer);
+    private BlockingRunnable startupMessageRetriever(
+        final MessageRetriever messageRetriever,
+        final Consumer<List<Message>> extraMessagesConsumer
+    ) {
+        final ExecutorService executorService = Executors.newSingleThreadExecutor(
+            singleNamedThreadFactory(getIdentifier() + "-message-retriever")
+        );
+        CompletableFuture.supplyAsync(messageRetriever::run, executorService).thenAccept(extraMessagesConsumer);
         return () -> {
             executorService.shutdownNow();
 
-            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageRetrieverShutdownTimeout",
-                    properties::getMessageRetrieverShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration(
+                "messageRetrieverShutdownTimeout",
+                properties::getMessageRetrieverShutdownTimeout,
+                DEFAULT_SHUTDOWN_TIME
+            );
             final boolean retrieverShutdown = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
             if (!retrieverShutdown) {
-                log.error("Container '{}' did not shutdown MessageRetriever within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
+                log.error(
+                    "Container '{}' did not shutdown MessageRetriever within {} seconds",
+                    getIdentifier(),
+                    shutdownTimeout.getSeconds()
+                );
             }
         };
     }
@@ -346,16 +395,25 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
      * @return the optional {@link ExecutorService} for this background thread if it was started
      */
     private BlockingRunnable startupMessageResolver(final MessageResolver messageResolver) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor(singleNamedThreadFactory(getIdentifier() + "-message-resolver"));
+        final ExecutorService executorService = Executors.newSingleThreadExecutor(
+            singleNamedThreadFactory(getIdentifier() + "-message-resolver")
+        );
         CompletableFuture.runAsync(messageResolver::run, executorService);
         return () -> {
             executorService.shutdownNow();
 
-            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration("messageResolverShutdownTimeout",
-                    properties::getMessageResolverShutdownTimeout, DEFAULT_SHUTDOWN_TIME);
+            final Duration shutdownTimeout = safelyGetPositiveOrZeroDuration(
+                "messageResolverShutdownTimeout",
+                properties::getMessageResolverShutdownTimeout,
+                DEFAULT_SHUTDOWN_TIME
+            );
             final boolean messageResolverShutdown = executorService.awaitTermination(shutdownTimeout.getSeconds(), SECONDS);
             if (!messageResolverShutdown) {
-                log.error("Container '{}' did not shutdown MessageResolver within {} seconds", getIdentifier(), shutdownTimeout.getSeconds());
+                log.error(
+                    "Container '{}' did not shutdown MessageResolver within {} seconds",
+                    getIdentifier(),
+                    shutdownTimeout.getSeconds()
+                );
             }
         };
     }
@@ -370,13 +428,15 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
     }
 
     private boolean shouldInterruptMessageProcessingThreadsOnShutdown() {
-        return Optional.ofNullable(properties.shouldInterruptThreadsProcessingMessagesOnShutdown())
-                .orElse(DEFAULT_SHOULD_INTERRUPT_MESSAGE_PROCESSING_ON_SHUTDOWN);
+        return Optional
+            .ofNullable(properties.shouldInterruptThreadsProcessingMessagesOnShutdown())
+            .orElse(DEFAULT_SHOULD_INTERRUPT_MESSAGE_PROCESSING_ON_SHUTDOWN);
     }
 
     private boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown() {
-        return Optional.ofNullable(properties.shouldProcessAnyExtraRetrievedMessagesOnShutdown())
-                .orElse(DEFAULT_SHOULD_PROCESS_EXTRA_MESSAGES_ON_SHUTDOWN);
+        return Optional
+            .ofNullable(properties.shouldProcessAnyExtraRetrievedMessagesOnShutdown())
+            .orElse(DEFAULT_SHOULD_PROCESS_EXTRA_MESSAGES_ON_SHUTDOWN);
     }
 
     /**

@@ -25,16 +25,15 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
+import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.List;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * {@link MessageListenerContainerFactory} that will wrap methods annotated with {@link PrefetchingQueueListener @PrefetchingQueueListener} with
@@ -42,7 +41,8 @@ import java.util.function.Supplier;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<PrefetchingQueueListener> {
+public class PrefetchingMessageListenerContainerFactory
+    extends AbstractAnnotationMessageListenerContainerFactory<PrefetchingQueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolver queueResolver;
@@ -56,50 +56,62 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
 
     @SuppressWarnings("Duplicates")
     @Override
-    protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method,
-                                                                      final PrefetchingQueueListener annotation) {
+    protected MessageListenerContainer wrapMethodContainingAnnotation(
+        final Object bean,
+        final Method method,
+        final PrefetchingQueueListener annotation
+    ) {
         final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation.sqsClient());
 
         final QueueProperties queueProperties = QueueProperties
-                .builder()
-                .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
-                .build();
+            .builder()
+            .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, annotation.value()))
+            .build();
 
         final String identifier = IdentifierUtils.buildIdentifierForMethod(annotation.identifier(), bean.getClass(), method);
         return new CoreMessageListenerContainer(
-                identifier,
-                buildMessageBrokerSupplier(annotation),
-                buildMessageRetrieverSupplier(annotation, queueProperties, sqsAsyncClient),
-                buildProcessorSupplier(identifier, queueProperties, sqsAsyncClient, bean, method),
-                buildMessageResolverSupplier(queueProperties, sqsAsyncClient),
-                StaticCoreMessageListenerContainerProperties.builder()
-                        .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
-                        .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
-                        .build()
+            identifier,
+            buildMessageBrokerSupplier(annotation),
+            buildMessageRetrieverSupplier(annotation, queueProperties, sqsAsyncClient),
+            buildProcessorSupplier(identifier, queueProperties, sqsAsyncClient, bean, method),
+            buildMessageResolverSupplier(queueProperties, sqsAsyncClient),
+            StaticCoreMessageListenerContainerProperties
+                .builder()
+                .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
+                .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
+                .build()
         );
     }
 
     private Supplier<MessageBroker> buildMessageBrokerSupplier(PrefetchingQueueListener annotation) {
         final int concurrencyLevel = getConcurrencyLevel(annotation);
 
-        return () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder()
-                .concurrencyLevel(concurrencyLevel)
-                .build());
+        return () ->
+            new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(concurrencyLevel).build());
     }
 
-    private Supplier<MessageResolver> buildMessageResolverSupplier(final QueueProperties queueProperties,
-                                                                   final SqsAsyncClient sqsAsyncClient) {
+    private Supplier<MessageResolver> buildMessageResolverSupplier(
+        final QueueProperties queueProperties,
+        final SqsAsyncClient sqsAsyncClient
+    ) {
         return () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient);
     }
 
-
-    private Supplier<MessageProcessor> buildProcessorSupplier(final String identifier,
-                                                              final QueueProperties queueProperties,
-                                                              final SqsAsyncClient sqsAsyncClient,
-                                                              final Object bean,
-                                                              final Method method) {
+    private Supplier<MessageProcessor> buildProcessorSupplier(
+        final String identifier,
+        final QueueProperties queueProperties,
+        final SqsAsyncClient sqsAsyncClient,
+        final Object bean,
+        final Method method
+    ) {
         return () -> {
-            final CoreMessageProcessor delegateProcessor = new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean);
+            final CoreMessageProcessor delegateProcessor = new CoreMessageProcessor(
+                argumentResolverService,
+                queueProperties,
+                sqsAsyncClient,
+                method,
+                bean
+            );
             if (messageProcessingDecorators.isEmpty()) {
                 return delegateProcessor;
             } else {
@@ -142,27 +154,37 @@ public class PrefetchingMessageListenerContainerFactory extends AbstractAnnotati
 
     @VisibleForTesting
     PrefetchingMessageRetrieverProperties buildMessageRetrieverProperties(final PrefetchingQueueListener annotation) {
-        return StaticPrefetchingMessageRetrieverProperties.builder()
-                .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
-                .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
-                .messageVisibilityTimeout(getMessageVisibilityTimeout(annotation))
-                .build();
+        return StaticPrefetchingMessageRetrieverProperties
+            .builder()
+            .desiredMinPrefetchedMessages(getDesiredMinPrefetchedMessages(annotation))
+            .maxPrefetchedMessages(getMaxPrefetchedMessages(annotation))
+            .messageVisibilityTimeout(getMessageVisibilityTimeout(annotation))
+            .build();
     }
 
-    private Supplier<MessageRetriever> buildMessageRetrieverSupplier(final PrefetchingQueueListener annotation,
-                                                                     final QueueProperties queueProperties,
-                                                                     final SqsAsyncClient sqsAsyncClient) {
+    private Supplier<MessageRetriever> buildMessageRetrieverSupplier(
+        final PrefetchingQueueListener annotation,
+        final QueueProperties queueProperties,
+        final SqsAsyncClient sqsAsyncClient
+    ) {
         final PrefetchingMessageRetrieverProperties properties = buildMessageRetrieverProperties(annotation);
         return () -> new PrefetchingMessageRetriever(sqsAsyncClient, queueProperties, properties);
     }
 
     private SqsAsyncClient getSqsAsyncClient(final String sqsClient) {
         if (StringUtils.isEmpty(sqsClient)) {
-            return sqsAsyncClientProvider.getDefaultClient()
-                    .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none"));
+            return sqsAsyncClientProvider
+                .getDefaultClient()
+                .orElseThrow(
+                    () -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none")
+                );
         }
 
-        return sqsAsyncClientProvider.getClient(sqsClient)
-                .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found"));
+        return sqsAsyncClientProvider
+            .getClient(sqsClient)
+            .orElseThrow(
+                () ->
+                    new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found")
+            );
     }
 }

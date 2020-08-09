@@ -1,7 +1,6 @@
 package com.jashmore.sqs.spring.container;
 
 import com.jashmore.sqs.container.MessageListenerContainer;
-
 import java.util.Set;
 
 /**

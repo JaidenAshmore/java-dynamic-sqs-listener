@@ -29,17 +29,15 @@ public class AvroSqsSpringCloudSchemaRegistryConfiguration {
     @ConditionalOnMissingBean
     public ConsumerSchemaRetriever<Schema> consumerSchemaProvider(final AvroSpringCloudSchemaProperties avroSpringCloudSchemaProperties) {
         return new AvroClasspathConsumerSchemaRetriever(
-                avroSpringCloudSchemaProperties.getSchemaImports(),
-                avroSpringCloudSchemaProperties.getSchemaLocations()
+            avroSpringCloudSchemaProperties.getSchemaImports(),
+            avroSpringCloudSchemaProperties.getSchemaLocations()
         );
     }
 
     @Bean
     @ConditionalOnMissingBean
     public ProducerSchemaRetriever<Schema> producerSchemaProvider(final SchemaRegistryClient schemaRegistryClient) {
-        return new InMemoryCachingProducerSchemaRetriever<>(
-                new AvroSchemaRegistryProducerSchemaRetriever(schemaRegistryClient)
-        );
+        return new InMemoryCachingProducerSchemaRetriever<>(new AvroSchemaRegistryProducerSchemaRetriever(schemaRegistryClient));
     }
 
     @Bean
@@ -51,11 +49,18 @@ public class AvroSqsSpringCloudSchemaRegistryConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SpringCloudSchemaArgumentResolver<Schema> springCloudSchemaArgumentResolver(final SchemaReferenceExtractor schemaReferenceExtractor,
-                                                                                       final ConsumerSchemaRetriever<Schema> consumerSchemaRetriever,
-                                                                                       final ProducerSchemaRetriever<Schema> producerSchemaProvider,
-                                                                                       final MessagePayloadDeserializer<Schema> messagePayloadDeserializer) {
-        return new SpringCloudSchemaArgumentResolver<>(schemaReferenceExtractor, consumerSchemaRetriever, producerSchemaProvider, messagePayloadDeserializer,
-                SpringCloudSchemaRegistryPayload.class);
+    public SpringCloudSchemaArgumentResolver<Schema> springCloudSchemaArgumentResolver(
+        final SchemaReferenceExtractor schemaReferenceExtractor,
+        final ConsumerSchemaRetriever<Schema> consumerSchemaRetriever,
+        final ProducerSchemaRetriever<Schema> producerSchemaProvider,
+        final MessagePayloadDeserializer<Schema> messagePayloadDeserializer
+    ) {
+        return new SpringCloudSchemaArgumentResolver<>(
+            schemaReferenceExtractor,
+            consumerSchemaRetriever,
+            producerSchemaProvider,
+            messagePayloadDeserializer,
+            SpringCloudSchemaRegistryPayload.class
+        );
     }
 }

@@ -1,7 +1,7 @@
 # Core - How to create a message processing decorator
 
 The [MessageProcessingDecorator](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) is used
-to wrap the processing of the messages with extra functionality like logging, metrics, etc.  This guide provides some examples of message decorators and
+to wrap the processing of the messages with extra functionality like logging, metrics, etc. This guide provides some examples of message decorators and
 then how to use them.
 
 ## Synchronous vs Asynchronous
@@ -24,7 +24,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
     }
 
     @Override
-    public  void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
+    public void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
         // message-listener-thread
     }
 
@@ -53,7 +53,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
 ### Asynchronous Message Listener
 
 Asynchronous message listeners are when the message listener returns a `CompletableFuture` and will mark the message has successfully being processed when
-the future is resolved.  In this scenario, the message processing callbacks will not be run on the same thread as the message listener. For example, given
+the future is resolved. In this scenario, the message processing callbacks will not be run on the same thread as the message listener. For example, given
 this implementation you can see which callbacks will be run on which thread:
 
 ```java
@@ -65,7 +65,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
     }
 
     @Override
-    public  void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
+    public void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
         // not guaranteed to be the message-listener-thread
         // It will be whatever thread the message listener is running the message processing on
     }

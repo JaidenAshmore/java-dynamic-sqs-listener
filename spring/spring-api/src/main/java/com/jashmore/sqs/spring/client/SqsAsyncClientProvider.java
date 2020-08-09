@@ -1,8 +1,7 @@
 package com.jashmore.sqs.spring.client;
 
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
 import java.util.Optional;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * Used to provide a specific {@link SqsAsyncClient} that can be used to communicate with the SQS Queue.

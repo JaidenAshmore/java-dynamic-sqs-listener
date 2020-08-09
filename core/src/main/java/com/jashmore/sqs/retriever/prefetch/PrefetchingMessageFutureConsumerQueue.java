@@ -2,14 +2,13 @@ package com.jashmore.sqs.retriever.prefetch;
 
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.ThreadSafe;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Queue that allows for the persistence of extra {@link CompletableFuture}s and {@link Message}s and when there are two matching together, resolve the
@@ -147,10 +146,11 @@ class PrefetchingMessageFutureConsumerQueue {
             final LinkedList<Message> messagesAvailableForProcessing = new LinkedList<>(messageQueue);
             futureQueue.clear();
             messageQueue.clear();
-            return QueueDrain.builder()
-                    .futuresWaitingForMessages(futuresWaitingForMessages)
-                    .messagesAvailableForProcessing(messagesAvailableForProcessing)
-                    .build();
+            return QueueDrain
+                .builder()
+                .futuresWaitingForMessages(futuresWaitingForMessages)
+                .messagesAvailableForProcessing(messagesAvailableForProcessing)
+                .build();
         } finally {
             lock.unlock();
         }

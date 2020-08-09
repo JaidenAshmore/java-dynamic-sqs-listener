@@ -1,13 +1,13 @@
 {
-  "ignorePatterns": [
-    {
-      "pattern": "http://localhost.*"
-    },
-    {
-      "pattern": "mailto:*"
-    },
-    {
-      "pattern": "https://coveralls.io.*"
-    }
-  ]
+    "ignorePatterns": [
+        {
+            "pattern": "http://localhost.*"
+        },
+        {
+            "pattern": "mailto:*"
+        },
+        {
+            "pattern": "https://coveralls.io.*"
+        }
+    ]
 }

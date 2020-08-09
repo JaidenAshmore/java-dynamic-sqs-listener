@@ -4,7 +4,6 @@ import com.jashmore.documentation.annotations.NotThreadSafe;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
-
 import java.time.Duration;
 
 /**

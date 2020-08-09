@@ -7,6 +7,10 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,17 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
 @Slf4j
-@SpringBootTest(classes = {PrefetchingQueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { PrefetchingQueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
-@TestPropertySource(properties = {
-        "prop.concurrency=5"
-})
+@TestPropertySource(properties = { "prop.concurrency=5" })
 class PrefetchingQueueListenerIntegrationTest {
     private static final String QUEUE_NAME = "PrefetchingQueueListenerIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
@@ -42,6 +39,7 @@ class PrefetchingQueueListenerIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -50,8 +48,12 @@ class PrefetchingQueueListenerIntegrationTest {
         @Service
         @SuppressWarnings("unused")
         public static class MessageListener {
-            @PrefetchingQueueListener(value = QUEUE_NAME,
-                    messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS, concurrencyLevelString = "${prop.concurrency}")
+
+            @PrefetchingQueueListener(
+                value = QUEUE_NAME,
+                messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS,
+                concurrencyLevelString = "${prop.concurrency}"
+            )
             public void listenToMessage(@Payload final String payload) {
                 try {
                     log.info("Received message: {}", payload);
@@ -67,8 +69,7 @@ class PrefetchingQueueListenerIntegrationTest {
     @Test
     void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
+        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND).forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

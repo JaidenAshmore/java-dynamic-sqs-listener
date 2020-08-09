@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 @ExtendWith(MockitoExtension.class)
 class AsyncLambdaMessageProcessorTest {
@@ -34,14 +33,15 @@ class AsyncLambdaMessageProcessorTest {
 
     @Nested
     class OnlyConsumeMessage {
+
         @Test
         void successfulExecutionWillResolveFuture() {
             // arrange
             when(resolveMessage.get()).thenReturn(CompletableFuture.completedFuture(null));
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> CompletableFuture.completedFuture(null)
+                sqsAsyncClient,
+                queueProperties,
+                message -> CompletableFuture.completedFuture(null)
             );
 
             // act
@@ -56,11 +56,11 @@ class AsyncLambdaMessageProcessorTest {
         void failureToProcessMessageWillRejectFuture() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> {
-                        throw new ExpectedTestException();
-                    }
+                sqsAsyncClient,
+                queueProperties,
+                message -> {
+                    throw new ExpectedTestException();
+                }
             );
 
             // act
@@ -75,9 +75,9 @@ class AsyncLambdaMessageProcessorTest {
         void rejectingFutureReturnedFromFutureWillRejectProcessingFuture() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> CompletableFutureUtils.completedExceptionally(new ExpectedTestException())
+                sqsAsyncClient,
+                queueProperties,
+                message -> CompletableFutureUtils.completedExceptionally(new ExpectedTestException())
             );
 
             // act
@@ -91,11 +91,7 @@ class AsyncLambdaMessageProcessorTest {
         @Test
         void methodThatReturnsNullWillRejectFuture() {
             // arrange
-            final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> null
-            );
+            final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(sqsAsyncClient, queueProperties, message -> null);
 
             // act
             final CompletableFuture<?> result = processor.processMessage(message, resolveMessage);
@@ -108,18 +104,19 @@ class AsyncLambdaMessageProcessorTest {
 
     @Nested
     class ConsumeMessageWithVisibility {
+
         @Test
         void visibilityExtenderCanBeUsedToExtendMessageVisibility() {
             // arrange
             when(resolveMessage.get()).thenReturn(CompletableFuture.completedFuture(null));
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    false,
-                    (message, visibilityExtender) -> {
-                        visibilityExtender.extend();
-                        return CompletableFuture.completedFuture(null);
-                    }
+                sqsAsyncClient,
+                queueProperties,
+                false,
+                (message, visibilityExtender) -> {
+                    visibilityExtender.extend();
+                    return CompletableFuture.completedFuture(null);
+                }
             );
 
             // act
@@ -127,23 +124,28 @@ class AsyncLambdaMessageProcessorTest {
 
             // assert
             assertThat(result).isCompleted();
-            verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest.builder()
-                    .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
-                    .queueUrl("url")
-                    .receiptHandle("handle")
-                    .build());
+            verify(sqsAsyncClient)
+                .changeMessageVisibility(
+                    ChangeMessageVisibilityRequest
+                        .builder()
+                        .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                        .queueUrl("url")
+                        .receiptHandle("handle")
+                        .build()
+                );
         }
     }
 
     @Nested
     class ConsumeMessageWithAcknowledge {
+
         @Test
         void successfulExecutionWillResolveFutureButNotResolveMessage() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message, acknowledge) -> CompletableFuture.completedFuture(null)
+                sqsAsyncClient,
+                queueProperties,
+                (message, acknowledge) -> CompletableFuture.completedFuture(null)
             );
 
             // act
@@ -158,11 +160,11 @@ class AsyncLambdaMessageProcessorTest {
         void failureExecutionWillRejectFutureAndNotResolveMessage() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message, acknowledge) -> {
-                        throw new ExpectedTestException();
-                    }
+                sqsAsyncClient,
+                queueProperties,
+                (message, acknowledge) -> {
+                    throw new ExpectedTestException();
+                }
             );
 
             // act
@@ -174,16 +176,16 @@ class AsyncLambdaMessageProcessorTest {
         }
     }
 
-
     @Nested
     class ConsumeMessageWithAcknowledgeAndVisibilityExtender {
+
         @Test
         void successfulExecutionWillResolveFutureButNotResolveMessage() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message, acknowledge, visibilityExtender) -> CompletableFuture.completedFuture(null)
+                sqsAsyncClient,
+                queueProperties,
+                (message, acknowledge, visibilityExtender) -> CompletableFuture.completedFuture(null)
             );
 
             // act
@@ -197,13 +199,14 @@ class AsyncLambdaMessageProcessorTest {
 
     @Nested
     class ResolvingMessage {
+
         @Test
         void exceptionThrownWhenResolvingMessageWillNotRejectProcessingFuture() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> CompletableFuture.completedFuture(null)
+                sqsAsyncClient,
+                queueProperties,
+                message -> CompletableFuture.completedFuture(null)
             );
             when(resolveMessage.get()).thenThrow(new ExpectedTestException());
 
@@ -218,9 +221,9 @@ class AsyncLambdaMessageProcessorTest {
         void resolveMessageRejectedWillNotRejectProcessingFuture() {
             // arrange
             final AsyncLambdaMessageProcessor processor = new AsyncLambdaMessageProcessor(
-                    sqsAsyncClient,
-                    queueProperties,
-                    (message) -> CompletableFuture.completedFuture(null)
+                sqsAsyncClient,
+                queueProperties,
+                message -> CompletableFuture.completedFuture(null)
             );
             when(resolveMessage.get()).thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()));
 

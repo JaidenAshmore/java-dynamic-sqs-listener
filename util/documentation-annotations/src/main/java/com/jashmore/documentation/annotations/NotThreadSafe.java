@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Indicates that the given class or method does not need to be thread safe as is should not be used concurrently.
  */
 @Documented
-@Target({TYPE, METHOD})
+@Target({ TYPE, METHOD })
 @Retention(SOURCE)
 public @interface NotThreadSafe {
 }

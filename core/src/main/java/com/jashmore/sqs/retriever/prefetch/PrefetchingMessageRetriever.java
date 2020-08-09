@@ -9,6 +9,12 @@ import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.Preconditions;
 import com.jashmore.sqs.util.collections.CollectionUtils;
+import java.time.Duration;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkInterruptedException;
@@ -17,13 +23,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
-
-import java.time.Duration;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Message retriever that allows for the prefetching of messages for faster throughput by making sure that there are always messages in a queue locally to be
@@ -65,10 +64,11 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
     private final PrefetchingMessageFutureConsumerQueue pairConsumerQueue;
     private final int maxPrefetchedMessages;
 
-
-    public PrefetchingMessageRetriever(final SqsAsyncClient sqsAsyncClient,
-                                       final QueueProperties queueProperties,
-                                       final PrefetchingMessageRetrieverProperties properties) {
+    public PrefetchingMessageRetriever(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final PrefetchingMessageRetrieverProperties properties
+    ) {
         Preconditions.checkNotNull(sqsAsyncClient, "sqsAsyncClient");
         Preconditions.checkNotNull(queueProperties, "queueProperties");
         Preconditions.checkNotNull(properties, "properties");
@@ -80,8 +80,10 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
         this.maxPrefetchedMessages = properties.getMaxPrefetchedMessages();
         final int desiredMinPrefetchedMessages = properties.getDesiredMinPrefetchedMessages();
 
-        Preconditions.checkArgument(maxPrefetchedMessages >= desiredMinPrefetchedMessages,
-                "maxPrefetchedMessages should be greater than or equal to desiredMinPrefetchedMessages");
+        Preconditions.checkArgument(
+            maxPrefetchedMessages >= desiredMinPrefetchedMessages,
+            "maxPrefetchedMessages should be greater than or equal to desiredMinPrefetchedMessages"
+        );
         Preconditions.checkArgument(desiredMinPrefetchedMessages > 0, "desiredMinPrefetchedMessages must be greater than zero");
 
         pairConsumerQueue = new PrefetchingMessageFutureConsumerQueue(desiredMinPrefetchedMessages);
@@ -102,10 +104,11 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 pairConsumerQueue.blockUntilFreeSlotForMessage();
-                final List<Message> messages = CompletableFuture.supplyAsync(this::buildReceiveMessageRequest)
-                        .thenCompose(sqsAsyncClient::receiveMessage)
-                        .thenApply(ReceiveMessageResponse::messages)
-                        .get();
+                final List<Message> messages = CompletableFuture
+                    .supplyAsync(this::buildReceiveMessageRequest)
+                    .thenCompose(sqsAsyncClient::receiveMessage)
+                    .thenApply(ReceiveMessageResponse::messages)
+                    .get();
 
                 log.debug("Received {} messages", messages.size());
 
@@ -131,7 +134,10 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
                 // because it does not realise it is being shut down, therefore we have to check for this and quit if necessary
                 if (exception instanceof ExecutionException) {
                     final Throwable executionExceptionCause = exception.getCause();
-                    if (executionExceptionCause instanceof SdkClientException && executionExceptionCause.getCause() instanceof SdkInterruptedException) {
+                    if (
+                        executionExceptionCause instanceof SdkClientException &&
+                        executionExceptionCause.getCause() instanceof SdkInterruptedException
+                    ) {
                         log.debug("Thread interrupted receiving messages");
                         break;
                     }
@@ -156,12 +162,13 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
         final int numberOfMessagesToObtain = Math.min(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS, numberOfPrefetchSlotsLeft);
 
         log.debug("Retrieving {} messages asynchronously", numberOfMessagesToObtain);
-        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .attributeNames(QueueAttributeName.ALL)
-                .messageAttributeNames(QueueAttributeName.ALL.toString())
-                .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
-                .maxNumberOfMessages(numberOfMessagesToObtain);
+        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
+            .builder()
+            .queueUrl(queueProperties.getQueueUrl())
+            .attributeNames(QueueAttributeName.ALL)
+            .messageAttributeNames(QueueAttributeName.ALL.toString())
+            .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS)
+            .maxNumberOfMessages(numberOfMessagesToObtain);
         final Duration visibilityTimeout = properties.getMessageVisibilityTimeout();
         if (visibilityTimeout != null && visibilityTimeout.getSeconds() > 0) {
             requestBuilder.visibilityTimeout((int) visibilityTimeout.getSeconds());
@@ -172,8 +179,11 @@ public class PrefetchingMessageRetriever implements MessageRetriever {
 
     private void performBackoff() {
         try {
-            final Duration errorBackoffTime =
-                    safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_ERROR_BACKOFF_TIMEOUT);
+            final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration(
+                "errorBackoffTime",
+                properties::getErrorBackoffTime,
+                DEFAULT_ERROR_BACKOFF_TIMEOUT
+            );
             log.debug("Backing off for {}ms", errorBackoffTime.toMillis());
             Thread.sleep(errorBackoffTime.toMillis());
         } catch (final InterruptedException interruptedException) {

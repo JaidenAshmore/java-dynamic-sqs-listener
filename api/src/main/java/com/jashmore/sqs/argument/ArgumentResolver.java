@@ -31,5 +31,6 @@ public interface ArgumentResolver<T> {
      * @return the value of the argument
      * @throws ArgumentResolutionException when there was an error determine the parameter argument value
      */
-    T resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message) throws ArgumentResolutionException;
+    T resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message)
+        throws ArgumentResolutionException;
 }

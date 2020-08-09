@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,10 +17,6 @@ import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultQueueResolverTest {
@@ -51,7 +50,7 @@ class DefaultQueueResolverTest {
         // arrange
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
-                .thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://url").build()));
+            .thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://url").build()));
 
         // act
         final String queueUrl = defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}");
@@ -66,16 +65,21 @@ class DefaultQueueResolverTest {
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final RuntimeException exceptionCause = new RuntimeException("error");
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
-                .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
+            .thenReturn(
+                new CompletableFuture<GetQueueUrlResponse>() {
+
                     @Override
                     public GetQueueUrlResponse get() throws ExecutionException {
                         throw new ExecutionException(exceptionCause);
                     }
-                });
+                }
+            );
 
         // act
-        final QueueResolutionException exception = assertThrows(QueueResolutionException.class,
-                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+        final QueueResolutionException exception = assertThrows(
+            QueueResolutionException.class,
+            () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}")
+        );
 
         // assert
         assertThat(exception).hasCause(exceptionCause);
@@ -87,16 +91,21 @@ class DefaultQueueResolverTest {
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final InterruptedException exceptionCause = new InterruptedException();
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
-                .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
+            .thenReturn(
+                new CompletableFuture<GetQueueUrlResponse>() {
+
                     @Override
                     public GetQueueUrlResponse get() throws ExecutionException {
                         throw new ExecutionException(exceptionCause);
                     }
-                });
+                }
+            );
 
         // act
-        final QueueResolutionException exception = assertThrows(QueueResolutionException.class,
-                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+        final QueueResolutionException exception = assertThrows(
+            QueueResolutionException.class,
+            () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}")
+        );
 
         // assert
         assertThat(exception).hasCause(exceptionCause);
@@ -108,16 +117,18 @@ class DefaultQueueResolverTest {
         when(environment.resolveRequiredPlaceholders("${variable}")).thenReturn("someQueueName");
         final InterruptedException interruptedException = new InterruptedException();
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
-                .thenReturn(new CompletableFuture<GetQueueUrlResponse>() {
+            .thenReturn(
+                new CompletableFuture<GetQueueUrlResponse>() {
+
                     @Override
                     public GetQueueUrlResponse get() throws InterruptedException {
                         throw interruptedException;
                     }
-                });
+                }
+            );
 
         // act
-        assertThrows(QueueResolutionException.class,
-                () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
+        assertThrows(QueueResolutionException.class, () -> defaultQueueResolver.resolveQueueUrl(sqsAsyncClient, "${variable}"));
 
         // assert
         assertThat(Thread.currentThread().isInterrupted()).isTrue();

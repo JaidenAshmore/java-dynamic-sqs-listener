@@ -16,6 +16,14 @@ import com.jashmore.sqs.extensions.brave.spring.BraveMessageProcessingDecoratorC
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,20 +36,13 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-@SpringBootTest(classes = {
+@SpringBootTest(
+    classes = {
         BraveMessageProcessingDecoratorConfiguration.class,
         BraveMessageProcessingDecoratorAsynchronousIntegrationTest.TestConfig.class,
         QueueListenerConfiguration.class
-})
+    }
+)
 public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
     private static final String QUEUE_NAME = "BraveMessageProcessingDecoratorIntegrationTest";
 
@@ -56,6 +57,7 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -64,6 +66,7 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
         @Bean
         public MessageProcessingDecorator messageFinishedDecorator() {
             return new MessageProcessingDecorator() {
+
                 @Override
                 public void onMessageResolvedSuccess(final MessageProcessingContext context, final Message message) {
                     messageResolvedLatch.countDown();
@@ -73,9 +76,7 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
 
         @Bean
         public Tracing tracing() {
-            return Tracing.newBuilder()
-                    .addSpanHandler(spanHandler)
-                    .build();
+            return Tracing.newBuilder().addSpanHandler(spanHandler).build();
         }
 
         @Service
@@ -90,18 +91,21 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
             @QueueListener(identifier = "asynchronous", value = QUEUE_NAME)
             public CompletableFuture<?> listenToMessageAsynchronously() {
                 CurrentTraceContext currentTraceContext = ThreadLocalCurrentTraceContext.create();
-                return CompletableFuture.supplyAsync(() -> {
-                    final ScopedSpan scopedSpan = tracing.tracer().startScopedSpan("span-inside-async-code");
-                    try {
-                        Thread.sleep(500);
-                        return null;
-                    } catch (InterruptedException interruptedException) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Failed");
-                    } finally {
-                        scopedSpan.finish();
-                    }
-                }, currentTraceContext.executorService(Executors.newCachedThreadPool()));
+                return CompletableFuture.supplyAsync(
+                    () -> {
+                        final ScopedSpan scopedSpan = tracing.tracer().startScopedSpan("span-inside-async-code");
+                        try {
+                            Thread.sleep(500);
+                            return null;
+                        } catch (InterruptedException interruptedException) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("Failed");
+                        } finally {
+                            scopedSpan.finish();
+                        }
+                    },
+                    currentTraceContext.executorService(Executors.newCachedThreadPool())
+                );
             }
         }
     }
@@ -128,10 +132,10 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
         final ScopedSpan scopedSenderSpan = tracing.tracer().startScopedSpan("sender-span");
         final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         SendMessageRemoteSetter.create(tracing).inject(scopedSenderSpan.context(), messageAttributes);
-        localSqsAsyncClient.sendMessage(QUEUE_NAME, SendMessageRequest.builder()
-                .messageBody("test")
-                .messageAttributes(messageAttributes)
-                .build());
+        localSqsAsyncClient.sendMessage(
+            QUEUE_NAME,
+            SendMessageRequest.builder().messageBody("test").messageAttributes(messageAttributes).build()
+        );
 
         // act
         assertThat(messageResolvedLatch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -156,7 +160,6 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
         final String traceId = senderSpan.traceId();
         assertThat(messageSpan.traceId()).isEqualTo(traceId);
         assertThat(internalProcessingSpan.traceId()).isEqualTo(traceId);
-
 
         assertThat(internalProcessingSpan.parentId()).isEqualTo(messageSpan.id());
         assertThat(messageSpan.parentId()).isEqualTo(senderSpan.id());

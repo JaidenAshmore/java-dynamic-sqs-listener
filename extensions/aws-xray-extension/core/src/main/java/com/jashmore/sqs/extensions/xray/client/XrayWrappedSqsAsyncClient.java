@@ -4,6 +4,11 @@ import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.entities.Segment;
 import com.jashmore.sqs.util.Preconditions;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import lombok.Builder;
 import lombok.Value;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
@@ -48,12 +53,6 @@ import software.amazon.awssdk.services.sqs.model.TagQueueResponse;
 import software.amazon.awssdk.services.sqs.model.UntagQueueRequest;
 import software.amazon.awssdk.services.sqs.model.UntagQueueResponse;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 /**
  * The {@link SqsAsyncClient} that can be used when the Xray Instrumentor has been integrated into the service which will allow you to use the client even
  * if it is being called when a segment has not begun.
@@ -81,7 +80,8 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
 
         this.delegate = options.delegate;
         this.recorder = (options.recorder != null) ? options.recorder : AWSXRay.getGlobalRecorder();
-        this.segmentNamingStrategy = (options.segmentNamingStrategy != null)
+        this.segmentNamingStrategy =
+            (options.segmentNamingStrategy != null)
                 ? options.segmentNamingStrategy
                 : new StaticClientSegmentNamingStrategy(DEFAULT_SEGMENT_NAME);
         this.segmentMutator = options.segmentMutator;
@@ -103,25 +103,30 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<ChangeMessageVisibilityResponse> changeMessageVisibility(final ChangeMessageVisibilityRequest changeMessageVisibilityRequest) {
+    public CompletableFuture<ChangeMessageVisibilityResponse> changeMessageVisibility(
+        final ChangeMessageVisibilityRequest changeMessageVisibilityRequest
+    ) {
         return wrapWithXray(delegate::changeMessageVisibility, changeMessageVisibilityRequest);
     }
 
     @Override
     public CompletableFuture<ChangeMessageVisibilityResponse> changeMessageVisibility(
-            final Consumer<ChangeMessageVisibilityRequest.Builder> changeMessageVisibilityRequest) {
+        final Consumer<ChangeMessageVisibilityRequest.Builder> changeMessageVisibilityRequest
+    ) {
         return wrapWithXray(delegate::changeMessageVisibility, changeMessageVisibilityRequest);
     }
 
     @Override
     public CompletableFuture<ChangeMessageVisibilityBatchResponse> changeMessageVisibilityBatch(
-            final ChangeMessageVisibilityBatchRequest changeMessageVisibilityBatchRequest) {
+        final ChangeMessageVisibilityBatchRequest changeMessageVisibilityBatchRequest
+    ) {
         return wrapWithXray(delegate::changeMessageVisibilityBatch, changeMessageVisibilityBatchRequest);
     }
 
     @Override
     public CompletableFuture<ChangeMessageVisibilityBatchResponse> changeMessageVisibilityBatch(
-            final Consumer<ChangeMessageVisibilityBatchRequest.Builder> changeMessageVisibilityBatchRequest) {
+        final Consumer<ChangeMessageVisibilityBatchRequest.Builder> changeMessageVisibilityBatchRequest
+    ) {
         return wrapWithXray(delegate::changeMessageVisibilityBatch, changeMessageVisibilityBatchRequest);
     }
 
@@ -151,7 +156,9 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<DeleteMessageBatchResponse> deleteMessageBatch(final Consumer<DeleteMessageBatchRequest.Builder> deleteMessageBatchRequest) {
+    public CompletableFuture<DeleteMessageBatchResponse> deleteMessageBatch(
+        final Consumer<DeleteMessageBatchRequest.Builder> deleteMessageBatchRequest
+    ) {
         return wrapWithXray(delegate::deleteMessageBatch, deleteMessageBatchRequest);
     }
 
@@ -171,7 +178,9 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<GetQueueAttributesResponse> getQueueAttributes(final Consumer<GetQueueAttributesRequest.Builder> getQueueAttributesRequest) {
+    public CompletableFuture<GetQueueAttributesResponse> getQueueAttributes(
+        final Consumer<GetQueueAttributesRequest.Builder> getQueueAttributesRequest
+    ) {
         return wrapWithXray(delegate::getQueueAttributes, getQueueAttributesRequest);
     }
 
@@ -187,13 +196,15 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
 
     @Override
     public CompletableFuture<ListDeadLetterSourceQueuesResponse> listDeadLetterSourceQueues(
-            final ListDeadLetterSourceQueuesRequest listDeadLetterSourceQueuesRequest) {
+        final ListDeadLetterSourceQueuesRequest listDeadLetterSourceQueuesRequest
+    ) {
         return wrapWithXray(delegate::listDeadLetterSourceQueues, listDeadLetterSourceQueuesRequest);
     }
 
     @Override
     public CompletableFuture<ListDeadLetterSourceQueuesResponse> listDeadLetterSourceQueues(
-            final Consumer<ListDeadLetterSourceQueuesRequest.Builder> listDeadLetterSourceQueuesRequest) {
+        final Consumer<ListDeadLetterSourceQueuesRequest.Builder> listDeadLetterSourceQueuesRequest
+    ) {
         return wrapWithXray(delegate::listDeadLetterSourceQueues, listDeadLetterSourceQueuesRequest);
     }
 
@@ -248,7 +259,9 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<RemovePermissionResponse> removePermission(final Consumer<RemovePermissionRequest.Builder> removePermissionRequest) {
+    public CompletableFuture<RemovePermissionResponse> removePermission(
+        final Consumer<RemovePermissionRequest.Builder> removePermissionRequest
+    ) {
         return wrapWithXray(delegate::removePermission, removePermissionRequest);
     }
 
@@ -268,7 +281,9 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<SendMessageBatchResponse> sendMessageBatch(final Consumer<SendMessageBatchRequest.Builder> sendMessageBatchRequest) {
+    public CompletableFuture<SendMessageBatchResponse> sendMessageBatch(
+        final Consumer<SendMessageBatchRequest.Builder> sendMessageBatchRequest
+    ) {
         return wrapWithXray(delegate::sendMessageBatch, sendMessageBatchRequest);
     }
 
@@ -278,7 +293,9 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<SetQueueAttributesResponse> setQueueAttributes(final Consumer<SetQueueAttributesRequest.Builder> setQueueAttributesRequest) {
+    public CompletableFuture<SetQueueAttributesResponse> setQueueAttributes(
+        final Consumer<SetQueueAttributesRequest.Builder> setQueueAttributesRequest
+    ) {
         return wrapWithXray(delegate::setQueueAttributes, setQueueAttributesRequest);
     }
 

@@ -5,9 +5,8 @@ import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.aws.AwsConstants;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-
 import java.time.Duration;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 /**
  * The properties used to configure the {@link BatchingMessageRetriever} which will be continually polled throughout the execution and therefore the

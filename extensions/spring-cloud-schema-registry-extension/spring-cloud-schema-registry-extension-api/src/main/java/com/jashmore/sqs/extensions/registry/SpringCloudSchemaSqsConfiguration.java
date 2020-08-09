@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableSchemaRegistryClient
 @SuppressWarnings("checkstyle:javadocmethod")
 public class SpringCloudSchemaSqsConfiguration {
+
     @Bean
     @ConditionalOnMissingBean(SchemaReferenceExtractor.class)
     public SchemaReferenceExtractor schemaReferenceExtractor() {

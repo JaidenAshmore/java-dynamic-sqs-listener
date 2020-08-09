@@ -10,14 +10,13 @@ import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMappingException;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import java.lang.reflect.Method;
 
 @ExtendWith(MockitoExtension.class)
 class PayloadArgumentResolverTest {
@@ -66,8 +65,10 @@ class PayloadArgumentResolverTest {
         when(payloadMapper.map(message, Pojo.class)).thenThrow(new PayloadMappingException("Error"));
 
         // act
-        final ArgumentResolutionException exception = assertThrows(ArgumentResolutionException.class,
-                () -> payloadArgumentResolver.resolveArgumentForParameter(queueProperties, stringParameter, message));
+        final ArgumentResolutionException exception = assertThrows(
+            ArgumentResolutionException.class,
+            () -> payloadArgumentResolver.resolveArgumentForParameter(queueProperties, stringParameter, message)
+        );
 
         // assert
         assertThat(exception.getCause()).isInstanceOf(PayloadMappingException.class);
@@ -87,25 +88,23 @@ class PayloadArgumentResolverTest {
         assertThat(argument).isEqualTo(parsedObject);
     }
 
-    @SuppressWarnings( {"unused"})
-    public void method(@Payload final String payloadString, @Payload final Pojo payloadPojo, final String parameterWithNoPayloadAnnotation) {
-
-    }
+    @SuppressWarnings({ "unused" })
+    public void method(
+        @Payload final String payloadString,
+        @Payload final Pojo payloadPojo,
+        final String parameterWithNoPayloadAnnotation
+    ) {}
 
     private MethodParameter getParameter(final int index) {
         try {
             final Method method = PayloadArgumentResolverTest.class.getMethod("method", String.class, Pojo.class, String.class);
-            return DefaultMethodParameter.builder()
-                    .method(method)
-                    .parameter(method.getParameters()[index])
-                    .parameterIndex(index)
-                    .build();
+            return DefaultMethodParameter.builder().method(method).parameter(method.getParameters()[index]).parameterIndex(index).build();
         } catch (final NoSuchMethodException noSuchMethodException) {
             throw new RuntimeException(noSuchMethodException);
         }
     }
 
-    @SuppressWarnings( {"WeakerAccess", "unused"})
+    @SuppressWarnings({ "WeakerAccess", "unused" })
     public static class Pojo {
         private final String field;
 

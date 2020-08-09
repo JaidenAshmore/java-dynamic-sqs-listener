@@ -4,12 +4,6 @@ import com.jashmore.documentation.annotations.GuardedBy;
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.SmartLifecycle;
-
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +17,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.SmartLifecycle;
 
 /**
  * Default implementation that will build the {@link MessageListenerContainer}s on post construction.
@@ -32,7 +31,8 @@ import java.util.function.Supplier;
  */
 @Slf4j
 @ThreadSafe
-public class DefaultMessageListenerContainerCoordinator implements MessageListenerContainerCoordinator, ApplicationContextAware, SmartLifecycle {
+public class DefaultMessageListenerContainerCoordinator
+    implements MessageListenerContainerCoordinator, ApplicationContextAware, SmartLifecycle {
     private final DefaultMessageListenerContainerCoordinatorProperties properties;
     /**
      * These {@link MessageListenerContainerFactory}s should be injected by the spring application and therefore to add more wrappers into the
@@ -57,8 +57,10 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public DefaultMessageListenerContainerCoordinator(final DefaultMessageListenerContainerCoordinatorProperties properties,
-                                                      final List<MessageListenerContainerFactory> messageListenerContainerFactories) {
+    public DefaultMessageListenerContainerCoordinator(
+        final DefaultMessageListenerContainerCoordinatorProperties properties,
+        final List<MessageListenerContainerFactory> messageListenerContainerFactories
+    ) {
         this.properties = properties;
         this.messageListenerContainerFactories = messageListenerContainerFactories;
         this.containersLazilyLoadedCache = null;
@@ -102,9 +104,10 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * @param containerConsumer the consumer to call
      */
     private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
-        final CompletableFuture<?>[] allTaskCompletableFutures = getContainers().stream()
-                .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
-                .toArray(CompletableFuture[]::new);
+        final CompletableFuture<?>[] allTaskCompletableFutures = getContainers()
+            .stream()
+            .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
+            .toArray(CompletableFuture[]::new);
 
         try {
             CompletableFuture.allOf(allTaskCompletableFutures).get();
@@ -123,8 +126,9 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * @param containerConsumer   the container consumer to run
      */
     private void runForContainer(final String containerIdentifier, final Consumer<MessageListenerContainer> containerConsumer) {
-        final MessageListenerContainer container = Optional.ofNullable(getContainerMap().get(containerIdentifier))
-                .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
+        final MessageListenerContainer container = Optional
+            .ofNullable(getContainerMap().get(containerIdentifier))
+            .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
 
         containerConsumer.accept(container);
     }
@@ -195,8 +199,9 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      * Initialise all of the containers for this application by finding all bean methods that need to be wrapped.
      */
     private static Map<String, MessageListenerContainer> calculateMessageListenerContainers(
-            @Nonnull final List<MessageListenerContainerFactory> messageListenerContainerFactories,
-            @Nonnull final ApplicationContext applicationContext) {
+        @Nonnull final List<MessageListenerContainerFactory> messageListenerContainerFactories,
+        @Nonnull final ApplicationContext applicationContext
+    ) {
         if (messageListenerContainerFactories.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -211,8 +216,10 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
                     if (annotationProcessor.canHandleMethod(method)) {
                         final MessageListenerContainer messageListenerContainer = annotationProcessor.buildContainer(bean, method);
                         if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
-                            throw new IllegalStateException("Created two MessageListenerContainers with the same identifier: "
-                                    + messageListenerContainer.getIdentifier());
+                            throw new IllegalStateException(
+                                "Created two MessageListenerContainers with the same identifier: " +
+                                messageListenerContainer.getIdentifier()
+                            );
                         }
                         log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
                         messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);

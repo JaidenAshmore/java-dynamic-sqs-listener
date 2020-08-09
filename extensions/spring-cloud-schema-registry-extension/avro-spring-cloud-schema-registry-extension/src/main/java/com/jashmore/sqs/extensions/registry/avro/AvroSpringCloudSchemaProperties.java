@@ -1,14 +1,13 @@
 package com.jashmore.sqs.extensions.registry.avro;
 
 import com.jashmore.documentation.annotations.Nullable;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -22,6 +21,7 @@ public class AvroSpringCloudSchemaProperties {
      */
     @Nullable
     private List<Resource> schemaImports;
+
     /**
      * The locations of the schemas to use for this service.
      *

@@ -20,6 +20,7 @@ public class IntegrationTestExampleApplication {
 
     @Service
     public static class SomeService {
+
         /**
          * Process a message payload, no-op.
          *

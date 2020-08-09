@@ -7,39 +7,32 @@ connect to two locally running ElasticMQ servers.
 
 ## Steps
 
-1. Create some queues that will use specific `SqsAsyncClient`s identified by an id.
+1.  Create some queues that will use specific `SqsAsyncClient`s identified by an id.
 
     ```java
     public class MyMessageListeners {
+
         // This uses the "default" SqsAsyncClient which may not be present
         @QueueListener("queueNameForDefaultListener")
-        public void listenerForDefaultClient(@Payload String messageBody) {
-
-        }
+        public void listenerForDefaultClient(@Payload String messageBody) {}
 
         // This uses the "firstClient" SqsAsyncClient
         @QueueListener(value = "queueNameForFirstClient", sqsClient = "firstClient")
-        public void queueNameListenerForFirstClient(@Payload String messageBody) {
-
-        }
+        public void queueNameListenerForFirstClient(@Payload String messageBody) {}
 
         // This uses the "firstClient" SqsAsyncClient
         @QueueListener(value = "anotherQueueNameForFirstClient", sqsClient = "firstClient")
-        public void anotherQueueNameListenerForFirstClient(@Payload String messageBody) {
-
-        }
+        public void anotherQueueNameListenerForFirstClient(@Payload String messageBody) {}
 
         // This uses the "secondClient" SqsAsyncClient
         @QueueListener(value = "queueNameForSecondClient", sqsClient = "secondClient")
-        public void queueNameListenerForSecondClient(@Payload String messageBody) {
-
-        }
+        public void queueNameListenerForSecondClient(@Payload String messageBody) {}
     }
     ```
 
-1. You will need to add to your `@Configuration` a bean of type
-[SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
-which will provide all of the `SqsAsyncClient`s for the queues above.
+1.  You will need to add to your `@Configuration` a bean of type
+    [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
+    which will provide all of the `SqsAsyncClient`s for the queues above.
 
     ```java
     @Configuration
@@ -57,7 +50,7 @@ which will provide all of the `SqsAsyncClient`s for the queues above.
                 defaultClient,
                 ImmutableMap.of(
                      "firstClient", firstClient,
-                     "secondClient", secondClient  
+                     "secondClient", secondClient
                 )
            );
         }

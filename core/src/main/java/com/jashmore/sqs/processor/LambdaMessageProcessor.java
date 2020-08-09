@@ -5,14 +5,13 @@ import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * {@link MessageProcessor} that takes a lambda/function for synchronous processing of a message.
@@ -32,9 +31,11 @@ public class LambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message and return the future
      */
-    public LambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                  final QueueProperties queueProperties,
-                                  final Consumer<Message> messageProcessor) {
+    public LambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final Consumer<Message> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
 
@@ -49,9 +50,11 @@ public class LambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message and acknowledge
      */
-    public LambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                  final QueueProperties queueProperties,
-                                  final BiConsumer<Message, Acknowledge> messageProcessor) {
+    public LambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final BiConsumer<Message, Acknowledge> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
 
@@ -71,10 +74,12 @@ public class LambdaMessageProcessor implements MessageProcessor {
      * @param ignoredForTypeErasure field needed due to type erasure
      * @param messageProcessor      the function to consume a message and visibility extender and return the future
      */
-    public LambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                  final QueueProperties queueProperties,
-                                  @SuppressWarnings("unused") final boolean ignoredForTypeErasure,
-                                  final BiConsumer<Message, VisibilityExtender> messageProcessor) {
+    public LambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        @SuppressWarnings("unused") final boolean ignoredForTypeErasure,
+        final BiConsumer<Message, VisibilityExtender> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
 
@@ -89,9 +94,11 @@ public class LambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message, acknowledge and visibility extender and return the future
      */
-    public LambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                  final QueueProperties queueProperties,
-                                  final MessageProcessingFunction messageProcessor) {
+    public LambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final MessageProcessingFunction messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
 
@@ -115,20 +122,26 @@ public class LambdaMessageProcessor implements MessageProcessor {
             return CompletableFuture.completedFuture(null);
         }
 
-        return CompletableFuture.completedFuture(null)
-                .thenAccept((ignored) -> {
+        return CompletableFuture
+            .completedFuture(null)
+            .thenAccept(
+                ignored -> {
                     try {
-                        resolveMessageCallback.get()
-                                .handle((i, throwable) -> {
+                        resolveMessageCallback
+                            .get()
+                            .handle(
+                                (i, throwable) -> {
                                     if (throwable != null) {
                                         log.error("Error resolving successfully processed message", throwable);
                                     }
                                     return null;
-                                });
+                                }
+                            );
                     } catch (final RuntimeException runtimeException) {
                         log.error("Failed to trigger message resolving", runtimeException);
                     }
-                });
+                }
+            );
     }
 
     /**

@@ -7,15 +7,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.ProxyMethodInterceptor;
-import org.junit.jupiter.api.Test;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("checkstyle:TypeName")
 public class AnnotationUtils_ParameterAnnotationsTest {
+
     @Test
     public void parameterAnnotationsCanBeFoundOnBaseClasses() {
         // arrange
@@ -23,7 +23,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -36,7 +38,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -49,7 +53,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -62,7 +68,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -75,7 +83,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -88,7 +98,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(object), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(object),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -102,7 +114,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(proxyObject), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(proxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -116,7 +130,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(proxyObject), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(proxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -131,12 +147,13 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(secondLevelProxyObject), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(secondLevelProxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
     }
-
 
     @Test
     public void multipleLevelsOfProxyingForMethodWithNoParameterAnnotationReturnsEmptyOptional() {
@@ -147,7 +164,9 @@ public class AnnotationUtils_ParameterAnnotationsTest {
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(secondLevelProxyObject), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(secondLevelProxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -158,11 +177,16 @@ public class AnnotationUtils_ParameterAnnotationsTest {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
-        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(proxyObject, ExtendedMyClassWithOverride.class);
+        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(
+            proxyObject,
+            ExtendedMyClassWithOverride.class
+        );
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithAnnotation(secondLevelProxyObject), ParameterAnnotation.class);
+            getMethodParameterWithAnnotation(secondLevelProxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -173,11 +197,16 @@ public class AnnotationUtils_ParameterAnnotationsTest {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
-        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(proxyObject, ExtendedMyClassWithOverride.class);
+        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(
+            proxyObject,
+            ExtendedMyClassWithOverride.class
+        );
 
         // act
         final Optional<ParameterAnnotation> annotation = AnnotationUtils.findParameterAnnotation(
-                getMethodParameterWithoutAnnotation(secondLevelProxyObject), ParameterAnnotation.class);
+            getMethodParameterWithoutAnnotation(secondLevelProxyObject),
+            ParameterAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -199,24 +228,23 @@ public class AnnotationUtils_ParameterAnnotationsTest {
             throw new RuntimeException(noSuchMethodException);
         }
 
-        return DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[parameterIndex])
-                .parameterIndex(parameterIndex)
-                .build();
+        return DefaultMethodParameter
+            .builder()
+            .method(method)
+            .parameter(method.getParameters()[parameterIndex])
+            .parameterIndex(parameterIndex)
+            .build();
     }
 
     static class MyClass {
-        public void method(@ParameterAnnotation final String parameter, final String secondParameter) {
 
-        }
+        public void method(@ParameterAnnotation final String parameter, final String secondParameter) {}
     }
 
-    private static class ExtendedMyClass extends MyClass {
-
-    }
+    private static class ExtendedMyClass extends MyClass {}
 
     static class ExtendedMyClassWithOverride extends MyClass {
+
         @Override
         public void method(final String parameter, final String secondParameter) {
             super.method(parameter, secondParameter);
@@ -226,6 +254,5 @@ public class AnnotationUtils_ParameterAnnotationsTest {
     @Retention(RUNTIME)
     @Target(PARAMETER)
     @interface ParameterAnnotation {
-
     }
 }

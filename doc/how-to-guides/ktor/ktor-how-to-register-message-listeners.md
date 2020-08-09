@@ -45,12 +45,12 @@ To make sure the message listener is gracefully shutdown when the web server is 
 attach to a `ShutdownHook`:
 
 ```kotlin
-    val server = embeddedServer(Netty, 8080) {
-       // setup message listeners here
-    }
-    server.start()
-    Runtime.getRuntime().addShutdownHook(Thread {
-        server.stop(1, 30_000)
-    })
-    Thread.currentThread().join()
+val server = embeddedServer(Netty, 8080) {
+   // setup message listeners here
+}
+server.start()
+Runtime.getRuntime().addShutdownHook(Thread {
+    server.stop(1, 30_000)
+})
+Thread.currentThread().join()
 ```

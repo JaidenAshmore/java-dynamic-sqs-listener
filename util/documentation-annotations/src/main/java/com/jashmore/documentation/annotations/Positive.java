@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * Indicates that the field, return value, etc should return a number that is positive.
  */
 @Documented
-@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
+@Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE })
 @Retention(SOURCE)
 public @interface Positive {
 }

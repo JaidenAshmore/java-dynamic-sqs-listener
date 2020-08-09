@@ -23,6 +23,9 @@ import com.jashmore.sqs.examples.latency.LatencyAppliedSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
+import javax.jms.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
@@ -41,10 +44,6 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
-import java.util.concurrent.ExecutionException;
-import java.util.stream.IntStream;
-import javax.jms.Session;
-
 /**
  * Configuration for each of the types of SQS Listeners that are available, as well as setting up the messages to be
  * processed.
@@ -54,6 +53,7 @@ import javax.jms.Session;
 @Slf4j
 @Configuration
 public class SqsListenersConfiguration {
+
     /**
      * Builds a in memory ElasticMQ SQS Server.
      *
@@ -62,10 +62,7 @@ public class SqsListenersConfiguration {
     @Bean
     public SQSRestServer sqsRestServer() {
         log.info("Starting Local ElasticMQ SQS Server");
-        return SQSRestServerBuilder
-                .withInterface("localhost")
-                .withDynamicPort()
-                .start();
+        return SQSRestServerBuilder.withInterface("localhost").withDynamicPort().start();
     }
 
     /**
@@ -78,7 +75,8 @@ public class SqsListenersConfiguration {
     @Bean
     public SqsAsyncClient sqsAsyncClient(SQSRestServer sqsRestServer) throws Exception {
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        final LocalSqsAsyncClient localSqsAsyncClient = new LocalSqsAsyncClientImpl(SqsQueuesConfig
+        final LocalSqsAsyncClient localSqsAsyncClient = new LocalSqsAsyncClientImpl(
+            SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(JMS_10_QUEUE_NAME).build())
@@ -88,7 +86,8 @@ public class SqsListenersConfiguration {
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(PREFETCHING_30_QUEUE_NAME).build())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_10_QUEUE_NAME).build())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_LISTENER_30_QUEUE_NAME).build())
-                .build());
+                .build()
+        );
 
         sendMessagesToQueue(localSqsAsyncClient);
 
@@ -106,12 +105,15 @@ public class SqsListenersConfiguration {
     public AmazonSQSAsync amazonSqs(SQSRestServer sqsRestServer, @SuppressWarnings("unused") SqsAsyncClient ignored) {
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
 
-        return new LatencyAppliedAmazonSqsAsync(AmazonSQSAsyncClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                        "http://localhost:" + serverBinding.localAddress().getPort(), "localstack")
+        return new LatencyAppliedAmazonSqsAsync(
+            AmazonSQSAsyncClientBuilder
+                .standard()
+                .withEndpointConfiguration(
+                    new AwsClientBuilder.EndpointConfiguration("http://localhost:" + serverBinding.localAddress().getPort(), "localstack")
                 )
                 .withCredentials(new AWSStaticCredentialsProvider(new com.amazonaws.auth.BasicAWSCredentials("X", "X")))
-                .build());
+                .build()
+        );
     }
 
     // Spring Cloud AWS Beans
@@ -127,7 +129,10 @@ public class SqsListenersConfiguration {
      * @return the container for this library
      */
     @Bean
-    public SimpleMessageListenerContainer simpleMessageListenerContainer(AmazonSQSAsync amazonSqs, QueueMessageHandler queueMessageHandler) {
+    public SimpleMessageListenerContainer simpleMessageListenerContainer(
+        AmazonSQSAsync amazonSqs,
+        QueueMessageHandler queueMessageHandler
+    ) {
         final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setMaxNumberOfMessages(10);
         container.setAmazonSqs(amazonSqs);
@@ -161,8 +166,10 @@ public class SqsListenersConfiguration {
      * @return the JMS container factory used
      */
     @Bean
-    public JmsListenerContainerFactory<DefaultMessageListenerContainer> jmsListenerContainerFactory(final AmazonSQSAsync amazonSqs,
-                                                                                                    final ProviderConfiguration providerConfiguration) {
+    public JmsListenerContainerFactory<DefaultMessageListenerContainer> jmsListenerContainerFactory(
+        final AmazonSQSAsync amazonSqs,
+        final ProviderConfiguration providerConfiguration
+    ) {
         final DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(new SQSConnectionFactory(providerConfiguration, amazonSqs));
         factory.setDestinationResolver(new DynamicDestinationResolver());
@@ -178,15 +185,17 @@ public class SqsListenersConfiguration {
             final int base = i;
 
             final SendMessageBatchRequest.Builder batchRequestBuilder = SendMessageBatchRequest.builder().queueUrl(queueUrl);
-            batchRequestBuilder.entries(IntStream.range(0, 10)
-                    .mapToObj(index -> {
-                        final String messageId = "" + (base + index);
-                        return SendMessageBatchRequestEntry.builder()
-                                .id(messageId)
-                                .messageBody(messageId)
-                                .build();
-                    })
-                    .collect(toSet()));
+            batchRequestBuilder.entries(
+                IntStream
+                    .range(0, 10)
+                    .mapToObj(
+                        index -> {
+                            final String messageId = "" + (base + index);
+                            return SendMessageBatchRequestEntry.builder().id(messageId).messageBody(messageId).build();
+                        }
+                    )
+                    .collect(toSet())
+            );
             log.info("Put 10 messages onto queue");
             try {
                 sqsAsyncClient.sendMessageBatch(batchRequestBuilder.build()).get();

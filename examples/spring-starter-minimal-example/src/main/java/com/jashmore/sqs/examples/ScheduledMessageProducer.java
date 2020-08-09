@@ -18,11 +18,7 @@ public class ScheduledMessageProducer {
 
     @Scheduled(fixedRate = 1_000)
     public void sendMessageToQueue() throws Exception {
-        String queueUrl = sqsAsyncClient.getQueueUrl(builder ->
-                builder.queueName("myQueueName"))
-                .get()
-                .queueUrl();
-        sqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrl)
-                .messageBody("hello world!"));
+        String queueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("myQueueName")).get().queueUrl();
+        sqsAsyncClient.sendMessage(builder -> builder.queueUrl(queueUrl).messageBody("hello world!"));
     }
 }

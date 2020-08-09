@@ -1,11 +1,10 @@
 package com.jashmore.sqs.spring.queue;
 
+import java.util.concurrent.ExecutionException;
 import lombok.AllArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * Default implementation that uses the {@link Environment} to resolve the placeholders in a string and from that either
@@ -25,7 +24,7 @@ public class DefaultQueueResolver implements QueueResolver {
         }
 
         try {
-            return sqsAsyncClient.getQueueUrl((builder) -> builder.queueName(resolvedQueueNameOrUrl)).get().queueUrl();
+            return sqsAsyncClient.getQueueUrl(builder -> builder.queueName(resolvedQueueNameOrUrl)).get().queueUrl();
         } catch (ExecutionException executionException) {
             throw new QueueResolutionException(executionException.getCause());
         } catch (InterruptedException interruptedException) {

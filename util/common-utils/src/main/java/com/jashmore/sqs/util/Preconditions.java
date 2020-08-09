@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Preconditions {
+
     /**
      * Make sure that the given value is not null, otherwise throw a {@link NullPointerException} with the provided error message.
      *

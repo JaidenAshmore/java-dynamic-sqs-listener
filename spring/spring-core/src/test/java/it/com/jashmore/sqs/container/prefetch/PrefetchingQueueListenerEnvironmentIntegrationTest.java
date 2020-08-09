@@ -7,6 +7,11 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,14 +22,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
-
 @Slf4j
-@SpringBootTest(classes = {PrefetchingQueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { PrefetchingQueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 class PrefetchingQueueListenerEnvironmentIntegrationTest {
     private static final String QUEUE_NAME = "PrefetchingQueueListenerIntegrationTest";
@@ -37,6 +36,7 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -44,6 +44,7 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @SuppressWarnings("unused")
             @PrefetchingQueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {
@@ -56,11 +57,14 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
     @Test
     void allMessagesAreProcessedByListeners() throws InterruptedException, ExecutionException, TimeoutException {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(index -> {
+        IntStream
+            .range(0, NUMBER_OF_MESSAGES_TO_SEND)
+            .forEach(
+                index -> {
                     log.info("Sending message: " + index);
                     localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + index);
-                });
+                }
+            );
 
         // act
         // Wait the visibility timeout to make sure that all messages were processed and deleted from the queue

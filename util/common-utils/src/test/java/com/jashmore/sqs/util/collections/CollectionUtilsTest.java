@@ -5,16 +5,16 @@ import static com.jashmore.sqs.util.collections.CollectionUtils.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Arrays;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
 
 class CollectionUtilsTest {
 
     @SuppressWarnings("ConstantConditions")
     @Nested
     class ImmutableList {
+
         @Test
         void singleElementWillCreateListWithElement() {
             assertThat(immutableListOf("one")).containsExactly("one");
@@ -68,13 +68,15 @@ class CollectionUtilsTest {
         @Test
         void multipleListsCanBeMergedTogetherToImmutableList() {
             assertThat(immutableListFrom(Arrays.asList("one", "two"), Arrays.asList("three", "four", "five")))
-                    .containsExactly("one", "two", "three", "four", "five");
+                .containsExactly("one", "two", "three", "four", "five");
         }
 
         @Test
         void multipleListsWillBeImmutable() {
-            assertThrows(UnsupportedOperationException.class,
-                    () -> immutableListFrom(Arrays.asList("one", "two"), Arrays.asList("three", "four", "five")).add("new"));
+            assertThrows(
+                UnsupportedOperationException.class,
+                () -> immutableListFrom(Arrays.asList("one", "two"), Arrays.asList("three", "four", "five")).add("new")
+            );
         }
     }
 }

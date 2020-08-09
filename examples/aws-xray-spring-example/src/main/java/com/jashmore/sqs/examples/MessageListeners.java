@@ -3,12 +3,11 @@ package com.jashmore.sqs.examples;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Entity;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
+import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
@@ -25,17 +24,19 @@ public class MessageListeners {
     public CompletableFuture<Void> sqsListener(final Message message) {
         final Entity currentTraceEntity = AWSXRay.getTraceEntity();
         log.info("Segment ID: {}", AWSXRay.getCurrentSegment().getTraceId());
-        return CompletableFuture.runAsync(() -> {
-            AWSXRay.setTraceEntity(currentTraceEntity);
-            try {
-                someService.someMethod();
-            } catch (final InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(interruptedException);
-            } finally {
-                log.info("Done");
-                AWSXRay.clearTraceEntity();
+        return CompletableFuture.runAsync(
+            () -> {
+                AWSXRay.setTraceEntity(currentTraceEntity);
+                try {
+                    someService.someMethod();
+                } catch (final InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(interruptedException);
+                } finally {
+                    log.info("Done");
+                    AWSXRay.clearTraceEntity();
+                }
             }
-        });
+        );
     }
 }

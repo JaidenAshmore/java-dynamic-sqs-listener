@@ -8,33 +8,38 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.jashmore.sqs.extensions.registry.ConsumerSchemaRetrieverException;
 import com.jashmore.sqs.extensions.registry.model.Author;
 import com.jashmore.sqs.extensions.registry.model.Book;
+import java.util.Arrays;
 import org.apache.avro.Schema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
-import java.util.Arrays;
-
 class AvroClasspathConsumerSchemaRetrieverTest {
+
     @Nested
     class SchemaParsing {
+
         @Test
         void creatingSchemaForResourceThatDoesNotExistThrowsException() {
-            final AvroSchemaProcessingException exception = assertThrows(AvroSchemaProcessingException.class, () -> new AvroClasspathConsumerSchemaRetriever(
-                    singletonList(new ClassPathResource("unknown/schema.avsc")),
-                    emptyList()
-            ));
+            final AvroSchemaProcessingException exception = assertThrows(
+                AvroSchemaProcessingException.class,
+                () -> new AvroClasspathConsumerSchemaRetriever(singletonList(new ClassPathResource("unknown/schema.avsc")), emptyList())
+            );
 
             assertThat(exception).hasMessage("Error processing schema definition: schema.avsc");
         }
 
         @Test
         void schemaThatHasNotHadTheJavaFileGeneratedWillReturnError() {
-            final AvroSchemaProcessingException exception = assertThrows(AvroSchemaProcessingException.class, () -> new AvroClasspathConsumerSchemaRetriever(
-                    singletonList(new ClassPathResource("avro-non-generated-test-schemas/non-built-schema.avsc")),
-                    emptyList()
-            ));
+            final AvroSchemaProcessingException exception = assertThrows(
+                AvroSchemaProcessingException.class,
+                () ->
+                    new AvroClasspathConsumerSchemaRetriever(
+                        singletonList(new ClassPathResource("avro-non-generated-test-schemas/non-built-schema.avsc")),
+                        emptyList()
+                    )
+            );
 
             assertThat(exception).hasMessage("Could not find class for schema: com.jashmore.sqs.extensions.registry.model.NonBuiltSchema");
         }
@@ -42,17 +47,27 @@ class AvroClasspathConsumerSchemaRetrieverTest {
         @Test
         void duplicateSchemaDefinitionsAreIgnored() {
             new AvroClasspathConsumerSchemaRetriever(
-                    Arrays.asList(new ClassPathResource("avro-test-schemas/import/author.avsc"), new ClassPathResource("avro-test-schemas/import/author.avsc")),
-                    Arrays.asList(new ClassPathResource("avro-test-schemas/schema/book.avsc"), new ClassPathResource("avro-test-schemas/schema/book.avsc"))
+                Arrays.asList(
+                    new ClassPathResource("avro-test-schemas/import/author.avsc"),
+                    new ClassPathResource("avro-test-schemas/import/author.avsc")
+                ),
+                Arrays.asList(
+                    new ClassPathResource("avro-test-schemas/schema/book.avsc"),
+                    new ClassPathResource("avro-test-schemas/schema/book.avsc")
+                )
             );
         }
 
         @Test
         void missingDependentSchemasWillThrowExceptionInParsing() {
-            final AvroSchemaProcessingException exception = assertThrows(AvroSchemaProcessingException.class, () -> new AvroClasspathConsumerSchemaRetriever(
-                    emptyList(),
-                    singletonList(new ClassPathResource("avro-test-schemas/schema/book.avsc"))
-            ));
+            final AvroSchemaProcessingException exception = assertThrows(
+                AvroSchemaProcessingException.class,
+                () ->
+                    new AvroClasspathConsumerSchemaRetriever(
+                        emptyList(),
+                        singletonList(new ClassPathResource("avro-test-schemas/schema/book.avsc"))
+                    )
+            );
 
             assertThat(exception).hasMessage("Error processing schema definition: book.avsc");
         }
@@ -64,10 +79,11 @@ class AvroClasspathConsumerSchemaRetrieverTest {
 
         @BeforeEach
         void setUp() {
-            avroClasspathConsumerSchemaRetriever = new AvroClasspathConsumerSchemaRetriever(
+            avroClasspathConsumerSchemaRetriever =
+                new AvroClasspathConsumerSchemaRetriever(
                     singletonList(new ClassPathResource("avro-test-schemas/import/author.avsc")),
                     singletonList(new ClassPathResource("avro-test-schemas/schema/book.avsc"))
-            );
+                );
         }
 
         @Test

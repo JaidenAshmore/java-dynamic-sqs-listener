@@ -13,11 +13,10 @@ import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import org.springframework.core.env.Environment;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import org.springframework.core.env.Environment;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * Wrap a method with a {@link MessageListenerContainer} that will execute the method whenever a message is received on the provided queue.

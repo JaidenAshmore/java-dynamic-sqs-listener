@@ -11,16 +11,22 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * Argument resolver for parameters annotated with the {@link MessageId} annotation.
  */
 public class MessageIdArgumentResolver implements ArgumentResolver<String> {
+
     @Override
     public boolean canResolveParameter(final MethodParameter methodParameter) {
-        return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                && AnnotationUtils.findParameterAnnotation(methodParameter, MessageId.class).isPresent();
+        return (
+            methodParameter.getParameter().getType().isAssignableFrom(String.class) &&
+            AnnotationUtils.findParameterAnnotation(methodParameter, MessageId.class).isPresent()
+        );
     }
 
     @Override
-    public String resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
+    public String resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
         return message.messageId();
     }
 }

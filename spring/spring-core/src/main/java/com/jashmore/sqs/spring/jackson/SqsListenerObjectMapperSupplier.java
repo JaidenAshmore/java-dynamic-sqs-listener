@@ -1,7 +1,6 @@
 package com.jashmore.sqs.spring.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.function.Supplier;
 
 /**
@@ -12,6 +11,4 @@ import java.util.function.Supplier;
  * {@link ObjectMapper}. We don't want this library's {@link ObjectMapper} to override the default Spring Boot one unintentionally.
  */
 @FunctionalInterface
-public interface SqsListenerObjectMapperSupplier extends Supplier<ObjectMapper> {
-
-}
+public interface SqsListenerObjectMapperSupplier extends Supplier<ObjectMapper> {}

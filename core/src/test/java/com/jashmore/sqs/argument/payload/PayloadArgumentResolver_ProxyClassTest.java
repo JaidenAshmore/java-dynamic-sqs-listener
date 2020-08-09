@@ -5,18 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.jashmore.sqs.argument.DefaultMethodParameter;
 import com.jashmore.sqs.argument.payload.mapper.PayloadMapper;
 import com.jashmore.sqs.util.ProxyMethodInterceptor;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Method;
-
 @SuppressWarnings("checkstyle:TypeName")
 @ExtendWith(MockitoExtension.class)
 class PayloadArgumentResolver_ProxyClassTest {
-
     @Mock
     private PayloadMapper payloadMapper;
 
@@ -35,11 +33,9 @@ class PayloadArgumentResolver_ProxyClassTest {
         final Method method = proxyFoo.getClass().getMethod("processMessage", String.class, String.class);
 
         // act
-        final boolean canResolveParameterForProxiedMethod = payloadArgumentResolver.canResolveParameter(DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[0])
-                .parameterIndex(0)
-                .build());
+        final boolean canResolveParameterForProxiedMethod = payloadArgumentResolver.canResolveParameter(
+            DefaultMethodParameter.builder().method(method).parameter(method.getParameters()[0]).parameterIndex(0).build()
+        );
 
         // assert
         assertThat(canResolveParameterForProxiedMethod).isTrue();
@@ -53,20 +49,17 @@ class PayloadArgumentResolver_ProxyClassTest {
         final Method method = proxyFoo.getClass().getMethod("processMessage", String.class, String.class);
 
         // act
-        final boolean canResolveParameterForProxiedMethod = payloadArgumentResolver.canResolveParameter(DefaultMethodParameter.builder()
-                .method(method)
-                .parameter(method.getParameters()[1])
-                .parameterIndex(1)
-                .build());
+        final boolean canResolveParameterForProxiedMethod = payloadArgumentResolver.canResolveParameter(
+            DefaultMethodParameter.builder().method(method).parameter(method.getParameters()[1]).parameterIndex(1).build()
+        );
 
         // assert
         assertThat(canResolveParameterForProxiedMethod).isFalse();
     }
 
-    @SuppressWarnings( {"unused", "WeakerAccess"})
+    @SuppressWarnings({ "unused", "WeakerAccess" })
     public static class Foo {
-        public void processMessage(@Payload final String payload, final String otherArgument) {
 
-        }
+        public void processMessage(@Payload final String payload, final String otherArgument) {}
     }
 }

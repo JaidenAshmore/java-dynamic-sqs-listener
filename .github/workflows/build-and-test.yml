@@ -3,30 +3,32 @@ name: Build and Test
 on: [push, pull_request] # pull_request needed for coveralls
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js 12.x
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12.x
-    - name: Markdown Linting
-      run: bin/markdown-linting.sh
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Build with Gradle
-      uses: eskatos/gradle-command-action@v1
-      env:
-        CI: true
-      with:
-        arguments: build
-    - name: Coverage Report
-      uses: eskatos/gradle-command-action@v1
-      env:
-        CI: true
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      with:
-        arguments: jacocoRootReport coveralls
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Install Yarn
+              uses: borales/actions-yarn@v2.0.0
+              with:
+                  cmd: install
+            - name: Markdown link checks and code formatting
+              uses: borales/actions-yarn@v2.0.0
+              with:
+                  cmd: test
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                  java-version: 1.8
+            - name: Build with Gradle
+              uses: eskatos/gradle-command-action@v1
+              env:
+                  CI: true
+              with:
+                  arguments: build
+            - name: Coverage Report
+              uses: eskatos/gradle-command-action@v1
+              env:
+                  CI: true
+                  COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+              with:
+                  arguments: jacocoRootReport coveralls

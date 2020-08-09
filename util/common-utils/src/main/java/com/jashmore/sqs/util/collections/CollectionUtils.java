@@ -1,12 +1,11 @@
 package com.jashmore.sqs.util.collections;
 
-import lombok.experimental.UtilityClass;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
 /**
  * Collection helper functions that can be used instead of having a Guava dependency.

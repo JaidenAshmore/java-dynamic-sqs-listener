@@ -1,12 +1,11 @@
 package com.jashmore.sqs.util.properties;
 
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Class that provides helper methods for dealing with the properties of the core components, e.g. by providing safety methods for getting default property
@@ -15,6 +14,7 @@ import java.util.function.Supplier;
 @Slf4j
 @UtilityClass
 public class PropertyUtils {
+
     /**
      * Safely get a long value by returning a default value if there was an error getting the value or the value is null.
      *
@@ -83,7 +83,11 @@ public class PropertyUtils {
      * @param defaultValue  the default value if the supplier throws an exception or is null
      * @return the int value for this property
      */
-    public int safelyGetPositiveOrZeroIntegerValue(final String propertyName, final Supplier<Integer> valueSupplier, final int defaultValue) {
+    public int safelyGetPositiveOrZeroIntegerValue(
+        final String propertyName,
+        final Supplier<Integer> valueSupplier,
+        final int defaultValue
+    ) {
         return safelyGetValue(propertyName, valueSupplier, defaultValue, aInteger -> aInteger >= 0);
     }
 
@@ -95,27 +99,34 @@ public class PropertyUtils {
      * @param defaultValue  the default duration
      * @return the duration for the property
      */
-    public Duration safelyGetPositiveOrZeroDuration(final String propertyName,
-                                                    final Supplier<Duration> valueSupplier,
-                                                    final Duration defaultValue) {
-        return safelyGetValue(propertyName, valueSupplier, defaultValue, (duration) -> !duration.isNegative());
+    public Duration safelyGetPositiveOrZeroDuration(
+        final String propertyName,
+        final Supplier<Duration> valueSupplier,
+        final Duration defaultValue
+    ) {
+        return safelyGetValue(propertyName, valueSupplier, defaultValue, duration -> !duration.isNegative());
     }
 
-    private <T> T safelyGetValue(final String propertyName,
-                                 final Supplier<T> valueSupplier,
-                                 final T defaultValue,
-                                 final Predicate<T> valueValidator) {
+    private <T> T safelyGetValue(
+        final String propertyName,
+        final Supplier<T> valueSupplier,
+        final T defaultValue,
+        final Predicate<T> valueValidator
+    ) {
         try {
-            return Optional.ofNullable(valueSupplier.get())
-                    .filter(value -> {
+            return Optional
+                .ofNullable(valueSupplier.get())
+                .filter(
+                    value -> {
                         if (!valueValidator.test(value)) {
                             log.error("Invalid value {} for property {} returning default value {}", value, propertyName, defaultValue);
                             return false;
                         }
 
                         return true;
-                    })
-                    .orElse(defaultValue);
+                    }
+                )
+                .orElse(defaultValue);
         } catch (final RuntimeException throwable) {
             log.error("Error obtaining Property value {} returning default value {}", propertyName, defaultValue, throwable);
             return defaultValue;

@@ -2,13 +2,13 @@ package com.jashmore.sqs.util.concurrent;
 
 import static java.util.stream.Collectors.toList;
 
-import lombok.experimental.UtilityClass;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class CompletableFutureUtils {
+
     /**
      * Creates a new {@link CompletableFuture} that is completed exceptionally with the provided {@link Throwable}.
      *
@@ -30,9 +30,8 @@ public class CompletableFutureUtils {
      * @return a future that will complete if all futures are completed successfully
      */
     public <T> CompletableFuture<List<T>> allOf(final List<CompletableFuture<T>> futures) {
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]))
-                .thenApply((ignored) -> futures.stream()
-                        .map(CompletableFuture::join)
-                        .collect(toList()));
+        return CompletableFuture
+            .allOf(futures.toArray(new CompletableFuture<?>[0]))
+            .thenApply(ignored -> futures.stream().map(CompletableFuture::join).collect(toList()));
     }
 }

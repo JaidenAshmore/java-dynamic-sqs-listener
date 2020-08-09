@@ -7,6 +7,8 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -21,10 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-@SpringBootTest(classes = {ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 @Slf4j
 class ProxyBeanQueueListenerResolutionIntegrationTest {
@@ -38,6 +37,7 @@ class ProxyBeanQueueListenerResolutionIntegrationTest {
     @SpringBootApplication
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -46,7 +46,10 @@ class ProxyBeanQueueListenerResolutionIntegrationTest {
         @Aspect
         @Component
         public static class TestingAspect {
-            @After("execution(* it.com.jashmore.sqs.proxy.ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.MessageListener.*(..))")
+
+            @After(
+                "execution(* it.com.jashmore.sqs.proxy.ProxyBeanQueueListenerResolutionIntegrationTest.TestConfig.MessageListener.*(..))"
+            )
             public void wrapMethod() {
                 proxiedTestMethodCompleted.countDown();
             }
@@ -54,6 +57,7 @@ class ProxyBeanQueueListenerResolutionIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @QueueListener(value = QUEUE_NAME)
             public void listenToMessage(@Payload final String payload) {
                 log.info("Message received: {}", payload);

@@ -5,14 +5,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.util.ProxyMethodInterceptor;
-import org.junit.jupiter.api.Test;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("checkstyle:TypeName")
 class AnnotationUtils_MethodAnnotationsTest {
+
     @Test
     void methodAnnotationsCanBeFoundOnBaseClasses() throws Exception {
         // arrange
@@ -20,7 +20,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -33,7 +35,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -46,7 +50,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -59,7 +65,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("otherMethodWithoutAnnotation", String.class), MethodAnnotation.class);
+            object.getClass().getMethod("otherMethodWithoutAnnotation", String.class),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -72,7 +80,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("otherMethodWithAnnotation", String.class), MethodAnnotation.class);
+            object.getClass().getMethod("otherMethodWithAnnotation", String.class),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -85,7 +95,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -98,7 +110,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -111,7 +125,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                object.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            object.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -125,7 +141,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                proxyObject.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            proxyObject.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -139,7 +157,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                proxyObject.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            proxyObject.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -154,12 +174,13 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                secondLevelProxyObject.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            secondLevelProxyObject.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
     }
-
 
     @Test
     void multipleLevelsOfProxyingForMethodWithNoAnnotationReturnsEmptyOptional() throws Exception {
@@ -170,7 +191,9 @@ class AnnotationUtils_MethodAnnotationsTest {
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                secondLevelProxyObject.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            secondLevelProxyObject.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
@@ -181,11 +204,16 @@ class AnnotationUtils_MethodAnnotationsTest {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
-        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(proxyObject, ExtendedMyClassWithOverride.class);
+        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(
+            proxyObject,
+            ExtendedMyClassWithOverride.class
+        );
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                secondLevelProxyObject.getClass().getMethod("methodWithAnnotation"), MethodAnnotation.class);
+            secondLevelProxyObject.getClass().getMethod("methodWithAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isPresent();
@@ -196,40 +224,40 @@ class AnnotationUtils_MethodAnnotationsTest {
         // arrange
         final ExtendedMyClassWithOverride object = new ExtendedMyClassWithOverride();
         final ExtendedMyClassWithOverride proxyObject = ProxyMethodInterceptor.wrapObject(object, ExtendedMyClassWithOverride.class);
-        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(proxyObject, ExtendedMyClassWithOverride.class);
+        final ExtendedMyClassWithOverride secondLevelProxyObject = ProxyMethodInterceptor.wrapObject(
+            proxyObject,
+            ExtendedMyClassWithOverride.class
+        );
 
         // act
         final Optional<MethodAnnotation> annotation = AnnotationUtils.findMethodAnnotation(
-                secondLevelProxyObject.getClass().getMethod("methodWithoutAnnotation"), MethodAnnotation.class);
+            secondLevelProxyObject.getClass().getMethod("methodWithoutAnnotation"),
+            MethodAnnotation.class
+        );
 
         // assert
         assertThat(annotation).isEmpty();
     }
 
     static class MyClass {
+
         @MethodAnnotation
-        public void methodWithAnnotation() {
+        public void methodWithAnnotation() {}
 
-        }
-
-        public void methodWithoutAnnotation() {
-
-        }
+        public void methodWithoutAnnotation() {}
     }
 
-    @SuppressWarnings( {"WeakerAccess", "unused"})
+    @SuppressWarnings({ "WeakerAccess", "unused" })
     private static class ExtendedMyClass extends MyClass {
+
         @MethodAnnotation
-        public void otherMethodWithAnnotation(final String payload) {
+        public void otherMethodWithAnnotation(final String payload) {}
 
-        }
-
-        public void otherMethodWithoutAnnotation(final String payload) {
-
-        }
+        public void otherMethodWithoutAnnotation(final String payload) {}
     }
 
     static class ExtendedMyClassWithOverride extends MyClass {
+
         @Override
         public void methodWithAnnotation() {
             super.methodWithAnnotation();
@@ -244,6 +272,5 @@ class AnnotationUtils_MethodAnnotationsTest {
     @Retention(RUNTIME)
     @Target(METHOD)
     @interface MethodAnnotation {
-
     }
 }

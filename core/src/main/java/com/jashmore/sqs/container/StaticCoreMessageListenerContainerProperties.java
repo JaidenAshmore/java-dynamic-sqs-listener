@@ -2,10 +2,9 @@ package com.jashmore.sqs.container;
 
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.PositiveOrZero;
+import java.time.Duration;
 import lombok.Builder;
 import lombok.Value;
-
-import java.time.Duration;
 
 @Value
 @Builder(toBuilder = true)

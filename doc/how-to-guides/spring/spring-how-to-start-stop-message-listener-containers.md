@@ -14,10 +14,9 @@ The core queue listener annotations provide a field that can be set for the iden
 
 ```java
 public class MyClass {
-    @QueueListener(value="myQueueName", identifier="my-identifier")
-    public void messageHandler(@Payload String payload) {
 
-    }
+    @QueueListener(value = "myQueueName", identifier = "my-identifier")
+    public void messageHandler(@Payload String payload) {}
 }
 ```
 
@@ -28,10 +27,9 @@ the message listener will automatically set `my-class-message-handler` as the id
 
 ```java
 public class MyClass {
-    @QueueListener(value="myQueueName")
-    public void messageHandler(@Payload String payload) {
 
-    }
+    @QueueListener(value = "myQueueName")
+    public void messageHandler(@Payload String payload) {}
 }
 ```
 

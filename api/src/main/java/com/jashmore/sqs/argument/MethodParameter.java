@@ -1,7 +1,6 @@
 package com.jashmore.sqs.argument;
 
 import com.jashmore.documentation.annotations.PositiveOrZero;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 

@@ -5,35 +5,22 @@ assume that you are using IntelliJ for your IDE.
 
 ## Steps
 
-*Note these steps were written using IntelliJ 2017.1 so the steps may be different for you.*
+_Note these steps are for IntelliJ 2017.1, so the steps may be different for you._
 
 1. Open the project in IntelliJ.
 1. Install the Lombok Plugin in IntelliJ.
-```IntelliJ IDEA -> Preferences -> Plugins -> Browse Repositories -> Search Lombok -> Install```
-1. Install the Checkstyle Plugin in IntelliJ
-```IntelliJ IDEA -> Preferences -> Plugins -> Browse Repositories -> Search Checkstyle -> Install```
+   `IntelliJ IDEA -> Preferences -> Plugins -> Browse Repositories -> Search Lombok -> Install`
+1. Install the Prettier Plugin in IntelliJ
+   `IntelliJ IDEA -> Preferences -> Plugins -> Browse Repositories -> Search Prettier -> Install`
+1. Configure the prettier plugin to run on all files `{**/*,*}.*` and to run on code format
 1. Enable Annotation Processing
-```Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable Annotation Processing```
-1. Add the checkstyle as the code style in the project.
-    1. Go to the Checkstyle screen
-    ```IntelliJ IDEA -> Preferences -> Other Settings -> Checkstyle```
-    1. Update the Checkstyle version to `6.19`
-    1. Load the Checkstyle in this project by clicking the `+` and choosing
-    [configuration/checkstyle/google_6_18_checkstyle.xml](../../configuration/checkstyle/google_6_18_checkstyle.xml)
-    1. Update the code style for Java to use this checkstyle file as well:
-    ```IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> Code next to Schema -> Import Schema -> Checkstyle configuration```
-1. Disable JavaDoc formatting. I could never get it working correctly with the checkstyle above.
-```IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> JavaDoc -> Disable JavaDoc Styling```
-1. For some reason the imports in the code style doesn't work correctly. Updating the Import layout for the Java
-code style:
-```IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> Imports``` to be
+   `Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable Annotation Processing`
+1. Update the Import layout for the Java code style:
+   `IntelliJ IDEA -> Preferences -> Editor -> Code Style -> Java -> Imports` to be
 
 ```text
 import static all other imports
 <blank line>
 import all other imports
-<blank line>
-import java.*
-import javax.*
 <blank line>
 ```

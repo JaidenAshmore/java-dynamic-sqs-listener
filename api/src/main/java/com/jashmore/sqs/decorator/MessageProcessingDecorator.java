@@ -4,9 +4,8 @@ import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.concurrent.CompletableFuture;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Used to decorate the thread that will be used to process the given message.
@@ -25,9 +24,7 @@ public interface MessageProcessingDecorator {
      * @param context details about the message processing functionality, e.g. identifier for this message processor
      * @param message the message being processed
      */
-    default void onPreMessageProcessing(MessageProcessingContext context, Message message) {
-
-    }
+    default void onPreMessageProcessing(MessageProcessingContext context, Message message) {}
 
     /**
      * Method called when the processing of the message has failed.
@@ -46,9 +43,7 @@ public interface MessageProcessingDecorator {
      * @param message   the message being processed
      * @param throwable the exception thrown
      */
-    default void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
-
-    }
+    default void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {}
 
     /**
      * Method called when the message has successfully been processed, but not necessarily that the message is considered a success and will be marked
@@ -65,9 +60,7 @@ public interface MessageProcessingDecorator {
      * @param message the message being processed
      * @param object  the value that was resolved from the message listener function or {@link CompletableFuture}
      */
-    default void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
-
-    }
+    default void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {}
 
     /**
      * Method called when the thread that was used to execute the message listener is done.
@@ -86,9 +79,7 @@ public interface MessageProcessingDecorator {
      * @param context details about the message processing functionality, e.g. identifier for this message processor
      * @param message the message being processed
      */
-    default void onMessageProcessingThreadComplete(MessageProcessingContext context, Message message) {
-
-    }
+    default void onMessageProcessingThreadComplete(MessageProcessingContext context, Message message) {}
 
     /**
      * Method called if the message was successfully processed and the call to resolve the message was successful.
@@ -111,9 +102,7 @@ public interface MessageProcessingDecorator {
      * @param context details about the message processing functionality, e.g. identifier for this message processor
      * @param message the message being processed
      */
-    default void onMessageResolvedSuccess(MessageProcessingContext context, Message message) {
-
-    }
+    default void onMessageResolvedSuccess(MessageProcessingContext context, Message message) {}
 
     /**
      * Method called if the message was successfully processed but the call to resolve the message was unsuccessful.
@@ -137,7 +126,5 @@ public interface MessageProcessingDecorator {
      * @param message   the message being processed
      * @param throwable the exception that was thrown while resolving the message
      */
-    default void onMessageResolvedFailure(MessageProcessingContext context, Message message, Throwable throwable) {
-
-    }
+    default void onMessageResolvedFailure(MessageProcessingContext context, Message message, Throwable throwable) {}
 }

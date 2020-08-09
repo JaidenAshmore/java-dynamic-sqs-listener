@@ -10,6 +10,7 @@ class PreconditionsTest {
 
     @Nested
     class CheckNotNull {
+
         @Test
         @SuppressWarnings("ObviousNullCheck")
         void shouldNotThrowExceptionWhenNonNull() {
@@ -18,16 +19,23 @@ class PreconditionsTest {
 
         @Test
         void shouldThrowExceptionWhenNull() {
-            final NullPointerException exception = assertThrows(NullPointerException.class, () -> Preconditions.checkNotNull(null, "message"));
+            final NullPointerException exception = assertThrows(
+                NullPointerException.class,
+                () -> Preconditions.checkNotNull(null, "message")
+            );
             assertThat(exception).hasMessage("message");
         }
     }
 
     @Nested
     class CheckPositiveOrZero {
+
         @Test
         void shouldThrowIllegalArgumentExceptionWhenNegative() {
-            final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Preconditions.checkPositiveOrZero(-1, "message"));
+            final IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> Preconditions.checkPositiveOrZero(-1, "message")
+            );
             assertThat(exception).hasMessage("message");
         }
 
@@ -44,9 +52,13 @@ class PreconditionsTest {
 
     @Nested
     class CheckArgument {
+
         @Test
         void shouldThrowIllegalArgumentExceptionWhenExpressionIsFalse() {
-            final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Preconditions.checkArgument(false, "message"));
+            final IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> Preconditions.checkArgument(false, "message")
+            );
             assertThat(exception).hasMessage("message");
         }
 

@@ -8,6 +8,10 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,14 +24,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 @SuppressWarnings("unused")
 @Slf4j
-@SpringBootTest(classes = {MessageAttributeSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { MessageAttributeSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 public class MessageAttributeSpringIntegrationTest {
     private static final String QUEUE_NAME = "MessageAttributeSpringIntegrationTest";
@@ -39,6 +38,7 @@ public class MessageAttributeSpringIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -46,6 +46,7 @@ public class MessageAttributeSpringIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @QueueListener(value = QUEUE_NAME)
             public void listenToMessage(@MessageAttribute("key") final String value) {
                 log.info("Obtained message: {}", value);
@@ -58,16 +59,25 @@ public class MessageAttributeSpringIntegrationTest {
     @Test
     public void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
-        localSqsAsyncClient.sendMessage(QUEUE_NAME, SendMessageRequest.builder()
-                .messageBody("message")
-                .messageAttributes(Collections.singletonMap(
-                        "key", MessageAttributeValue.builder()
+        localSqsAsyncClient
+            .sendMessage(
+                QUEUE_NAME,
+                SendMessageRequest
+                    .builder()
+                    .messageBody("message")
+                    .messageAttributes(
+                        Collections.singletonMap(
+                            "key",
+                            MessageAttributeValue
+                                .builder()
                                 .dataType(MessageAttributeDataTypes.STRING.getValue())
                                 .stringValue("value")
                                 .build()
-                ))
-                .build())
-                .get(5, TimeUnit.SECONDS);
+                        )
+                    )
+                    .build()
+            )
+            .get(5, TimeUnit.SECONDS);
 
         // act
         COUNT_DOWN_LATCH.await(20, TimeUnit.SECONDS);

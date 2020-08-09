@@ -2,7 +2,7 @@
 
 The framework uses an
 [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) to build
-the arguments for the method listener execution.  The default core implementation, the
+the arguments for the method listener execution. The default core implementation, the
 [DelegatingArgumentResolverService](../../../core/src/main/java/com/jashmore/sqs/argument/DelegatingArgumentResolverService.java),
 uses [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)s under the hood to resolve
 each type of argument.
@@ -37,17 +37,16 @@ public void messageListener(@UserGroup final String userGroup) {
 ```json
 {
     "payload": {
-         "user": {
-             "group": "admin"
-         }
+        "user": {
+            "group": "admin"
+        }
     }
-    // other fields here
 }
 ```
 
 ## Steps
 
-1. Create a new annotation that indicates that this user group should be extracted.
+1.  Create a new annotation that indicates that this user group should be extracted.
 
     ```java
     @Retention(value = RUNTIME)
@@ -56,8 +55,8 @@ public void messageListener(@UserGroup final String userGroup) {
     }
     ```
 
-1. Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
-interface that will be able to resolve these arguments with those annotations.
+1.  Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
+    interface that will be able to resolve these arguments with those annotations.
 
     ```java
     public class UserGroupArgumentResolver implements ArgumentResolver<String> {
@@ -66,14 +65,15 @@ interface that will be able to resolve these arguments with those annotations.
         @Override
         public boolean canResolveParameter(MethodParameter methodParameter) {
             // make sure only String parameters with the @UserGroup annotations are resolved using this
-            return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                && AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class).isPresent();
+            return (
+                methodParameter.getParameter().getType().isAssignableFrom(String.class) &&
+                AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class).isPresent()
+            );
         }
 
         @Override
-        public String resolveArgumentForParameter(QueueProperties queueProperties,
-                                                  MethodParameter methodParameter,
-                                                  Message message) throws ArgumentResolutionException {
+        public String resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message)
+            throws ArgumentResolutionException {
             try {
                 // You could build an actual POJO instead of using this JsonNode
                 final JsonNode node = objectMapper.readTree(message.body());
@@ -90,22 +90,23 @@ interface that will be able to resolve these arguments with those annotations.
     }
     ```
 
-1. Create a method that will use this argument, for example something like:
+1.  Create a method that will use this argument, for example something like:
 
     ```java
-        public void messageListener(@UserGroup final String userGroup) {
-            // Do something here
-        }
+    public void messageListener(@UserGroup final String userGroup) {
+        // Do something here
+    }
     ```
 
-1. Build your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with
-this [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
+1.  Build your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with
+    this [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
 
     ```java
     new DelegatingArgumentResolverService(ImmutableSet.of(
          // other ArgumentResolvers here
          new UserGroupArgumentResolver()
-   ));
+
+    ));
     ```
 
 ## Integrating with Spring

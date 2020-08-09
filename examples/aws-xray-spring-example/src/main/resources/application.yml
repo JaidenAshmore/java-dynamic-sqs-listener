@@ -1,6 +1,6 @@
 spring:
-  application:
-    name: my-service
+    application:
+        name: my-service
 
 sqs.queue.url: replaceThis
 

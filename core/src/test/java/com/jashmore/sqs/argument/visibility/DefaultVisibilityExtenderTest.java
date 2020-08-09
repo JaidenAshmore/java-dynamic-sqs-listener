@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,15 +18,9 @@ import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-
 @ExtendWith(MockitoExtension.class)
 class DefaultVisibilityExtenderTest {
-    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties
-            .builder()
-            .queueUrl("queueUrl")
-            .build();
+    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("queueUrl").build();
     private static final String RECEIPT_HANDLE = "receipt_handle";
 
     @Mock
@@ -48,12 +44,15 @@ class DefaultVisibilityExtenderTest {
         defaultVisibilityExtender.extend();
 
         // assert
-        verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest
-                .builder()
-                .queueUrl("queueUrl")
-                .receiptHandle(RECEIPT_HANDLE)
-                .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
-                .build());
+        verify(sqsAsyncClient)
+            .changeMessageVisibility(
+                ChangeMessageVisibilityRequest
+                    .builder()
+                    .queueUrl("queueUrl")
+                    .receiptHandle(RECEIPT_HANDLE)
+                    .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                    .build()
+            );
     }
 
     @Test
@@ -62,24 +61,26 @@ class DefaultVisibilityExtenderTest {
         defaultVisibilityExtender.extend(10);
 
         // assert
-        verify(sqsAsyncClient).changeMessageVisibility(ChangeMessageVisibilityRequest
-                .builder()
-                .queueUrl("queueUrl")
-                .receiptHandle(RECEIPT_HANDLE)
-                .visibilityTimeout(10)
-                .build());
+        verify(sqsAsyncClient)
+            .changeMessageVisibility(
+                ChangeMessageVisibilityRequest.builder().queueUrl("queueUrl").receiptHandle(RECEIPT_HANDLE).visibilityTimeout(10).build()
+            );
     }
 
     @Test
     void defaultExtendShouldReturnFutureFromAmazon() {
         // arrange
-        when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
-                .builder()
-                .queueUrl("queueUrl")
-                .receiptHandle(RECEIPT_HANDLE)
-                .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
-                .build()))
-                .thenReturn(changeMessageVisibilityResultFuture);
+        when(
+                sqsAsyncClient.changeMessageVisibility(
+                    ChangeMessageVisibilityRequest
+                        .builder()
+                        .queueUrl("queueUrl")
+                        .receiptHandle(RECEIPT_HANDLE)
+                        .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                        .build()
+                )
+            )
+            .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
         final Future<?> extendFuture = defaultVisibilityExtender.extend();
@@ -91,13 +92,17 @@ class DefaultVisibilityExtenderTest {
     @Test
     void extendShouldReturnFutureFromAmazon() {
         // arrange
-        when(sqsAsyncClient.changeMessageVisibility(ChangeMessageVisibilityRequest
-                .builder()
-                .queueUrl("queueUrl")
-                .receiptHandle(RECEIPT_HANDLE)
-                .visibilityTimeout(10)
-                .build()))
-                .thenReturn(changeMessageVisibilityResultFuture);
+        when(
+                sqsAsyncClient.changeMessageVisibility(
+                    ChangeMessageVisibilityRequest
+                        .builder()
+                        .queueUrl("queueUrl")
+                        .receiptHandle(RECEIPT_HANDLE)
+                        .visibilityTimeout(10)
+                        .build()
+                )
+            )
+            .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
         final Future<?> extendFuture = defaultVisibilityExtender.extend(10);
