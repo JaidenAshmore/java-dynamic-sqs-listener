@@ -6,10 +6,9 @@ import brave.Span;
 import brave.Tracing;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-
 import java.util.Map;
 import java.util.Optional;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 /**
  * Used to consume the tracing information from the message attributes of the SQS message.
@@ -25,9 +24,7 @@ public class SendMessageRemoteGetter implements Propagation.RemoteGetter<Map<Str
 
     @Override
     public String get(final Map<String, MessageAttributeValue> request, final String fieldName) {
-        return Optional.ofNullable(request.get(fieldName))
-                .map(MessageAttributeValue::stringValue)
-                .orElse(null);
+        return Optional.ofNullable(request.get(fieldName)).map(MessageAttributeValue::stringValue).orElse(null);
     }
 
     /**

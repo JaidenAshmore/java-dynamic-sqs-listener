@@ -2,11 +2,10 @@ package com.jashmore.sqs.decorator;
 
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.QueueProperties;
+import java.util.Map;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.util.Map;
 
 @Value
 @Builder

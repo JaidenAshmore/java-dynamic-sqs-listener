@@ -7,19 +7,18 @@ The Queue Listener annotations have been written to allow for them to be set via
 1. Create some properties in the `application.yml` file, in this case there are two profiles with different concurrency rates.
 
     ```yaml
-
     ---
     spring.profiles: staging
 
     queues:
         my-queue:
-           concurrency: 5
+            concurrency: 5
 
     ---
     spring.profiles: production
     queues:
         my-queue:
-           concurrency: 10
+            concurrency: 10
     ```
 
 1. Use the annotations `{propertyName}String` fields in the annotations to pull data from the environment:
@@ -31,5 +30,5 @@ The Queue Listener annotations have been written to allow for them to be set via
     }
     ```
 
-***NOTE**: the `{propertyName}String` fields will override any of the other properties if they are set. E.g. if both `concurrencyLevel` and
-`concurrencyLevelString` are set the `concurrencyLevelString` one will be prioritised*
+**\*NOTE**: the `{propertyName}String` fields will override any of the other properties if they are set. E.g. if both `concurrencyLevel` and
+`concurrencyLevelString` are set the `concurrencyLevelString` one will be prioritised\*

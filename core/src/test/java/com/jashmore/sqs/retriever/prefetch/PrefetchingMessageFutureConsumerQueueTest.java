@@ -6,14 +6,6 @@ import static java.lang.Thread.State.WAITING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +15,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -47,13 +46,15 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
 
         // act
-        final Thread thread = new Thread(() -> {
-            try {
-                prefetchingMessageRetriever.pushMessage(Message.builder().build());
-            } catch (InterruptedException interruptedException) {
-                // do nothing
+        final Thread thread = new Thread(
+            () -> {
+                try {
+                    prefetchingMessageRetriever.pushMessage(Message.builder().build());
+                } catch (InterruptedException interruptedException) {
+                    // do nothing
+                }
             }
-        });
+        );
         thread.start();
 
         // assert
@@ -65,13 +66,16 @@ class PrefetchingMessageFutureConsumerQueueTest {
         // arrange
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
-        thread = new Thread(() -> {
-            try {
-                prefetchingMessageRetriever.pushMessage(Message.builder().build());
-            } catch (InterruptedException interruptedException) {
-                // do nothing
-            }
-        });
+        thread =
+            new Thread(
+                () -> {
+                    try {
+                        prefetchingMessageRetriever.pushMessage(Message.builder().build());
+                    } catch (InterruptedException interruptedException) {
+                        // do nothing
+                    }
+                }
+            );
         thread.start();
         waitUntilThreadInState(thread, WAITING);
 
@@ -121,37 +125,48 @@ class PrefetchingMessageFutureConsumerQueueTest {
         final List<CompletableFuture<?>> allFutures = new LinkedList<>();
 
         // act
-        executorService.submit(() -> {
-            IntStream.range(0, totalMessages)
+        executorService.submit(
+            () -> {
+                IntStream
+                    .range(0, totalMessages)
                     .mapToObj(String::valueOf)
                     .map(index -> Message.builder().body(index).build())
-                    .forEach(message -> {
-                        try {
-                            prefetchingMessageRetriever.pushMessage(message);
-                        } catch (final InterruptedException interruptedException) {
-                            // do nothing
+                    .forEach(
+                        message -> {
+                            try {
+                                prefetchingMessageRetriever.pushMessage(message);
+                            } catch (final InterruptedException interruptedException) {
+                                // do nothing
+                            }
                         }
-                    });
+                    );
 
-            log.debug("Added all messages");
-        });
-        executorService.submit(() -> {
-            IntStream.range(0, totalMessages)
+                log.debug("Added all messages");
+            }
+        );
+        executorService.submit(
+            () -> {
+                IntStream
+                    .range(0, totalMessages)
                     .mapToObj(String::valueOf)
-                    .forEach(index -> {
-                        final CompletableFuture<Message> completableFuture = new CompletableFuture<>();
-                        allFutures.add(completableFuture);
-                        completableFuture
-                                .thenApply(message -> {
+                    .forEach(
+                        index -> {
+                            final CompletableFuture<Message> completableFuture = new CompletableFuture<>();
+                            allFutures.add(completableFuture);
+                            completableFuture.thenApply(
+                                message -> {
                                     futuresCompleted.add(index);
                                     log.debug("Matched message {} with future {}", message.body(), index);
                                     messagesCompleted.add(message.body());
                                     return message;
-                                });
-                        prefetchingMessageRetriever.pushCompletableFuture(completableFuture);
-                    });
-            log.debug("Added all futures");
-        });
+                                }
+                            );
+                            prefetchingMessageRetriever.pushCompletableFuture(completableFuture);
+                        }
+                    );
+                log.debug("Added all futures");
+            }
+        );
         executorService.shutdown();
         executorService.awaitTermination(5, TimeUnit.SECONDS);
         CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[0])).get(1, TimeUnit.SECONDS);

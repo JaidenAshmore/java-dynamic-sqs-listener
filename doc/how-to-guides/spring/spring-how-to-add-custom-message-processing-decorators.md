@@ -6,6 +6,7 @@ that you want to apply to all the default message listeners you can just add it 
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
     public MessageProcessingDecorator myDecorator() {
         return new MyMessageProcessingDecorator();

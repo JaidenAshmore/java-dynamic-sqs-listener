@@ -16,6 +16,10 @@ import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverPropert
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
+import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,11 +28,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Optional;
 
 /**
  * Class is hard to test as it is the one building all of the dependencies internally using new constructors. Don't really know a better way to do this
@@ -56,8 +55,14 @@ class BasicMessageListenerContainerFactoryTest {
 
     @BeforeEach
     void setUp() {
-        messageListenerContainerFactory = new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment,
-                Collections.emptyList());
+        messageListenerContainerFactory =
+            new BasicMessageListenerContainerFactory(
+                argumentResolverService,
+                sqsAsyncClientProvider,
+                queueResolver,
+                environment,
+                Collections.emptyList()
+            );
     }
 
     @Test
@@ -180,16 +185,20 @@ class BasicMessageListenerContainerFactoryTest {
         final QueueListener annotation = method.getAnnotation(QueueListener.class);
 
         // act
-        final BatchingMessageRetrieverProperties properties
-                = messageListenerContainerFactory.batchingMessageRetrieverProperties(annotation);
+        final BatchingMessageRetrieverProperties properties = messageListenerContainerFactory.batchingMessageRetrieverProperties(
+            annotation
+        );
 
         // assert
-        assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .messageVisibilityTimeout(Duration.ofSeconds(300))
-                .batchingPeriod(Duration.ofMillis(40L))
-                .batchSize(10)
-                .build()
-        );
+        assertThat(properties)
+            .isEqualTo(
+                StaticBatchingMessageRetrieverProperties
+                    .builder()
+                    .messageVisibilityTimeout(Duration.ofSeconds(300))
+                    .batchingPeriod(Duration.ofMillis(40L))
+                    .batchSize(10)
+                    .build()
+            );
     }
 
     @Test
@@ -202,16 +211,20 @@ class BasicMessageListenerContainerFactoryTest {
         when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
 
         // act
-        final BatchingMessageRetrieverProperties properties
-                = messageListenerContainerFactory.batchingMessageRetrieverProperties(annotation);
+        final BatchingMessageRetrieverProperties properties = messageListenerContainerFactory.batchingMessageRetrieverProperties(
+            annotation
+        );
 
         // assert
-        assertThat(properties).isEqualTo(StaticBatchingMessageRetrieverProperties.builder()
-                .messageVisibilityTimeout(Duration.ofSeconds(40))
-                .batchingPeriod(Duration.ofMillis(30))
-                .batchSize(8)
-                .build()
-        );
+        assertThat(properties)
+            .isEqualTo(
+                StaticBatchingMessageRetrieverProperties
+                    .builder()
+                    .messageVisibilityTimeout(Duration.ofSeconds(40))
+                    .batchingPeriod(Duration.ofMillis(30))
+                    .batchSize(8)
+                    .build()
+            );
     }
 
     @Test
@@ -222,8 +235,10 @@ class BasicMessageListenerContainerFactoryTest {
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
 
         // act
-        final MessageListenerContainerInitialisationException exception =
-                assertThrows(MessageListenerContainerInitialisationException.class, () -> messageListenerContainerFactory.buildContainer(bean, method));
+        final MessageListenerContainerInitialisationException exception = assertThrows(
+            MessageListenerContainerInitialisationException.class,
+            () -> messageListenerContainerFactory.buildContainer(bean, method)
+        );
 
         // assert
         assertThat(exception.getMessage()).isEqualTo("Expected the default SQS Client but there is none");
@@ -237,8 +252,10 @@ class BasicMessageListenerContainerFactoryTest {
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
 
         // act
-        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
-                () -> messageListenerContainerFactory.buildContainer(bean, method));
+        final MessageListenerContainerInitialisationException exception = assertThrows(
+            MessageListenerContainerInitialisationException.class,
+            () -> messageListenerContainerFactory.buildContainer(bean, method)
+        );
 
         // assert
         assertThat(exception.getMessage()).isEqualTo("Expected a client with id 'clientId' but none were found");
@@ -263,13 +280,18 @@ class BasicMessageListenerContainerFactoryTest {
      */
     @Nested
     class MessageProcessingDecorators {
+
         @Test
         void canBuildContainerWhenMessageProcessingDecoratorsIncluded() throws Exception {
             // arrange
             messageListenerContainerFactory =
-                    new BasicMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider, queueResolver, environment,
-                            Collections.singletonList(new MessageProcessingDecorator() {
-                            }));
+                new BasicMessageListenerContainerFactory(
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    environment,
+                    Collections.singletonList(new MessageProcessingDecorator() {})
+                );
             when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
             final Object bean = new BasicMessageListenerContainerFactoryTest();
             final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
@@ -283,28 +305,23 @@ class BasicMessageListenerContainerFactoryTest {
     }
 
     @QueueListener("test")
-    public void myMethod() {
-
-    }
+    public void myMethod() {}
 
     @QueueListener(value = "test2", identifier = "identifier")
-    public void myMethodWithIdentifier() {
+    public void myMethodWithIdentifier() {}
 
-    }
-
-    @QueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}", batchSizeString = "${prop.batchSize}",
-            messageVisibilityTimeoutInSecondsString = "${prop.visibility}", batchingPeriodInMsString = "${prop.period}")
-    public void methodWithFieldsUsingEnvironmentProperties() {
-
-    }
+    @QueueListener(
+        value = "test2",
+        concurrencyLevelString = "${prop.concurrency}",
+        batchSizeString = "${prop.batchSize}",
+        messageVisibilityTimeoutInSecondsString = "${prop.visibility}",
+        batchingPeriodInMsString = "${prop.period}"
+    )
+    public void methodWithFieldsUsingEnvironmentProperties() {}
 
     @QueueListener(value = "test2", concurrencyLevel = 20, batchSize = 10, messageVisibilityTimeoutInSeconds = 300, batchingPeriodInMs = 40)
-    public void methodWithFields() {
-
-    }
+    public void methodWithFields() {}
 
     @QueueListener(value = "test2", sqsClient = "clientId")
-    public void methodUsingSpecificSqsAsyncClient() {
-
-    }
+    public void methodUsingSpecificSqsAsyncClient() {}
 }

@@ -5,6 +5,7 @@ package com.jashmore.sqs.extensions.registry;
  * used to publish the message.
  */
 public class ProducerSchemaRetrieverException extends RuntimeException {
+
     public ProducerSchemaRetrieverException(final Throwable cause) {
         super(cause);
     }

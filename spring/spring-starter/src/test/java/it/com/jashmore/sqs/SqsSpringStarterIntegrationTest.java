@@ -7,6 +7,10 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
 @Slf4j
-@SpringBootTest(classes = {SqsSpringStarterIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { SqsSpringStarterIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 class SqsSpringStarterIntegrationTest {
     private static final String QUEUE_NAME = "SqsSpringStarterIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
@@ -34,9 +33,11 @@ class SqsSpringStarterIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Service
         @SuppressWarnings("unused")
         public static class MessageListener {
+
             @PrefetchingQueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {
                 try {
@@ -58,8 +59,7 @@ class SqsSpringStarterIntegrationTest {
     @Test
     void springStarterShouldAutomaticallySetUpSqsConfigurationIfIncluded() throws Exception {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
+        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND).forEach(i -> localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i));
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

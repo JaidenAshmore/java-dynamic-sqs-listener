@@ -4,7 +4,6 @@ import com.jashmore.documentation.annotations.Max;
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.sqs.aws.AwsConstants;
-
 import java.time.Duration;
 
 /**

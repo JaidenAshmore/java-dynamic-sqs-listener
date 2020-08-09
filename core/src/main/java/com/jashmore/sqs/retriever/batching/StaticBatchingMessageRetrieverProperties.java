@@ -3,10 +3,9 @@ package com.jashmore.sqs.retriever.batching;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
+import java.time.Duration;
 import lombok.Builder;
 import lombok.Value;
-
-import java.time.Duration;
 
 /**
  * Static implementation of the properties that will never change during the processing of the messages.

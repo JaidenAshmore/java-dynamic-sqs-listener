@@ -43,17 +43,16 @@ public class Application {
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
         log.info("Starting Local ElasticMQ SQS Server");
-        final SQSRestServer sqsRestServer = SQSRestServerBuilder
-                .withInterface("localhost")
-                .withDynamicPort()
-                .start();
+        final SQSRestServer sqsRestServer = SQSRestServerBuilder.withInterface("localhost").withDynamicPort().start();
 
         final Http.ServerBinding serverBinding = sqsRestServer.waitUntilStarted();
-        return new LocalSqsAsyncClientImpl(SqsQueuesConfig
+        return new LocalSqsAsyncClientImpl(
+            SqsQueuesConfig
                 .builder()
                 .sqsServerUrl("http://localhost:" + serverBinding.localAddress().getPort())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("test").build())
                 .queue(SqsQueuesConfig.QueueConfig.builder().queueName("anotherTest").build())
-                .build());
+                .build()
+        );
     }
 }

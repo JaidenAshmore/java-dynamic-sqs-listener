@@ -3,10 +3,9 @@ package com.jashmore.sqs.argument.attribute;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 /**
  * Populate on of the arguments in a message processing method by taking a value from the message system attributes.

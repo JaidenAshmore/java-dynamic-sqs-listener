@@ -7,6 +7,11 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
-
 @Slf4j
-@SpringBootTest(classes = {QueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { QueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 class QueueListenerIntegrationTest {
     private static final String QUEUE_NAME = "QueueListenerIntegrationTest";
 
@@ -36,6 +35,7 @@ class QueueListenerIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -43,6 +43,7 @@ class QueueListenerIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @QueueListener(value = QUEUE_NAME)
             public void listenToMessage(@Payload final String payload) {
                 log.info("Obtained message: {}", payload);
@@ -55,11 +56,14 @@ class QueueListenerIntegrationTest {
     @Test
     void allMessagesAreProcessedByListeners() throws InterruptedException {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(i -> {
+        IntStream
+            .range(0, NUMBER_OF_MESSAGES_TO_SEND)
+            .forEach(
+                i -> {
                     log.info("Sending message: " + i);
                     localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i);
-                });
+                }
+            );
 
         // act
         COUNT_DOWN_LATCH.await(20, TimeUnit.SECONDS);

@@ -1,9 +1,8 @@
 package com.jashmore.sqs.resolver;
 
 import com.jashmore.documentation.annotations.ThreadSafe;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.concurrent.CompletableFuture;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Will resolve the messages by deleting them from the SQS queue so that it does not get processed again.

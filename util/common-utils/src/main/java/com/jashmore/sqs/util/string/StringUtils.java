@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class StringUtils {
+
     /**
      * Given an identifier that may be camel case with a range of characters, it will create an identifier that only contains lowercase letters, numbers
      * and hyphens.

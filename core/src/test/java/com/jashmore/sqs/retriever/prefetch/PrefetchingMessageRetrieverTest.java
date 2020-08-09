@@ -15,6 +15,15 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,32 +41,21 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class PrefetchingMessageRetrieverTest {
     private static final String QUEUE_URL = "queueUrl";
-    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
-            .queueUrl(QUEUE_URL)
-            .build();
+    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl(QUEUE_URL).build();
 
-    private static final CompletableFuture<ReceiveMessageResponse> RECEIVE_MESSAGES_INTERRUPTED
-            = CompletableFutureUtils.completedExceptionally(SdkClientException.builder().cause(new SdkInterruptedException()).build());
+    private static final CompletableFuture<ReceiveMessageResponse> RECEIVE_MESSAGES_INTERRUPTED = CompletableFutureUtils.completedExceptionally(
+        SdkClientException.builder().cause(new SdkInterruptedException()).build()
+    );
 
-
-    private static final StaticPrefetchingMessageRetrieverProperties DEFAULT_PREFETCHING_PROPERTIES = StaticPrefetchingMessageRetrieverProperties.builder()
-            .desiredMinPrefetchedMessages(1)
-            .maxPrefetchedMessages(2)
-            .build();
+    private static final StaticPrefetchingMessageRetrieverProperties DEFAULT_PREFETCHING_PROPERTIES = StaticPrefetchingMessageRetrieverProperties
+        .builder()
+        .desiredMinPrefetchedMessages(1)
+        .maxPrefetchedMessages(2)
+        .build();
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;
@@ -77,15 +75,16 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void desiredPrefetchedMessagesGreaterThanMaxPrefetchedMessagesThrowsException() {
         // arrange
-        final PrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(10)
-                .maxPrefetchedMessages(5)
-                .build();
+        final PrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(10)
+            .maxPrefetchedMessages(5)
+            .build();
 
         // act
         final IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties)
+            IllegalArgumentException.class,
+            () -> new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties)
         );
 
         // assert
@@ -95,15 +94,16 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void desiredMinPrefetchedMessagesLessThanOneThrowsErrorInConstruction() {
         // arrange
-        final PrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(0)
-                .maxPrefetchedMessages(5)
-                .build();
+        final PrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(0)
+            .maxPrefetchedMessages(5)
+            .build();
 
         // act
         final IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties)
+            IllegalArgumentException.class,
+            () -> new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties)
         );
 
         // assert
@@ -115,12 +115,13 @@ class PrefetchingMessageRetrieverTest {
         // arrange
         final Message message = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(message))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(2)
-                .maxPrefetchedMessages(2)
-                .build();
+            .thenReturn(mockReceiveMessageResponse(message))
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(2)
+            .maxPrefetchedMessages(2)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
@@ -133,18 +134,20 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void backgroundThreadWillRequestAsManyPrefetchedMessagesAsNeeded() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .maxPrefetchedMessages(2)
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .maxPrefetchedMessages(2)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(2);
     }
@@ -155,13 +158,14 @@ class PrefetchingMessageRetrieverTest {
         final Message firstBatchMessageTwo = Message.builder().build();
         final Message secondBatchMessageOne = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(firstBatchMessageOne, firstBatchMessageTwo))
-                .thenReturn(mockReceiveMessageResponse(secondBatchMessageOne))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(4)
-                .maxPrefetchedMessages(5)
-                .build();
+            .thenReturn(mockReceiveMessageResponse(firstBatchMessageOne, firstBatchMessageTwo))
+            .thenReturn(mockReceiveMessageResponse(secondBatchMessageOne))
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(4)
+            .maxPrefetchedMessages(5)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
@@ -177,20 +181,23 @@ class PrefetchingMessageRetrieverTest {
         final Message firstBatchMessageTwo = Message.builder().build();
         final Message secondBatchMessageOne = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(mockReceiveMessageResponse(firstBatchMessageOne, firstBatchMessageTwo))
-                .thenReturn(mockReceiveMessageResponse(secondBatchMessageOne))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(4)
-                .maxPrefetchedMessages(5)
-                .build();
+            .thenReturn(mockReceiveMessageResponse(firstBatchMessageOne, firstBatchMessageTwo))
+            .thenReturn(mockReceiveMessageResponse(secondBatchMessageOne))
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(4)
+            .maxPrefetchedMessages(5)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient, times(3)).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getAllValues().get(0).maxNumberOfMessages()).isEqualTo(5);
         assertThat(receiveMessageRequestArgumentCaptor.getAllValues().get(1).maxNumberOfMessages()).isEqualTo(3);
@@ -199,20 +206,23 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void backgroundThreadWillNotTryToRequestMoreMessagesThanTheAwsMaximum() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .maxPrefetchedMessages(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS + 1)
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .maxPrefetchedMessages(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS + 1)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages()).isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().maxNumberOfMessages())
+            .isEqualTo(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
     }
 
     @Test
@@ -221,21 +231,25 @@ class PrefetchingMessageRetrieverTest {
         final CountDownLatch receiveMessageRequested = new CountDownLatch(1);
         final Message firstMessage = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, firstMessage));
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(1)
-                .maxPrefetchedMessages(1)
-                .build();
+            .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, firstMessage));
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(1)
+            .maxPrefetchedMessages(1)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
-        startRunnableInThread(retriever::run, thread -> {
-            // act
-            assertThat(receiveMessageRequested.await(5, TimeUnit.SECONDS)).isTrue();
-            Thread.sleep(500); // Wait a little bit to make sure that we have messages
+        startRunnableInThread(
+            retriever::run,
+            thread -> {
+                // act
+                assertThat(receiveMessageRequested.await(5, TimeUnit.SECONDS)).isTrue();
+                Thread.sleep(500); // Wait a little bit to make sure that we have messages
 
-            // assert
-            verify(sqsAsyncClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
-        });
+                // assert
+                verify(sqsAsyncClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
+            }
+        );
     }
 
     @Test
@@ -247,13 +261,14 @@ class PrefetchingMessageRetrieverTest {
         final Message secondMessage = Message.builder().build();
         final Message thirdMessage = Message.builder().build();
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenAnswer(triggerLatchAndReturnMessages(firstMessagesFetchedLatch, firstMessage, secondMessage))
-                .thenAnswer(triggerLatchAndReturnMessages(secondMessageGroupRequestedLatch, thirdMessage))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(2)
-                .maxPrefetchedMessages(3)
-                .build();
+            .thenAnswer(triggerLatchAndReturnMessages(firstMessagesFetchedLatch, firstMessage, secondMessage))
+            .thenAnswer(triggerLatchAndReturnMessages(secondMessageGroupRequestedLatch, thirdMessage))
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(2)
+            .maxPrefetchedMessages(3)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
@@ -272,38 +287,43 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void waitTimeForPrefetchingPropertiesWillBeSqsMaximum() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .desiredMinPrefetchedMessages(1)
-                .maxPrefetchedMessages(2)
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .desiredMinPrefetchedMessages(1)
+            .maxPrefetchedMessages(2)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds()).isEqualTo(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().waitTimeSeconds())
+            .isEqualTo(AwsConstants.MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
     }
 
     @Test
     void whenNoMessageVisibilityTimeoutIncludedTheVisibilityTimeoutIsNullInReceiveMessageRequest() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeout(null)
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .messageVisibilityTimeout(null)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
     }
@@ -311,18 +331,20 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void whenNegativeMessageVisibilityTimeoutIncludedTheVisibilityTimeoutIsNullInReceiveMessageRequest() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeout(Duration.ofSeconds(-1))
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .messageVisibilityTimeout(Duration.ofSeconds(-1))
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
     }
@@ -330,18 +352,20 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void whenZeroMessageVisibilityTimeoutIncludedTheVisibilityTimeoutIsNullInReceiveMessageRequest() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeout(Duration.ZERO)
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .messageVisibilityTimeout(Duration.ZERO)
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isNull();
     }
@@ -349,18 +373,20 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void whenMessageVisibilityTimeoutIncludedTheVisibilityTimeoutIsIncludedInReceiveMessageRequest() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .messageVisibilityTimeout(Duration.ofSeconds(2))
-                .build();
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .messageVisibilityTimeout(Duration.ofSeconds(2))
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().visibilityTimeout()).isEqualTo(2);
     }
@@ -368,31 +394,42 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void allMessageAttributesAreIncludedInMessagesWhenRetrieved() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(
+            sqsAsyncClient,
+            QUEUE_PROPERTIES,
+            DEFAULT_PREFETCHING_PROPERTIES
+        );
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
-        assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames()).containsExactly(QueueAttributeName.ALL.toString());
+        assertThat(receiveMessageRequestArgumentCaptor.getValue().messageAttributeNames())
+            .containsExactly(QueueAttributeName.ALL.toString());
     }
 
     @Test
     void allMessageSystemAttributesAreIncludedInMessagesWhenRetrieved() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
-        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(
+            sqsAsyncClient,
+            QUEUE_PROPERTIES,
+            DEFAULT_PREFETCHING_PROPERTIES
+        );
 
         // act
         retriever.run();
 
         // assert
-        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(ReceiveMessageRequest.class);
+        final ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestArgumentCaptor = ArgumentCaptor.forClass(
+            ReceiveMessageRequest.class
+        );
         verify(sqsAsyncClient).receiveMessage(receiveMessageRequestArgumentCaptor.capture());
         assertThat(receiveMessageRequestArgumentCaptor.getValue().attributeNames()).contains(QueueAttributeName.ALL);
     }
@@ -402,8 +439,12 @@ class PrefetchingMessageRetrieverTest {
         // arrange
         final CountDownLatch receiveMessageRequested = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build(), Message.builder().build()));
-        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, DEFAULT_PREFETCHING_PROPERTIES);
+            .thenAnswer(triggerLatchAndReturnMessages(receiveMessageRequested, Message.builder().build(), Message.builder().build()));
+        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(
+            sqsAsyncClient,
+            QUEUE_PROPERTIES,
+            DEFAULT_PREFETCHING_PROPERTIES
+        );
 
         // act
         final Future<List<Message>> future = Executors.newSingleThreadExecutor().submit(retriever::run);
@@ -419,12 +460,13 @@ class PrefetchingMessageRetrieverTest {
     void exceptionThrownObtainingMessagesWillBackOffForSpecifiedPeriod() {
         // arrange
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenThrow(new ExpectedTestException())
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+            .thenThrow(new ExpectedTestException())
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
         final int backoffTimeInMilliseconds = 500;
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
-                .build();
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
@@ -440,32 +482,35 @@ class PrefetchingMessageRetrieverTest {
     void threadInterruptedWhileBackingOffWillStopBackgroundThread() {
         // arrange
         final AtomicBoolean backoffOccurred = new AtomicBoolean(false);
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenThrow(new ExpectedTestException());
-        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES,
-                new PrefetchingMessageRetrieverProperties() {
-                    @Override
-                    public @Positive int getDesiredMinPrefetchedMessages() {
-                        return 2;
-                    }
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenThrow(new ExpectedTestException());
+        final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(
+            sqsAsyncClient,
+            QUEUE_PROPERTIES,
+            new PrefetchingMessageRetrieverProperties() {
 
-                    @Override
-                    public @Positive int getMaxPrefetchedMessages() {
-                        return 4;
-                    }
+                @Override
+                public @Positive int getDesiredMinPrefetchedMessages() {
+                    return 2;
+                }
 
-                    @Override
-                    public @Nullable @Positive Duration getMessageVisibilityTimeout() {
-                        return null;
-                    }
+                @Override
+                public @Positive int getMaxPrefetchedMessages() {
+                    return 4;
+                }
 
-                    @Override
-                    public @Nullable @PositiveOrZero Duration getErrorBackoffTime() {
-                        backoffOccurred.set(true);
-                        Thread.currentThread().interrupt();
-                        return Duration.ofMillis(500);
-                    }
-                });
+                @Override
+                public @Nullable @Positive Duration getMessageVisibilityTimeout() {
+                    return null;
+                }
+
+                @Override
+                public @Nullable @PositiveOrZero Duration getErrorBackoffTime() {
+                    backoffOccurred.set(true);
+                    Thread.currentThread().interrupt();
+                    return Duration.ofMillis(500);
+                }
+            }
+        );
 
         // act
         retriever.run();
@@ -478,12 +523,13 @@ class PrefetchingMessageRetrieverTest {
     void rejectedFutureFromSqsAsyncClientWillBackoff() {
         // arrange
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+            .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
+            .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
         final int backoffTimeInMilliseconds = 500;
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
-                .build();
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
@@ -498,19 +544,22 @@ class PrefetchingMessageRetrieverTest {
     @Test
     void whenSqsAsyncClientThrowsSdkInterruptedExceptionTheBackgroundThreadShouldStop() {
         // arrange
-        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                .thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
+        when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(RECEIVE_MESSAGES_INTERRUPTED);
         final int backoffTimeInMilliseconds = 500;
-        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES.toBuilder()
-                .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
-                .build();
+        final StaticPrefetchingMessageRetrieverProperties properties = DEFAULT_PREFETCHING_PROPERTIES
+            .toBuilder()
+            .errorBackoffTime(Duration.ofMillis(backoffTimeInMilliseconds))
+            .build();
         final PrefetchingMessageRetriever retriever = new PrefetchingMessageRetriever(sqsAsyncClient, QUEUE_PROPERTIES, properties);
 
         // act
         retriever.run();
     }
 
-    private Answer<CompletableFuture<ReceiveMessageResponse>> triggerLatchAndReturnMessages(final CountDownLatch latch, final Message... messages) {
+    private Answer<CompletableFuture<ReceiveMessageResponse>> triggerLatchAndReturnMessages(
+        final CountDownLatch latch,
+        final Message... messages
+    ) {
         return invocation -> {
             latch.countDown();
             return mockReceiveMessageResponse(messages);
@@ -518,8 +567,6 @@ class PrefetchingMessageRetrieverTest {
     }
 
     private CompletableFuture<ReceiveMessageResponse> mockReceiveMessageResponse(final Message... messages) {
-        return CompletableFuture.completedFuture(ReceiveMessageResponse.builder()
-                .messages(messages)
-                .build());
+        return CompletableFuture.completedFuture(ReceiveMessageResponse.builder().messages(messages).build());
     }
 }

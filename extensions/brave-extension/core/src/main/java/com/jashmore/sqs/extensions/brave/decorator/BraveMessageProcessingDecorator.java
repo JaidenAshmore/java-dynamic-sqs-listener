@@ -9,13 +9,12 @@ import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
+import java.util.Map;
+import java.util.function.BiFunction;
 import lombok.Builder;
 import lombok.Value;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-
-import java.util.Map;
-import java.util.function.BiFunction;
 
 /**
  * Message processing decorator that is used to add Brave tracing to the message processing thread.
@@ -24,8 +23,8 @@ import java.util.function.BiFunction;
  * here, otherwise a new trace will be started.
  */
 public class BraveMessageProcessingDecorator implements MessageProcessingDecorator {
-    private static final BiFunction<MessageProcessingContext, Message, String> DEFAULT_SPAN_NAME_CREATOR = (details, message)
-            -> "sqs-listener-" + details.getListenerIdentifier();
+    private static final BiFunction<MessageProcessingContext, Message, String> DEFAULT_SPAN_NAME_CREATOR = (details, message) ->
+        "sqs-listener-" + details.getListenerIdentifier();
 
     private final Tracer tracer;
     private final TraceContext.Extractor<Map<String, MessageAttributeValue>> traceExtractor;
@@ -46,10 +45,7 @@ public class BraveMessageProcessingDecorator implements MessageProcessingDecorat
         final TraceContextOrSamplingFlags traceContextOrSamplingFlags = traceExtractor.extract(message.messageAttributes());
         final Span span = tracer.nextSpan(traceContextOrSamplingFlags);
         if (span != null && !span.isNoop()) {
-            span
-                    .name(spanNameCreator.apply(context, message))
-                    .kind(Span.Kind.CONSUMER)
-                    .start();
+            span.name(spanNameCreator.apply(context, message)).kind(Span.Kind.CONSUMER).start();
             context.setAttribute(this.getClass().getSimpleName() + ":span", span);
         }
         final Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span);
@@ -60,8 +56,7 @@ public class BraveMessageProcessingDecorator implements MessageProcessingDecorat
     public void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable throwable) {
         final Span span = context.getAttribute(this.getClass().getSimpleName() + ":span");
         if (span != null) {
-            span.error(throwable)
-                    .finish();
+            span.error(throwable).finish();
         }
     }
 

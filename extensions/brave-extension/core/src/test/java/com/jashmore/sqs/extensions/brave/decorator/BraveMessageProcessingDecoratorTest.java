@@ -14,6 +14,8 @@ import com.jashmore.sqs.brave.propogation.SendMessageRemoteGetter;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteSetter;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.util.ExpectedTestException;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -21,27 +23,19 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
-import java.util.HashMap;
-import java.util.Map;
-
 class BraveMessageProcessingDecoratorTest {
     private final TestSpanHandler spanHandler = new TestSpanHandler();
     private ThreadLocalCurrentTraceContext currentTraceContext;
     private Tracing tracing;
 
-    private final Message message = Message.builder()
-            .body("test")
-            .build();
+    private final Message message = Message.builder().body("test").build();
 
     private BraveMessageProcessingDecorator decorator;
 
     @BeforeEach
     void setUp() {
         currentTraceContext = ThreadLocalCurrentTraceContext.newBuilder().build();
-        tracing = Tracing.newBuilder()
-                .addSpanHandler(spanHandler)
-                .currentTraceContext(currentTraceContext)
-                .build();
+        tracing = Tracing.newBuilder().addSpanHandler(spanHandler).currentTraceContext(currentTraceContext).build();
         decorator = new BraveMessageProcessingDecorator(tracing);
     }
 
@@ -53,6 +47,7 @@ class BraveMessageProcessingDecoratorTest {
 
     @Nested
     class PreMessageProcessing {
+
         @Test
         void willCreateSpanAndSaveToContext() {
             // arrange
@@ -109,6 +104,7 @@ class BraveMessageProcessingDecoratorTest {
 
     @Nested
     class OnMessageProcessingThreadComplete {
+
         @Test
         void willDoNothingIfNoSpanInScopePresent() {
             // arrange
@@ -118,7 +114,6 @@ class BraveMessageProcessingDecoratorTest {
             // act
             context.setAttribute("BraveMessageProcessingDecorator:span-in-scope", null);
             decorator.onMessageProcessingThreadComplete(context, message);
-
             // assert not exception thrown
         }
 
@@ -139,6 +134,7 @@ class BraveMessageProcessingDecoratorTest {
 
     @Nested
     class OnMessageProcessingSuccess {
+
         @Test
         void willFinishTheSpan() {
             // arrange
@@ -170,6 +166,7 @@ class BraveMessageProcessingDecoratorTest {
 
     @Nested
     class OnMessageProcessingFailure {
+
         @Test
         void willFinishTheSpan() {
             // arrange
@@ -202,14 +199,17 @@ class BraveMessageProcessingDecoratorTest {
 
     @Nested
     class Options {
+
         @Nested
         class SpanNameCreator {
+
             @Test
             void canBeUsedToManuallySetSpanName() {
                 // arrange
-                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator.Options.builder()
-                        .spanNameCreator((context, message) -> "my-span-name")
-                        .build();
+                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator
+                    .Options.builder()
+                    .spanNameCreator((context, message) -> "my-span-name")
+                    .build();
                 decorator = new BraveMessageProcessingDecorator(tracing, options);
                 final MessageProcessingContext context = newContext();
 
@@ -224,20 +224,19 @@ class BraveMessageProcessingDecoratorTest {
 
         @Nested
         class TraceExtractor {
+
             @Test
             void canBeUsedToManuallySetToProvideMethodToExtractSpanDetails() {
                 // arrange
                 final ScopedSpan scopedSenderSpan = tracing.tracer().startScopedSpan("sender-span");
                 final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
                 SendMessageRemoteSetter.create(tracing).inject(scopedSenderSpan.context(), messageAttributes);
-                final Message message = Message.builder()
-                        .body("test")
-                        .messageAttributes(messageAttributes)
-                        .build();
+                final Message message = Message.builder().body("test").messageAttributes(messageAttributes).build();
                 final MessageProcessingContext context = newContext();
-                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator.Options.builder()
-                        .traceExtractor(SendMessageRemoteGetter.create(tracing))
-                        .build();
+                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator
+                    .Options.builder()
+                    .traceExtractor(SendMessageRemoteGetter.create(tracing))
+                    .build();
                 decorator = new BraveMessageProcessingDecorator(tracing, options);
 
                 // act
@@ -253,7 +252,6 @@ class BraveMessageProcessingDecoratorTest {
             }
         }
     }
-
 
     @Test
     void spanWillBeConsumableByProcessingMessage() {
@@ -285,10 +283,7 @@ class BraveMessageProcessingDecoratorTest {
         final ScopedSpan scopedSenderSpan = tracing.tracer().startScopedSpan("sender-span");
         final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         SendMessageRemoteSetter.create(tracing).inject(scopedSenderSpan.context(), messageAttributes);
-        final Message message = Message.builder()
-                .body("test")
-                .messageAttributes(messageAttributes)
-                .build();
+        final Message message = Message.builder().body("test").messageAttributes(messageAttributes).build();
         final MessageProcessingContext context = newContext();
 
         // act
@@ -304,10 +299,11 @@ class BraveMessageProcessingDecoratorTest {
     }
 
     private static MessageProcessingContext newContext() {
-        return MessageProcessingContext.builder()
-                .listenerIdentifier("identifier")
-                .queueProperties(QueueProperties.builder().queueUrl("url").build())
-                .attributes(new HashMap<>())
-                .build();
+        return MessageProcessingContext
+            .builder()
+            .listenerIdentifier("identifier")
+            .queueProperties(QueueProperties.builder().queueUrl("url").build())
+            .attributes(new HashMap<>())
+            .build();
     }
 }

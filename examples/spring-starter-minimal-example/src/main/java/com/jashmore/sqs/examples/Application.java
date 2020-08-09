@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-
 @SpringBootApplication
 public class Application {
 

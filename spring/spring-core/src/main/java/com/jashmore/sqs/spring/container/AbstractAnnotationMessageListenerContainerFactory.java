@@ -2,7 +2,6 @@ package com.jashmore.sqs.spring.container;
 
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
@@ -13,16 +12,20 @@ import java.lang.reflect.Method;
  * @param <T> the type of annotation that the method should have for it to be wrapped
  */
 public abstract class AbstractAnnotationMessageListenerContainerFactory<T extends Annotation> implements MessageListenerContainerFactory {
+
     @Override
     public boolean canHandleMethod(final Method method) {
-        return AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
-                .isPresent();
+        return AnnotationUtils.findMethodAnnotation(method, getAnnotationClass()).isPresent();
     }
 
     @Override
     public MessageListenerContainer buildContainer(final Object bean, final Method method) {
-        final T annotation = AnnotationUtils.findMethodAnnotation(method, getAnnotationClass())
-                .orElseThrow(() -> new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName()));
+        final T annotation = AnnotationUtils
+            .findMethodAnnotation(method, getAnnotationClass())
+            .orElseThrow(
+                () ->
+                    new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName())
+            );
 
         return wrapMethodContainingAnnotation(bean, method, annotation);
     }

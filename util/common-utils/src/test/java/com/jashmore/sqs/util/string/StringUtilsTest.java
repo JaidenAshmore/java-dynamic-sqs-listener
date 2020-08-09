@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class StringUtilsTest {
+
     @Nested
     class ToLowerHyphenCase {
+
         @Test
         void willConvertCamelCaseToHyphenCase() {
             assertThat(StringUtils.toLowerHyphenCase("MyClassNameWithMethod")).isEqualTo("my-class-name-with-method");

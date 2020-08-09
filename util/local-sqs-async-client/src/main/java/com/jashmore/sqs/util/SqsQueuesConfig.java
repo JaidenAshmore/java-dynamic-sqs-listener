@@ -1,10 +1,9 @@
 package com.jashmore.sqs.util;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
-
-import java.util.List;
 
 /**
  * Configuration properties for connecting to a locally running SQS Server.

@@ -2,11 +2,10 @@ package com.jashmore.sqs.util.collections;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import lombok.experimental.UtilityClass;
-
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class QueueUtils {
@@ -23,10 +22,13 @@ public class QueueUtils {
      * @param <T>               the type of the queue elements
      * @throws InterruptedException if the the thread was interrupted while waiting for elements
      */
-    public <T> void drain(final BlockingQueue<T> queue,
-                          final Collection<T> drainToCollection,
-                          final int desiredElements,
-                          final Duration durationToWait) throws InterruptedException {
+    public <T> void drain(
+        final BlockingQueue<T> queue,
+        final Collection<T> drainToCollection,
+        final int desiredElements,
+        final Duration durationToWait
+    )
+        throws InterruptedException {
         final long endTimeInMs = System.currentTimeMillis() + durationToWait.toMillis();
 
         int elementsLeft = desiredElements;

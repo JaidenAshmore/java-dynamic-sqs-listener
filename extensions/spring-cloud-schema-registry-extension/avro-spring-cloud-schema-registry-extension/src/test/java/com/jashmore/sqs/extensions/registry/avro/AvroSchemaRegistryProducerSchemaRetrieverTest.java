@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.extensions.registry.ProducerSchemaRetrieverException;
+import java.io.IOException;
 import org.apache.avro.Schema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,11 +16,9 @@ import org.springframework.cloud.schema.registry.SchemaReference;
 import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
 import org.springframework.core.io.ClassPathResource;
 
-import java.io.IOException;
-
 @ExtendWith(MockitoExtension.class)
 class AvroSchemaRegistryProducerSchemaRetrieverTest {
-    private static  final Schema.Parser SCHEMA_PARSER = new Schema.Parser();
+    private static final Schema.Parser SCHEMA_PARSER = new Schema.Parser();
     private static final Schema SCHEMA;
 
     @Mock

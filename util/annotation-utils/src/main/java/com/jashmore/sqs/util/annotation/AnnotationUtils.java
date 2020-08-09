@@ -3,12 +3,11 @@ package com.jashmore.sqs.util.annotation;
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.Preconditions;
-import lombok.experimental.UtilityClass;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.function.Function;
+import lombok.experimental.UtilityClass;
 
 /**
  * These annotation utility method are written to get past the problem of CGLib and other proxying libraries that extend the base classes to add extra
@@ -60,6 +59,7 @@ import java.util.function.Function;
  */
 @UtilityClass
 public class AnnotationUtils {
+
     /**
      * Get the annotation on a method by looking on the method of this class as well as traversing the methods for all superclasses of the method, returning
      * the first annotation that it finds otherwise returning an {@link Optional#empty()} if none of the class methods contain the annotation.
@@ -70,7 +70,10 @@ public class AnnotationUtils {
      * @return the found annotation in an {@link Optional} otherwise an {@link Optional#empty()} is returned
      */
     @Nonnull
-    public <A extends Annotation> Optional<A> findMethodAnnotation(@Nonnull final Method methodToProcess, @Nonnull final Class<A> annotationClass) {
+    public <A extends Annotation> Optional<A> findMethodAnnotation(
+        @Nonnull final Method methodToProcess,
+        @Nonnull final Class<A> annotationClass
+    ) {
         Preconditions.checkNotNull(methodToProcess, "methodToProcess should not be null");
         Preconditions.checkNotNull(annotationClass, "annotationClass should not be null");
 
@@ -87,10 +90,15 @@ public class AnnotationUtils {
      * @return the found annotation in an {@link Optional} otherwise an {@link Optional#empty()} is returned
      */
     @Nonnull
-    public <A extends Annotation> Optional<A> findParameterAnnotation(@Nonnull final MethodParameter methodParameterToProcess,
-                                                                      @Nonnull final Class<A> annotationClass) {
-        return findForEachChainedMethodStack(methodParameterToProcess.getMethod(),
-                method -> Optional.ofNullable(method.getParameters()[methodParameterToProcess.getParameterIndex()].getAnnotation(annotationClass)));
+    public <A extends Annotation> Optional<A> findParameterAnnotation(
+        @Nonnull final MethodParameter methodParameterToProcess,
+        @Nonnull final Class<A> annotationClass
+    ) {
+        return findForEachChainedMethodStack(
+            methodParameterToProcess.getMethod(),
+            method ->
+                Optional.ofNullable(method.getParameters()[methodParameterToProcess.getParameterIndex()].getAnnotation(annotationClass))
+        );
     }
 
     /**

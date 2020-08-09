@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnClass(name = "brave.Tracing")
 public class BraveMessageProcessingDecoratorConfiguration {
+
     @Bean
     @ConditionalOnMissingBean
     public BraveMessageProcessingDecorator braveMessageProcessorDecorator(final Tracing tracing) {

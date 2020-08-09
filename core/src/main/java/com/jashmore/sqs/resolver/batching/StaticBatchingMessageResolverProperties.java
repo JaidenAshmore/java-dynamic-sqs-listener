@@ -4,11 +4,10 @@ import static com.jashmore.sqs.aws.AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH;
 
 import com.jashmore.documentation.annotations.Max;
 import com.jashmore.documentation.annotations.Positive;
+import java.time.Duration;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.time.Duration;
 
 /**
  * Static implementation that will contain constant size and time limit for the buffer.

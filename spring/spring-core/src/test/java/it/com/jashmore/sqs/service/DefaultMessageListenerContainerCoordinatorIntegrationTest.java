@@ -8,6 +8,8 @@ import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,11 +20,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 @Slf4j
-@SpringBootTest(classes = {DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
     private static final String QUEUE_NAME = "DefaultMessageListenerContainerCoordinatorIntegrationTest";
@@ -35,6 +34,7 @@ public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -42,6 +42,7 @@ public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @SuppressWarnings("unused")
             @QueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {

@@ -1,8 +1,7 @@
 package com.jashmore.sqs.retriever.batching;
 
-import lombok.experimental.UtilityClass;
-
 import java.time.Duration;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class BatchingMessageRetrieverConstants {

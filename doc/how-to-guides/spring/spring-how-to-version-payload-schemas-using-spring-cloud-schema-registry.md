@@ -10,49 +10,50 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
 
 ## Steps to consume messages serialized using Apache Avro
 
-1. Include the `Spring Cloud Schema Registry Extension` dependency
+1.  Include the `Spring Cloud Schema Registry Extension` dependency
 
     ```xml
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>avro-spring-cloud-schema-registry-extension</artifactId>
-            <version>${project.version}</version>
-        </dependency>  
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>avro-spring-cloud-schema-registry-extension</artifactId>
+        <version>${project.version}</version>
+    </dependency>
     ```
 
-1. Define your schemas and map this in your spring `application.yml`
+1.  Define your schemas and map this in your spring `application.yml`
 
     ```yml
-   spring:
-     cloud:
-       schema-registry-client:
-         endpoint: http://localhost:8990
-       schema:
-         avro:
-           schema-imports:
-             - classpath:avro/author.avsc
-           schema-locations:
-             - classpath:avro/book.avsc
+    spring:
+        cloud:
+            schema-registry-client:
+                endpoint: http://localhost:8990
+            schema:
+                avro:
+                    schema-imports:
+                        - classpath:avro/author.avsc
+                    schema-locations:
+                        - classpath:avro/book.avsc
     ```
 
-   In this example above we have a book schema which is dependent on the author schema. We have also hardcoded the Schema Registry
-   to be at [http://localhost:8990](http://localhost:8990).
-1. Create your schemas and place them in your `resources` directory. For example this is an example schema for the Book.
+    In this example above we have a book schema which is dependent on the author schema. We have also hardcoded the Schema Registry
+    to be at [http://localhost:8990](http://localhost:8990).
+
+1.  Create your schemas and place them in your `resources` directory. For example this is an example schema for the Book.
 
     ```json
     {
-      "namespace" : "com.jashmore.sqs.extensions.registry.model",
-      "type" : "record",
-      "name" : "Book",
-      "fields" : [
-        { "name":"id","type":"string" },
-        { "name":"name","type":"string" },
-        { "name":"author","type":"Author" }
-      ]
+        "namespace": "com.jashmore.sqs.extensions.registry.model",
+        "type": "record",
+        "name": "Book",
+        "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "name", "type": "string" },
+            { "name": "author", "type": "Author" }
+        ]
     }
     ```
 
-1. Enable the extension by annotating the Spring Application
+1.  Enable the extension by annotating the Spring Application
 
     ```java
     @EnableSchemaRegistrySqsExtension
@@ -62,23 +63,23 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
     }
     ```
 
-1. Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be de-serialised from
-the message payload.
+1.  Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be de-serialised from
+    the message payload.
 
-    ```java
-    class MyClass {
-        @QueueListener(value = "queueName")
-        public void listen(@SpringCloudSchemaRegistryPayload Book payload) {
-            log.info("Payload: {}", payload);
+        ```java
+        class MyClass {
+            @QueueListener(value = "queueName")
+            public void listen(@SpringCloudSchemaRegistryPayload Book payload) {
+                log.info("Payload: {}", payload);
+            }
         }
-    }
-    ```
+        ```
 
 ## Steps to produce messages using Avro
 
 You can wrap your `SqsAsyncClient` with the
 [AvroSchemaRegistrySqsAsyncClient](../../../util/avro-spring-cloud-schema-registry-sqs-client/src/main/java/com/jashmore/sqs/registry/AvroSchemaRegistrySqsAsyncClient.java)
-to be able to more easily send a message that will be serialized using the Avro Schema.  This Avro SQS Client is for testing purposes and therefore it is
+to be able to more easily send a message that will be serialized using the Avro Schema. This Avro SQS Client is for testing purposes and therefore it is
 recommended to developer your own logic for sending these messages.
 
 For a full example of building this client, take a look at the

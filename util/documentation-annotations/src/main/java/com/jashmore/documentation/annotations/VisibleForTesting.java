@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * Indicates that the component should be a lower restriction, e.g. private instead of package protected, but is more open for testing purposes.
  */
 @Documented
-@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
+@Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE })
 @Retention(SOURCE)
 public @interface VisibleForTesting {
 }

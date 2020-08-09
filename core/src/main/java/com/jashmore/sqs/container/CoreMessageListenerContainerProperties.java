@@ -4,7 +4,6 @@ import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.retriever.MessageRetriever;
-
 import java.time.Duration;
 
 public interface CoreMessageListenerContainerProperties {

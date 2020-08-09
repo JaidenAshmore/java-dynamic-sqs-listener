@@ -2,6 +2,8 @@ package com.jashmore.sqs.examples;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Segment;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,9 +11,6 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sns.SnsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Helper scheduled task that will place 10 messages onto each queue for processing by the message listeners.
@@ -25,10 +24,12 @@ public class ScheduledMessageProducer {
     private final String snsArn;
     private final AtomicInteger count = new AtomicInteger();
 
-    public ScheduledMessageProducer(final SqsAsyncClient sqsAsyncClient,
-                                    final SnsAsyncClient snsAsyncClient,
-                                    @Value("${sqs.queue.url}") final String queueUrl,
-                                    @Value("${sns.arn}") final String snsArn) {
+    public ScheduledMessageProducer(
+        final SqsAsyncClient sqsAsyncClient,
+        final SnsAsyncClient snsAsyncClient,
+        @Value("${sqs.queue.url}") final String queueUrl,
+        @Value("${sns.arn}") final String snsArn
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.snsAsyncClient = snsAsyncClient;
         this.queueUrl = queueUrl;
@@ -41,10 +42,7 @@ public class ScheduledMessageProducer {
         AWSXRay.beginSubsegment("send-to-sqs");
         log.info("SQS Trace ID: {}", segment.getTraceId());
         final int currentValue = count.incrementAndGet();
-        sqsAsyncClient.sendMessage(SendMessageRequest.builder()
-                .queueUrl(queueUrl)
-                .messageBody("from-direct-sqs-" + currentValue)
-                .build());
+        sqsAsyncClient.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody("from-direct-sqs-" + currentValue).build());
         AWSXRay.endSubsegment();
         AWSXRay.endSegment();
     }
@@ -55,10 +53,7 @@ public class ScheduledMessageProducer {
         AWSXRay.beginSubsegment("send-to-sns");
         log.info("SNS Trace ID: {}", segment.getTraceId());
         final String uuid = UUID.randomUUID().toString();
-        snsAsyncClient.publish(builder -> builder
-                .message("SNS message with UUID: " + uuid)
-                .topicArn(snsArn)
-        );
+        snsAsyncClient.publish(builder -> builder.message("SNS message with UUID: " + uuid).topicArn(snsArn));
         AWSXRay.endSubsegment();
         AWSXRay.endSegment();
     }

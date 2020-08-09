@@ -29,11 +29,6 @@ import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverPropertie
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
 import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
-
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Collections;
@@ -43,6 +38,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the
@@ -65,10 +64,7 @@ public class ConcurrentBrokerExample {
         // Sets up the SQS that will be used
         final LocalSqsAsyncClient sqsAsyncClient = new ElasticMqSqsAsyncClient();
         final String queueUrl = sqsAsyncClient.createRandomQueue().get().queueUrl();
-        final QueueProperties queueProperties = QueueProperties
-                .builder()
-                .queueUrl(queueUrl)
-                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
 
         final MessageConsumer messageConsumer = new MessageConsumer();
         final Method messageReceivedMethod;
@@ -78,63 +74,65 @@ public class ConcurrentBrokerExample {
             throw new RuntimeException(exception);
         }
 
-        final Tracing tracing = Tracing.newBuilder()
-                .currentTraceContext(ThreadLocalCurrentTraceContext.newBuilder()
-                        .addScopeDecorator(MDCScopeDecorator.get())
-                        .build()
-                )
-                .build();
+        final Tracing tracing = Tracing
+            .newBuilder()
+            .currentTraceContext(ThreadLocalCurrentTraceContext.newBuilder().addScopeDecorator(MDCScopeDecorator.get()).build())
+            .build();
         tracing.setNoop(true);
 
         final String identifier = "core-example-container";
         final MessageListenerContainer container = new CoreMessageListenerContainer(
-                identifier,
-                () -> new ConcurrentMessageBroker(new ConcurrentMessageBrokerProperties() {
-                    private final Random random = new Random();
-                    private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel = CacheBuilder.newBuilder()
+            identifier,
+            () ->
+                new ConcurrentMessageBroker(
+                    new ConcurrentMessageBrokerProperties() {
+                        private final Random random = new Random();
+                        private final LoadingCache<Boolean, Integer> cachedConcurrencyLevel = CacheBuilder
+                            .newBuilder()
                             .expireAfterWrite(10, TimeUnit.SECONDS)
                             .build(CacheLoader.from(() -> random.nextInt(CONCURRENCY_LEVEL_LIMIT)));
 
-                    @Override
-                    public @PositiveOrZero int getConcurrencyLevel() {
-                        return cachedConcurrencyLevel.getUnchecked(true);
-                    }
+                        @Override
+                        public @PositiveOrZero int getConcurrencyLevel() {
+                            return cachedConcurrencyLevel.getUnchecked(true);
+                        }
 
-                    @Override
-                    public Duration getConcurrencyPollingRate() {
-                        return Duration.ofMillis(CONCURRENCY_LEVEL_PERIOD_IN_MS);
-                    }
+                        @Override
+                        public Duration getConcurrencyPollingRate() {
+                            return Duration.ofMillis(CONCURRENCY_LEVEL_PERIOD_IN_MS);
+                        }
 
-                    @Override
-                    public Duration getErrorBackoffTime() {
-                        return Duration.ofMillis(500);
+                        @Override
+                        public Duration getErrorBackoffTime() {
+                            return Duration.ofMillis(500);
+                        }
                     }
-                }),
-                () -> new PrefetchingMessageRetriever(
+                ),
+            () ->
+                new PrefetchingMessageRetriever(
+                    sqsAsyncClient,
+                    queueProperties,
+                    StaticPrefetchingMessageRetrieverProperties.builder().desiredMinPrefetchedMessages(10).maxPrefetchedMessages(20).build()
+                ),
+            () ->
+                new DecoratingMessageProcessor(
+                    identifier,
+                    queueProperties,
+                    Collections.singletonList(new BraveMessageProcessingDecorator(tracing)),
+                    new CoreMessageProcessor(
+                        new CoreArgumentResolverService(new JacksonPayloadMapper(OBJECT_MAPPER), OBJECT_MAPPER),
+                        queueProperties,
                         sqsAsyncClient,
-                        queueProperties,
-                        StaticPrefetchingMessageRetrieverProperties.builder()
-                                .desiredMinPrefetchedMessages(10)
-                                .maxPrefetchedMessages(20)
-                                .build()
+                        messageReceivedMethod,
+                        messageConsumer
+                    )
                 ),
-                () -> new DecoratingMessageProcessor(
-                        identifier,
-                        queueProperties,
-                        Collections.singletonList(new BraveMessageProcessingDecorator(tracing)),
-                        new CoreMessageProcessor(
-                                new CoreArgumentResolverService(new JacksonPayloadMapper(OBJECT_MAPPER), OBJECT_MAPPER),
-                                queueProperties,
-                                sqsAsyncClient,
-                                messageReceivedMethod,
-                                messageConsumer
-                        )
-                ),
-                () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient,
-                        StaticBatchingMessageResolverProperties.builder()
-                                .bufferingSizeLimit(1)
-                                .bufferingTime(Duration.ofSeconds(5))
-                                .build())
+            () ->
+                new BatchingMessageResolver(
+                    queueProperties,
+                    sqsAsyncClient,
+                    StaticBatchingMessageResolverProperties.builder().bufferingSizeLimit(1).bufferingTime(Duration.ofSeconds(5)).build()
+                )
         );
         container.start();
 
@@ -142,37 +140,55 @@ public class ConcurrentBrokerExample {
 
         final AtomicInteger count = new AtomicInteger(0);
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            sqsAsyncClient.sendMessageBatch((builder) -> builder
-                    .queueUrl(queueUrl)
-                    .entries(IntStream.range(0, 10)
-                            .mapToObj(index -> {
-                                final Request request = new Request("key_" + count.getAndIncrement());
-                                try {
-                                    return SendMessageBatchRequestEntry.builder()
-                                            .id("" + index)
-                                            .messageBody(OBJECT_MAPPER.writeValueAsString(request))
-                                            .build();
-                                } catch (JsonProcessingException exception) {
-                                    throw new RuntimeException(exception);
-                                }
-
-                            })
-                            .collect(toSet())
-                    ));
-            log.info("Put 10 messages onto queue");
-        }, 0, 2, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(
+            () -> {
+                sqsAsyncClient.sendMessageBatch(
+                    builder ->
+                        builder
+                            .queueUrl(queueUrl)
+                            .entries(
+                                IntStream
+                                    .range(0, 10)
+                                    .mapToObj(
+                                        index -> {
+                                            final Request request = new Request("key_" + count.getAndIncrement());
+                                            try {
+                                                return SendMessageBatchRequestEntry
+                                                    .builder()
+                                                    .id("" + index)
+                                                    .messageBody(OBJECT_MAPPER.writeValueAsString(request))
+                                                    .build();
+                                            } catch (JsonProcessingException exception) {
+                                                throw new RuntimeException(exception);
+                                            }
+                                        }
+                                    )
+                                    .collect(toSet())
+                            )
+                );
+                log.info("Put 10 messages onto queue");
+            },
+            0,
+            2,
+            TimeUnit.SECONDS
+        );
 
         log.info("Running application. Ctrl + C to exit...");
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            scheduledExecutorService.shutdownNow();
-            try {
-                scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException interruptedException) {
-                // do nothing
-            }
-            container.stop();
-        }));
+        Runtime
+            .getRuntime()
+            .addShutdownHook(
+                new Thread(
+                    () -> {
+                        scheduledExecutorService.shutdownNow();
+                        try {
+                            scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+                        } catch (InterruptedException interruptedException) {
+                            // do nothing
+                        }
+                        container.stop();
+                    }
+                )
+            );
         Thread.currentThread().join();
     }
 

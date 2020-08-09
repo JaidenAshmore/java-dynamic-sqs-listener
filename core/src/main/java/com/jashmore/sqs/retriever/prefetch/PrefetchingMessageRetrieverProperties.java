@@ -3,9 +3,8 @@ package com.jashmore.sqs.retriever.prefetch;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-
 import java.time.Duration;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 public interface PrefetchingMessageRetrieverProperties {
     /**

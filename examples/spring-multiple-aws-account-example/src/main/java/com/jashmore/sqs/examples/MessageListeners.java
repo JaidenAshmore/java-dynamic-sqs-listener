@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @SuppressWarnings("unused")
 @Slf4j
 public class MessageListeners {
+
     /**
      * Basic queue listener.
      *

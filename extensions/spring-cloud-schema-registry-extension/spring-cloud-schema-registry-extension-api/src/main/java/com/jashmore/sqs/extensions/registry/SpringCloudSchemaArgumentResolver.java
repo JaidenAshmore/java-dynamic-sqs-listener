@@ -5,10 +5,9 @@ import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
+import java.lang.annotation.Annotation;
 import org.springframework.cloud.schema.registry.SchemaReference;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import java.lang.annotation.Annotation;
 
 /**
  * Argument resolver for taking messages that were serialized using a schema versioning tool like Apache Avro.
@@ -34,11 +33,13 @@ public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Ob
      * @param messagePayloadDeserializer used to deserialize the message payload using the schemas for the message
      * @param annotationClass            the annotation that should be used to trigger this argument resolver
      */
-    public SpringCloudSchemaArgumentResolver(final SchemaReferenceExtractor schemaReferenceExtractor,
-                                             final ConsumerSchemaRetriever<T> consumerSchemaRetriever,
-                                             final ProducerSchemaRetriever<T> producerSchemaRetriever,
-                                             final MessagePayloadDeserializer<T> messagePayloadDeserializer,
-                                             final Class<? extends Annotation> annotationClass) {
+    public SpringCloudSchemaArgumentResolver(
+        final SchemaReferenceExtractor schemaReferenceExtractor,
+        final ConsumerSchemaRetriever<T> consumerSchemaRetriever,
+        final ProducerSchemaRetriever<T> producerSchemaRetriever,
+        final MessagePayloadDeserializer<T> messagePayloadDeserializer,
+        final Class<? extends Annotation> annotationClass
+    ) {
         this.schemaReferenceExtractor = schemaReferenceExtractor;
         this.consumerSchemaRetriever = consumerSchemaRetriever;
         this.producerSchemaRetriever = producerSchemaRetriever;
@@ -52,9 +53,12 @@ public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Ob
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
+    public Object resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
         try {
             final Class<?> clazz = methodParameter.getParameter().getType();
             final SchemaReference schemaReference = schemaReferenceExtractor.extract(message);

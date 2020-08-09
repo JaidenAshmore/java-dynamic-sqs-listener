@@ -6,6 +6,10 @@ target/
 build
 .gradle
 out
+target
+
+# Node
+node_modules
 
 # Log file
 *.log

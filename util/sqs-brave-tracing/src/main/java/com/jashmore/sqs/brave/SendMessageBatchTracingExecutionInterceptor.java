@@ -6,6 +6,10 @@ import brave.Span;
 import brave.Tracing;
 import brave.propagation.TraceContext;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteSetter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import software.amazon.awssdk.core.SdkRequest;
 import software.amazon.awssdk.core.interceptor.Context;
 import software.amazon.awssdk.core.interceptor.ExecutionAttribute;
@@ -18,11 +22,6 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResultEntry;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * {@link ExecutionInterceptor} that is used to create spans for the {@link SendMessageBatchRequest}
@@ -42,14 +41,15 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
         this(tracing, SpanDecorator.DEFAULT);
     }
 
-    public SendMessageBatchTracingExecutionInterceptor(final Tracing tracing,
-                                                       final SpanDecorator spanDecorator) {
+    public SendMessageBatchTracingExecutionInterceptor(final Tracing tracing, final SpanDecorator spanDecorator) {
         this(tracing, spanDecorator, SendMessageRemoteSetter.create(tracing));
     }
 
-    public SendMessageBatchTracingExecutionInterceptor(final Tracing tracing,
-                                                       final SpanDecorator spanDecorator,
-                                                       final TraceContext.Injector<Map<String, MessageAttributeValue>> injector) {
+    public SendMessageBatchTracingExecutionInterceptor(
+        final Tracing tracing,
+        final SpanDecorator spanDecorator,
+        final TraceContext.Injector<Map<String, MessageAttributeValue>> injector
+    ) {
         this.tracing = tracing;
         this.spanDecorator = spanDecorator;
         this.messageAttributeInjector = injector;
@@ -62,8 +62,10 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
         }
 
         final SendMessageBatchRequest request = (SendMessageBatchRequest) context.request();
-        final Map<String, Span> messageSpans = request.entries().stream()
-                .collect(toMap(SendMessageBatchRequestEntry::id, entry -> startSpanForMessage(request, entry)));
+        final Map<String, Span> messageSpans = request
+            .entries()
+            .stream()
+            .collect(toMap(SendMessageBatchRequestEntry::id, entry -> startSpanForMessage(request, entry)));
 
         executionAttributes.putAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE, messageSpans);
     }
@@ -81,14 +83,13 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
         }
 
         final SendMessageBatchRequest request = (SendMessageBatchRequest) context.request();
-        final List<SendMessageBatchRequestEntry> updatedEntries = request.entries().stream()
-                .map(requestEntry -> injectSpanInformationIntoMessage(requestEntry,
-                        messageSpans.get(requestEntry.id())))
-                .collect(Collectors.toList());
+        final List<SendMessageBatchRequestEntry> updatedEntries = request
+            .entries()
+            .stream()
+            .map(requestEntry -> injectSpanInformationIntoMessage(requestEntry, messageSpans.get(requestEntry.id())))
+            .collect(Collectors.toList());
 
-        return request.toBuilder()
-                .entries(updatedEntries)
-                .build();
+        return request.toBuilder().entries(updatedEntries).build();
     }
 
     @Override
@@ -99,60 +100,66 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
 
         final SendMessageBatchRequest request = (SendMessageBatchRequest) context.request();
 
-        final Map<String, Span> individualMessageSpans =
-                executionAttributes.getAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE);
+        final Map<String, Span> individualMessageSpans = executionAttributes.getAttribute(MESSAGE_SPANS_EXECUTION_ATTRIBUTE);
         if (individualMessageSpans == null) {
             // someone deleted our attribute...
             return;
         }
 
         if (!context.httpResponse().isSuccessful()) {
-            individualMessageSpans.values()
-                    .forEach(
-                            span -> {
-                                try {
-                                    spanDecorator.decorateRequestFailedMessageSpan(request,
-                                            context.httpResponse(), span);
-                                    span.error(new RuntimeException("Error placing message onto SQS queue"));
-                                } finally {
-                                    span.finish();
-                                }
-                            });
+            individualMessageSpans
+                .values()
+                .forEach(
+                    span -> {
+                        try {
+                            spanDecorator.decorateRequestFailedMessageSpan(request, context.httpResponse(), span);
+                            span.error(new RuntimeException("Error placing message onto SQS queue"));
+                        } finally {
+                            span.finish();
+                        }
+                    }
+                );
             return;
         }
 
         final SendMessageBatchResponse response = (SendMessageBatchResponse) context.response();
 
-        response.successful().forEach(result -> {
-            final Span messageSpan = individualMessageSpans.get(result.id());
-            if (messageSpan == null) {
-                // for some reason the individual message's span cannot be found
-                return;
-            }
+        response
+            .successful()
+            .forEach(
+                result -> {
+                    final Span messageSpan = individualMessageSpans.get(result.id());
+                    if (messageSpan == null) {
+                        // for some reason the individual message's span cannot be found
+                        return;
+                    }
 
-            try {
-                spanDecorator.decorateMessageSuccessfulSpan(response, context.httpResponse(),
-                        result, messageSpan);
-            } finally {
-                messageSpan.finish();
-            }
-        });
+                    try {
+                        spanDecorator.decorateMessageSuccessfulSpan(response, context.httpResponse(), result, messageSpan);
+                    } finally {
+                        messageSpan.finish();
+                    }
+                }
+            );
 
-        response.failed().forEach(result -> {
-            final Span messageSpan = individualMessageSpans.get(result.id());
-            if (messageSpan == null) {
-                // for some reason the individual message's span cannot be found
-                return;
-            }
+        response
+            .failed()
+            .forEach(
+                result -> {
+                    final Span messageSpan = individualMessageSpans.get(result.id());
+                    if (messageSpan == null) {
+                        // for some reason the individual message's span cannot be found
+                        return;
+                    }
 
-            try {
-                spanDecorator.decorateMessageFailureSpan(response, context.httpResponse(), result,
-                        messageSpan);
-                messageSpan.error(new RuntimeException("Error placing message onto SQS queue"));
-            } finally {
-                messageSpan.finish();
-            }
-        });
+                    try {
+                        spanDecorator.decorateMessageFailureSpan(response, context.httpResponse(), result, messageSpan);
+                        messageSpan.error(new RuntimeException("Error placing message onto SQS queue"));
+                    } finally {
+                        messageSpan.finish();
+                    }
+                }
+            );
     }
 
     private Span startSpanForMessage(final SendMessageBatchRequest request, final SendMessageBatchRequestEntry requestEntry) {
@@ -165,16 +172,12 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
         return messageSpan;
     }
 
-    private SendMessageBatchRequestEntry injectSpanInformationIntoMessage(
-            final SendMessageBatchRequestEntry entry, final Span span) {
-        final Map<String, MessageAttributeValue> currentMessageAttributes =
-                new HashMap<>(entry.messageAttributes());
+    private SendMessageBatchRequestEntry injectSpanInformationIntoMessage(final SendMessageBatchRequestEntry entry, final Span span) {
+        final Map<String, MessageAttributeValue> currentMessageAttributes = new HashMap<>(entry.messageAttributes());
 
         messageAttributeInjector.inject(span.context(), currentMessageAttributes);
 
-        return entry.toBuilder()
-                .messageAttributes(currentMessageAttributes)
-                .build();
+        return entry.toBuilder().messageAttributes(currentMessageAttributes).build();
     }
 
     /**
@@ -186,8 +189,7 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
      */
     @SuppressWarnings("unused")
     public interface SpanDecorator {
-        SpanDecorator DEFAULT = new SpanDecorator() {
-        };
+        SpanDecorator DEFAULT = new SpanDecorator() {};
 
         /**
          * Decorate the message span before the message is sent to SQS.
@@ -196,9 +198,7 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
          * @param entry   the entry for the message being handled
          * @param span    the span corresponding to this message
          */
-        default void decorateMessageSpan(final SendMessageBatchRequest request,
-                                         final SendMessageBatchRequestEntry entry,
-                                         final Span span) {
+        default void decorateMessageSpan(final SendMessageBatchRequest request, final SendMessageBatchRequestEntry entry, final Span span) {
             span.kind(Span.Kind.PRODUCER);
             span.name("sqs-send-message-batch");
             span.remoteServiceName("aws-sqs");
@@ -213,9 +213,11 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
          * @param httpResponse the http response that indicates the failure
          * @param span         the span to apply decorations to
          */
-        default void decorateRequestFailedMessageSpan(final SendMessageBatchRequest request,
-                                                      final SdkHttpResponse httpResponse,
-                                                      final Span span) {
+        default void decorateRequestFailedMessageSpan(
+            final SendMessageBatchRequest request,
+            final SdkHttpResponse httpResponse,
+            final Span span
+        ) {
             span.tag("response.code", String.valueOf(httpResponse.statusCode()));
         }
 
@@ -227,10 +229,12 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
          * @param entry        the message entry that was a success
          * @param span         the span corresponding to this message
          */
-        default void decorateMessageSuccessfulSpan(final SendMessageBatchResponse response,
-                                                   final SdkHttpResponse httpResponse,
-                                                   final SendMessageBatchResultEntry entry,
-                                                   final Span span) {
+        default void decorateMessageSuccessfulSpan(
+            final SendMessageBatchResponse response,
+            final SdkHttpResponse httpResponse,
+            final SendMessageBatchResultEntry entry,
+            final Span span
+        ) {
             span.tag("message.id", entry.messageId());
         }
 
@@ -245,10 +249,11 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
          * @param entry        the message entry that was a failure
          * @param span         the span corresponding to this message
          */
-        default void decorateMessageFailureSpan(final SendMessageBatchResponse response,
-                                                final SdkHttpResponse httpResponse,
-                                                final BatchResultErrorEntry entry,
-                                                final Span span) {
-        }
+        default void decorateMessageFailureSpan(
+            final SendMessageBatchResponse response,
+            final SdkHttpResponse httpResponse,
+            final BatchResultErrorEntry entry,
+            final Span span
+        ) {}
     }
 }

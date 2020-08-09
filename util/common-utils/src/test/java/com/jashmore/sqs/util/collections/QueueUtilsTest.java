@@ -2,9 +2,6 @@ package com.jashmore.sqs.util.collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +11,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class QueueUtilsTest {
+
     @Nested
     class Drain {
+
         @Test
         void whenNumberOfElementsPresentInQueueWillExtractThoseElements() throws InterruptedException {
             // arrange
@@ -86,7 +87,8 @@ class QueueUtilsTest {
         }
 
         @Test
-        void whenNotEnoughElementsPlacedIntoQueueWithinLimitWillOnlyAddElementsFound() throws InterruptedException, TimeoutException, ExecutionException {
+        void whenNotEnoughElementsPlacedIntoQueueWithinLimitWillOnlyAddElementsFound()
+            throws InterruptedException, TimeoutException, ExecutionException {
             // arrange
             final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
             final List<String> list = new ArrayList<>();
@@ -105,13 +107,15 @@ class QueueUtilsTest {
     }
 
     private CompletableFuture<Void> runInBackgroundThread(BlockingRunnable runnable) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                runnable.run();
-            } catch (InterruptedException interruptedException) {
-                throw new RuntimeException(interruptedException);
+        return CompletableFuture.runAsync(
+            () -> {
+                try {
+                    runnable.run();
+                } catch (InterruptedException interruptedException) {
+                    throw new RuntimeException(interruptedException);
+                }
             }
-        });
+        );
     }
 
     /**

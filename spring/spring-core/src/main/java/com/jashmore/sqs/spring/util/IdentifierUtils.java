@@ -2,13 +2,13 @@ package com.jashmore.sqs.spring.util;
 
 import static com.jashmore.sqs.util.string.StringUtils.toLowerHyphenCase;
 
+import java.lang.reflect.Method;
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
 
-import java.lang.reflect.Method;
-
 @UtilityClass
 public class IdentifierUtils {
+
     /**
      * Builds an identifier from a provided identifier if it is not empty, otherwise build an identifier from the class and method.
      *

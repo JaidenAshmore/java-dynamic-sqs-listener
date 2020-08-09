@@ -1,9 +1,8 @@
 package com.jashmore.sqs.argument;
 
-import lombok.AllArgsConstructor;
-
 import java.util.List;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 
 /**
  * Delegates the resolving of an argument in the method using a list of {@link ArgumentResolver}s.
@@ -17,9 +16,10 @@ public class DelegatingArgumentResolverService implements ArgumentResolverServic
 
     @Override
     public ArgumentResolver<?> getArgumentResolver(final MethodParameter methodParameter) throws UnsupportedArgumentResolutionException {
-        return argumentResolvers.stream()
-                .filter(resolver -> resolver.canResolveParameter(methodParameter))
-                .findFirst()
-                .orElseThrow(() -> new UnsupportedArgumentResolutionException(methodParameter));
+        return argumentResolvers
+            .stream()
+            .filter(resolver -> resolver.canResolveParameter(methodParameter))
+            .findFirst()
+            .orElseThrow(() -> new UnsupportedArgumentResolutionException(methodParameter));
     }
 }

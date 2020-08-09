@@ -12,7 +12,7 @@ the [Core Kotlin DSL](../../../extensions/core-kotlin-dsl) tool can be used to e
     implementation("com.jashmore:core-kotlin-dsl:${version}")
     ```
 
-   or
+    or
 
     ```xml
     <dependency>

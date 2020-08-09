@@ -13,15 +13,19 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * use case could be when the entire message is needed to forward to another queue.
  */
 public class MessageArgumentResolver implements ArgumentResolver<Message> {
+
     @Override
     public boolean canResolveParameter(final MethodParameter methodParameter) {
         return methodParameter.getParameter().getType() == Message.class;
     }
 
     @Override
-    public Message resolveArgumentForParameter(final QueueProperties queueProperties,
-                                               final MethodParameter methodParameter,
-                                               final Message message) throws ArgumentResolutionException {
+    public Message resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
         return message;
     }
 }

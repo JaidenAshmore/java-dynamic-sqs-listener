@@ -10,7 +10,6 @@ public class ResizableSemaphore extends Semaphore {
 
     public ResizableSemaphore(final int permits) {
         super(permits);
-
         this.maximumPermits = permits;
     }
 

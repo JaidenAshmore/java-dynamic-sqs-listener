@@ -24,14 +24,13 @@ public class ConsumerApplication {
 
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
-        return new LocalSqsAsyncClientImpl(SqsQueuesConfig.builder()
+        return new LocalSqsAsyncClientImpl(
+            SqsQueuesConfig
+                .builder()
                 .sqsServerUrl("http://localhost:9324")
-                .queue(SqsQueuesConfig.QueueConfig.builder()
-                        .queueName("test")
-                        .deadLetterQueueName("test-dlq")
-                        .maxReceiveCount(3)
-                        .build())
-                .build());
+                .queue(SqsQueuesConfig.QueueConfig.builder().queueName("test").deadLetterQueueName("test-dlq").maxReceiveCount(3).build())
+                .build()
+        );
     }
 
     @SuppressWarnings("unused")

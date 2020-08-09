@@ -1,10 +1,9 @@
 package com.jashmore.sqs.argument;
 
 import com.jashmore.documentation.annotations.PositiveOrZero;
-import lombok.Builder;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import lombok.Builder;
 
 /**
  * Default implementation of the {@link MethodParameter}, nothing special about it.

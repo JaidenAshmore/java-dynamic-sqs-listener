@@ -15,16 +15,14 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import it.com.jashmore.sqs.util.SqsIntegrationTestUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Test;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 public class AsyncLambdaMessageProcessorIntegrationTest {
-
     private static final ElasticMqSqsAsyncClient client = new ElasticMqSqsAsyncClient();
 
     @AfterAll
@@ -36,39 +34,38 @@ public class AsyncLambdaMessageProcessorIntegrationTest {
     void canProcessMessageLambdas() throws ExecutionException, InterruptedException {
         // arrange
         final String queueUrl = client.createRandomQueue().get().getResponse().queueUrl();
-        final QueueProperties queueProperties = QueueProperties.builder()
-                .queueUrl(queueUrl)
-                .build();
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl(queueUrl).build();
         final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, client);
         final CountDownLatch countDownLatch = new CountDownLatch(20);
         final MessageProcessor messageProcessor = new AsyncLambdaMessageProcessor(
-                client,
-                queueProperties,
-                (message) -> CompletableFuture.runAsync(() -> {
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException interruptedException) {
-                        // ignore
+            client,
+            queueProperties,
+            message ->
+                CompletableFuture.runAsync(
+                    () -> {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException interruptedException) {
+                            // ignore
+                        }
+                        countDownLatch.countDown();
                     }
-                    countDownLatch.countDown();
-                })
+                )
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                StaticConcurrentMessageBrokerProperties.builder()
-                        .concurrencyLevel(1)
-                        .build()
+            StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(1).build()
         );
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
-                queueProperties,
-                client,
-                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
+            queueProperties,
+            client,
+            StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
-                "id",
-                () -> messageBroker,
-                () -> messageRetriever,
-                () -> messageProcessor,
-                () -> messageResolver
+            "id",
+            () -> messageBroker,
+            () -> messageRetriever,
+            () -> messageProcessor,
+            () -> messageResolver
         );
         coreMessageListenerContainer.start();
 

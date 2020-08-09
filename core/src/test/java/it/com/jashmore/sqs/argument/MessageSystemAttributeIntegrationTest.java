@@ -24,6 +24,11 @@ import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.util.CreateRandomQueueResponse;
+import java.time.OffsetDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -31,12 +36,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-
-import java.time.OffsetDateTime;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 class MessageSystemAttributeIntegrationTest {
@@ -50,7 +49,9 @@ class MessageSystemAttributeIntegrationTest {
 
     @BeforeEach
     void setUp() throws InterruptedException, ExecutionException, TimeoutException {
-        queueProperties = elasticMQSqsAsyncClient.createRandomQueue()
+        queueProperties =
+            elasticMQSqsAsyncClient
+                .createRandomQueue()
                 .thenApply(CreateRandomQueueResponse::queueUrl)
                 .thenApply(url -> QueueProperties.builder().queueUrl(url).build())
                 .get(5, SECONDS);
@@ -65,41 +66,37 @@ class MessageSystemAttributeIntegrationTest {
     void messageAttributesCanBeConsumedInMessageProcessingMethods() throws Exception {
         // arrange
         final MessageRetriever messageRetriever = new BatchingMessageRetriever(
-                queueProperties,
-                elasticMQSqsAsyncClient,
-                StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
+            queueProperties,
+            elasticMQSqsAsyncClient,
+            StaticBatchingMessageRetrieverProperties.builder().batchSize(1).build()
         );
         final CountDownLatch messageProcessedLatch = new CountDownLatch(1);
         final AtomicReference<OffsetDateTime> messageAttributeReference = new AtomicReference<>();
         final MessageConsumer messageConsumer = new MessageConsumer(messageProcessedLatch, messageAttributeReference);
         final MessageResolver messageResolver = new BatchingMessageResolver(queueProperties, elasticMQSqsAsyncClient);
         final MessageProcessor messageProcessor = new CoreMessageProcessor(
-                ARGUMENT_RESOLVER_SERVICE,
-                queueProperties,
-                elasticMQSqsAsyncClient,
-                MessageConsumer.class.getMethod("consume", OffsetDateTime.class),
-                messageConsumer
+            ARGUMENT_RESOLVER_SERVICE,
+            queueProperties,
+            elasticMQSqsAsyncClient,
+            MessageConsumer.class.getMethod("consume", OffsetDateTime.class),
+            messageConsumer
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
-                StaticConcurrentMessageBrokerProperties.builder()
-                        .concurrencyLevel(1)
-                        .build()
+            StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(1).build()
         );
         final CoreMessageListenerContainer coreMessageListenerContainer = new CoreMessageListenerContainer(
-                "id",
-                () -> messageBroker,
-                () -> messageRetriever,
-                () -> messageProcessor,
-                () -> messageResolver
+            "id",
+            () -> messageBroker,
+            () -> messageRetriever,
+            () -> messageProcessor,
+            () -> messageResolver
         );
         coreMessageListenerContainer.start();
 
         // act
-        elasticMQSqsAsyncClient.sendMessage(SendMessageRequest.builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .messageBody("test")
-                .build())
-                .get(2, SECONDS);
+        elasticMQSqsAsyncClient
+            .sendMessage(SendMessageRequest.builder().queueUrl(queueProperties.getQueueUrl()).messageBody("test").build())
+            .get(2, SECONDS);
 
         assertThat(messageProcessedLatch.await(5, SECONDS)).isTrue();
         coreMessageListenerContainer.stop();
@@ -114,7 +111,9 @@ class MessageSystemAttributeIntegrationTest {
         private final CountDownLatch latch;
         private final AtomicReference<OffsetDateTime> valueAtomicReference;
 
-        public void consume(@MessageSystemAttribute(MessageSystemAttributeName.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP) final OffsetDateTime value) {
+        public void consume(
+            @MessageSystemAttribute(MessageSystemAttributeName.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP) final OffsetDateTime value
+        ) {
             log.info("Message processed with attribute: {}", value);
             valueAtomicReference.set(value);
             latch.countDown();

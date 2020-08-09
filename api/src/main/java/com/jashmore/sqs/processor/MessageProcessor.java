@@ -6,10 +6,9 @@ import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.resolver.MessageResolver;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * Processor that has the responsibility of taking a message and processing it via the required message consumer (Java method).

@@ -4,12 +4,11 @@ import com.jashmore.documentation.annotations.Min;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
+import java.time.Duration;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-
-import java.time.Duration;
 
 @Builder(toBuilder = true)
 @ToString
@@ -17,8 +16,10 @@ import java.time.Duration;
 public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingMessageRetrieverProperties {
     @NonNull
     private final Integer desiredMinPrefetchedMessages;
+
     @NonNull
     private final Integer maxPrefetchedMessages;
+
     private final Duration messageVisibilityTimeout;
     private final Duration errorBackoffTime;
 

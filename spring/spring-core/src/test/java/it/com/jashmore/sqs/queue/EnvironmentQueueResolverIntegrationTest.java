@@ -14,11 +14,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@SpringBootTest(classes = {EnvironmentQueueResolverIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
-@TestPropertySource(properties = {
-        "property.with.queue.url=http://sqs.some.url",
-        "property.with.queue.name=EnvironmentQueueResolverIntegrationTest"
-})
+@SpringBootTest(classes = { EnvironmentQueueResolverIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
+@TestPropertySource(
+    properties = { "property.with.queue.url=http://sqs.some.url", "property.with.queue.name=EnvironmentQueueResolverIntegrationTest" }
+)
 @ExtendWith(SpringExtension.class)
 class EnvironmentQueueResolverIntegrationTest {
     private static final String QUEUE_NAME = "EnvironmentQueueResolverIntegrationTest";
@@ -31,6 +30,7 @@ class EnvironmentQueueResolverIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public ElasticMqSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);

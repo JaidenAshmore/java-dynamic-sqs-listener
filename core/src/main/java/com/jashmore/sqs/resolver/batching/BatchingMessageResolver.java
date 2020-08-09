@@ -7,15 +7,6 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.util.collections.QueueUtils;
 import com.jashmore.sqs.util.thread.ThreadUtils;
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.core.exception.SdkInterruptedException;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -29,6 +20,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * {@link MessageResolver} that will batch the deletions of messages into a group to reduce the amount of messages that are being sent to SQS queue.
@@ -52,12 +51,12 @@ public class BatchingMessageResolver implements MessageResolver {
      * @param queueProperties details about the queue that the arguments will be resolved for
      * @param sqsAsyncClient  the client for connecting to the SQS queue
      */
-    public BatchingMessageResolver(final QueueProperties queueProperties,
-                                   final SqsAsyncClient sqsAsyncClient) {
-        this(queueProperties, sqsAsyncClient, StaticBatchingMessageResolverProperties.builder()
-                .bufferingSizeLimit(1)
-                .bufferingTime(Duration.ofHours(1))
-                .build());
+    public BatchingMessageResolver(final QueueProperties queueProperties, final SqsAsyncClient sqsAsyncClient) {
+        this(
+            queueProperties,
+            sqsAsyncClient,
+            StaticBatchingMessageResolverProperties.builder().bufferingSizeLimit(1).bufferingTime(Duration.ofHours(1)).build()
+        );
     }
 
     /**
@@ -67,9 +66,11 @@ public class BatchingMessageResolver implements MessageResolver {
      * @param sqsAsyncClient  the client for connecting to the SQS queue
      * @param properties      configuration properties for this resolver
      */
-    public BatchingMessageResolver(final QueueProperties queueProperties,
-                                   final SqsAsyncClient sqsAsyncClient,
-                                   final BatchingMessageResolverProperties properties) {
+    public BatchingMessageResolver(
+        final QueueProperties queueProperties,
+        final SqsAsyncClient sqsAsyncClient,
+        final BatchingMessageResolverProperties properties
+    ) {
         this.queueProperties = queueProperties;
         this.sqsAsyncClient = sqsAsyncClient;
         this.properties = properties;
@@ -108,14 +109,12 @@ public class BatchingMessageResolver implements MessageResolver {
                 log.debug("Sending batch deletion for {} messages", batchOfMessagesToResolve.size());
                 final CompletableFuture<?> completableFuture = submitMessageDeletionBatch(batchOfMessagesToResolve, executorService);
                 batchesBeingPublished.add(completableFuture);
-                completableFuture
-                        .whenComplete((response, throwable) -> batchesBeingPublished.remove(completableFuture));
+                completableFuture.whenComplete((response, throwable) -> batchesBeingPublished.remove(completableFuture));
             }
         }
         try {
             log.debug("Waiting for {} batches to complete", batchesBeingPublished.size());
-            CompletableFuture.allOf(batchesBeingPublished.toArray(new CompletableFuture<?>[0]))
-                    .get();
+            CompletableFuture.allOf(batchesBeingPublished.toArray(new CompletableFuture<?>[0])).get();
             executorService.shutdownNow();
             log.info("MessageResolver has been successfully stopped");
         } catch (final InterruptedException interruptedException) {
@@ -161,57 +160,81 @@ public class BatchingMessageResolver implements MessageResolver {
      *
      * @param batchOfMessagesToResolve the messages to resolve
      */
-    private CompletableFuture<?> submitMessageDeletionBatch(final List<MessageResolutionBean> batchOfMessagesToResolve,
-                                                            final ExecutorService executorService) {
-        final Map<String, CompletableFuture<Object>> messageCompletableFutures = batchOfMessagesToResolve.stream()
-                .map(bean -> new AbstractMap.SimpleImmutableEntry<>(bean.getMessage().messageId(), bean.getCompletableFuture()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    private CompletableFuture<?> submitMessageDeletionBatch(
+        final List<MessageResolutionBean> batchOfMessagesToResolve,
+        final ExecutorService executorService
+    ) {
+        final Map<String, CompletableFuture<Object>> messageCompletableFutures = batchOfMessagesToResolve
+            .stream()
+            .map(bean -> new AbstractMap.SimpleImmutableEntry<>(bean.getMessage().messageId(), bean.getCompletableFuture()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        return CompletableFuture.supplyAsync(() -> buildBatchDeleteMessageRequest(batchOfMessagesToResolve))
-                .thenComposeAsync(sqsAsyncClient::deleteMessageBatch, executorService)
-                .whenComplete((response, exception) -> {
+        return CompletableFuture
+            .supplyAsync(() -> buildBatchDeleteMessageRequest(batchOfMessagesToResolve))
+            .thenComposeAsync(sqsAsyncClient::deleteMessageBatch, executorService)
+            .whenComplete(
+                (response, exception) -> {
                     if (exception != null) {
                         log.error("Error deleting messages", exception);
 
-                        messageCompletableFutures.values()
-                                .forEach(completableFuture -> completableFuture.completeExceptionally(exception));
+                        messageCompletableFutures.values().forEach(completableFuture -> completableFuture.completeExceptionally(exception));
                         return;
                     }
 
                     log.debug("{} messages successfully deleted, {} failed", response.successful().size(), response.failed().size());
 
-                    response.successful().stream()
-                            .map(entry -> messageCompletableFutures.remove(entry.id()))
-                            .forEach(completableFuture -> completableFuture.complete("completed"));
+                    response
+                        .successful()
+                        .stream()
+                        .map(entry -> messageCompletableFutures.remove(entry.id()))
+                        .forEach(completableFuture -> completableFuture.complete("completed"));
 
-                    response.failed()
-                            .forEach(entry -> {
+                    response
+                        .failed()
+                        .forEach(
+                            entry -> {
                                 final CompletableFuture<?> completableFuture = messageCompletableFutures.remove(entry.id());
                                 completableFuture.completeExceptionally(new RuntimeException(entry.message()));
-                            });
+                            }
+                        );
 
                     if (!messageCompletableFutures.isEmpty()) {
-                        log.error("{} messages were not handled in the deletion. This could be a bug in the AWS SDK", messageCompletableFutures.size());
-                        messageCompletableFutures.values()
-                                .forEach(completableFuture -> completableFuture.completeExceptionally(
+                        log.error(
+                            "{} messages were not handled in the deletion. This could be a bug in the AWS SDK",
+                            messageCompletableFutures.size()
+                        );
+                        messageCompletableFutures
+                            .values()
+                            .forEach(
+                                completableFuture ->
+                                    completableFuture.completeExceptionally(
                                         new RuntimeException("Message not handled by batch delete. This should not happen")
-                                ));
+                                    )
+                            );
                     }
-                });
+                }
+            );
     }
 
     private DeleteMessageBatchRequest buildBatchDeleteMessageRequest(final List<MessageResolutionBean> batchOfMessagesToResolve) {
-        return DeleteMessageBatchRequest.builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .entries(batchOfMessagesToResolve.stream()
-                        .map(MessageResolutionBean::getMessage)
-                        .map(messageToDelete -> DeleteMessageBatchRequestEntry.builder()
+        return DeleteMessageBatchRequest
+            .builder()
+            .queueUrl(queueProperties.getQueueUrl())
+            .entries(
+                batchOfMessagesToResolve
+                    .stream()
+                    .map(MessageResolutionBean::getMessage)
+                    .map(
+                        messageToDelete ->
+                            DeleteMessageBatchRequestEntry
+                                .builder()
                                 .id(messageToDelete.messageId())
                                 .receiptHandle(messageToDelete.receiptHandle())
-                                .build())
-                        .collect(Collectors.toSet())
-                )
-                .build();
+                                .build()
+                    )
+                    .collect(Collectors.toSet())
+            )
+            .build();
     }
 
     /**

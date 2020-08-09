@@ -1,0 +1,24 @@
+build
+out
+*.iml
+.idea
+gradle/**/*
+.gradle
+bin
+target
+gradlew
+gradlew.bat
+LICENSE
+yarn.lock
+spring.factories
+lombok.config
+*.png
+*.properties
+.prettierignore
+.gitignore
+
+# Kotlin is handled by ktlint plugin
+*.kt
+*.kts
+
+doc/resources/**/*.xml

@@ -8,6 +8,9 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
@@ -18,12 +21,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 @Slf4j
-@SpringBootTest(classes = {PrefetchingQueueListenerMessageDecoratorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { PrefetchingQueueListenerMessageDecoratorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 public class PrefetchingQueueListenerMessageDecoratorIntegrationTest {
     private static final String QUEUE_NAME = "PrefetchingQueueListenerMessageDecoratorIntegrationTest";
     private static final AtomicReference<String> mdcValue = new AtomicReference<>();
@@ -34,6 +33,7 @@ public class PrefetchingQueueListenerMessageDecoratorIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -42,6 +42,7 @@ public class PrefetchingQueueListenerMessageDecoratorIntegrationTest {
         @Bean
         public MessageProcessingDecorator mdcDecorator() {
             return new MessageProcessingDecorator() {
+
                 @Override
                 public void onPreMessageProcessing(final MessageProcessingContext context, final Message message) {
                     MDC.put("test", "value");
@@ -51,6 +52,7 @@ public class PrefetchingQueueListenerMessageDecoratorIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             @PrefetchingQueueListener(value = QUEUE_NAME)
             public void listenToMessage() {
                 mdcValue.set(MDC.get("test"));

@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Configuration
 @AutoConfigureBefore(QueueListenerConfiguration.class)
 public class SqsListenerXrayConfiguration {
+
     @Bean
     @Qualifier("sqsXrayRecorder")
     @ConditionalOnMissingBean(name = "sqsXrayRecorder")
@@ -32,12 +33,17 @@ public class SqsListenerXrayConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public BasicXrayMessageProcessingDecorator xrayMessageDecorator(@Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
-                                                                    @Value("${spring.application.name:service}") final String applicationName) {
-        return new BasicXrayMessageProcessingDecorator(BasicXrayMessageProcessingDecorator.Options.builder()
+    public BasicXrayMessageProcessingDecorator xrayMessageDecorator(
+        @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
+        @Value("${spring.application.name:service}") final String applicationName
+    ) {
+        return new BasicXrayMessageProcessingDecorator(
+            BasicXrayMessageProcessingDecorator
+                .Options.builder()
                 .recorder(recorder)
                 .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy(applicationName))
-                .build());
+                .build()
+        );
     }
 
     @Configuration
@@ -52,7 +58,9 @@ public class SqsListenerXrayConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        public ClientSegmentNamingStrategy clientSegmentNamingStrategy(@Value("${spring.application.name:service}") final String applicationName) {
+        public ClientSegmentNamingStrategy clientSegmentNamingStrategy(
+            @Value("${spring.application.name:service}") final String applicationName
+        ) {
             return new StaticClientSegmentNamingStrategy(applicationName);
         }
 
@@ -63,16 +71,21 @@ public class SqsListenerXrayConfiguration {
         }
 
         @Bean
-        public SqsAsyncClientProvider xraySqsAsyncClientProvider(final SqsAsyncClient defaultClient,
-                                                                 @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
-                                                                 final ClientSegmentNamingStrategy clientSegmentNamingStrategy,
-                                                                 final ClientSegmentMutator clientSegmentMutator) {
-            final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(XrayWrappedSqsAsyncClient.Options.builder()
+        public SqsAsyncClientProvider xraySqsAsyncClientProvider(
+            final SqsAsyncClient defaultClient,
+            @Qualifier("sqsXrayRecorder") final AWSXRayRecorder recorder,
+            final ClientSegmentNamingStrategy clientSegmentNamingStrategy,
+            final ClientSegmentMutator clientSegmentMutator
+        ) {
+            final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(
+                XrayWrappedSqsAsyncClient
+                    .Options.builder()
                     .delegate(defaultClient)
                     .recorder(recorder)
                     .segmentNamingStrategy(clientSegmentNamingStrategy)
                     .segmentMutator(clientSegmentMutator)
-                    .build());
+                    .build()
+            );
 
             return new DefaultSqsAsyncClientProvider(xrayDefaultClient);
         }

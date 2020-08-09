@@ -9,6 +9,14 @@ import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.util.ExpectedTestException;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,27 +32,17 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class BatchingMessageResolverTest {
     private static final Duration BUFFERING_TIME = Duration.ofSeconds(1);
-    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder()
-            .queueUrl("queueUrl")
-            .build();
+    private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("queueUrl").build();
 
-    private static final StaticBatchingMessageResolverProperties DEFAULT_BATCHING_PROPERTIES = StaticBatchingMessageResolverProperties.builder()
-            .bufferingTime(BUFFERING_TIME)
-            .bufferingSizeLimit(1)
-            .build();
+    private static final StaticBatchingMessageResolverProperties DEFAULT_BATCHING_PROPERTIES = StaticBatchingMessageResolverProperties
+        .builder()
+        .bufferingTime(BUFFERING_TIME)
+        .bufferingSizeLimit(1)
+        .build();
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;
@@ -65,23 +63,27 @@ class BatchingMessageResolverTest {
     void messageShouldBeBufferedUntilTheTimeLimitIsHit() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100;
-        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
-                .bufferingSizeLimit(2)
-                .build();
+        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES
+            .toBuilder()
+            .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
+            .bufferingSizeLimit(2)
+            .build();
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            batchingProperties
+        );
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
-                    return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-                            .successful(DeleteMessageBatchResultEntry.builder()
-                                    .id("id")
-                                    .build()
-                            )
-                            .build());
-                });
+                    return CompletableFuture.completedFuture(
+                        DeleteMessageBatchResponse.builder().successful(DeleteMessageBatchResultEntry.builder().id("id").build()).build()
+                    );
+                }
+            );
 
         // act
         final long startTime = System.currentTimeMillis();
@@ -97,19 +99,26 @@ class BatchingMessageResolverTest {
     void whenBatchingSizeLimitReachedTheMessagesAreImmediatelySent() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100_000;
-        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
-                .bufferingSizeLimit(2)
-                .build();
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
+        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES
+            .toBuilder()
+            .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
+            .bufferingSizeLimit(2)
+            .build();
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            batchingProperties
+        );
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id2").receiptHandle("handle2").build());
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
-                });
+                }
+            );
 
         // act
         final long startTime = System.currentTimeMillis();
@@ -125,17 +134,24 @@ class BatchingMessageResolverTest {
     void batchDeleteRequestShouldContainCorrectReceiptHandleForMessageRemoval() throws Exception {
         // arrange
         final long bufferingTimeInMs = 100_000;
-        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
-                .bufferingSizeLimit(2)
-                .build();
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
+        final BatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES
+            .toBuilder()
+            .bufferingTime(Duration.ofMillis(bufferingTimeInMs))
+            .bufferingSizeLimit(2)
+            .build();
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            batchingProperties
+        );
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
-                });
+                }
+            );
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id1").receiptHandle("receipt1").build());
         batchingMessageResolver.resolveMessage(Message.builder().messageId("id2").receiptHandle("receipt2").build());
 
@@ -144,34 +160,40 @@ class BatchingMessageResolverTest {
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();
 
         // assert
-        verify(sqsAsyncClient).deleteMessageBatch(DeleteMessageBatchRequest.builder()
-                .queueUrl("queueUrl")
-                .entries(
+        verify(sqsAsyncClient)
+            .deleteMessageBatch(
+                DeleteMessageBatchRequest
+                    .builder()
+                    .queueUrl("queueUrl")
+                    .entries(
                         DeleteMessageBatchRequestEntry.builder().id("id1").receiptHandle("receipt1").build(),
                         DeleteMessageBatchRequestEntry.builder().id("id2").receiptHandle("receipt2").build()
-                )
-                .build());
+                    )
+                    .build()
+            );
     }
 
     @Test
     void whenMessageIsSuccessfullyDeletedTheCompletableFutureIsResolved() throws Exception {
         // arrange
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            DEFAULT_BATCHING_PROPERTIES
+        );
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
-                    return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-                            .successful(DeleteMessageBatchResultEntry.builder()
-                                    .id("id")
-                                    .build()
-                            )
-                            .build());
-                });
-        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                    return CompletableFuture.completedFuture(
+                        DeleteMessageBatchResponse.builder().successful(DeleteMessageBatchResultEntry.builder().id("id").build()).build()
+                    );
+                }
+            );
+        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -185,22 +207,27 @@ class BatchingMessageResolverTest {
     @Test
     void whenMessageFailsToBeDeletedTheCompletableFutureIsCompletedExceptionally() throws Exception {
         // arrange
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            DEFAULT_BATCHING_PROPERTIES
+        );
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
-                    return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-                            .failed(BatchResultErrorEntry.builder()
-                                    .id("id")
-                                    .message("Expected Test Error")
-                                    .build())
-                            .build());
-                });
-        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                    return CompletableFuture.completedFuture(
+                        DeleteMessageBatchResponse
+                            .builder()
+                            .failed(BatchResultErrorEntry.builder().id("id").message("Expected Test Error").build())
+                            .build()
+                    );
+                }
+            );
+        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -215,17 +242,22 @@ class BatchingMessageResolverTest {
     @Test
     void whenMessageIsNotHandledInBatchDeletionItIsRejected() throws Exception {
         // arrange
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            DEFAULT_BATCHING_PROPERTIES
+        );
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
-                });
-        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                }
+            );
+        final CompletableFuture<?> messageResolvedCompletableFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -243,17 +275,16 @@ class BatchingMessageResolverTest {
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
-                });
+                }
+            );
         executorService.submit(batchingMessageResolver::run);
 
         // act
-        batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+        batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
 
         // assert
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();
@@ -262,21 +293,26 @@ class BatchingMessageResolverTest {
     @Test
     void interruptingThreadWhileWaitingForTotalMessageBatchWillStillPublishCurrentMessagesObtained() throws Exception {
         // arrange
-        final StaticBatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingTime(Duration.ofMillis(100_000L))
-                .bufferingSizeLimit(2)
-                .build();
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, batchingProperties);
-        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+        final StaticBatchingMessageResolverProperties batchingProperties = DEFAULT_BATCHING_PROPERTIES
+            .toBuilder()
+            .bufferingTime(Duration.ofMillis(100_000L))
+            .bufferingSizeLimit(2)
+            .build();
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            batchingProperties
+        );
+        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-                        .successful(DeleteMessageBatchResultEntry.builder()
-                                .id("id")
-                                .build())
-                        .build()));
+            .thenAnswer(
+                invocation ->
+                    CompletableFuture.completedFuture(
+                        DeleteMessageBatchResponse.builder().successful(DeleteMessageBatchResultEntry.builder().id("id").build()).build()
+                    )
+            );
 
         // act
         final Future<?> resolverThreadFuture = executorService.submit(batchingMessageResolver::run);
@@ -291,19 +327,24 @@ class BatchingMessageResolverTest {
     @Test
     void exceptionThrownInResponseToBatchRemovalWillRejectAllMessages() throws Exception {
         // arrange
-        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, DEFAULT_BATCHING_PROPERTIES);
+        final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(
+            QUEUE_PROPERTIES,
+            sqsAsyncClient,
+            DEFAULT_BATCHING_PROPERTIES
+        );
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     final CompletableFuture<DeleteMessageBatchResponse> completableFuture = new CompletableFuture<>();
                     completableFuture.completeExceptionally(new ExpectedTestException());
                     return completableFuture;
-                });
-        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                }
+            );
+        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -317,16 +358,12 @@ class BatchingMessageResolverTest {
     @Test
     void exceptionThrownSendingBatchRemovalWillRejectAllMessages() {
         // arrange
-        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingSizeLimit(1)
-                .build();
+        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder().bufferingSizeLimit(1).build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, properties);
-        when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenThrow(new ExpectedTestException());
-        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+        when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).thenThrow(new ExpectedTestException());
+        final CompletableFuture<?> messageResolvedFuture = batchingMessageResolver.resolveMessage(
+            Message.builder().messageId("id").receiptHandle("handle").build()
+        );
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -339,27 +376,21 @@ class BatchingMessageResolverTest {
     @Test
     void multipleBatchesOfDeletionsCanBeSentConcurrentlyIfManyResolveMessageCallsAreMadeAtOnce() throws Exception {
         // arrange
-        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingSizeLimit(1)
-                .build();
+        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder().bufferingSizeLimit(1).build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(2);
         final CountDownLatch blockDeleteMessage = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     log.debug("Received batch to delete");
                     batchBeingDeletedLatch.countDown();
                     blockDeleteMessage.await();
                     throw new ExpectedTestException();
-                });
-        batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
-        batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                }
+            );
+        batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
+        batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
 
         // act
         executorService.submit(batchingMessageResolver::run);
@@ -371,22 +402,19 @@ class BatchingMessageResolverTest {
     @Test
     void shuttingDownMessageResolverWillWaitUntilEachMessageBatchCompletes() throws Exception {
         // arrange
-        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder()
-                .bufferingSizeLimit(1)
-                .build();
+        final StaticBatchingMessageResolverProperties properties = DEFAULT_BATCHING_PROPERTIES.toBuilder().bufferingSizeLimit(1).build();
         final BatchingMessageResolver batchingMessageResolver = new BatchingMessageResolver(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch batchBeingDeletedLatch = new CountDownLatch(1);
         final CountDownLatch blockDeleteMessage = new CountDownLatch(1);
         when(sqsAsyncClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-                .thenAnswer(invocation -> {
+            .thenAnswer(
+                invocation -> {
                     batchBeingDeletedLatch.countDown();
                     blockDeleteMessage.await();
                     throw new ExpectedTestException();
-                });
-        batchingMessageResolver.resolveMessage(Message.builder()
-                .messageId("id")
-                .receiptHandle("handle")
-                .build());
+                }
+            );
+        batchingMessageResolver.resolveMessage(Message.builder().messageId("id").receiptHandle("handle").build());
         final Thread resolverThread = new Thread(batchingMessageResolver::run);
         resolverThread.start();
         assertThat(batchBeingDeletedLatch.await(1, TimeUnit.SECONDS)).isTrue();

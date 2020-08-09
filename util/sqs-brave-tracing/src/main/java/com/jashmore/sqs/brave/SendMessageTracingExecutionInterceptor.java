@@ -4,6 +4,8 @@ import brave.Span;
 import brave.Tracing;
 import brave.propagation.TraceContext;
 import com.jashmore.sqs.brave.propogation.SendMessageRemoteSetter;
+import java.util.HashMap;
+import java.util.Map;
 import software.amazon.awssdk.core.SdkRequest;
 import software.amazon.awssdk.core.interceptor.Context;
 import software.amazon.awssdk.core.interceptor.ExecutionAttribute;
@@ -13,9 +15,6 @@ import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link ExecutionInterceptor} that will add tracing information to the message attributes of a SQS
@@ -34,14 +33,15 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
         this(tracing, SpanDecorator.DEFAULT);
     }
 
-    public SendMessageTracingExecutionInterceptor(final Tracing tracing,
-                                                  final SpanDecorator spanDecorator) {
+    public SendMessageTracingExecutionInterceptor(final Tracing tracing, final SpanDecorator spanDecorator) {
         this(tracing, spanDecorator, SendMessageRemoteSetter.create(tracing));
     }
 
-    public SendMessageTracingExecutionInterceptor(final Tracing tracing,
-                                                  final SpanDecorator spanDecorator,
-                                                  final TraceContext.Injector<Map<String, MessageAttributeValue>> injector) {
+    public SendMessageTracingExecutionInterceptor(
+        final Tracing tracing,
+        final SpanDecorator spanDecorator,
+        final TraceContext.Injector<Map<String, MessageAttributeValue>> injector
+    ) {
         this.tracing = tracing;
         this.spanDecorator = spanDecorator;
         this.messageAttributeInjector = injector;
@@ -76,13 +76,10 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
             return request;
         }
 
-        final Map<String, MessageAttributeValue> currentMessageAttributes =
-                new HashMap<>(request.messageAttributes());
+        final Map<String, MessageAttributeValue> currentMessageAttributes = new HashMap<>(request.messageAttributes());
         messageAttributeInjector.inject(span.context(), currentMessageAttributes);
 
-        return request.toBuilder()
-                .messageAttributes(currentMessageAttributes)
-                .build();
+        return request.toBuilder().messageAttributes(currentMessageAttributes).build();
     }
 
     @Override
@@ -120,8 +117,7 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
      */
     @SuppressWarnings("unused")
     public interface SpanDecorator {
-        SpanDecorator DEFAULT = new SpanDecorator() {
-        };
+        SpanDecorator DEFAULT = new SpanDecorator() {};
 
         /**
          * Decorate the message span before the message is sent to SQS.
@@ -129,8 +125,7 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
          * @param request the original request
          * @param span    the span corresponding to this message
          */
-        default void decorateMessageSpan(final SendMessageRequest request,
-                                         final Span span) {
+        default void decorateMessageSpan(final SendMessageRequest request, final Span span) {
             span.kind(Span.Kind.PRODUCER);
             span.name("sqs-send-message");
             span.remoteServiceName("aws-sqs");
@@ -145,10 +140,12 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
          * @param sdkHttpResponse the underlying HTTP response
          * @param span            the span for this message to decorate
          */
-        default void decorateMessageSpanOnSuccess(final SendMessageRequest request,
-                                                  final SendMessageResponse response,
-                                                  final SdkHttpResponse sdkHttpResponse,
-                                                  final Span span) {
+        default void decorateMessageSpanOnSuccess(
+            final SendMessageRequest request,
+            final SendMessageResponse response,
+            final SdkHttpResponse sdkHttpResponse,
+            final Span span
+        ) {
             span.tag("message.id", response.messageId());
         }
 
@@ -160,10 +157,12 @@ public class SendMessageTracingExecutionInterceptor implements ExecutionIntercep
          * @param sdkHttpResponse the underlying HTTP response
          * @param span            the span for this message to decorate
          */
-        default void decorateMessageSpanOnFailure(final SendMessageRequest request,
-                                                  final SendMessageResponse response,
-                                                  final SdkHttpResponse sdkHttpResponse,
-                                                  final Span span) {
+        default void decorateMessageSpanOnFailure(
+            final SendMessageRequest request,
+            final SendMessageResponse response,
+            final SdkHttpResponse sdkHttpResponse,
+            final Span span
+        ) {
             span.tag("response.code", String.valueOf(sdkHttpResponse.statusCode()));
         }
     }

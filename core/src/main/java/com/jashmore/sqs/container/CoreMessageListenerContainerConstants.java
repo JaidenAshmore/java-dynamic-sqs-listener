@@ -1,9 +1,8 @@
 package com.jashmore.sqs.container;
 
 import com.jashmore.sqs.retriever.MessageRetriever;
-import lombok.experimental.UtilityClass;
-
 import java.time.Duration;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class CoreMessageListenerContainerConstants {

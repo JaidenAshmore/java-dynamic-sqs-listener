@@ -22,28 +22,28 @@ Start each of these applications in new terminals/your IDE:
 
     ```bash
     docker run -p 9324:9324 softwaremill/elasticmq
-   ```
+    ```
 
 1. The SQS consumer service
 
     ```bash
-   cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer
-   gradle bootRun
-   ```
+    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer
+    gradle bootRun
+    ```
 
 1. The first SQS producer service
 
-   ```bash
-   cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer
-   gradle bootRun
-   ```
+    ```bash
+    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer
+    gradle bootRun
+    ```
 
 1. The second SQS producer service
 
-   ```bash
-   cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-2
-   gradle bootRun
-   ```
+    ```bash
+    cd java-dynamic-sqs-listener/examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer-2
+    gradle bootRun
+    ```
 
 You should now see the consumer receiving messages from both producers and even though the producers are sending
 the payload in different schema versions the consumer is still able to process the message.

@@ -1,15 +1,15 @@
 package com.jashmore.sqs.util.thread;
 
 import com.jashmore.documentation.annotations.Nonnull;
-import lombok.experimental.UtilityClass;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ThreadUtils {
+
     /**
      * Build a {@link ThreadFactory} with the provided thread name format applied to all threads.
      *
@@ -19,7 +19,7 @@ public class ThreadUtils {
      * @return the generated thread factory
      */
     public ThreadFactory multiNamedThreadFactory(final String threadNamePrefix) {
-        return new NamedThreadFactory((threadCount) -> threadNamePrefix + "-" + threadCount);
+        return new NamedThreadFactory(threadCount -> threadNamePrefix + "-" + threadCount);
     }
 
     /**
@@ -29,7 +29,7 @@ public class ThreadUtils {
      * @return the generated thread factory
      */
     public ThreadFactory singleNamedThreadFactory(final String threadName) {
-        return new NamedThreadFactory((threadCount) -> threadName);
+        return new NamedThreadFactory(threadCount -> threadName);
     }
 
     private class NamedThreadFactory implements ThreadFactory {

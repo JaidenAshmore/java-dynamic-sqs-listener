@@ -6,12 +6,11 @@ import com.jashmore.sqs.argument.ArgumentResolutionException;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.MethodParameter;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 /**
  * An {@link ArgumentResolver} that is able to handle the extraction of information from the attributes of the SQS message.
@@ -41,15 +40,23 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
     }
 
     @Override
-    public Object resolveArgumentForParameter(final QueueProperties queueProperties,
-                                              final MethodParameter methodParameter,
-                                              final Message message) throws ArgumentResolutionException {
-        final MessageAttribute annotation = AnnotationUtils.findParameterAnnotation(methodParameter, MessageAttribute.class)
-                .orElseThrow(() -> new ArgumentResolutionException("Parameter passed in does not contain the MessageAttribute annotation when it should"));
+    public Object resolveArgumentForParameter(
+        final QueueProperties queueProperties,
+        final MethodParameter methodParameter,
+        final Message message
+    )
+        throws ArgumentResolutionException {
+        final MessageAttribute annotation = AnnotationUtils
+            .findParameterAnnotation(methodParameter, MessageAttribute.class)
+            .orElseThrow(
+                () -> new ArgumentResolutionException("Parameter passed in does not contain the MessageAttribute annotation when it should")
+            );
 
         final String attributeName = annotation.value();
 
-        final Optional<MessageAttributeValue> optionalMessageAttributeValue = Optional.ofNullable(message.messageAttributes().get(attributeName));
+        final Optional<MessageAttributeValue> optionalMessageAttributeValue = Optional.ofNullable(
+            message.messageAttributes().get(attributeName)
+        );
 
         if (!optionalMessageAttributeValue.isPresent()) {
             if (annotation.required()) {
@@ -61,14 +68,18 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
 
         final MessageAttributeValue messageAttributeValue = optionalMessageAttributeValue.get();
 
-        if (messageAttributeValue.dataType().startsWith(MessageAttributeDataTypes.STRING.getValue())
-                || messageAttributeValue.dataType().startsWith(MessageAttributeDataTypes.NUMBER.getValue())) {
+        if (
+            messageAttributeValue.dataType().startsWith(MessageAttributeDataTypes.STRING.getValue()) ||
+            messageAttributeValue.dataType().startsWith(MessageAttributeDataTypes.NUMBER.getValue())
+        ) {
             return handleStringParameterValue(methodParameter, messageAttributeValue, attributeName);
         } else if (messageAttributeValue.dataType().startsWith(MessageAttributeDataTypes.BINARY.getValue())) {
             return handleByteParameterValue(methodParameter, messageAttributeValue);
         }
 
-        throw new ArgumentResolutionException("Cannot parse message attribute due to unknown data type '" + messageAttributeValue.dataType() + "'");
+        throw new ArgumentResolutionException(
+            "Cannot parse message attribute due to unknown data type '" + messageAttributeValue.dataType() + "'"
+        );
     }
 
     /**
@@ -79,9 +90,11 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
      * @param attributeName         the name of the attribute that is being consumed
      * @return the resolved argument from the attribute
      */
-    private Object handleStringParameterValue(final MethodParameter methodParameter,
-                                              final MessageAttributeValue messageAttributeValue,
-                                              final String attributeName) {
+    private Object handleStringParameterValue(
+        final MethodParameter methodParameter,
+        final MessageAttributeValue messageAttributeValue,
+        final String attributeName
+    ) {
         if (methodParameter.getParameter().getType().isAssignableFrom(String.class)) {
             return messageAttributeValue.stringValue();
         }
@@ -100,8 +113,7 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
      * @param messageAttributeValue value of the message attribute
      * @return the argument resolved for this attribute
      */
-    private Object handleByteParameterValue(final MethodParameter methodParameter,
-                                            final MessageAttributeValue messageAttributeValue) {
+    private Object handleByteParameterValue(final MethodParameter methodParameter, final MessageAttributeValue messageAttributeValue) {
         final byte[] byteArray = messageAttributeValue.binaryValue().asByteArray();
         final Class<?> parameterClass = methodParameter.getParameter().getType();
         if (parameterClass == byte[].class) {

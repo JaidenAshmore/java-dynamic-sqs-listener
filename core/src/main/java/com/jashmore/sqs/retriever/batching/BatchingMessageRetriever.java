@@ -10,15 +10,6 @@ import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.util.collections.QueueUtils;
 import com.jashmore.sqs.util.properties.PropertyUtils;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.core.exception.SdkInterruptedException;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -27,6 +18,14 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkInterruptedException;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 /**
  * This implementation of the {@link MessageRetriever} will group requests for messages into batches to reduce the number of times that messages are requested
@@ -43,9 +42,11 @@ public class BatchingMessageRetriever implements MessageRetriever {
 
     private final LinkedBlockingDeque<CompletableFuture<Message>> futuresWaitingForMessages;
 
-    public BatchingMessageRetriever(final QueueProperties queueProperties,
-                                    final SqsAsyncClient sqsAsyncClient,
-                                    final BatchingMessageRetrieverProperties properties) {
+    public BatchingMessageRetriever(
+        final QueueProperties queueProperties,
+        final SqsAsyncClient sqsAsyncClient,
+        final BatchingMessageRetrieverProperties properties
+    ) {
         this.queueProperties = queueProperties;
         this.sqsAsyncClient = sqsAsyncClient;
         this.properties = properties;
@@ -80,7 +81,9 @@ public class BatchingMessageRetriever implements MessageRetriever {
 
             final List<Message> messages;
             try {
-                messages = CompletableFuture.supplyAsync(messagesToObtain::size)
+                messages =
+                    CompletableFuture
+                        .supplyAsync(messagesToObtain::size)
                         .thenApply(this::buildReceiveMessageRequest)
                         .thenComposeAsync(sqsAsyncClient::receiveMessage)
                         .thenApply(ReceiveMessageResponse::messages)
@@ -132,10 +135,11 @@ public class BatchingMessageRetriever implements MessageRetriever {
         final int batchSize = getBatchSize();
         final Duration pollingPeriod = safelyGetPositiveOrZeroDuration("batchingPeriod", properties::getBatchingPeriod, Duration.ZERO);
         if (log.isDebugEnabled()) {
-            log.debug("Waiting for {} requests for messages within {}ms. Total currently waiting: {}",
-                    batchSize,
-                    pollingPeriod.toMillis(),
-                    futuresWaitingForMessages.size()
+            log.debug(
+                "Waiting for {} requests for messages within {}ms. Total currently waiting: {}",
+                batchSize,
+                pollingPeriod.toMillis(),
+                futuresWaitingForMessages.size()
             );
         }
         QueueUtils.drain(futuresWaitingForMessages, messagesToObtain, batchSize, pollingPeriod);
@@ -144,7 +148,11 @@ public class BatchingMessageRetriever implements MessageRetriever {
 
     private void performBackoff() {
         try {
-            final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration("errorBackoffTime", properties::getErrorBackoffTime, DEFAULT_BACKOFF_TIME);
+            final Duration errorBackoffTime = safelyGetPositiveOrZeroDuration(
+                "errorBackoffTime",
+                properties::getErrorBackoffTime,
+                DEFAULT_BACKOFF_TIME
+            );
             log.debug("Backing off for {}ms", errorBackoffTime.toMillis());
             Thread.sleep(errorBackoffTime.toMillis());
         } catch (final InterruptedException interruptedException) {
@@ -159,18 +167,13 @@ public class BatchingMessageRetriever implements MessageRetriever {
      * @return the total number of threads for the batching trigger
      */
     private int getBatchSize() {
-        final int batchSize = PropertyUtils.safelyGetIntegerValue(
-                "batchSize",
-                properties::getBatchSize,
-                DEFAULT_BATCHING_TRIGGER
-        );
+        final int batchSize = PropertyUtils.safelyGetIntegerValue("batchSize", properties::getBatchSize, DEFAULT_BATCHING_TRIGGER);
 
         if (batchSize < 0) {
             return 0;
         }
 
         return Math.min(batchSize, AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS);
-
     }
 
     /**
@@ -180,12 +183,13 @@ public class BatchingMessageRetriever implements MessageRetriever {
      * @return the request that will be sent to SQS
      */
     private ReceiveMessageRequest buildReceiveMessageRequest(final int numberOfMessagesToObtain) {
-        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest.builder()
-                .queueUrl(queueProperties.getQueueUrl())
-                .attributeNames(QueueAttributeName.ALL)
-                .messageAttributeNames(QueueAttributeName.ALL.toString())
-                .maxNumberOfMessages(numberOfMessagesToObtain)
-                .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
+        final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
+            .builder()
+            .queueUrl(queueProperties.getQueueUrl())
+            .attributeNames(QueueAttributeName.ALL)
+            .messageAttributeNames(QueueAttributeName.ALL.toString())
+            .maxNumberOfMessages(numberOfMessagesToObtain)
+            .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);
 
         try {
             final Duration visibilityTimeout = properties.getMessageVisibilityTimeout();

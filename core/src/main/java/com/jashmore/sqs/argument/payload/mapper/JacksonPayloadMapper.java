@@ -1,10 +1,9 @@
 package com.jashmore.sqs.argument.payload.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.model.Message;
-
-import java.io.IOException;
 
 /**
  * Cast the message body to a Java Bean using a Jackson {@link ObjectMapper}.

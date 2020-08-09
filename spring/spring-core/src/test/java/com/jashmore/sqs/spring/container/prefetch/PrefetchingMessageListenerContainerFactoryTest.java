@@ -16,6 +16,10 @@ import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProp
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.queue.QueueResolver;
+import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,11 +28,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Optional;
 
 /**
  * Class is hard to test as it is the one building all of the dependencies internally using new constructors. Don't really know a better way to do this
@@ -56,8 +55,14 @@ class PrefetchingMessageListenerContainerFactoryTest {
 
     @BeforeEach
     void setUp() {
-        prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(argumentResolverService, sqsAsyncClientProvider,
-                queueResolver, environment, Collections.emptyList());
+        prefetchingMessageListenerContainerFactory =
+            new PrefetchingMessageListenerContainerFactory(
+                argumentResolverService,
+                sqsAsyncClientProvider,
+                queueResolver,
+                environment,
+                Collections.emptyList()
+            );
     }
 
     @Test
@@ -87,8 +92,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer.getIdentifier())
-                .isEqualTo("prefetching-message-listener-container-factory-test-my-method");
+        assertThat(messageListenerContainer.getIdentifier()).isEqualTo("prefetching-message-listener-container-factory-test-my-method");
     }
 
     @Test
@@ -198,15 +202,20 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
 
         // act
-        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(annotation);
+        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(
+            annotation
+        );
 
         // assert
-        assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
-                .maxPrefetchedMessages(30)
-                .desiredMinPrefetchedMessages(40)
-                .messageVisibilityTimeout(Duration.ofSeconds(40))
-                .build()
-        );
+        assertThat(properties)
+            .isEqualTo(
+                StaticPrefetchingMessageRetrieverProperties
+                    .builder()
+                    .maxPrefetchedMessages(30)
+                    .desiredMinPrefetchedMessages(40)
+                    .messageVisibilityTimeout(Duration.ofSeconds(40))
+                    .build()
+            );
     }
 
     @Test
@@ -216,15 +225,20 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
 
         // act
-        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(annotation);
+        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(
+            annotation
+        );
 
         // assert
-        assertThat(properties).isEqualTo(StaticPrefetchingMessageRetrieverProperties.builder()
-                .maxPrefetchedMessages(20)
-                .desiredMinPrefetchedMessages(5)
-                .messageVisibilityTimeout(Duration.ofSeconds(300))
-                .build()
-        );
+        assertThat(properties)
+            .isEqualTo(
+                StaticPrefetchingMessageRetrieverProperties
+                    .builder()
+                    .maxPrefetchedMessages(20)
+                    .desiredMinPrefetchedMessages(5)
+                    .messageVisibilityTimeout(Duration.ofSeconds(300))
+                    .build()
+            );
     }
 
     @Test
@@ -235,8 +249,10 @@ class PrefetchingMessageListenerContainerFactoryTest {
         when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.empty());
 
         // act
-        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
-                () -> prefetchingMessageListenerContainerFactory.buildContainer(bean, method));
+        final MessageListenerContainerInitialisationException exception = assertThrows(
+            MessageListenerContainerInitialisationException.class,
+            () -> prefetchingMessageListenerContainerFactory.buildContainer(bean, method)
+        );
 
         // assert
         assertThat(exception).hasMessage("Expected the default SQS Client but there is none");
@@ -250,8 +266,10 @@ class PrefetchingMessageListenerContainerFactoryTest {
         when(sqsAsyncClientProvider.getClient("clientId")).thenReturn(Optional.empty());
 
         // act
-        final MessageListenerContainerInitialisationException exception = assertThrows(MessageListenerContainerInitialisationException.class,
-                () -> prefetchingMessageListenerContainerFactory.buildContainer(bean, method));
+        final MessageListenerContainerInitialisationException exception = assertThrows(
+            MessageListenerContainerInitialisationException.class,
+            () -> prefetchingMessageListenerContainerFactory.buildContainer(bean, method)
+        );
 
         assertThat(exception).hasMessage("Expected a client with id 'clientId' but none were found");
     }
@@ -275,13 +293,18 @@ class PrefetchingMessageListenerContainerFactoryTest {
      */
     @Nested
     class MessageProcessingDecorators {
+
         @Test
         void canBuildContainerWhenMessageProcessingDecoratorsIncluded() throws Exception {
             // arrange
-            prefetchingMessageListenerContainerFactory = new PrefetchingMessageListenerContainerFactory(
-                    argumentResolverService, sqsAsyncClientProvider, queueResolver, environment,
-                    Collections.singletonList(new MessageProcessingDecorator() {
-                    }));
+            prefetchingMessageListenerContainerFactory =
+                new PrefetchingMessageListenerContainerFactory(
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    environment,
+                    Collections.singletonList(new MessageProcessingDecorator() {})
+                );
             when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultClient));
             final Object bean = new PrefetchingMessageListenerContainerFactoryTest();
             final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
@@ -295,32 +318,29 @@ class PrefetchingMessageListenerContainerFactoryTest {
     }
 
     @PrefetchingQueueListener("test")
-    public void myMethod() {
-
-    }
+    public void myMethod() {}
 
     @PrefetchingQueueListener(value = "test2", identifier = "identifier")
-    public void myMethodWithIdentifier() {
+    public void myMethodWithIdentifier() {}
 
-    }
-
-    @PrefetchingQueueListener(value = "test2", concurrencyLevelString = "${prop.concurrency}",
-            messageVisibilityTimeoutInSecondsString = "${prop.visibility}", maxPrefetchedMessagesString = "${prop.maxPrefetched}",
-            desiredMinPrefetchedMessagesString = "${prop.desiredMinPrefetchedMessages}"
+    @PrefetchingQueueListener(
+        value = "test2",
+        concurrencyLevelString = "${prop.concurrency}",
+        messageVisibilityTimeoutInSecondsString = "${prop.visibility}",
+        maxPrefetchedMessagesString = "${prop.maxPrefetched}",
+        desiredMinPrefetchedMessagesString = "${prop.desiredMinPrefetchedMessages}"
     )
-    public void methodWithFieldsUsingEnvironmentProperties() {
+    public void methodWithFieldsUsingEnvironmentProperties() {}
 
-    }
-
-    @PrefetchingQueueListener(value = "test2", concurrencyLevel = 2, messageVisibilityTimeoutInSeconds = 300,
-            maxPrefetchedMessages = 20, desiredMinPrefetchedMessages = 5
+    @PrefetchingQueueListener(
+        value = "test2",
+        concurrencyLevel = 2,
+        messageVisibilityTimeoutInSeconds = 300,
+        maxPrefetchedMessages = 20,
+        desiredMinPrefetchedMessages = 5
     )
-    public void methodWithFieldsUsingProperties() {
-
-    }
+    public void methodWithFieldsUsingProperties() {}
 
     @PrefetchingQueueListener(value = "test2", sqsClient = "clientId")
-    public void methodUsingSpecificSqsAsyncClient() {
-
-    }
+    public void methodUsingSpecificSqsAsyncClient() {}
 }

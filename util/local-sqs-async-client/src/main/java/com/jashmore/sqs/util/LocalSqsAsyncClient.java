@@ -1,13 +1,12 @@
 package com.jashmore.sqs.util;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * Client that should be used for local development like integration tests or with your own localstack or ElasticMQ SQS Server.
@@ -40,7 +39,6 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      */
     CompletableFuture<SendMessageResponse> sendMessage(final String queueName, final SendMessageRequest sendMessageRequest);
 
-
     /**
      * Send a message to a local queue with the given name.
      *
@@ -48,8 +46,10 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      * @param sendMessageRequestBuilderConsumer a consumer of the request builder that can be used to generate the request
      * @return the response for sending the messages as a {@link CompletableFuture}
      */
-    CompletableFuture<SendMessageResponse> sendMessage(final String queueName,
-                                                       final Consumer<SendMessageRequest.Builder> sendMessageRequestBuilderConsumer);
+    CompletableFuture<SendMessageResponse> sendMessage(
+        final String queueName,
+        final Consumer<SendMessageRequest.Builder> sendMessageRequestBuilderConsumer
+    );
 
     /**
      * Purge all of the messages from all known queues.

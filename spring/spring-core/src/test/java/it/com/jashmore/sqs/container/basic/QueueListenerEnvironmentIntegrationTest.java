@@ -7,6 +7,10 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,17 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
 @Slf4j
-@SpringBootTest(classes = {QueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class})
+@SpringBootTest(classes = { QueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
-@TestPropertySource(properties = {
-        "prop.concurrency=5"
-})
+@TestPropertySource(properties = { "prop.concurrency=5" })
 class QueueListenerEnvironmentIntegrationTest {
     private static final String QUEUE_NAME = "QueueListenerEnvironmentIntegrationTest";
 
@@ -41,6 +38,7 @@ class QueueListenerEnvironmentIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -49,6 +47,7 @@ class QueueListenerEnvironmentIntegrationTest {
         @SuppressWarnings("unused")
         @Service
         public static class MessageListener {
+
             @QueueListener(value = QUEUE_NAME, concurrencyLevelString = "${prop.concurrency}")
             public void listenToMessage(@Payload final String payload) {
                 try {
@@ -65,12 +64,15 @@ class QueueListenerEnvironmentIntegrationTest {
     @Test
     void allMessagesAreProcessedByListeners() throws Exception {
         // arrange
-        IntStream.range(0, NUMBER_OF_MESSAGES_TO_SEND)
-                .forEach(index -> {
+        IntStream
+            .range(0, NUMBER_OF_MESSAGES_TO_SEND)
+            .forEach(
+                index -> {
                     final String messageBody = "message: " + index;
                     log.info("Sent message: {}", messageBody);
                     localSqsAsyncClient.sendMessage(QUEUE_NAME, messageBody);
-                });
+                }
+            );
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

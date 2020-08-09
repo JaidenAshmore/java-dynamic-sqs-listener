@@ -4,37 +4,37 @@ _This guide assumes that you have knowledge of Xray and how it works. If not tak
 
 ## Steps
 
-1. Add the [AWS XRay Core Extension](../../../extensions/aws-xray-extension/core) as a dependency.
+1.  Add the [AWS XRay Core Extension](../../../extensions/aws-xray-extension/core) as a dependency.
 
     ```xml
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>aws-xray-extension-core</artifactId>
-            <version>${dynamic-sqs-listener.version}</version>
-        </dependency>
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>aws-xray-extension-core</artifactId>
+        <version>${dynamic-sqs-listener.version}</version>
+    </dependency>
     ```
 
-1. Wrap the [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) with a
-[DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java) with an instance of the
-[BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java).
-This will extract the tracing header from the SQS message and begin a Xray Segment.
+1.  Wrap the [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) with a
+    [DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java) with an instance of the
+    [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java).
+    This will extract the tracing header from the SQS message and begin a Xray Segment.
 
-    ```java
-    MessageProcessor processor = ...;
-    List<MessageProcessingDecorator> decorators = new ArrayList<>();
-    decorators.add(new BasicXrayMessageProcessingDecorator(Options.builder()
-           .recorder(AWSXRay.getGlobalRecorder())
-           .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("service-name"))
-           .build());
-    DecoratingMessageProcessor decoratingMessageProcessor = new DecoratingMessageProcessor(
-       "identifier",
-       queueProperties,
-       decorators,
-       processor
-    );
-    ```
+        ```java
+        MessageProcessor processor = ...;
+        List<MessageProcessingDecorator> decorators = new ArrayList<>();
+        decorators.add(new BasicXrayMessageProcessingDecorator(Options.builder()
+               .recorder(AWSXRay.getGlobalRecorder())
+               .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("service-name"))
+               .build());
+        DecoratingMessageProcessor decoratingMessageProcessor = new DecoratingMessageProcessor(
+           "identifier",
+           queueProperties,
+           decorators,
+           processor
+        );
+        ```
 
-1. Now when the application runs any tracing in the message will be continued in the message listener.
+1.  Now when the application runs any tracing in the message will be continued in the message listener.
 
 ## Integration with AWS Xray Instrumentor
 
@@ -42,11 +42,11 @@ If you want tracing information to be included when making client calls to AWS, 
 [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
 
 ```xml
-    <dependency>
-        <groupId>com.amazonaws</groupId>
-        <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-        <version>${aws-xray.version}</version>
-    </dependency>
+<dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+    <version>${aws-xray.version}</version>
+</dependency>
 ```
 
 This requires the `SqsAsyncClient` to be used inside Xray segments otherwise a segment not found exceptions will be thrown. To get around this, wrap

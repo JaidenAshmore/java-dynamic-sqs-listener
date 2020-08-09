@@ -10,6 +10,11 @@ import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,28 +36,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 @Slf4j
 @SpringBootTest(
-        classes = {
-            SpringObjectMapperIntegrationTest.Application.class,
-            SpringObjectMapperIntegrationTest.TestConfig.class,
-            SpringObjectMapperIntegrationTest.Controller.class,
-            SpringObjectMapperIntegrationTest.MessageListener.class,
-            QueueListenerConfiguration.class
-        },
-        webEnvironment = RANDOM_PORT
+    classes = {
+        SpringObjectMapperIntegrationTest.Application.class,
+        SpringObjectMapperIntegrationTest.TestConfig.class,
+        SpringObjectMapperIntegrationTest.Controller.class,
+        SpringObjectMapperIntegrationTest.MessageListener.class,
+        QueueListenerConfiguration.class
+    },
+    webEnvironment = RANDOM_PORT
 )
-@TestPropertySource(properties = {
+@TestPropertySource(
+    properties = {
         // We customise the Jackson ObjectMapper to not fail on unknown properties and we want to make sure that this is maintained when integrating
         // this library
         "spring.jackson.deserialization.fail-on-unknown-properties=false"
-})
+    }
+)
 class SpringObjectMapperIntegrationTest {
     private static final String QUEUE_NAME = "SpringObjectMapperIntegrationTest";
 
@@ -70,6 +71,7 @@ class SpringObjectMapperIntegrationTest {
 
     @SpringBootApplication
     public static class Application {
+
         public static void main(String[] args) {
             SpringApplication.run(Application.class);
         }
@@ -77,6 +79,7 @@ class SpringObjectMapperIntegrationTest {
 
     @RestController
     public static class Controller {
+
         @PostMapping("/user")
         public String createEntity(@RequestBody User user) {
             return user.username;
@@ -85,6 +88,7 @@ class SpringObjectMapperIntegrationTest {
 
     @Service
     public static class MessageListener {
+
         @QueueListener(QUEUE_NAME)
         public void listener(@Payload final User user) {
             MESSAGE_RECEIVED.countDown();
@@ -94,6 +98,7 @@ class SpringObjectMapperIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(QUEUE_NAME);
@@ -108,8 +113,7 @@ class SpringObjectMapperIntegrationTest {
         payload.put("email", "example@company.com");
 
         // act
-        final ResponseEntity<String> response =
-                restTemplate.postForEntity("http://localhost:" + port + "/user", payload, String.class);
+        final ResponseEntity<String> response = restTemplate.postForEntity("http://localhost:" + port + "/user", payload, String.class);
 
         // assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -15,12 +15,13 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 /**
  * A very basic decorator that will start a new segment and link this to any existing Xray trace in the message.
- * 
+ *
  * <p>See <a href="https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sqs.html">Xray SQS Services</a>
  */
 public class BasicXrayMessageProcessingDecorator implements MessageProcessingDecorator {
     private static final String SEGMENT_CONTEXT_ATTRIBUTE_NAME = BasicXrayMessageProcessingDecorator.class.getSimpleName() + ":segment";
-    private static final String SUBSEGMENT_CONTEXT_ATTRIBUTE_NAME = BasicXrayMessageProcessingDecorator.class.getSimpleName() + ":subsegment";
+    private static final String SUBSEGMENT_CONTEXT_ATTRIBUTE_NAME =
+        BasicXrayMessageProcessingDecorator.class.getSimpleName() + ":subsegment";
     private static final String DEFAULT_SEGMENT_NAME = "message-listener";
 
     private final AWSXRayRecorder recorder;
@@ -32,11 +33,13 @@ public class BasicXrayMessageProcessingDecorator implements MessageProcessingDec
 
     public BasicXrayMessageProcessingDecorator(final Options options) {
         this.recorder = options.recorder != null ? options.recorder : AWSXRay.getGlobalRecorder();
-        this.segmentNamingStrategy = options.segmentNamingStrategy != null
+        this.segmentNamingStrategy =
+            options.segmentNamingStrategy != null
                 ? options.segmentNamingStrategy
                 : new StaticDecoratorSegmentNamingStrategy(DEFAULT_SEGMENT_NAME);
         this.segmentMutator = options.segmentMutator;
-        this.subsegmentNamingStrategy = options.subsegmentNamingStrategy != null
+        this.subsegmentNamingStrategy =
+            options.subsegmentNamingStrategy != null
                 ? options.subsegmentNamingStrategy
                 : (context, message) -> context.getListenerIdentifier();
         this.subsegmentMutator = options.subsegmentMutator;
@@ -126,6 +129,7 @@ public class BasicXrayMessageProcessingDecorator implements MessageProcessingDec
          * Optional mutator that can be used to add custom configuration for the segment started.
          */
         DecoratorSegmentMutator segmentMutator;
+
         /**
          * Whether the message listener should generate a subsegment before executing.
          *
@@ -133,6 +137,7 @@ public class BasicXrayMessageProcessingDecorator implements MessageProcessingDec
          */
         @Builder.Default
         Boolean generateSubsegment = true;
+
         /**
          * Strategy for naming the Subsegment that will be started when processing a message.
          *

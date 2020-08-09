@@ -15,6 +15,7 @@ will provide the `ObjectMapper`.
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
     public SqsListenerObjectMapperSupplier objectMapperSupplier() {
         return () -> new ObjectMapper();
@@ -22,8 +23,8 @@ public class MyConfiguration {
 }
 ```
 
-*The reason for this supplier being created, instead of defining your own `ObjectMapper` bean is to reduce complexity of interoperability
-with the existing `ObjectMappers`, like the Spring Boot auto configured `ObjectMapper` used for HTTP serialisation and de-serialisation.*
+_The reason for this supplier being created, instead of defining your own `ObjectMapper` bean is to reduce complexity of interoperability
+with the existing `ObjectMappers`, like the Spring Boot auto configured `ObjectMapper` used for HTTP serialisation and de-serialisation._
 
 ## Providing your own [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
 
@@ -34,6 +35,7 @@ to support certain argument resolutions or want to have control on how you resol
 ```java
 @Configuration
 public class MyConfiguration {
+
     @Bean
     public ArgumentResolverService argumentResolverService(final SqsListenerObjectMapperSupplier objectMapperSupplier) {
         final ObjectMapper objectMapper = objectMapperSupplier.get();
@@ -56,17 +58,17 @@ the default [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sq
 ```java
 @Configuration
 public class MyConfiguration {
-   private static final ObjectMapper MY_OBJECT_MAPPER_FOR_SQS = new ObjectMapper();
+    private static final ObjectMapper MY_OBJECT_MAPPER_FOR_SQS = new ObjectMapper();
 
-   @Bean
-   public PayloadArgumentResolver payloadArgumentResolver() {
-       return new PayloadArgumentResolver(new JacksonPayloadMapper(MY_OBJECT_MAPPER_FOR_SQS));
-   }
+    @Bean
+    public PayloadArgumentResolver payloadArgumentResolver() {
+        return new PayloadArgumentResolver(new JacksonPayloadMapper(MY_OBJECT_MAPPER_FOR_SQS));
+    }
 
-   @Bean
-   public MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
-       return new MessageAttributeArgumentResolver(MY_OBJECT_MAPPER_FOR_SQS);
-   }
+    @Bean
+    public MessageAttributeArgumentResolver messageAttributeArgumentResolver() {
+        return new MessageAttributeArgumentResolver(MY_OBJECT_MAPPER_FOR_SQS);
+    }
 }
 ```
 

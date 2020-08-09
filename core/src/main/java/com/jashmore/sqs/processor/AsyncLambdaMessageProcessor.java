@@ -5,14 +5,13 @@ import com.jashmore.sqs.argument.visibility.DefaultVisibilityExtender;
 import com.jashmore.sqs.processor.argument.Acknowledge;
 import com.jashmore.sqs.processor.argument.VisibilityExtender;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.Message;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 /**
  * {@link MessageProcessor} that takes a lambda/function for asynchronous processing of a message.
@@ -31,9 +30,11 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message and return the future
      */
-    public AsyncLambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                       final QueueProperties queueProperties,
-                                       final Function<Message, CompletableFuture<?>> messageProcessor) {
+    public AsyncLambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final Function<Message, CompletableFuture<?>> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
         this.usesAcknowledgeParameter = false;
@@ -48,9 +49,11 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message and acknowledge and return the future
      */
-    public AsyncLambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                       final QueueProperties queueProperties,
-                                       final BiFunction<Message, Acknowledge, CompletableFuture<?>> messageProcessor) {
+    public AsyncLambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final BiFunction<Message, Acknowledge, CompletableFuture<?>> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
         this.usesAcknowledgeParameter = true;
@@ -65,9 +68,11 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
      * @param queueProperties  the properties of the queue
      * @param messageProcessor the function to consume a message, acknowledge and visibility extender and return the future
      */
-    public AsyncLambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                       final QueueProperties queueProperties,
-                                       final MessageProcessingFunction messageProcessor) {
+    public AsyncLambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        final MessageProcessingFunction messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
         this.usesAcknowledgeParameter = true;
@@ -87,10 +92,12 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
      * @param ignoredForTypeErasure field needed due to type erasure
      * @param messageProcessor      the function to consume a message and visibility extender and return the future
      */
-    public AsyncLambdaMessageProcessor(final SqsAsyncClient sqsAsyncClient,
-                                       final QueueProperties queueProperties,
-                                       @SuppressWarnings("unused") final boolean ignoredForTypeErasure,
-                                       final BiFunction<Message, VisibilityExtender, CompletableFuture<?>> messageProcessor) {
+    public AsyncLambdaMessageProcessor(
+        final SqsAsyncClient sqsAsyncClient,
+        final QueueProperties queueProperties,
+        @SuppressWarnings("unused") final boolean ignoredForTypeErasure,
+        final BiFunction<Message, VisibilityExtender, CompletableFuture<?>> messageProcessor
+    ) {
         this.sqsAsyncClient = sqsAsyncClient;
         this.queueProperties = queueProperties;
         this.usesAcknowledgeParameter = false;
@@ -110,7 +117,9 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
         }
 
         if (result == null) {
-            return CompletableFutureUtils.completedExceptionally(new MessageProcessingException("Method returns CompletableFuture but null was returned"));
+            return CompletableFutureUtils.completedExceptionally(
+                new MessageProcessingException("Method returns CompletableFuture but null was returned")
+            );
         }
 
         if (usesAcknowledgeParameter) {
@@ -119,20 +128,22 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
 
         final Runnable resolveCallbackLoggingErrorsOnly = () -> {
             try {
-                resolveMessageCallback.get()
-                        .handle((i, throwable) -> {
+                resolveMessageCallback
+                    .get()
+                    .handle(
+                        (i, throwable) -> {
                             if (throwable != null) {
                                 log.error("Error resolving successfully processed message", throwable);
                             }
                             return null;
-                        });
+                        }
+                    );
             } catch (RuntimeException runtimeException) {
                 log.error("Failed to trigger message resolving", runtimeException);
             }
         };
 
-        return result
-                .thenAccept((ignored) -> resolveCallbackLoggingErrorsOnly.run());
+        return result.thenAccept(ignored -> resolveCallbackLoggingErrorsOnly.run());
     }
 
     /**

@@ -11,6 +11,13 @@ import com.jashmore.sqs.examples.integrationtests.IntegrationTestExampleApplicat
 import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.SqsQueuesConfig;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,20 +29,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-@SpringBootTest(classes = {
-        IntegrationTestExampleApplication.class,
-        SqsListenerExampleIntegrationTest.TestConfig.class
-})
+@SpringBootTest(classes = { IntegrationTestExampleApplication.class, SqsListenerExampleIntegrationTest.TestConfig.class })
 @ExtendWith(SpringExtension.class)
-@TestPropertySource(properties = {"sqs.queues.integrationTestingQueue=" + SqsListenerExampleIntegrationTest.QUEUE_NAME})
+@TestPropertySource(properties = { "sqs.queues.integrationTestingQueue=" + SqsListenerExampleIntegrationTest.QUEUE_NAME })
 class SqsListenerExampleIntegrationTest {
     static final String QUEUE_NAME = "SqsListenerExampleIntegrationTest";
     private static final int QUEUE_MAX_RECEIVE_COUNT = 3;
@@ -49,13 +45,19 @@ class SqsListenerExampleIntegrationTest {
 
     @Configuration
     public static class TestConfig {
+
         @Bean
         public LocalSqsAsyncClient localSqsAsyncClient() {
-            return new ElasticMqSqsAsyncClient(Collections.singletonList(
-                    SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME)
-                            .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
-                            .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
-                            .build()));
+            return new ElasticMqSqsAsyncClient(
+                Collections.singletonList(
+                    SqsQueuesConfig
+                        .QueueConfig.builder()
+                        .queueName(QUEUE_NAME)
+                        .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
+                        .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
+                        .build()
+                )
+            );
         }
     }
 
@@ -68,10 +70,14 @@ class SqsListenerExampleIntegrationTest {
     void messagesPlacedOntoQueueArePickedUpMessageListener() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
-        doAnswer(invocationOnMock -> {
-            messageReceivedCountDownLatch.countDown();
-            return null;
-        }).when(mockSomeService).run(anyString());
+        doAnswer(
+                invocationOnMock -> {
+                    messageReceivedCountDownLatch.countDown();
+                    return null;
+                }
+            )
+            .when(mockSomeService)
+            .run(anyString());
 
         // act
         localSqsAsyncClient.sendMessage(QUEUE_NAME, "my message");
@@ -86,13 +92,17 @@ class SqsListenerExampleIntegrationTest {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
-        doAnswer(invocationOnMock -> {
-            if (!processedMessageOnce.getAndSet(true)) {
-                throw new ExpectedTestException();
-            }
-            messageReceivedCountDownLatch.countDown();
-            return null;
-        }).when(mockSomeService).run(anyString());
+        doAnswer(
+                invocationOnMock -> {
+                    if (!processedMessageOnce.getAndSet(true)) {
+                        throw new ExpectedTestException();
+                    }
+                    messageReceivedCountDownLatch.countDown();
+                    return null;
+                }
+            )
+            .when(mockSomeService)
+            .run(anyString());
 
         // act
         localSqsAsyncClient.sendMessage(QUEUE_NAME, "my message");
@@ -106,10 +116,14 @@ class SqsListenerExampleIntegrationTest {
     void messageThatContinuesToFailWillBePlacedIntoDlq() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(QUEUE_MAX_RECEIVE_COUNT);
-        doAnswer(invocationOnMock -> {
-            messageReceivedCountDownLatch.countDown();
-            throw new ExpectedTestException();
-        }).when(mockSomeService).run(anyString());
+        doAnswer(
+                invocationOnMock -> {
+                    messageReceivedCountDownLatch.countDown();
+                    throw new ExpectedTestException();
+                }
+            )
+            .when(mockSomeService)
+            .run(anyString());
 
         // act
         localSqsAsyncClient.sendMessage(QUEUE_NAME, "my message");
