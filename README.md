@@ -283,7 +283,7 @@ for compatibility.
     -   [Kotlin](https://github.com/JetBrains/kotlin)
     -   [Ktor](https://github.com/ktorio/ktor)
 
-See the [build.gradle.kts](build.gradle.kts) for the specific versions of these dependencies.
+See the [gradle.properties](gradle.properties) for the specific versions of these dependencies.
 
 ## How to Guides
 
