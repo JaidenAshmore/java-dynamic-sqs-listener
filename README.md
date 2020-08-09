@@ -486,21 +486,21 @@ public class MyMessageListener {
 #### Kotlin DSL/Ktor
 
 ```kotlin
-    coreMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
-        broker = concurrentBroker {
-            concurrencyLevel = { 100 }
-        }
-        // other configuration
+coreMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+    broker = concurrentBroker {
+        concurrencyLevel = { 100 }
     }
+    // other configuration
+}
 ```
 
 or
 
 ```kotlin
-    batchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
-        concurrencyLevel = { 100 }
-        // other configuration
-    }
+batchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+    concurrencyLevel = { 100 }
+    // other configuration
+}
 ```
 
 ### How to Mark the message as successfully processed
@@ -584,16 +584,16 @@ public class MyMessageListener {
 #### Kotlin/Ktor
 
 ```kotlin
-    batchingMessageListener("listener-identifier", sqsAsyncClient, "${insert.queue.url.here}") {
-        concurrencyLevel = { 10 }
-        batchSize = { 10 }
-        batchingPeriod = { Duration.ofSeconds(2) }
-        processor = lambdaProcessor {
-            method { message ->
-              // process the message payload here
-            }
+batchingMessageListener("listener-identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+    concurrencyLevel = { 10 }
+    batchSize = { 10 }
+    batchingPeriod = { Duration.ofSeconds(2) }
+    processor = lambdaProcessor {
+        method { message ->
+          // process the message payload here
         }
     }
+}
 ```
 
 In this example above we have set it to process 10 messages at once and when there are threads wanting more messages it will wait for a maximum of 2 seconds
@@ -633,17 +633,17 @@ public class MyMessageListener {
 #### Kotlin DSL/Ktor
 
 ```kotlin
-    prefetchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
-        concurrencyLevel = { 10 }
-        desiredPrefetchedMessages = 5
-        maxPrefetchedMessages = 10
+prefetchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+    concurrencyLevel = { 10 }
+    desiredPrefetchedMessages = 5
+    maxPrefetchedMessages = 10
 
-        processor = lambdaProcessor {
-            methodWithVisibilityExtender { message, _ ->
-                // process the message payload here
-            }
+    processor = lambdaProcessor {
+        methodWithVisibilityExtender { message, _ ->
+            // process the message payload here
         }
     }
+}
 ```
 
 ### Comparing other SQS Libraries

@@ -93,9 +93,9 @@ public void messageListener(@UserGroup final String userGroup) {
 1.  Create a method that will use this argument, for example something like:
 
     ```java
-        public void messageListener(@UserGroup final String userGroup) {
-            // Do something here
-        }
+    public void messageListener(@UserGroup final String userGroup) {
+        // Do something here
+    }
     ```
 
 1.  Build your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with

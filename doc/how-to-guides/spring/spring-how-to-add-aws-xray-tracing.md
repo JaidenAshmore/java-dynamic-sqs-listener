@@ -28,10 +28,10 @@ For more information about each component this is auto configuring for you, take
 
     ```xml
     <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-            <version>${aws-xray.version}</version>
-        </dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+        <version>${aws-xray.version}</version>
+    </dependency>
     ```
 
 ## Example
