@@ -34,25 +34,25 @@ connect to two locally running ElasticMQ servers.
     [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
     which will provide all of the `SqsAsyncClient`s for the queues above.
 
-        ```java
-        @Configuration
-        public class MyConfig {
-            @Bean
-            public SqsAsyncClientProvider sqsAsyncClientProvider() {
-               // this client will be used if there is no client identifier for the listener. Note that this can be null
-               // and in this case listenerForDefaultClient above will fail to wrap
-               final SqsAsyncClient defaultClient = ...;
+    ```java
+    @Configuration
+    public class MyConfig {
+        @Bean
+        public SqsAsyncClientProvider sqsAsyncClientProvider() {
+           // this client will be used if there is no client identifier for the listener. Note that this can be null
+           // and in this case listenerForDefaultClient above will fail to wrap
+           final SqsAsyncClient defaultClient = ...;
 
-               final SqsAsyncClient firstClient = ...;
-               final SqsAsyncClient secondClient = ...;
+           final SqsAsyncClient firstClient = ...;
+           final SqsAsyncClient secondClient = ...;
 
-               return new DefaultSqsAsyncClientProvider(
-                    defaultClient,
-                    ImmutableMap.of(
-                         "firstClient", firstClient,
-                         "secondClient", secondClient
-                    )
-               );
-            }
+           return new DefaultSqsAsyncClientProvider(
+                defaultClient,
+                ImmutableMap.of(
+                     "firstClient", firstClient,
+                     "secondClient", secondClient
+                )
+           );
         }
-        ```
+    }
+    ```

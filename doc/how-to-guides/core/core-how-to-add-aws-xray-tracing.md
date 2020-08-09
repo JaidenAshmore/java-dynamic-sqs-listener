@@ -19,20 +19,20 @@ _This guide assumes that you have knowledge of Xray and how it works. If not tak
     [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java).
     This will extract the tracing header from the SQS message and begin a Xray Segment.
 
-        ```java
-        MessageProcessor processor = ...;
-        List<MessageProcessingDecorator> decorators = new ArrayList<>();
-        decorators.add(new BasicXrayMessageProcessingDecorator(Options.builder()
-               .recorder(AWSXRay.getGlobalRecorder())
-               .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("service-name"))
-               .build());
-        DecoratingMessageProcessor decoratingMessageProcessor = new DecoratingMessageProcessor(
-           "identifier",
-           queueProperties,
-           decorators,
-           processor
-        );
-        ```
+    ```java
+    MessageProcessor processor = ...;
+    List<MessageProcessingDecorator> decorators = new ArrayList<>();
+    decorators.add(new BasicXrayMessageProcessingDecorator(Options.builder()
+           .recorder(AWSXRay.getGlobalRecorder())
+           .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("service-name"))
+           .build());
+    DecoratingMessageProcessor decoratingMessageProcessor = new DecoratingMessageProcessor(
+       "identifier",
+       queueProperties,
+       decorators,
+       processor
+    );
+    ```
 
 1.  Now when the application runs any tracing in the message will be continued in the message listener.
 

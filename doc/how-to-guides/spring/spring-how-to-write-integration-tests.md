@@ -40,19 +40,25 @@ module would be good examples.
 1.  Create a configuration class in your test providing an `ElasticMqSqsAsyncClient` bean. Here you can provide some
     configuration to set up some initial queues in the SQS Server.
 
-        ```java
-        @Configuration
-        public static class TestConfig {
-            @Bean
-            public LocalSqsAsyncClient localSqsAsyncClient() {
-                return new ElasticMqSqsAsyncClient(ImmutableList.of(
-                        SqsQueuesConfig.QueueConfig.builder().queueName(QUEUE_NAME)
-                                .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
-                                .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
-                                .build()));
-            }
+    ```java
+    @Configuration
+    public static class TestConfig {
+
+        @Bean
+        public LocalSqsAsyncClient localSqsAsyncClient() {
+            return new ElasticMqSqsAsyncClient(
+                ImmutableList.of(
+                    SqsQueuesConfig
+                        .QueueConfig.builder()
+                        .queueName(QUEUE_NAME)
+                        .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
+                        .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)
+                        .build()
+                )
+            );
         }
-        ```
+    }
+    ```
 
 1.  Include this Configuration class in the `@SpringBootTest` annotation.
 

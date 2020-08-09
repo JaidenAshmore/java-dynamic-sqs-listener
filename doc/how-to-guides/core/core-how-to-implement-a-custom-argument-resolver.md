@@ -41,7 +41,6 @@ public void messageListener(@UserGroup final String userGroup) {
             "group": "admin"
         }
     }
-    // other fields here
 }
 ```
 
@@ -59,36 +58,37 @@ public void messageListener(@UserGroup final String userGroup) {
 1.  Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
     interface that will be able to resolve these arguments with those annotations.
 
-        ```java
-        public class UserGroupArgumentResolver implements ArgumentResolver<String> {
-            private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    ```java
+    public class UserGroupArgumentResolver implements ArgumentResolver<String> {
+        private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-            @Override
-            public boolean canResolveParameter(MethodParameter methodParameter) {
-                // make sure only String parameters with the @UserGroup annotations are resolved using this
-                return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                    && AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class).isPresent();
-            }
+        @Override
+        public boolean canResolveParameter(MethodParameter methodParameter) {
+            // make sure only String parameters with the @UserGroup annotations are resolved using this
+            return (
+                methodParameter.getParameter().getType().isAssignableFrom(String.class) &&
+                AnnotationUtils.findParameterAnnotation(methodParameter, UserGroup.class).isPresent()
+            );
+        }
 
-            @Override
-            public String resolveArgumentForParameter(QueueProperties queueProperties,
-                                                      MethodParameter methodParameter,
-                                                      Message message) throws ArgumentResolutionException {
-                try {
-                    // You could build an actual POJO instead of using this JsonNode
-                    final JsonNode node = objectMapper.readTree(message.body());
-                    final JsonNode userGroupNode = node.at("/payload/user/group");
-                    if (userGroupNode.isMissingNode()) {
-                        return null;
-                    } else {
-                        return userGroupNode.textValue();
-                    }
-                } catch (IOException e) {
-                    throw new ArgumentResolutionException("Error parsing payload", e);
+        @Override
+        public String resolveArgumentForParameter(QueueProperties queueProperties, MethodParameter methodParameter, Message message)
+            throws ArgumentResolutionException {
+            try {
+                // You could build an actual POJO instead of using this JsonNode
+                final JsonNode node = objectMapper.readTree(message.body());
+                final JsonNode userGroupNode = node.at("/payload/user/group");
+                if (userGroupNode.isMissingNode()) {
+                    return null;
+                } else {
+                    return userGroupNode.textValue();
                 }
+            } catch (IOException e) {
+                throw new ArgumentResolutionException("Error parsing payload", e);
             }
         }
-        ```
+    }
+    ```
 
 1.  Create a method that will use this argument, for example something like:
 
@@ -101,13 +101,13 @@ public void messageListener(@UserGroup final String userGroup) {
 1.  Build your [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java) with
     this [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java).
 
-        ```java
-        new DelegatingArgumentResolverService(ImmutableSet.of(
-             // other ArgumentResolvers here
-             new UserGroupArgumentResolver()
+    ```java
+    new DelegatingArgumentResolverService(ImmutableSet.of(
+         // other ArgumentResolvers here
+         new UserGroupArgumentResolver()
 
-        ));
-        ```
+    ));
+    ```
 
 ## Integrating with Spring
 

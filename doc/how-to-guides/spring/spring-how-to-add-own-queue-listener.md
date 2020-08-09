@@ -64,31 +64,38 @@ we wrote.
     [CoreMessageListenerContainer](../../../core/src/main/java/com/jashmore/sqs/container/CoreMessageListenerContainer.java)
     is the simplest (and currently only) implementation of this and is the most likely one to use.
 
-        ```java
-        public class MySleepingMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
-            private final ArgumentResolverService argumentResolverService;
-            private final SqsAsyncClientProvider sqsAsyncClientProvider;
+    ```java
+    public class MySleepingMessageListenerContainerFactory
+        extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
+        private final ArgumentResolverService argumentResolverService;
+        private final SqsAsyncClientProvider sqsAsyncClientProvider;
 
-            public MySleepingMessageListenerContainerFactory(final ArgumentResolverService argumentResolverService,
-                                                             final SqsAsyncClientProvider sqsAsyncClientProvider) {
-                this.argumentResolverService = argumentResolverService;
-                this.sqsAsyncClientProvider = sqsAsyncClientProvider;
-            }
-
-            @Override
-            protected Class<SleepingQueueListener> getAnnotationClass() {
-                return SleepingQueueListener.class;
-            }
-
-            @Override
-            protected MessageListenerContainer wrapMethodContainingAnnotation(final Object bean, final Method method, final SleepingQueueListener annotation) {
-                // build your container here
-                return new CoreMessageListenerContainer(
-                       // components in here
-                );
-            }
+        public MySleepingMessageListenerContainerFactory(
+            final ArgumentResolverService argumentResolverService,
+            final SqsAsyncClientProvider sqsAsyncClientProvider
+        ) {
+            this.argumentResolverService = argumentResolverService;
+            this.sqsAsyncClientProvider = sqsAsyncClientProvider;
         }
-        ```
+
+        @Override
+        protected Class<SleepingQueueListener> getAnnotationClass() {
+            return SleepingQueueListener.class;
+        }
+
+        @Override
+        protected MessageListenerContainer wrapMethodContainingAnnotation(
+            final Object bean,
+            final Method method,
+            final SleepingQueueListener annotation
+        ) {
+            // build your container here
+            return new CoreMessageListenerContainer(
+                // components in here
+            );
+        }
+    }
+    ```
 
 1.  Add this bean into the application context by annotating it with the `@Component` annotation or by defining it as a spring bean in a `@Configuration` class.
 

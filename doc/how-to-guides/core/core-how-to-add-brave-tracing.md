@@ -16,13 +16,13 @@
 1.  Wrap your [MessageProcessor](../../../api/src/main/java/com/jashmore/sqs/processor/MessageProcessor.java) with
     the [DecoratingMessageProcessor](../../../core/src/main/java/com/jashmore/sqs/processor/DecoratingMessageProcessor.java).
 
-        ```java
-        final List<MessageProcessingDecorators> messageProcessingDecorators = ImmutableList.of(
-              new BraveMessageProcessingDecorator(tracing)
-        );
-        final CoreMessageProcessor delegateProcessor = ...
-        return new DecoratingMessageProcessor(identifier, queueProperties, messageProcessingDecorators, delegateProcessor);
-        ```
+    ```java
+    final List<MessageProcessingDecorators> messageProcessingDecorators = ImmutableList.of(
+          new BraveMessageProcessingDecorator(tracing)
+    );
+    final CoreMessageProcessor delegateProcessor = ...
+    return new DecoratingMessageProcessor(identifier, queueProperties, messageProcessingDecorators, delegateProcessor);
+    ```
 
 ## Example
 

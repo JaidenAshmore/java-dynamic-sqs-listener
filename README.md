@@ -35,20 +35,21 @@ The following provides some examples using the library with different languages 
     [@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
     annotation to a method indicating that it should process messages from a queue.
 
-        ```java
-        @Service
-        public class MyMessageListener {
-            // The queue here can point to your SQS server, e.g. a
-            // local SQS server or one on AWS
-            @QueueListener("${insert.queue.url.here}")
-            public void processMessage(@Payload final String payload) {
-                // process the message payload here
-            }
-        }
-        ```
+    ```java
+    @Service
+    public class MyMessageListener {
 
-        This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
-        will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
+        // The queue here can point to your SQS server, e.g. a
+        // local SQS server or one on AWS
+        @QueueListener("${insert.queue.url.here}")
+        public void processMessage(@Payload final String payload) {
+            // process the message payload here
+        }
+    }
+    ```
+
+    This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
+    will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
 
 See [Spring Starter Minimal Example](examples/spring-starter-minimal-example) for a minimal example of configuring in a Spring Boot
 application with a local ElasticMQ SQS Server.
@@ -385,44 +386,49 @@ argument with the payload in uppercase.
 1.  Implement the [ArgumentResolver](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) interface where it will
     do the logic for converting the message payload to uppercase.
 
-        ```java
-            public class UppercasePayloadArgumentResolver implements ArgumentResolver<String> {
-                @Override
-                public boolean canResolveParameter(MethodParameter methodParameter) {
-                    return methodParameter.getParameter().getType().isAssignableFrom(String.class)
-                        && AnnotationUtils.findParameterAnnotation(methodParameter, UppercasePayload.class).isPresent();
-               }
+    ```java
+    public class UppercasePayloadArgumentResolver implements ArgumentResolver<String> {
 
-               @Override
-               public String resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message) throws ArgumentResolutionException {
-                   return message.body().toUppercase();
-               }
-            }
-        ```
+        @Override
+        public boolean canResolveParameter(MethodParameter methodParameter) {
+            return (
+                methodParameter.getParameter().getType().isAssignableFrom(String.class) &&
+                AnnotationUtils.findParameterAnnotation(methodParameter, UppercasePayload.class).isPresent()
+            );
+        }
 
-        You may be curious why we use a custom `AnnotationUtils.findParameterAnnotation` function instead of getting the annotation directly from the parameter.
-        The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB.  As libraries, like
-        CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
-        annotations. For more information about this, take a look at the JavaDoc provided in
-        [AnnotationUtils](./util/annotation-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
-        testing this problem in
-        [PayloadArgumentResolver_ProxyClassTest.java](./core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
+        @Override
+        public String resolveArgumentForParameter(QueueProperties queueProperties, Parameter parameter, Message message)
+            throws ArgumentResolutionException {
+            return message.body().toUppercase();
+        }
+    }
+    ```
 
-        Also, as this library is not Spring specific, the Spring Annotation classes cannot be used.
+    You may be curious why we use a custom `AnnotationUtils.findParameterAnnotation` function instead of getting the annotation directly from the parameter.
+    The reason for this is due to potential proxying of beans in the application, such as by applying Aspects around your code via CGLIB. As libraries, like
+    CGLIB, won't copy the annotations to the proxied classes the resolver needs to look through the class hierarchy to find the original class to get the
+    annotations. For more information about this, take a look at the JavaDoc provided in
+    [AnnotationUtils](./util/annotation-utils/src/main/java/com/jashmore/sqs/util/annotation/AnnotationUtils.java). You can also see an example of
+    testing this problem in
+    [PayloadArgumentResolver_ProxyClassTest.java](./core/src/test/java/com/jashmore/sqs/argument/payload/PayloadArgumentResolver_ProxyClassTest.java).
+
+    Also, as this library is not Spring specific, the Spring Annotation classes cannot be used.
 
 1.  Include the custom [ArgumentResolver](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) in the application
     context for automatic injection into the
     [ArgumentResolverService](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java).
 
-         ```java
-         @Configuration
-         public class MyCustomConfiguration {
-            @Bean
-            public UppercasePayloadArgumentResolver uppercasePayloadArgumentResolver() {
-                return new UppercasePayloadArgumentResolver();
-            }
-         }
-         ```
+    ```java
+    @Configuration
+    public class MyCustomConfiguration {
+
+        @Bean
+        public UppercasePayloadArgumentResolver uppercasePayloadArgumentResolver() {
+            return new UppercasePayloadArgumentResolver();
+        }
+    }
+    ```
 
 1.  Use the new annotation in your message listener
 

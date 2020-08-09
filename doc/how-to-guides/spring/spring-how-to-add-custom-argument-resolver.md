@@ -20,15 +20,16 @@ to build an [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argum
 1.  Add this bean in the Spring Context by annotating it with a `@Component` (or other equivalent annotation) or by providing it as a bean in a `@Configuration`
     class.
 
-         ```java
-         @Configuration
-         public class MyConfiguration {
-            @Bean
-            public ArgumentResolver userGroupArgumentResolver() {
-                return new UserGroupArgumentResolver();
-            }
-         }
-         ```
+    ```java
+    @Configuration
+    public class MyConfiguration {
+
+        @Bean
+        public ArgumentResolver userGroupArgumentResolver() {
+            return new UserGroupArgumentResolver();
+        }
+    }
+    ```
 
 At this point the default [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)
 should contain this custom argument resolver, and it should be applied during execution of the framework. This is because all

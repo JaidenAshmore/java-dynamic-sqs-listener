@@ -15,24 +15,24 @@ For more information about each component this is auto configuring for you, take
     the `SqsAsyncClient` in a
     [XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java).
 
-        ```xml
-        <dependency>
-            <groupId>com.jashmore</groupId>
-            <artifactId>aws-xray-extension-spring-boot</artifactId>
-            <version>${dynamic-sqs-listener.version}</version>
-        </dependency>
-        ```
+    ```xml
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>aws-xray-extension-spring-boot</artifactId>
+        <version>${dynamic-sqs-listener.version}</version>
+    </dependency>
+    ```
 
 1.  **[Optional]** If you want tracing information to be included when sending messages to AWS, add the
     [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency.
 
-        ```xml
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
-                <version>${aws-xray.version}</version>
-            </dependency>
-        ```
+    ```xml
+    <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+            <version>${aws-xray.version}</version>
+        </dependency>
+    ```
 
 ## Example
 

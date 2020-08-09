@@ -10,17 +10,16 @@ if this is not desirable, you can supply your own properties to disable this fun
     [DefaultMessageListenerCoordinatorProperties](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/DefaultMessageListenerContainerCoordinatorProperties.java)
     with the configuration you desire.
 
-        ```java
-        @Configuration
-        class MyConfiguration {
-            @Bean
-            DefaultMessageListenerCoordinatorProperties defaultMessageListenerCoordinatorProperties() {
-                 return StaticDefaultMessageListenerContainerCoordinatorProperties.builder()
-                             .isAutoStartContainersEnabled(false)
-                             .build();
-            }
+    ```java
+    @Configuration
+    class MyConfiguration {
+
+        @Bean
+        DefaultMessageListenerCoordinatorProperties defaultMessageListenerCoordinatorProperties() {
+            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(false).build();
         }
-        ```
+    }
+    ```
 
 This will not work if you have supplied your
 own [MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java)
