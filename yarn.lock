@@ -23,10 +23,10 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@prettier/plugin-xml@0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@prettier/plugin-xml/-/plugin-xml-0.10.0.tgz#538e485bc38aa9852b82679a020df3e05c49df4a"
-  integrity sha512-8Pmkik2wH4sT6cVdeRN3MpzniFxzOWH0fLRnLJwMXSPMyz9ZKdVm4bg5oAWG96LABue0/W4cCr+oXuEslTTAUA==
+"@prettier/plugin-xml@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@prettier/plugin-xml/-/plugin-xml-0.11.0.tgz#9214c451b2d3f196999b0da28023b4a92024e604"
+  integrity sha512-Dxh0oV+KUMtgI9QmV2UFsZINA8Ac8CFPidL53ZYtm7qC375QJPxWpkn/hI5VmCJvrjUi2qj3S4hFFjKCVjU0AQ==
   dependencies:
     "@xml-tools/parser" "^1.0.2"
     prettier ">=1.10"
