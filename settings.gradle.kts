@@ -8,7 +8,7 @@ pluginManagement {
         id("org.jlleitschuh.gradle.ktlint") version "9.3.0"
         id("com.github.spotbugs") version "4.5.0"
         kotlin("jvm") version "1.3.72"
-        id("io.gitlab.arturbosch.detekt") version "1.11.0"
+        id("io.gitlab.arturbosch.detekt") version "1.11.1"
     }
     repositories {
         gradlePluginPortal()
