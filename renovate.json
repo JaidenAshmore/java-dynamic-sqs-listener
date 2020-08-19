@@ -1,3 +1,11 @@
 {
-    "extends": ["config:base"]
+    "extends": ["config:base"],
+    "separateMinorPatch": true,
+    "packageRules": [
+        {
+            "updateTypes": ["patch"],
+            "automerge": true,
+            "automergeType": "branch"
+        }
+    ]
 }
