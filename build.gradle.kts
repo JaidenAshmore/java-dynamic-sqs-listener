@@ -1,9 +1,7 @@
-import com.jashmore.gradle.GithubReleaseNotesTask
 import com.jashmore.gradle.JacocoCoverallsPlugin
 import com.jashmore.gradle.ReleasePlugin
 import com.jashmore.gradle.release
 import io.gitlab.arturbosch.detekt.detekt
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
@@ -11,7 +9,7 @@ plugins {
     checkstyle
     jacoco
     id("com.github.spotbugs")
-    kotlin("jvm") apply false
+    id("com.jashmore.gradle.github.release")
     id("org.jlleitschuh.gradle.ktlint") apply false
     id("io.gitlab.arturbosch.detekt") apply false
 }
@@ -41,13 +39,8 @@ subprojects {
     if (!isKotlinProject) {
         apply(plugin = "com.github.spotbugs")
     } else {
-        apply(plugin = "kotlin")
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
         apply(plugin = "io.gitlab.arturbosch.detekt")
-
-        tasks.withType<KotlinCompile>().configureEach {
-            kotlinOptions.jvmTarget = "1.8"
-        }
     }
 
     dependencies {
@@ -95,9 +88,7 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
-    }
 
-    tasks.test {
         // We don"t want integration tests to run in the "test" task and instead run in "integrationTest"
         exclude("it/com/**")
 
@@ -156,20 +147,15 @@ release {
     signingPassword = System.getenv("GPG_SIGNING_PASSWORD")
 }
 
-val milestonePropertyName = "milestoneVersion"
-val generateReleaseNotesTaskName = "generateReleaseNotes"
-
-tasks.register<GithubReleaseNotesTask>(generateReleaseNotesTaskName) {
-    group = "release"
-    description = "Task for generating the release notes from the issues in a GitHub milestone"
-
-    githubUser = "JaidenAshmore"
+gitHubRelease {
+    gitHubUser = "JaidenAshmore"
     repositoryName = "java-dynamic-sqs-listener"
+    milestoneVersion = (project.version as String).replace("-SNAPSHOT", "")
     groupings = {
         group {
-            title = "Enhancements"
-            filter = {
-                labels.any { it.name == "enhancement" }
+            heading = "## Enhancements"
+            filter = { issue ->
+                issue.labels.any { it.name == "enhancement" }
             }
             renderer = { issue, comments ->
                 val releaseNotes = comments
@@ -186,28 +172,20 @@ tasks.register<GithubReleaseNotesTask>(generateReleaseNotesTaskName) {
         }
 
         group {
-            title = "Bug Fixes"
-            filter = { labels.any { it.name == "bug" } }
+            heading = "## Bug Fixes"
+            filter = { issue ->
+                issue.labels.any { it.name == "bug" }
+            }
             renderer = { issue, _ -> "- [GH-${issue.number}]: ${issue.title}" }
         }
 
         group {
-            title = "Documentation"
-            filter = { labels.any { it.name == "documentation" } }
+            heading = "## Documentation"
+            filter = { issue ->
+                issue.labels.any { it.name == "documentation" }
+            }
             renderer = { issue, _ -> "- [GH-${issue.number}]: ${issue.title}" }
         }
-    }
-    doFirst {
-        if (!project.hasProperty(milestonePropertyName)) {
-            throw RuntimeException(
-                """
-                    Required property $milestonePropertyName has not been set.
-        
-                    Usage: ./gradlew $generateReleaseNotesTaskName -P$milestonePropertyName=4.0.0
-                    """.trimIndent()
-            )
-        }
-        milestoneVersion = project.properties[milestonePropertyName] as String
     }
 }
 
