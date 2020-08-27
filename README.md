@@ -46,6 +46,7 @@ The following provides some examples using the library with different languages 
             // process the message payload here
         }
     }
+
     ```
 
     This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
@@ -115,6 +116,7 @@ application with a local ElasticMQ SQS Server.
             Thread.currentThread().join();
         }
     }
+
     ```
 
 See the [Core Example](examples/core-example) for a more complicated example that uses a local ElasticMQ server and dynamically changes the concurrency
@@ -366,6 +368,7 @@ public class MyMessageListener {
         }
     }
 }
+
 ```
 
 ### Spring - Adding a custom argument resolver
@@ -381,6 +384,7 @@ argument with the payload in uppercase.
     @Target(ElementType.PARAMETER)
     public @interface UppercasePayload {
     }
+
     ```
 
 1.  Implement the [ArgumentResolver](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) interface where it will
@@ -403,6 +407,7 @@ argument with the payload in uppercase.
             return message.body().toUppercase();
         }
     }
+
     ```
 
     You may be curious why we use a custom `AnnotationUtils.findParameterAnnotation` function instead of getting the annotation directly from the parameter.
@@ -428,6 +433,7 @@ argument with the payload in uppercase.
             return new UppercasePayloadArgumentResolver();
         }
     }
+
     ```
 
 1.  Use the new annotation in your message listener
@@ -441,6 +447,7 @@ argument with the payload in uppercase.
             // process the message payload here
         }
     }
+
     ```
 
 For a more extensive guide for doing this, take a look at
@@ -468,6 +475,7 @@ public class SomeClass {
         );
     }
 }
+
 ```
 
 #### Spring Boot
@@ -481,6 +489,7 @@ public class MyMessageListener {
         // process message here
     }
 }
+
 ```
 
 #### Kotlin DSL/Ktor
@@ -518,6 +527,7 @@ public class MyMessageListener {
         // if this does not throw an exception it will be considered successfully processed
     }
 }
+
 ```
 
 or
@@ -546,6 +556,7 @@ public class MyMessageListener {
         }
     }
 }
+
 ```
 
 or
@@ -579,6 +590,7 @@ public class MyMessageListener {
         // process the message payload here
     }
 }
+
 ```
 
 #### Kotlin/Ktor
@@ -628,6 +640,7 @@ public class MyMessageListener {
         // process the message payload here
     }
 }
+
 ```
 
 #### Kotlin DSL/Ktor

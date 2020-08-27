@@ -61,6 +61,7 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
     class Application {
         // normal code
     }
+
     ```
 
 1.  Define your queue listener using the `@SpringCloudSchemaRegistryPayload` to represent the payload that needs to be de-serialised from
@@ -74,6 +75,7 @@ For a full working solution of this feature, take a look at the [Spring Cloud Sc
             log.info("Payload: {}", payload);
         }
     }
+
     ```
 
 ## Steps to produce messages using Avro

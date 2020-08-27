@@ -48,6 +48,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
         // non message-listener-thread
     }
 }
+
 ```
 
 ### Asynchronous Message Listener
@@ -91,6 +92,7 @@ public class ExampleMessageProcessingDecorator implements MessageProcessingDecor
         // non message-listener-thread
     }
 }
+
 ```
 
 ## Adding the MessageProcessingDecorators to the message processing
@@ -138,6 +140,7 @@ public class MdcMessageProcessingDecorator implements MessageProcessingDecorator
         MDC.remove("message.id");
     }
 }
+
 ```
 
 ### Metrics
@@ -162,6 +165,7 @@ public class MetricsMessageProcessingDecorator implements MessageProcessingDecor
         metrics.messageSuccessfullyProcessed();
     }
 }
+
 ```
 
 ## Sharing information between callbacks
@@ -186,4 +190,5 @@ public class MdcMessageProcessingDecorator implements MessageProcessingDecorator
         log.info("Message processed in {}ms", endTime - (long) context.getAttribute("startTime"));
     }
 }
+
 ```

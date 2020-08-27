@@ -13,6 +13,7 @@ public class MyService {
         // do something with the message
     }
 }
+
 ```
 
 There are only a few core implementations of the [MessageListenerContainerFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
@@ -52,6 +53,7 @@ we wrote.
          */
         Long sleepPeriodInMs();
     }
+
     ```
 
 1.  Implement the [MessageListenerContainerFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerFactory.java)
@@ -95,6 +97,7 @@ we wrote.
             );
         }
     }
+
     ```
 
 1.  Add this bean into the application context by annotating it with the `@Component` annotation or by defining it as a spring bean in a `@Configuration` class.
@@ -110,6 +113,7 @@ we wrote.
             return new MySleepingMessageListenerContainerFactory(argumentResolverService);
         }
     }
+
     ```
 
 To see how the containers get built, take a look at the

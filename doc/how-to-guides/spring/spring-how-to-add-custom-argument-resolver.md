@@ -29,6 +29,7 @@ to build an [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argum
             return new UserGroupArgumentResolver();
         }
     }
+
     ```
 
 At this point the default [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolverService.java)

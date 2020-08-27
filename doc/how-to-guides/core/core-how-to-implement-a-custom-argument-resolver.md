@@ -53,6 +53,7 @@ public void messageListener(@UserGroup final String userGroup) {
     @Target(ElementType.PARAMETER)
     public @interface UserGroup {
     }
+
     ```
 
 1.  Create a new implementation of the [ArgumentResolver](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java)
@@ -88,6 +89,7 @@ public void messageListener(@UserGroup final String userGroup) {
             }
         }
     }
+
     ```
 
 1.  Create a method that will use this argument, for example something like:

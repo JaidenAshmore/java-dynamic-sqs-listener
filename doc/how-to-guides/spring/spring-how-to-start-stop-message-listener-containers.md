@@ -18,6 +18,7 @@ public class MyClass {
     @QueueListener(value = "myQueueName", identifier = "my-identifier")
     public void messageHandler(@Payload String payload) {}
 }
+
 ```
 
 ### Using the default identifier
@@ -31,6 +32,7 @@ public class MyClass {
     @QueueListener(value = "myQueueName")
     public void messageHandler(@Payload String payload) {}
 }
+
 ```
 
 ## Starting/Stopping the queue
@@ -53,6 +55,7 @@ public class MyService {
         messageListenerContainerCoordinator.startContainer("my-identifier");
     }
 }
+
 ```
 
 ## Starting/Stopping all queues
@@ -75,4 +78,5 @@ public class MyService {
         messageListenerContainerCoordinator.stopAllContainers();
     }
 }
+
 ```

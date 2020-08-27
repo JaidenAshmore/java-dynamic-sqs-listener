@@ -62,6 +62,7 @@ public class MyConfiguration {
         };
     }
 }
+
 ```
 
 This will remove the
@@ -89,6 +90,7 @@ public class MyConfiguration {
         );
     }
 }
+
 ```
 
 ### Using a custom `AWSXRayRecorder`
@@ -109,6 +111,7 @@ public class MyConfiguration {
         return AWSXRayRecorderBuilder.standard().withEmitter(Emitter.create(daemonConfiguration)).build();
     }
 }
+
 ```
 
 ### Communicating with Multiple AWS Accounts

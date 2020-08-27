@@ -19,6 +19,7 @@ if this is not desirable, you can supply your own properties to disable this fun
             return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(false).build();
         }
     }
+
     ```
 
 This will not work if you have supplied your
