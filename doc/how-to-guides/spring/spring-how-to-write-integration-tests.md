@@ -58,6 +58,7 @@ module would be good examples.
             );
         }
     }
+
     ```
 
 1.  Include this Configuration class in the `@SpringBootTest` annotation.
@@ -93,6 +94,7 @@ module would be good examples.
             // assertions here that the message was processed correctly
         }
     }
+
     ```
 
 1.  If the Integration Test has multiple tests it is best to purge the queues between tests, and you can do this with a JUnit4 `After` or JUnit5 `AfterEach`

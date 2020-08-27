@@ -12,4 +12,5 @@ public class MyConfiguration {
         return new MyMessageProcessingDecorator();
     }
 }
+
 ```

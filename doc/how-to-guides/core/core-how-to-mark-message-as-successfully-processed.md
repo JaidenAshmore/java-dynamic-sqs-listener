@@ -23,6 +23,7 @@ public class MyClass {
         someService.importantProcessing(payload);
     }
 }
+
 ```
 
 ## Including an Acknowledge Object in the method signature
@@ -52,6 +53,7 @@ public class MyClass {
         someService.unimportantProcessing(payload);
     }
 }
+
 ```
 
 ## The method returns a CompletableFuture
@@ -76,4 +78,5 @@ public class MyClass {
         return someService.importantProcessingAsync(payload);
     }
 }
+
 ```

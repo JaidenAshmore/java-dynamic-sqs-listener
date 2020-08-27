@@ -21,6 +21,7 @@ public class MyConfiguration {
         return () -> new ObjectMapper();
     }
 }
+
 ```
 
 _The reason for this supplier being created, instead of defining your own `ObjectMapper` bean is to reduce complexity of interoperability
@@ -47,6 +48,7 @@ public class MyConfiguration {
         return new DelegatingArgumentResolverService(argumentResolvers);
     }
 }
+
 ```
 
 ## Overwriting core [ArgumentResolvers](../../../api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) that use Jackson's `ObjectMapper`
@@ -70,6 +72,7 @@ public class MyConfiguration {
         return new MessageAttributeArgumentResolver(MY_OBJECT_MAPPER_FOR_SQS);
     }
 }
+
 ```
 
 ## De-serialising without using Jackson

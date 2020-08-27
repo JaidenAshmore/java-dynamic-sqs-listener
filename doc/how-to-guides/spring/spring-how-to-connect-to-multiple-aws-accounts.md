@@ -28,6 +28,7 @@ connect to two locally running ElasticMQ servers.
         @QueueListener(value = "queueNameForSecondClient", sqsClient = "secondClient")
         public void queueNameListenerForSecondClient(@Payload String messageBody) {}
     }
+
     ```
 
 1.  You will need to add to your `@Configuration` a bean of type

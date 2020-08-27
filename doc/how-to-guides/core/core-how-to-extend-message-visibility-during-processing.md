@@ -23,4 +23,5 @@ public class MyClass {
         someService.methodThatTakesLongToo(payload);
     }
 }
+
 ```
