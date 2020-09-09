@@ -713,24 +713,24 @@ log-update@^4.0.0:
     slice-ansi "^4.0.0"
     wrap-ansi "^6.2.0"
 
-markdown-link-check@3.8.2:
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/markdown-link-check/-/markdown-link-check-3.8.2.tgz#3592425048318da1d3a36946c5e26bcad3bbf80a"
-  integrity sha512-72QIX1KcPDzySMK9tP93fEYHR6qZ82vwduMK/wrLO72r/DNgqr3DRP2unDh30OpGuS1irlFWjx4IRbrqJDqe0w==
+markdown-link-check@3.8.3:
+  version "3.8.3"
+  resolved "https://registry.yarnpkg.com/markdown-link-check/-/markdown-link-check-3.8.3.tgz#b0a93237770f5ab8fe3d15fc61a5ce12a31a5bc8"
+  integrity sha512-Q9LTCwBjWcQR9dd6LNMXg9GFewkRiVEaU/+Y2ZcCbOb0lVqIfeJworWYGakG7bFj8HJQILBTRnAnEK9DDKfdPA==
   dependencies:
     async "^3.2.0"
     chalk "^4.1.0"
     commander "^6.1.0"
     link-check "^4.5.1"
     lodash "^4.17.20"
-    markdown-link-extractor "^1.2.5"
+    markdown-link-extractor "^1.2.6"
     progress "^2.0.3"
     request "^2.88.2"
 
-markdown-link-extractor@^1.2.5:
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/markdown-link-extractor/-/markdown-link-extractor-1.2.5.tgz#f6aead4c5c12d9c037f3ba529ba2ddd905df5a9e"
-  integrity sha512-lAO4XIF4gsfN8IApvXWf0FEORDqEi47Mw76MJ668QpSVPFqVZJWAWsFl2SYJYULA+MLnaa9f9eHQttW3O47lyw==
+markdown-link-extractor@^1.2.6:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/markdown-link-extractor/-/markdown-link-extractor-1.2.6.tgz#7b0c769694cf173f5ee898d4de06dc0ecaff4c01"
+  integrity sha512-WDiwWTzR/zk0n0As7q1KCB1Jd/T7nJ7IEr6E1QKZR1Agd/xRmB0FjM2IrtC7IZ1ZwxflBE0aLe4pkX8d+rzV8w==
   dependencies:
     marked "^1.1.1"
 
