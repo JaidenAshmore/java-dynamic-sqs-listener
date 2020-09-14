@@ -3,6 +3,7 @@ package com.jashmore.sqs.util;
 import static com.jashmore.sqs.util.SqsQueuesConfig.DEFAULT_SQS_SERVER_URL;
 import static com.jashmore.sqs.util.SqsQueuesConfig.QueueConfig.DEFAULT_MAX_RECEIVE_COUNT;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE;
 
@@ -207,8 +208,20 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
             createDeadLetterQueueFuture = CompletableFuture.completedFuture(null);
         }
 
+        if (queueConfig.isFifoQueue()) {
+            if (!queueConfig.getQueueName().endsWith(".fifo")) {
+                throw new IllegalArgumentException("Queue name must end in .fifo for FIFO queues");
+            }
+            attributes.put(QueueAttributeName.FIFO_QUEUE, String.valueOf(true));
+            attributes.put(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
+        }
+
+        final Map<String, String> rawAttributes = new HashMap<>(
+            attributes.entrySet().stream().collect(toMap(entry -> entry.getKey().toString(), Map.Entry::getValue))
+        );
+
         return createDeadLetterQueueFuture.thenCompose(
-            ignored -> delegate.createQueue(builder -> builder.queueName(queueConfig.getQueueName()).attributes(attributes))
+            ignored -> delegate.createQueue(builder -> builder.queueName(queueConfig.getQueueName()).attributesWithStrings(rawAttributes))
         );
     }
 

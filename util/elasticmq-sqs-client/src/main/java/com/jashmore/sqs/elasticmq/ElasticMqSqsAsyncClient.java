@@ -38,6 +38,10 @@ public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
         this(Collections.singletonList(SqsQueuesConfig.QueueConfig.builder().queueName(queueName).build()), clientBuilderConsumer);
     }
 
+    public ElasticMqSqsAsyncClient(final SqsQueuesConfig.QueueConfig queueConfiguration) {
+        this(Collections.singletonList(queueConfiguration), builder -> {});
+    }
+
     public ElasticMqSqsAsyncClient(final List<SqsQueuesConfig.QueueConfig> queuesConfiguration) {
         this(queuesConfiguration, builder -> {});
     }

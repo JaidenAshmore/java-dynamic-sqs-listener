@@ -60,6 +60,7 @@ include(
     ":example:core-example",
     ":example:spring-aws-example",
     ":example:core-kotlin-example",
+    ":example:fifo-example",
     ":example:ktor-example",
     ":example:spring-cloud-schema-registry:consumer",
     ":example:spring-cloud-schema-registry:producer",
@@ -107,6 +108,7 @@ project(":sqs-brave-tracing").projectDir = file("util/sqs-brave-tracing")
 project(":example:aws-xray-spring-example").projectDir = file("examples/aws-xray-spring-example")
 project(":example:core-example").projectDir = file("examples/core-example")
 project(":example:core-kotlin-example").projectDir = file("examples/core-kotlin-example")
+project(":example:fifo-example").projectDir = file("examples/fifo-example")
 project(":example:ktor-example").projectDir = file("examples/ktor-example")
 project(":example:spring-aws-example").projectDir = file("examples/spring-aws-example")
 project(":example:spring-cloud-schema-registry:consumer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer")
