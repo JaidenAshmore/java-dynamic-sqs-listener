@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE;
 
+import com.jashmore.sqs.util.collections.CollectionUtils;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -121,6 +122,30 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
 
         log.info("Creating queue with name: {}", queueName);
         return createQueue(requestBuilder -> requestBuilder.queueName(queueName).build())
+            .thenApply(
+                createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
+            );
+    }
+
+    @Override
+    public CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue() {
+        final String queueName = UUID.randomUUID().toString().replace("-", "") + ".fifo";
+
+        log.info("Creating queue with name: {}", queueName);
+        return createQueue(
+                requestBuilder ->
+                    requestBuilder
+                        .queueName(queueName)
+                        .attributes(
+                            CollectionUtils.immutableMapOf(
+                                QueueAttributeName.FIFO_QUEUE,
+                                String.valueOf(true),
+                                QueueAttributeName.CONTENT_BASED_DEDUPLICATION,
+                                String.valueOf(false)
+                            )
+                        )
+                        .build()
+            )
             .thenApply(
                 createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
             );

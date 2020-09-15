@@ -12,6 +12,7 @@ plugins {
     id("com.jashmore.gradle.github.release")
     id("org.jlleitschuh.gradle.ktlint") apply false
     id("io.gitlab.arturbosch.detekt") apply false
+    id("org.unbroken-dome.test-sets") version "3.0.1"
 }
 
 allprojects {
@@ -36,6 +37,7 @@ subprojects {
     val isKotlinProject = project.name.contains("kotlin") || project.name.contains("ktor")
     apply(plugin = "java-library")
     apply(plugin = "jacoco")
+    apply(plugin = "org.unbroken-dome.test-sets")
     if (!isKotlinProject) {
         apply(plugin = "com.github.spotbugs")
     } else {
@@ -89,17 +91,15 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
 
-        // We don"t want integration tests to run in the "test" task and instead run in "integrationTest"
-        exclude("it/com/**")
-
         // Only run Jacoco in the test phase, not the integration test phase
         jacoco {
             toolVersion = "0.8.5"
         }
     }
 
-    val integrationTestTask = tasks.create<Test>("integrationTest") {
-        include("it/com/**")
+    testSets {
+        val integrationTest by creating {
+        }
     }
 
     tasks.jacocoTestReport {
@@ -132,7 +132,7 @@ subprojects {
     tasks.check {
         dependsOn(tasks.jacocoTestReport)
         dependsOn(tasks.jacocoTestCoverageVerification)
-        dependsOn(integrationTestTask)
+        dependsOn(tasks.getByName("integrationTest"))
     }
 }
 

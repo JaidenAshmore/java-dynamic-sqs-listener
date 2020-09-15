@@ -21,6 +21,8 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      */
     CompletableFuture<CreateRandomQueueResponse> createRandomQueue();
 
+    CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue();
+
     /**
      * Send the message content to a local queue with the given name.
      *
