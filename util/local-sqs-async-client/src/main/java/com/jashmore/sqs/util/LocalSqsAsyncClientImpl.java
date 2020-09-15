@@ -128,30 +128,6 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     }
 
     @Override
-    public CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue() {
-        final String queueName = UUID.randomUUID().toString().replace("-", "") + ".fifo";
-
-        log.info("Creating queue with name: {}", queueName);
-        return createQueue(
-                requestBuilder ->
-                    requestBuilder
-                        .queueName(queueName)
-                        .attributes(
-                            CollectionUtils.immutableMapOf(
-                                QueueAttributeName.FIFO_QUEUE,
-                                String.valueOf(true),
-                                QueueAttributeName.CONTENT_BASED_DEDUPLICATION,
-                                String.valueOf(false)
-                            )
-                        )
-                        .build()
-            )
-            .thenApply(
-                createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
-            );
-    }
-
-    @Override
     public CompletableFuture<List<PurgeQueueResponse>> purgeAllQueues() {
         return delegate
             .listQueues()
