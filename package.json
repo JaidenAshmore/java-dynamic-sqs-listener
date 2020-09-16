@@ -4,7 +4,7 @@
         "husky": "4.3.0",
         "lint-staged": "10.3.0",
         "markdown-link-check": "3.8.3",
-        "prettier": "2.1.1",
+        "prettier": "2.1.2",
         "prettier-plugin-java": "0.8.0"
     },
     "scripts": {
