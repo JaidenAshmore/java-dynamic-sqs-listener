@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -38,5 +40,12 @@ public class CollectionUtils {
         underlyingList.addAll(one);
         underlyingList.addAll(two);
         return Collections.unmodifiableList(underlyingList);
+    }
+
+    public <T, S> Map<T, S> immutableMapOf(T keyOne, S valueOne, T keyTwo, S valueTwo) {
+        final Map<T, S> internalMap = new HashMap<>();
+        internalMap.put(keyOne, valueOne);
+        internalMap.put(keyTwo, valueTwo);
+        return Collections.unmodifiableMap(internalMap);
     }
 }
