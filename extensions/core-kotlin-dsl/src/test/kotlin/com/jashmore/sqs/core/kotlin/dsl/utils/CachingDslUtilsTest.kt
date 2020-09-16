@@ -39,15 +39,23 @@ class CachingDslUtilsTest {
         @Test
         fun `will continually get new values when timeouts keeps expiring`() {
             var count = 0
-            val cachedSupplier = cached(Duration.ofMillis(200)) { count++ }
+            val startTime = System.currentTimeMillis()
+            val cachedSupplier = cached(Duration.ofMillis(500)) {
+                println("Time: ${System.currentTimeMillis() - startTime}")
+                count++
+            }
             assertThat(cachedSupplier()).isEqualTo(0)
-            Thread.sleep(100)
             assertThat(cachedSupplier()).isEqualTo(0)
-            Thread.sleep(200)
+            assertThat(cachedSupplier()).isEqualTo(0)
+            Thread.sleep(1000)
             assertThat(cachedSupplier()).isEqualTo(1)
-            Thread.sleep(150)
             assertThat(cachedSupplier()).isEqualTo(1)
-            Thread.sleep(100)
+            assertThat(cachedSupplier()).isEqualTo(1)
+            assertThat(cachedSupplier()).isEqualTo(1)
+            Thread.sleep(1000)
+            assertThat(cachedSupplier()).isEqualTo(2)
+            assertThat(cachedSupplier()).isEqualTo(2)
+            assertThat(cachedSupplier()).isEqualTo(2)
             assertThat(cachedSupplier()).isEqualTo(2)
         }
     }

@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.toList;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE;
 
-import com.jashmore.sqs.util.collections.CollectionUtils;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
