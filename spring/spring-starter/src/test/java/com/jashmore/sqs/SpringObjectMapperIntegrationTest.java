@@ -91,8 +91,8 @@ class SpringObjectMapperIntegrationTest {
 
         @QueueListener(QUEUE_NAME)
         public void listener(@Payload final User user) {
-            MESSAGE_RECEIVED.countDown();
             MESSAGE_LISTENER_USER.set(user);
+            MESSAGE_RECEIVED.countDown();
         }
     }
 
