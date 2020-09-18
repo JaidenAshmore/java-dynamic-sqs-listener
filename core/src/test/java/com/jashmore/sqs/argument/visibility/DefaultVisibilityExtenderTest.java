@@ -71,15 +71,15 @@ class DefaultVisibilityExtenderTest {
     void defaultExtendShouldReturnFutureFromAmazon() {
         // arrange
         when(
-                sqsAsyncClient.changeMessageVisibility(
-                    ChangeMessageVisibilityRequest
-                        .builder()
-                        .queueUrl("queueUrl")
-                        .receiptHandle(RECEIPT_HANDLE)
-                        .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
-                        .build()
-                )
+            sqsAsyncClient.changeMessageVisibility(
+                ChangeMessageVisibilityRequest
+                    .builder()
+                    .queueUrl("queueUrl")
+                    .receiptHandle(RECEIPT_HANDLE)
+                    .visibilityTimeout(DEFAULT_VISIBILITY_EXTENSION_IN_SECONDS)
+                    .build()
             )
+        )
             .thenReturn(changeMessageVisibilityResultFuture);
 
         // act
@@ -93,15 +93,10 @@ class DefaultVisibilityExtenderTest {
     void extendShouldReturnFutureFromAmazon() {
         // arrange
         when(
-                sqsAsyncClient.changeMessageVisibility(
-                    ChangeMessageVisibilityRequest
-                        .builder()
-                        .queueUrl("queueUrl")
-                        .receiptHandle(RECEIPT_HANDLE)
-                        .visibilityTimeout(10)
-                        .build()
-                )
+            sqsAsyncClient.changeMessageVisibility(
+                ChangeMessageVisibilityRequest.builder().queueUrl("queueUrl").receiptHandle(RECEIPT_HANDLE).visibilityTimeout(10).build()
             )
+        )
             .thenReturn(changeMessageVisibilityResultFuture);
 
         // act

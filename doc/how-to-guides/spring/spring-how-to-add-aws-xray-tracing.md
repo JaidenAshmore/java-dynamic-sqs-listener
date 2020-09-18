@@ -83,8 +83,8 @@ public class MyConfiguration {
     @Bean
     public ClientSegmentMutator clientSegmentMutator() {
         return new BasicXrayMessageProcessingDecorator(
-            BasicXrayMessageProcessingDecorator
-                .Options.builder()
+            BasicXrayMessageProcessingDecorator.Options
+                .builder()
                 .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("my-custom-name"))
                 .build()
         );

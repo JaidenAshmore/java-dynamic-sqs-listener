@@ -48,8 +48,8 @@ module would be good examples.
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(
                 ImmutableList.of(
-                    SqsQueuesConfig
-                        .QueueConfig.builder()
+                    SqsQueuesConfig.QueueConfig
+                        .builder()
                         .queueName(QUEUE_NAME)
                         .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
                         .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)

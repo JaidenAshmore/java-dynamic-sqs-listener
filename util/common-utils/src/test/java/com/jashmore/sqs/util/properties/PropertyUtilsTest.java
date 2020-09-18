@@ -15,14 +15,14 @@ class PropertyUtilsTest {
         assertThat(PropertyUtils.safelyGetLongValue("prop", () -> 1L, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetLongValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                PropertyUtils.safelyGetLongValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            PropertyUtils.safelyGetLongValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -33,14 +33,14 @@ class PropertyUtilsTest {
         assertThat(PropertyUtils.safelyGetPositiveLongValue("prop", () -> 0L, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveLongValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                PropertyUtils.safelyGetPositiveLongValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            PropertyUtils.safelyGetPositiveLongValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -51,14 +51,14 @@ class PropertyUtilsTest {
         assertThat(PropertyUtils.safelyGetPositiveOrZeroLongValue("prop", () -> 0L, 5)).isEqualTo(0);
         assertThat(PropertyUtils.safelyGetPositiveOrZeroLongValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                PropertyUtils.safelyGetPositiveOrZeroLongValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            PropertyUtils.safelyGetPositiveOrZeroLongValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -67,14 +67,14 @@ class PropertyUtilsTest {
         assertThat(PropertyUtils.safelyGetIntegerValue("prop", () -> 1, 5)).isEqualTo(1);
         assertThat(PropertyUtils.safelyGetIntegerValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                PropertyUtils.safelyGetIntegerValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            PropertyUtils.safelyGetIntegerValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -85,14 +85,14 @@ class PropertyUtilsTest {
         assertThat(PropertyUtils.safelyGetPositiveIntegerValue("prop", () -> 0, 5)).isEqualTo(5);
         assertThat(PropertyUtils.safelyGetPositiveIntegerValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                PropertyUtils.safelyGetPositiveIntegerValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            PropertyUtils.safelyGetPositiveIntegerValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -103,14 +103,14 @@ class PropertyUtilsTest {
         assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> 0, 5)).isEqualTo(0);
         assertThat(safelyGetPositiveOrZeroIntegerValue("prop", () -> null, 5)).isEqualTo(5);
         assertThat(
-                safelyGetPositiveOrZeroIntegerValue(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    5
-                )
+            safelyGetPositiveOrZeroIntegerValue(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                5
             )
+        )
             .isEqualTo(5);
     }
 
@@ -122,14 +122,14 @@ class PropertyUtilsTest {
         assertThat(safelyGetPositiveOrZeroDuration("prop", () -> Duration.ofSeconds(0), defaultDuration)).isEqualTo(Duration.ofSeconds(0));
         assertThat(safelyGetPositiveOrZeroDuration("prop", () -> null, defaultDuration)).isEqualTo(defaultDuration);
         assertThat(
-                safelyGetPositiveOrZeroDuration(
-                    "prop",
-                    () -> {
-                        throw new ExpectedTestException();
-                    },
-                    defaultDuration
-                )
+            safelyGetPositiveOrZeroDuration(
+                "prop",
+                () -> {
+                    throw new ExpectedTestException();
+                },
+                defaultDuration
             )
+        )
             .isEqualTo(defaultDuration);
     }
 }
