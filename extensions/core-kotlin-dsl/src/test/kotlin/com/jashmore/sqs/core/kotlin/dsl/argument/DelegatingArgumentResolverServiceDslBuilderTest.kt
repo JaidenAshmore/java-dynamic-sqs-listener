@@ -28,7 +28,11 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
     private val queueProperties = QueueProperties.builder().queueUrl("url").build()
     private val method: Method = DelegatingArgumentResolverServiceDslBuilderTest::class.java.getMethod(
         "myMethod",
-        User::class.java, String::class.java, User::class.java, String::class.java, Message::class.java
+        User::class.java,
+        String::class.java,
+        User::class.java,
+        String::class.java,
+        Message::class.java
     )
 
     @Test

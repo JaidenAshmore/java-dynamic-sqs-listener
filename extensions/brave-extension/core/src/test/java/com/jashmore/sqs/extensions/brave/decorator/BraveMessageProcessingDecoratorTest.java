@@ -206,8 +206,8 @@ class BraveMessageProcessingDecoratorTest {
             @Test
             void canBeUsedToManuallySetSpanName() {
                 // arrange
-                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator
-                    .Options.builder()
+                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator.Options
+                    .builder()
                     .spanNameCreator((context, message) -> "my-span-name")
                     .build();
                 decorator = new BraveMessageProcessingDecorator(tracing, options);
@@ -233,8 +233,8 @@ class BraveMessageProcessingDecoratorTest {
                 SendMessageRemoteSetter.create(tracing).inject(scopedSenderSpan.context(), messageAttributes);
                 final Message message = Message.builder().body("test").messageAttributes(messageAttributes).build();
                 final MessageProcessingContext context = newContext();
-                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator
-                    .Options.builder()
+                final BraveMessageProcessingDecorator.Options options = BraveMessageProcessingDecorator.Options
+                    .builder()
                     .traceExtractor(SendMessageRemoteGetter.create(tracing))
                     .build();
                 decorator = new BraveMessageProcessingDecorator(tracing, options);

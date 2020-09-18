@@ -63,8 +63,8 @@ class XrayWrappedSqsAsyncClientTest {
             // arrange
             when(recorder.getCurrentSegmentOptional()).thenReturn(Optional.empty());
             final SqsAsyncClient client = new XrayWrappedSqsAsyncClient(
-                XrayWrappedSqsAsyncClient
-                    .Options.builder()
+                XrayWrappedSqsAsyncClient.Options
+                    .builder()
                     .delegate(delegate)
                     .recorder(recorder)
                     .segmentNamingStrategy(segmentNamingStrategy)
@@ -85,8 +85,8 @@ class XrayWrappedSqsAsyncClientTest {
             // arrange
             when(recorder.getCurrentSegmentOptional()).thenReturn(Optional.of(mock(Segment.class)));
             final SqsAsyncClient client = new XrayWrappedSqsAsyncClient(
-                XrayWrappedSqsAsyncClient
-                    .Options.builder()
+                XrayWrappedSqsAsyncClient.Options
+                    .builder()
                     .delegate(delegate)
                     .recorder(recorder)
                     .segmentNamingStrategy(segmentNamingStrategy)
@@ -128,8 +128,8 @@ class XrayWrappedSqsAsyncClientTest {
             when(recorder.beginSegment(anyString())).thenReturn(mockSegment);
             final ClientSegmentMutator clientSegmentMutator = mock(ClientSegmentMutator.class);
             final SqsAsyncClient client = new XrayWrappedSqsAsyncClient(
-                XrayWrappedSqsAsyncClient
-                    .Options.builder()
+                XrayWrappedSqsAsyncClient.Options
+                    .builder()
                     .delegate(delegate)
                     .recorder(recorder)
                     .segmentMutator(clientSegmentMutator)
@@ -150,8 +150,8 @@ class XrayWrappedSqsAsyncClientTest {
             final Segment mockSegment = mock(Segment.class);
             when(recorder.beginSegment(anyString())).thenReturn(mockSegment);
             final SqsAsyncClient client = new XrayWrappedSqsAsyncClient(
-                XrayWrappedSqsAsyncClient
-                    .Options.builder()
+                XrayWrappedSqsAsyncClient.Options
+                    .builder()
                     .delegate(delegate)
                     .recorder(recorder)
                     .segmentMutator(new UnsampledClientSegmentMutator())

@@ -89,8 +89,8 @@ class BasicXrayMessageProcessingDecoratorTest {
         void segmentNamingStrategyCanBeUsedToNameSegment() {
             // arrange
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(recorder)
                     .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy("static-name"))
                     .build()
@@ -108,8 +108,8 @@ class BasicXrayMessageProcessingDecoratorTest {
         void segmentMutatorCanBeUsedToMutateTheSegmentAfterConstruction() {
             // arrange
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(recorder)
                     .segmentMutator((segment, context, message) -> segment.setSampled(false))
                     .build()
@@ -132,8 +132,8 @@ class BasicXrayMessageProcessingDecoratorTest {
             final AtomicReference<Entity> messageProcessingEntity = new AtomicReference<>();
             final AWSXRayRecorder globalRecorder = AWSXRayRecorderBuilder.defaultRecorder();
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(globalRecorder)
                     .segmentMutator((segment, context, message) -> messageListenerSegment.set(segment))
                     .generateSubsegment(false)
@@ -196,8 +196,8 @@ class BasicXrayMessageProcessingDecoratorTest {
             final AtomicReference<Segment> messageListenerSegment = new AtomicReference<>();
             final AWSXRayRecorder globalRecorder = AWSXRayRecorderBuilder.defaultRecorder();
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(globalRecorder)
                     .segmentMutator((segment, context, message) -> messageListenerSegment.set(segment))
                     .generateSubsegment(false)
@@ -273,8 +273,8 @@ class BasicXrayMessageProcessingDecoratorTest {
         void subsegmentNamingStrategyCanBeUsedToNameSubsegment() {
             // arrange
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(recorder)
                     .subsegmentNamingStrategy((context, message) -> "static-name")
                     .build()
@@ -293,8 +293,8 @@ class BasicXrayMessageProcessingDecoratorTest {
             // arrange
             final AtomicReference<Subsegment> subsegmentFound = new AtomicReference<>();
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(recorder)
                     .subsegmentMutator(((subsegment, context, message) -> subsegmentFound.set(subsegment)))
                     .build()
@@ -315,8 +315,8 @@ class BasicXrayMessageProcessingDecoratorTest {
             final AtomicReference<Entity> messageProcessingEntity = new AtomicReference<>();
             final AWSXRayRecorder globalRecorder = AWSXRayRecorderBuilder.defaultRecorder();
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(globalRecorder)
                     .subsegmentMutator((segment, context, message) -> messageListenerSubsegment.set(segment))
                     .build()
@@ -347,8 +347,8 @@ class BasicXrayMessageProcessingDecoratorTest {
             final Subsegment mockSubsegment = mock(Subsegment.class);
             when(recorder.beginSubsegment(anyString())).thenReturn(mockSubsegment);
             final BasicXrayMessageProcessingDecorator decorator = new BasicXrayMessageProcessingDecorator(
-                BasicXrayMessageProcessingDecorator
-                    .Options.builder()
+                BasicXrayMessageProcessingDecorator.Options
+                    .builder()
                     .recorder(recorder)
                     .subsegmentMutator((segment, context, message) -> messageListenerSubsegment.set(segment))
                     .build()
