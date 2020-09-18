@@ -19,7 +19,7 @@ public class SomeService {
                 Thread.sleep(500);
             } else {
                 Thread.sleep(200);
-                throw new RuntimeException("Failed to process");
+                throw new RuntimeException("Expected random failure to process");
             }
         } catch (RuntimeException exception) {
             subsegment.addException(exception);
