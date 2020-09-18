@@ -103,7 +103,9 @@ fun main() {
             }
             log.info("Put 10 messages onto queue")
         },
-        0, 2, TimeUnit.SECONDS
+        0,
+        2,
+        TimeUnit.SECONDS
     )
 
     log.info("Running application for 3 minutes. Ctrl + C to exit...")

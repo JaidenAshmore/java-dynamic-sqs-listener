@@ -85,15 +85,17 @@ class CoreMessageProcessorDslBuilderTest {
         // act
         val coreProcessor = coreProcessor("identifier", sqsAsyncClient, queueProperties) {
             argumentResolverService = delegatingArgumentResolverService {
-                add(object : ArgumentResolver<String> {
-                    override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
+                add(
+                    object : ArgumentResolver<String> {
+                        override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
 
-                    override fun resolveArgumentForParameter(
-                        queueProperties: QueueProperties,
-                        methodParameter: MethodParameter,
-                        message: Message
-                    ): String = "some value"
-                })
+                        override fun resolveArgumentForParameter(
+                            queueProperties: QueueProperties,
+                            methodParameter: MethodParameter,
+                            message: Message
+                        ): String = "some value"
+                    }
+                )
             }
             bean = CoreMessageProcessorDslBuilderTest()
             method = CoreMessageProcessorDslBuilderTest::class.java.getMethod("myMethod", String::class.java)
@@ -111,15 +113,17 @@ class CoreMessageProcessorDslBuilderTest {
         val mockDecorator = mock(MessageProcessingDecorator::class.java)
         val coreProcessor = coreProcessor("identifier", sqsAsyncClient, queueProperties) {
             argumentResolverService = delegatingArgumentResolverService {
-                add(object : ArgumentResolver<String> {
-                    override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
+                add(
+                    object : ArgumentResolver<String> {
+                        override fun canResolveParameter(methodParameter: MethodParameter?): Boolean = true
 
-                    override fun resolveArgumentForParameter(
-                        queueProperties: QueueProperties,
-                        methodParameter: MethodParameter,
-                        message: Message
-                    ): String = "some value"
-                })
+                        override fun resolveArgumentForParameter(
+                            queueProperties: QueueProperties,
+                            methodParameter: MethodParameter,
+                            message: Message
+                        ): String = "some value"
+                    }
+                )
             }
             bean = CoreMessageProcessorDslBuilderTest()
             method = CoreMessageProcessorDslBuilderTest::class.java.getMethod("myMethod", String::class.java)
