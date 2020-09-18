@@ -38,8 +38,8 @@ public class SqsListenerXrayConfiguration {
         @Value("${spring.application.name:service}") final String applicationName
     ) {
         return new BasicXrayMessageProcessingDecorator(
-            BasicXrayMessageProcessingDecorator
-                .Options.builder()
+            BasicXrayMessageProcessingDecorator.Options
+                .builder()
                 .recorder(recorder)
                 .segmentNamingStrategy(new StaticDecoratorSegmentNamingStrategy(applicationName))
                 .build()
@@ -78,8 +78,8 @@ public class SqsListenerXrayConfiguration {
             final ClientSegmentMutator clientSegmentMutator
         ) {
             final XrayWrappedSqsAsyncClient xrayDefaultClient = new XrayWrappedSqsAsyncClient(
-                XrayWrappedSqsAsyncClient
-                    .Options.builder()
+                XrayWrappedSqsAsyncClient.Options
+                    .builder()
                     .delegate(defaultClient)
                     .recorder(recorder)
                     .segmentNamingStrategy(clientSegmentNamingStrategy)

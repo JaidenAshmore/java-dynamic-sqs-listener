@@ -20,7 +20,7 @@ of the bean's lifecycle.
 ## Examples
 
 The main example that should be used as a reference is the
-[SqsListenerExampleIntegrationTest](../../../examples/spring-integration-test-example/src/test/java/it/com/jashmore/sqs/examples/integrationtests/SqsListenerExampleIntegrationTest.java)
+[SqsListenerExampleIntegrationTest](../../../examples/spring-integration-test-example/src/test/java /com/jashmore/sqs/examples/integrationtests/SqsListenerExampleIntegrationTest.java)
 which will test all of those scenarios described above using the methods described below. Otherwise, any of the other integration tests in the spring starter
 module would be good examples.
 
@@ -48,8 +48,8 @@ module would be good examples.
         public LocalSqsAsyncClient localSqsAsyncClient() {
             return new ElasticMqSqsAsyncClient(
                 ImmutableList.of(
-                    SqsQueuesConfig
-                        .QueueConfig.builder()
+                    SqsQueuesConfig.QueueConfig
+                        .builder()
                         .queueName(QUEUE_NAME)
                         .maxReceiveCount(QUEUE_MAX_RECEIVE_COUNT)
                         .visibilityTimeout(VISIBILITY_TIMEOUT_IN_SECONDS)

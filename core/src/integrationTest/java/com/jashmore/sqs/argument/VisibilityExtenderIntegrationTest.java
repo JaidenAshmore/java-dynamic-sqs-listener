@@ -44,8 +44,8 @@ class VisibilityExtenderIntegrationTest {
 
     private static final ElasticMqSqsAsyncClient elasticMQSqsAsyncClient = new ElasticMqSqsAsyncClient(
         singletonList(
-            SqsQueuesConfig
-                .QueueConfig.builder()
+            SqsQueuesConfig.QueueConfig
+                .builder()
                 .queueName("VisibilityExtenderIntegrationTest")
                 .visibilityTimeout(ORIGINAL_MESSAGE_VISIBILITY)
                 .maxReceiveCount(2) // make sure it will try multiple times

@@ -581,13 +581,13 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-java-parser@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/java-parser/-/java-parser-0.8.0.tgz#5abee16e3fbc11d0d90c5b6ac69919e01fe1ba5c"
-  integrity sha512-8MOu9EDjWlAcBnxjVI8jblcOX/zJt9XVLaMLrXYvmJYk3gvRqTUKsEp/PxaooJQc6wh+nPEyqEbhCy3BWIgi0g==
+java-parser@0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/java-parser/-/java-parser-0.8.2.tgz#12a29a6ef8e9ca50d5d047e4c4c8ac383ff240d6"
+  integrity sha512-YphTEk4zIpWAHqBriAdjlNnTEcEYQ2xBA8KOH5V7QxggNbxjkeEcKJjNYnQvqEue8+O1TLj7vfL0NVG6x5LGMw==
   dependencies:
     chevrotain "6.5.0"
-    lodash "4.17.15"
+    lodash "4.17.20"
 
 js-tokens@^4.0.0:
   version "4.0.0"
@@ -686,12 +686,7 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
-lodash@4.17.15:
-  version "4.17.15"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
-  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
-
-lodash@^4.17.20:
+lodash@4.17.20, lodash@^4.17.20:
   version "4.17.20"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
@@ -892,19 +887,19 @@ please-upgrade-node@^3.2.0:
   dependencies:
     semver-compare "^1.0.0"
 
-prettier-plugin-java@0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-java/-/prettier-plugin-java-0.8.0.tgz#231320f9c7f1a115df33256c0b4c66e48eb876ce"
-  integrity sha512-+4qdhUfFQIj4bLGSDrAGmUZKXQRjJYpQFbmRh04atEZe7QEZUF6NHVyRjJ73Cgwhc5NaiyIpFhtcXgLf9J9V6A==
+prettier-plugin-java@0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-java/-/prettier-plugin-java-0.8.2.tgz#8cbeef028b40d1e8d9968b2c36a769441a719e83"
+  integrity sha512-G11PMutlfhUjLqmrB0gW9n6hTIvlnXX+lhzgH3Uhc1QSlDQoLBky5lNSRgvdYSDPpSF3DmyYd3/7U3Ez8n0ckg==
   dependencies:
-    java-parser "^0.8.0"
-    lodash "4.17.15"
-    prettier "2.0.4"
+    java-parser "0.8.2"
+    lodash "4.17.20"
+    prettier "2.1.1"
 
-prettier@2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.0.4.tgz#2d1bae173e355996ee355ec9830a7a1ee05457ef"
-  integrity sha512-SVJIQ51spzFDvh4fIbCLvciiDMCrRhlN3mbZvv/+ycjvmF5E73bKdGfU8QDLNmjYJf+lsGnDBC4UUnvTe5OO0w==
+prettier@2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.1.1.tgz#d9485dd5e499daa6cb547023b87a6cf51bee37d6"
+  integrity sha512-9bY+5ZWCfqj3ghYBLxApy2zf6m+NJo5GzmLTpr9FsApsfjriNnS2dahWReHMi7qNPhhHl9SYHJs2cHZLgexNIw==
 
 prettier@2.1.2:
   version "2.1.2"
