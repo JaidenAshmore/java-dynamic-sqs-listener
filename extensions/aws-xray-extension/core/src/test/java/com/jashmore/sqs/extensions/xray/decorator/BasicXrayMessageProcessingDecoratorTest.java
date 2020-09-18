@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 @ExtendWith(MockitoExtension.class)
 class BasicXrayMessageProcessingDecoratorTest {
     @Mock
-    private AWSXRayRecorder recorder;
+    AWSXRayRecorder recorder;
 
     @Nested
     public class MessageListenerSegment {

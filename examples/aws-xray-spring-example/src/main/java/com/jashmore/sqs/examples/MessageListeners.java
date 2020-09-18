@@ -2,6 +2,7 @@ package com.jashmore.sqs.examples;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Entity;
+import com.amazonaws.xray.entities.Segment;
 import com.jashmore.sqs.spring.container.basic.QueueListener;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,11 @@ public class MessageListeners {
     @QueueListener(identifier = "queue", value = "${sqs.queue.url}")
     public CompletableFuture<Void> sqsListener(final Message message) {
         final Entity currentTraceEntity = AWSXRay.getTraceEntity();
-        log.info("Segment ID: {}", AWSXRay.getCurrentSegment().getTraceId());
+        final Segment currentSegment = AWSXRay.getCurrentSegment();
+        if (currentSegment == null) {
+            throw new RuntimeException("Expected segment");
+        }
+        log.info("Segment ID: {}", currentSegment.getTraceId());
         return CompletableFuture.runAsync(
             () -> {
                 AWSXRay.setTraceEntity(currentTraceEntity);

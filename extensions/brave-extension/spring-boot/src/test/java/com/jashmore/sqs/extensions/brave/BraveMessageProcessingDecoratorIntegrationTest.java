@@ -123,6 +123,7 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
 
         // act
         assertThat(messageResolvedLatch.await(5, TimeUnit.SECONDS)).isTrue();
+        Thread.sleep(500); // make sure that everything else is completed
         scopedSenderSpan.finish();
 
         // assert
