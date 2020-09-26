@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
@@ -17,9 +18,26 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
     /**
      * Creates a random queue that can be used for testing, returning the URL for this queue.
      *
-     * @return the queue URL of the random queue created
+     * @return the result of creating the queue
      */
     CompletableFuture<CreateRandomQueueResponse> createRandomQueue();
+
+    /**
+     * Creates a random FIFO queue that can be used for testing, returning the result of creating the queue.
+     *
+     * @return the result of creating the queue
+     */
+    CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue();
+
+    /**
+     * Creates a random FIFO queue that can be used for testing, returning the result of creating the queue.
+     *
+     * @param sendMessageRequestBuilderConsumer consume the builder for adding extra configuration to the queue
+     * @return the result of creating the queue
+     */
+    CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue(
+        Consumer<CreateQueueRequest.Builder> sendMessageRequestBuilderConsumer
+    );
 
     /**
      * Send the message content to a local queue with the given name.
@@ -28,7 +46,7 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      * @param messageBody the contents of the message
      * @return the response for sending the messages as a {@link CompletableFuture}
      */
-    CompletableFuture<SendMessageResponse> sendMessage(final String queueName, final String messageBody);
+    CompletableFuture<SendMessageResponse> sendMessage(String queueName, String messageBody);
 
     /**
      * Send the following message request object to the local queue with the given name.
@@ -37,7 +55,7 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      * @param sendMessageRequest the request to send to the local queue
      * @return the response for sending the messages as a {@link CompletableFuture}
      */
-    CompletableFuture<SendMessageResponse> sendMessage(final String queueName, final SendMessageRequest sendMessageRequest);
+    CompletableFuture<SendMessageResponse> sendMessage(String queueName, SendMessageRequest sendMessageRequest);
 
     /**
      * Send a message to a local queue with the given name.
@@ -47,8 +65,8 @@ public interface LocalSqsAsyncClient extends SqsAsyncClient {
      * @return the response for sending the messages as a {@link CompletableFuture}
      */
     CompletableFuture<SendMessageResponse> sendMessage(
-        final String queueName,
-        final Consumer<SendMessageRequest.Builder> sendMessageRequestBuilderConsumer
+        String queueName,
+        Consumer<SendMessageRequest.Builder> sendMessageRequestBuilderConsumer
     );
 
     /**

@@ -659,6 +659,71 @@ prefetchingMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.her
 }
 ```
 
+### Listening to a FIFO SQS Queue
+
+FIFO SQS Queues can be used when the order of the SQS messages are important. The FIFO message listener guarantees messages
+in the same message group run in the order they are generated and two messages in the same group executed concurrently. For more information about
+the configuration options for the message listener take a look at the
+[FifoMessageListenerContainerProperties](core/src/main/java/com/jashmore/sqs/container/fifo/FifoMessageListenerContainerProperties.java) or the specific
+annotation or DSL builder for the framework implementation.
+
+### Java
+
+```java
+public class Main {
+
+    public static void main(String[] args) throws InterruptedException {
+        final SqsAsyncClient sqsAsyncClient = SqsAsyncClient.create(); // or your own custom client
+        final QueueProperties queueProperties = QueueProperties.builder().queueUrl("${insert.queue.url.here}").build();
+        final MessageListenerContainer container = new FifoMessageListenerContainer(
+            queueProperties,
+            sqsAsyncClient,
+            () ->
+                new LambdaMessageProcessor(
+                    sqsAsyncClient,
+                    queueProperties,
+                    message -> {
+                        // process the message here
+                    }
+                ),
+            ImmutableFifoMessageListenerContainerProperties.builder().identifier("listener-identifier").concurrencyLevel(10).build()
+        );
+        container.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(container::stop));
+        Thread.currentThread().join();
+    }
+}
+
+```
+
+### Spring Boot
+
+```java
+@Component
+class MessageListeners {
+
+    @FifoQueueListener(value = "${insert.queue.url.here}", concurrencyLevel = 10)
+    public void fifoListener(@Payload final String body) {
+        // process message here
+    }
+}
+
+```
+
+### Kotlin DSL/Ktor
+
+```kotlin
+fifoMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
+    concurrencyLevel = { 10 }
+
+    processor = lambdaProcessor {
+        method { message ->
+            // process the message payload here
+        }
+    }
+}
+```
+
 ### Comparing other SQS Libraries
 
 If you want to see the difference in usage between this library and others like the

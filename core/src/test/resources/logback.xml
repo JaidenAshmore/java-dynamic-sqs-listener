@@ -13,7 +13,7 @@
 
     <logger name="com.jashmore" level="INFO" />
 
-    <root level="INFO">
+    <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

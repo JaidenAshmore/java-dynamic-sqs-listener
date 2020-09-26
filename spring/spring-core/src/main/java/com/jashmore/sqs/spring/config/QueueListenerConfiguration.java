@@ -20,6 +20,7 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.StaticDefaultMessageListenerContainerCoordinatorProperties;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
@@ -244,6 +245,23 @@ public class QueueListenerConfiguration {
                 final List<MessageProcessingDecorator> decorators
             ) {
                 return new PrefetchingMessageListenerContainerFactory(
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    environment,
+                    decorators
+                );
+            }
+
+            @Bean
+            public MessageListenerContainerFactory fifoMessageListenerContainerFactory(
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final Environment environment,
+                final List<MessageProcessingDecorator> decorators
+            ) {
+                return new FifoMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,

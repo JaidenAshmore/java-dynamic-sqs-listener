@@ -117,7 +117,8 @@ subprojects {
         violationRules {
             rule {
                 excludes = listOf(
-                    "com.jashmore.sqs.examples*"
+                    "com.jashmore.sqs.examples*",
+                    "com.jashmore.sqs.container.fifo*" // these classes are better handled by integration tests
                 )
                 element = "PACKAGE"
                 limit {

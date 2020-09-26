@@ -3,6 +3,7 @@ package com.jashmore.sqs.ktor.container
 import com.jashmore.sqs.container.MessageListenerContainer
 import com.jashmore.sqs.core.kotlin.dsl.container.BatchingMessageListenerContainerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.container.CoreMessageListenerContainerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.container.FifoMessageListenerContainerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.container.PrefetchingMessageListenerContainerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.container.coreMessageListener
 import io.ktor.application.Application
@@ -40,6 +41,16 @@ fun Application.batchingMessageListener(
     init: BatchingMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
     return initMessageListener(environment, com.jashmore.sqs.core.kotlin.dsl.container.batchingMessageListener(identifier, sqsAsyncClient, queueUrl, init))
+}
+
+@ContextDsl
+fun Application.fifoMessageListener(
+    identifier: String,
+    sqsAsyncClient: SqsAsyncClient,
+    queueUrl: String,
+    init: FifoMessageListenerContainerDslBuilder.() -> Unit
+): MessageListenerContainer {
+    return initMessageListener(environment, com.jashmore.sqs.core.kotlin.dsl.container.fifoMessageListener(identifier, sqsAsyncClient, queueUrl, init))
 }
 
 fun initMessageListener(

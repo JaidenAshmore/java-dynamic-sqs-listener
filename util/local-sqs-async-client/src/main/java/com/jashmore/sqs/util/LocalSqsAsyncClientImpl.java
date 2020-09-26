@@ -24,6 +24,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
@@ -40,7 +41,6 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
  * <p>The implementation is kept to an absolute minimum and it will only connect to the server and set up any queues that should be set up on initial
  * connection. For any further configuration options look at creating your own implementation.
  */
-@SuppressWarnings("unused")
 @Slf4j
 public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     @Delegate(excludes = SdkAutoCloseable.class)
@@ -81,6 +81,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
         }
     }
 
+    @SuppressWarnings("unused")
     public LocalSqsAsyncClientImpl(final SqsAsyncClient delegate) {
         this.delegate = delegate;
     }
@@ -127,6 +128,33 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     }
 
     @Override
+    public CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue() {
+        return createRandomFifoQueue(builder -> {});
+    }
+
+    @Override
+    public CompletableFuture<CreateRandomQueueResponse> createRandomFifoQueue(
+        Consumer<CreateQueueRequest.Builder> sendMessageRequestBuilderConsumer
+    ) {
+        final String queueName = UUID.randomUUID().toString().replace("-", "") + ".fifo";
+
+        log.info("Creating FIFO queue with name: {}", queueName);
+        return createQueue(
+                requestBuilder -> {
+                    sendMessageRequestBuilderConsumer.accept(requestBuilder);
+                    final Map<QueueAttributeName, String> originalAttributes = requestBuilder.build().attributes();
+                    final Map<QueueAttributeName, String> actualAttributes = new HashMap<>(originalAttributes);
+                    actualAttributes.putIfAbsent(QueueAttributeName.FIFO_QUEUE, String.valueOf(true));
+                    actualAttributes.putIfAbsent(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
+                    requestBuilder.queueName(queueName).attributes(actualAttributes).build();
+                }
+            )
+            .thenApply(
+                createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
+            );
+    }
+
+    @Override
     public CompletableFuture<List<PurgeQueueResponse>> purgeAllQueues() {
         return delegate
             .listQueues()
@@ -167,16 +195,12 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
         final List<CompletableFuture<CreateQueueResponse>> queueFutures = sqsQueuesConfig
             .getQueues()
             .stream()
-            .map(queueConfig -> buildQueue(delegate, sqsQueuesConfig, queueConfig))
+            .map(queueConfig -> buildQueue(delegate, queueConfig))
             .collect(toList());
         return CompletableFutureUtils.allOf(queueFutures);
     }
 
-    private static CompletableFuture<CreateQueueResponse> buildQueue(
-        SqsAsyncClient delegate,
-        SqsQueuesConfig sqsQueuesConfig,
-        SqsQueuesConfig.QueueConfig queueConfig
-    ) {
+    private static CompletableFuture<CreateQueueResponse> buildQueue(SqsAsyncClient delegate, SqsQueuesConfig.QueueConfig queueConfig) {
         log.debug("Creating local queue: {}", queueConfig.getQueueName());
 
         final Map<QueueAttributeName, String> attributes = new HashMap<>();
@@ -191,7 +215,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
                 .orElse(queueConfig.getQueueName() + "-dlq");
             final int maxReceiveCount = Optional.ofNullable(queueConfig.getMaxReceiveCount()).orElse(DEFAULT_MAX_RECEIVE_COUNT);
             createDeadLetterQueueFuture =
-                createDeadLetterQueue(delegate, sqsQueuesConfig, deadLetterQueueName)
+                createDeadLetterQueue(delegate, queueConfig, deadLetterQueueName)
                     .thenAccept(
                         deadLetterQueueArn ->
                             attributes.put(
@@ -207,6 +231,14 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
             createDeadLetterQueueFuture = CompletableFuture.completedFuture(null);
         }
 
+        if (queueConfig.isFifoQueue()) {
+            if (!queueConfig.getQueueName().endsWith(".fifo")) {
+                throw new IllegalArgumentException("Queue name must end in .fifo for FIFO queues");
+            }
+            attributes.put(QueueAttributeName.FIFO_QUEUE, String.valueOf(true));
+            attributes.put(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
+        }
+
         return createDeadLetterQueueFuture.thenCompose(
             ignored -> delegate.createQueue(builder -> builder.queueName(queueConfig.getQueueName()).attributes(attributes))
         );
@@ -220,12 +252,24 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
      */
     private static CompletableFuture<String> createDeadLetterQueue(
         SqsAsyncClient delegate,
-        SqsQueuesConfig sqsQueuesConfig,
+        SqsQueuesConfig.QueueConfig queueConfig,
         final String queueName
     ) {
         log.debug("Creating dead letter queue: {}", queueName);
         return delegate
-            .createQueue((builder -> builder.queueName(queueName)))
+            .createQueue(
+                (
+                    builder -> {
+                        if (queueConfig.isFifoQueue()) {
+                            final Map<QueueAttributeName, String> attributes = new HashMap<>();
+                            attributes.put(QueueAttributeName.FIFO_QUEUE, "true");
+                            attributes.put(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, "false");
+                            builder.attributes(attributes);
+                        }
+                        builder.queueName(queueName);
+                    }
+                )
+            )
             .thenCompose(
                 createQueueResponse ->
                     delegate.getQueueAttributes(
@@ -236,7 +280,5 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     }
 
     @Override
-    public void close() {
-        log.info("Closing local SDK");
-    }
+    public void close() {}
 }
