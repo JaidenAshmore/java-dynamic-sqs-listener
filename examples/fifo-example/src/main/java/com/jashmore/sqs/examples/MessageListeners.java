@@ -26,9 +26,7 @@ public class MessageListeners {
     @FifoQueueListener(
         identifier = "fifo",
         value = "test-queue.fifo",
-        concurrencyLevel = 0,
-        maximumCachedMessageGroups = 1,
-        maximumMessagesInMessageGroup = 1,
+        concurrencyLevel = 10,
         messageVisibilityTimeoutInSeconds = 60,
         tryAndProcessAnyExtraRetrievedMessagesOnShutdown = true
     )
