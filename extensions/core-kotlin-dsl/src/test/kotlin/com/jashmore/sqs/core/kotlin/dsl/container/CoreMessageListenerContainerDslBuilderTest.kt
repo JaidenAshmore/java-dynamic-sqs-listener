@@ -86,6 +86,39 @@ class CoreMessageListenerContainerDslBuilderTest {
     }
 
     @Test
+    fun `can configure grouping message broker`() {
+        // arrange
+        val sqsAsyncClient = ElasticMqSqsAsyncClient()
+        val queueUrl = sqsAsyncClient.createRandomQueue().get().queueUrl()
+        val countDownLatch = CountDownLatch(1)
+
+        // act
+        container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+            processor = coreProcessor {
+                bean = MessageListener(countDownLatch)
+                method = MessageListener::class.java.getMethod("processMessage")
+            }
+            retriever = batchingMessageRetriever {
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(5) }
+            }
+            resolver = batchingResolver {
+                batchSize = { 1 }
+                batchingPeriod = { Duration.ofSeconds(1) }
+            }
+            broker = groupingBroker {
+                concurrencyLevel = { 1 }
+                messageGroupingFunction = { "groupId" }
+            }
+        }
+        container?.start()
+        sqsAsyncClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }
+
+        // assert
+        assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
+    }
+
+    @Test
     fun `can configure shutdown configuration for container`() {
         // arrange
         val sqsAsyncClient = ElasticMqSqsAsyncClient()

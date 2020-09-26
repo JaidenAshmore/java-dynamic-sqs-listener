@@ -20,6 +20,7 @@ import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordina
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import java.lang.reflect.Field;
@@ -405,7 +406,8 @@ class QueueListenerConfigurationTest {
                         assertThat(MessageListenerContainerFactoryClasses)
                             .containsExactlyInAnyOrder(
                                 BasicMessageListenerContainerFactory.class,
-                                PrefetchingMessageListenerContainerFactory.class
+                                PrefetchingMessageListenerContainerFactory.class,
+                                FifoMessageListenerContainerFactory.class
                             );
                     }
                 );
@@ -449,7 +451,7 @@ class QueueListenerConfigurationTest {
                         argumentResolversField.setAccessible(true);
                         assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
                             .containsExactlyElementsOf(messageListenerContainerFactories);
-                        assertThat(messageListenerContainerFactories).hasSize(3);
+                        assertThat(messageListenerContainerFactories).hasSize(4);
                     }
                 );
         }

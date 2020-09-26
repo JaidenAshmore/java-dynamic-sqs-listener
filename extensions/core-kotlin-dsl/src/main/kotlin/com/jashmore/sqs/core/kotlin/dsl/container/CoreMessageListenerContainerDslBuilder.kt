@@ -3,6 +3,7 @@ package com.jashmore.sqs.core.kotlin.dsl.container
 import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.broker.MessageBroker
 import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker
+import com.jashmore.sqs.broker.grouping.GroupingMessageBroker
 import com.jashmore.sqs.container.CoreMessageListenerContainer
 import com.jashmore.sqs.container.CoreMessageListenerContainerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
@@ -12,6 +13,7 @@ import com.jashmore.sqs.core.kotlin.dsl.MessageProcessorDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageResolverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.MessageRetrieverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.broker.ConcurrentMessageBrokerDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.broker.GroupingMessageBrokerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.initComponent
 import com.jashmore.sqs.core.kotlin.dsl.resolver.BatchingMessageResolverDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.retriever.BatchingMessageRetrieverDslBuilder
@@ -51,6 +53,21 @@ class CoreMessageListenerContainerDslBuilder(identifier: String, sqsAsyncClient:
      * ```
      */
     fun concurrentBroker(init: ConcurrentMessageBrokerDslBuilder.() -> Unit) = com.jashmore.sqs.core.kotlin.dsl.broker.concurrentBroker(init)
+
+    /**
+     * Use the [GroupingMessageBroker] as the [MessageBroker] in this container.
+     *
+     * Usage:
+     * ```kotlin
+     * val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
+     *     broker = groupingBroker {
+     *        // configure here
+     *     }
+     *     // other configuration
+     * }
+     * ```
+     */
+    fun groupingBroker(init: GroupingMessageBrokerDslBuilder.() -> Unit) = com.jashmore.sqs.core.kotlin.dsl.broker.groupingBroker(init)
 
     /**
      * Use the [BatchingMessageRetriever] as the [MessageRetriever] for this container.

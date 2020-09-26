@@ -60,5 +60,10 @@ public class SqsQueuesConfig {
          * re-drive policy linked to it with this max receive count.
          */
         Integer maxReceiveCount;
+
+        /**
+         * Whether the queue should be a FIFO queue instead of a Standard queue.
+         */
+        boolean fifoQueue;
     }
 }

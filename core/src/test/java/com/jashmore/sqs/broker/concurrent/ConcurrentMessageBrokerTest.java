@@ -1,5 +1,7 @@
 package com.jashmore.sqs.broker.concurrent;
 
+import static com.jashmore.sqs.broker.util.MessageBrokerTestUtils.processingMessageWillBlockUntilInterrupted;
+import static com.jashmore.sqs.broker.util.MessageBrokerTestUtils.runBrokerProcessMessageOnThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -8,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.processor.MessageProcessingException;
 import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
@@ -20,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
@@ -47,18 +47,18 @@ class ConcurrentMessageBrokerTest {
     private Supplier<CompletableFuture<Message>> messageSupplier;
 
     private ExecutorService brokerExecutorService;
-    private ExecutorService messageExecutingExecutorService;
+    private ExecutorService messageProcessorExecutorService;
 
     @BeforeEach
     void setUp() {
         brokerExecutorService = Executors.newCachedThreadPool();
-        messageExecutingExecutorService = Executors.newCachedThreadPool();
+        messageProcessorExecutorService = Executors.newCachedThreadPool();
     }
 
     @AfterEach
     void tearDown() {
         brokerExecutorService.shutdownNow();
-        messageExecutingExecutorService.shutdownNow();
+        messageProcessorExecutorService.shutdownNow();
     }
 
     @Test
@@ -73,7 +73,8 @@ class ConcurrentMessageBrokerTest {
         runBrokerProcessMessageOnThread(
             broker,
             () -> CompletableFuture.completedFuture(Message.builder().build()),
-            processingMessageWillBlockUntilInterrupted(messagesProcessingLatch)
+            processingMessageWillBlockUntilInterrupted(messagesProcessingLatch, messageProcessorExecutorService),
+            brokerExecutorService
         );
 
         // assert
@@ -92,7 +93,7 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP, brokerExecutorService);
         Thread.sleep(concurrencyPollingRateInMs * 3);
 
         // assert
@@ -120,7 +121,12 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted());
+        runBrokerProcessMessageOnThread(
+            broker,
+            messageSupplier,
+            processingMessageWillBlockUntilInterrupted(messageProcessorExecutorService),
+            brokerExecutorService
+        );
 
         // assert
         assertThat(countDownLatch.await(concurrencyPollingRateInMs * 3, MILLISECONDS)).isTrue();
@@ -136,7 +142,8 @@ class ConcurrentMessageBrokerTest {
             broker,
             () -> false,
             messageSupplier,
-            processingMessageWillBlockUntilInterrupted()
+            processingMessageWillBlockUntilInterrupted(messageProcessorExecutorService),
+            brokerExecutorService
         );
         future.get(30, SECONDS);
 
@@ -154,7 +161,12 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
+        runBrokerProcessMessageOnThread(
+            broker,
+            messageSupplier,
+            processingMessageWillBlockUntilInterrupted(messageProcessingLatch, messageProcessorExecutorService),
+            brokerExecutorService
+        );
 
         // assert
         assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
@@ -170,7 +182,12 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
+        runBrokerProcessMessageOnThread(
+            broker,
+            messageSupplier,
+            processingMessageWillBlockUntilInterrupted(messageProcessingLatch, messageProcessorExecutorService),
+            brokerExecutorService
+        );
 
         // assert
         assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
@@ -187,7 +204,12 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, processingMessageWillBlockUntilInterrupted(messageProcessingLatch));
+        runBrokerProcessMessageOnThread(
+            broker,
+            messageSupplier,
+            processingMessageWillBlockUntilInterrupted(messageProcessingLatch, messageProcessorExecutorService),
+            brokerExecutorService
+        );
 
         // assert
         assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
@@ -206,12 +228,13 @@ class ConcurrentMessageBrokerTest {
                     isFirst.set(false);
                     throw new MessageProcessingException("Expected Test Exception");
                 }
-            }
+            },
+            messageProcessorExecutorService
         );
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(DEFAULT_PROPERTIES);
 
         // act
-        runBrokerProcessMessageOnThread(broker, messageSupplier, messageConsumer);
+        runBrokerProcessMessageOnThread(broker, messageSupplier, messageConsumer, brokerExecutorService);
 
         // assert
         assertThat(messageProcessingLatch.await(30, SECONDS)).isTrue();
@@ -236,81 +259,11 @@ class ConcurrentMessageBrokerTest {
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
-        final Future<?> brokerFuture = runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP);
+        final Future<?> brokerFuture = runBrokerProcessMessageOnThread(broker, messageSupplier, MESSAGE_NO_OP, brokerExecutorService);
         assertThat(enteredBackoffSection.await(30, SECONDS)).isTrue();
         brokerExecutorService.shutdownNow();
 
         // assert
         brokerFuture.get(backoffTimeInMs / 2, MILLISECONDS);
-    }
-
-    private Future<?> runBrokerProcessMessageOnThread(
-        final MessageBroker broker,
-        final Supplier<CompletableFuture<Message>> messageRetriever,
-        final Function<Message, CompletableFuture<?>> messageConsumer
-    ) {
-        return brokerExecutorService.submit(
-            () -> {
-                final ExecutorService executorService = Executors.newCachedThreadPool();
-                try {
-                    broker.processMessages(executorService, messageRetriever, messageConsumer);
-                } catch (InterruptedException interruptedException) {
-                    // do nothing
-                } finally {
-                    executorService.shutdownNow();
-                }
-            }
-        );
-    }
-
-    private Future<?> runBrokerProcessMessageOnThread(
-        final MessageBroker broker,
-        final BooleanSupplier keepProcessingMessages,
-        final Supplier<CompletableFuture<Message>> messageRetriever,
-        final Function<Message, CompletableFuture<?>> messageConsumer
-    ) {
-        return brokerExecutorService.submit(
-            () -> {
-                final ExecutorService executorService = Executors.newCachedThreadPool();
-                try {
-                    broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
-                } catch (InterruptedException interruptedException) {
-                    // do nothing
-                } finally {
-                    executorService.shutdownNow();
-                }
-            }
-        );
-    }
-
-    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted() {
-        return processingMessageWillBlockUntilInterrupted(null);
-    }
-
-    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted(
-        final CountDownLatch messageProcessingLatch
-    ) {
-        return processingMessageWillBlockUntilInterrupted(messageProcessingLatch, () -> {});
-    }
-
-    private Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted(
-        final CountDownLatch messageProcessingLatch,
-        final Runnable runnableCalledOnMessageProcessing
-    ) {
-        return message ->
-            CompletableFuture.runAsync(
-                () -> {
-                    runnableCalledOnMessageProcessing.run();
-                    if (messageProcessingLatch != null) {
-                        messageProcessingLatch.countDown();
-                    }
-                    try {
-                        Thread.sleep(Long.MAX_VALUE);
-                    } catch (final InterruptedException interruptedException) {
-                        //expected
-                    }
-                },
-                messageExecutingExecutorService
-            );
     }
 }

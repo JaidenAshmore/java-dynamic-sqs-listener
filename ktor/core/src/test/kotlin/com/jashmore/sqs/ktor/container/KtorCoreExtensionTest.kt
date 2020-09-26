@@ -105,4 +105,33 @@ class KtorCoreExtensionTest {
             assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
         }
     }
+
+    @Test
+    fun `fifo message listener can be registered`() {
+        val queueUrl = sqsClient.createRandomFifoQueue().get().response.queueUrl()
+        val countDownLatch = CountDownLatch(1)
+        withTestApplication({
+            val server = embeddedServer(Netty, 8080) {
+                fifoMessageListener("fifo-listener", sqsClient, queueUrl) {
+                    concurrencyLevel = { 5 }
+                    processor = lambdaProcessor {
+                        method { message ->
+                            log.info("Message: {}", message.body())
+                            countDownLatch.countDown()
+                        }
+                    }
+                }
+            }
+            server.start()
+        }) {
+            sqsClient.sendMessage {
+                it.queueUrl(queueUrl)
+                    .messageBody("body")
+                    .messageGroupId("groupId")
+                    .messageDeduplicationId("dedupId")
+            }.get()
+
+            assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
+        }
+    }
 }

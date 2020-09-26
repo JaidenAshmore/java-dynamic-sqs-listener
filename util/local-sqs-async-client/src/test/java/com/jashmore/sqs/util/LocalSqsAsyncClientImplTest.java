@@ -2,9 +2,14 @@ package com.jashmore.sqs.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.CONTENT_BASED_DEDUPLICATION;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.FIFO_QUEUE;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.REDRIVE_POLICY;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.VISIBILITY_TIMEOUT;
 
 import akka.http.scaladsl.Http;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -13,8 +18,10 @@ import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.ListQueuesResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
@@ -187,13 +194,9 @@ class LocalSqsAsyncClientImplTest {
         // assert
         final String visibilityTimeout = sqsAsyncClient
             .getQueueAttributes(
-                GetQueueAttributesRequest
-                    .builder()
-                    .queueUrl(queueServerUrl + "/queue/queueName")
-                    .attributeNames(QueueAttributeName.VISIBILITY_TIMEOUT)
-                    .build()
+                GetQueueAttributesRequest.builder().queueUrl(queueServerUrl + "/queue/queueName").attributeNames(VISIBILITY_TIMEOUT).build()
             )
-            .thenApply(getQueueAttributesResponse -> getQueueAttributesResponse.attributes().get(QueueAttributeName.VISIBILITY_TIMEOUT))
+            .thenApply(getQueueAttributesResponse -> getQueueAttributesResponse.attributes().get(VISIBILITY_TIMEOUT))
             .get();
         assertThat(visibilityTimeout).contains("60");
     }
@@ -225,6 +228,94 @@ class LocalSqsAsyncClientImplTest {
             .thenApply(response -> response.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES))
             .get(30, TimeUnit.SECONDS);
         assertThat(approximateNumberOfMessages).isEqualTo("3");
+    }
+
+    @Test
+    void canCreateFifoQueuesWhenBuildingClient() throws Exception {
+        // arrange
+        final LocalSqsAsyncClientImpl sqsAsyncClient = new LocalSqsAsyncClientImpl(
+            SqsQueuesConfig
+                .builder()
+                .sqsServerUrl(queueServerUrl)
+                .queues(
+                    Collections.singletonList(
+                        SqsQueuesConfig.QueueConfig
+                            .builder()
+                            .queueName("some.fifo")
+                            .deadLetterQueueName("somedlq.fifo")
+                            .fifoQueue(true)
+                            .maxReceiveCount(6)
+                            .build()
+                    )
+                )
+                .build()
+        );
+        final String queueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("some.fifo")).get().queueUrl();
+        final String dlqQueueUrl = sqsAsyncClient.getQueueUrl(builder -> builder.queueName("somedlq.fifo")).get().queueUrl();
+
+        // act
+        final GetQueueAttributesResponse queueAttributesResponse = sqsAsyncClient
+            .getQueueAttributes(
+                builder -> builder.queueUrl(queueUrl).attributeNames(FIFO_QUEUE, REDRIVE_POLICY, CONTENT_BASED_DEDUPLICATION)
+            )
+            .get(30, TimeUnit.SECONDS);
+        final GetQueueAttributesResponse dlqAttributesResponse = sqsAsyncClient
+            .getQueueAttributes(builder -> builder.queueUrl(dlqQueueUrl).attributeNames(FIFO_QUEUE, CONTENT_BASED_DEDUPLICATION))
+            .get(30, TimeUnit.SECONDS);
+
+        // assert
+        assertThat(queueAttributesResponse.attributes().get(FIFO_QUEUE)).isEqualTo("true");
+        assertThat(queueAttributesResponse.attributes().get(REDRIVE_POLICY))
+            .isEqualTo("{\"deadLetterTargetArn\":\"arn:aws:sqs:elasticmq:000000000000:somedlq.fifo\",\"maxReceiveCount\":6}");
+        assertThat(queueAttributesResponse.attributes().get(CONTENT_BASED_DEDUPLICATION)).isEqualTo("false");
+        assertThat(dlqAttributesResponse.attributes().get(FIFO_QUEUE)).isEqualTo("true");
+        assertThat(dlqAttributesResponse.attributes().get(CONTENT_BASED_DEDUPLICATION)).isEqualTo("false");
+    }
+
+    @Nested
+    class CreateRandomFifoQueue {
+
+        @Test
+        void canCreateFifoQueue() throws Exception {
+            // arrange
+            final LocalSqsAsyncClientImpl sqsAsyncClient = new LocalSqsAsyncClientImpl(
+                SqsQueuesConfig.builder().sqsServerUrl(queueServerUrl).build()
+            );
+
+            // act
+            final CreateRandomQueueResponse response = sqsAsyncClient.createRandomFifoQueue().get(5, TimeUnit.SECONDS);
+            final GetQueueAttributesResponse attributes = sqsAsyncClient
+                .getQueueAttributes(
+                    builder -> builder.queueUrl(response.getResponse().queueUrl()).attributeNames(QueueAttributeName.FIFO_QUEUE)
+                )
+                .get();
+
+            // assert
+            assertThat(response.getQueueName()).endsWith(".fifo");
+            assertThat(attributes.attributes().get(FIFO_QUEUE)).isEqualTo("true");
+        }
+
+        @Test
+        void canCreateFifoQueueWithCustomAttributes() throws Exception {
+            // arrange
+            final LocalSqsAsyncClientImpl sqsAsyncClient = new LocalSqsAsyncClientImpl(
+                SqsQueuesConfig.builder().sqsServerUrl(queueServerUrl).build()
+            );
+
+            // act
+            final CreateRandomQueueResponse response = sqsAsyncClient
+                .createRandomFifoQueue(builder -> builder.attributes(Collections.singletonMap(VISIBILITY_TIMEOUT, "3")))
+                .get(5, TimeUnit.SECONDS);
+            final GetQueueAttributesResponse attributes = sqsAsyncClient
+                .getQueueAttributes(
+                    builder -> builder.queueUrl(response.getResponse().queueUrl()).attributeNames(VISIBILITY_TIMEOUT, FIFO_QUEUE)
+                )
+                .get();
+
+            // assert
+            assertThat(attributes.attributes().get(VISIBILITY_TIMEOUT)).isEqualTo("3");
+            assertThat(attributes.attributes().get(FIFO_QUEUE)).isEqualTo("true");
+        }
     }
 
     private int getQueueTotalMessagesVisible(final LocalSqsAsyncClient client, final String queueUrl)
