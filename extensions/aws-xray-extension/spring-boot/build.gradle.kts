@@ -11,7 +11,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-autoconfigure")
     implementation(project(":java-dynamic-sqs-listener-spring-core"))
 
-    testImplementation("org.checkerframework:checker-qual:3.6.1")
+    testImplementation("org.checkerframework:checker-qual:3.7.0")
     testImplementation("org.springframework:spring-test")
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation(project(":elasticmq-sqs-client"))
