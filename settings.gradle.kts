@@ -56,6 +56,7 @@ include(
     ":documentation-annotations",
 
     // Examples
+    ":example:auto-visibility-extender-example",
     ":example:aws-xray-spring-example",
     ":example:core-example",
     ":example:spring-aws-example",
@@ -105,6 +106,7 @@ project(":proxy-method-interceptor").projectDir = file("util/proxy-method-interc
 project(":sqs-brave-tracing").projectDir = file("util/sqs-brave-tracing")
 
 // Examples
+project(":example:auto-visibility-extender-example").projectDir = file("examples/auto-visibility-extender-example")
 project(":example:aws-xray-spring-example").projectDir = file("examples/aws-xray-spring-example")
 project(":example:core-example").projectDir = file("examples/core-example")
 project(":example:core-kotlin-example").projectDir = file("examples/core-kotlin-example")
