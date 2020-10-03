@@ -9,9 +9,7 @@ import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerPropertie
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.StaticCoreMessageListenerContainerProperties;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
-import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
@@ -24,13 +22,12 @@ import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverPropert
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.AbstractAnnotationMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.List;
 import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
@@ -41,13 +38,26 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * {@link QueueListener @QueueListener} with some predefined implementations of the framework.
  */
 @Slf4j
-@AllArgsConstructor
 public class BasicMessageListenerContainerFactory extends AbstractAnnotationMessageListenerContainerFactory<QueueListener> {
     private final ArgumentResolverService argumentResolverService;
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolver queueResolver;
     private final Environment environment;
-    private final List<MessageProcessingDecorator> messageProcessingDecorators;
+    private final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory;
+
+    public BasicMessageListenerContainerFactory(
+        final ArgumentResolverService argumentResolverService,
+        final SqsAsyncClientProvider sqsAsyncClientProvider,
+        final QueueResolver queueResolver,
+        final Environment environment,
+        final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
+    ) {
+        this.argumentResolverService = argumentResolverService;
+        this.sqsAsyncClientProvider = sqsAsyncClientProvider;
+        this.queueResolver = queueResolver;
+        this.environment = environment;
+        this.decoratingMessageProcessorFactory = decoratingMessageProcessorFactory;
+    }
 
     @Override
     protected Class<QueueListener> getAnnotationClass() {
@@ -96,20 +106,15 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
         final Object bean,
         final Method method
     ) {
-        return () -> {
-            final CoreMessageProcessor delegateProcessor = new CoreMessageProcessor(
-                argumentResolverService,
-                queueProperties,
+        return () ->
+            decoratingMessageProcessorFactory.decorateMessageProcessor(
                 sqsAsyncClient,
+                identifier,
+                queueProperties,
+                bean,
                 method,
-                bean
+                new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean)
             );
-            if (messageProcessingDecorators.isEmpty()) {
-                return delegateProcessor;
-            } else {
-                return new DecoratingMessageProcessor(identifier, queueProperties, messageProcessingDecorators, delegateProcessor);
-            }
-        };
     }
 
     private Supplier<MessageRetriever> buildMessageRetrieverSupplier(

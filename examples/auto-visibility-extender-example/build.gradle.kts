@@ -12,5 +12,4 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation(project(":java-dynamic-sqs-listener-spring-starter"))
     implementation(project(":elasticmq-sqs-client"))
-    implementation(project(":expected-test-exception"))
 }
