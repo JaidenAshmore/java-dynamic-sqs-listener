@@ -52,7 +52,7 @@ public class CollectionUtils {
     }
 
     /**
-     * Helper collector that will convert a {@link java.util.stream.Stream<Map.Entry>} to a {@link Map} from the entry key to value.
+     * Helper collector that will convert a {@link java.util.stream.Stream} containing {@link Map.Entry}s to a {@link Map} from the entry key to value.
      *
      * @param <K> the type of the key for the map
      * @param <V> the type of the value for the map
