@@ -23,6 +23,7 @@ import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFact
 import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
+import com.jashmore.sqs.spring.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
@@ -213,17 +214,27 @@ public class QueueListenerConfiguration {
             return new DefaultMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
         }
 
+        /**
+         * Contains all of the {@link MessageProcessingDecoratorFactory}s that can be used to attach {@link MessageProcessingDecorator}s to individual
+         * message listeners.
+         */
         @Configuration
         @ConditionalOnMissingBean(DecoratingMessageProcessorFactory.class)
         public static class MessageProcessingDecoratorFactories {
 
             @Bean
-            @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
             public DecoratingMessageProcessorFactory decoratingMessageProcessorFactory(
                 final List<MessageProcessingDecorator> globalDecorators,
                 final List<MessageProcessingDecoratorFactory<? extends MessageProcessingDecorator>> messageProcessingDecoratorFactories
             ) {
                 return new DecoratingMessageProcessorFactory(globalDecorators, messageProcessingDecoratorFactories);
+            }
+
+            @Bean
+            public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory(
+                final Environment environment
+            ) {
+                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(environment);
             }
         }
 

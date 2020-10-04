@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -47,5 +49,16 @@ public class CollectionUtils {
         internalMap.put(keyOne, valueOne);
         internalMap.put(keyTwo, valueTwo);
         return Collections.unmodifiableMap(internalMap);
+    }
+
+    /**
+     * Helper collector that will convert a {@link java.util.stream.Stream} containing {@link Map.Entry}s to a {@link Map} from the entry key to value.
+     *
+     * @param <K> the type of the key for the map
+     * @param <V> the type of the value for the map
+     * @return a collector for collecting the stream
+     */
+    public <K, V> Collector<Map.Entry<K, V>, ?, Map<K, V>> pairsToMap() {
+        return Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 }
