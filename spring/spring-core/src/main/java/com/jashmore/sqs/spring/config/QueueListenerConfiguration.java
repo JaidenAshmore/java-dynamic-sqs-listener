@@ -231,8 +231,10 @@ public class QueueListenerConfiguration {
             }
 
             @Bean
-            public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory() {
-                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory();
+            public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory(
+                final Environment environment
+            ) {
+                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(environment);
             }
         }
 

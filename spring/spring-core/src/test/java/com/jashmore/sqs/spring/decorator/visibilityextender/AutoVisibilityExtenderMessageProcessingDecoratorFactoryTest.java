@@ -1,26 +1,33 @@
 package com.jashmore.sqs.spring.decorator.visibilityextender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecorator;
+import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecoratorProperties;
 import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.LambdaMessageProcessor;
 import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactoryException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequest;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchResponse;
@@ -34,7 +41,15 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
     @Mock
     QueueProperties queueProperties;
 
-    AutoVisibilityExtenderMessageProcessingDecoratorFactory factory = new AutoVisibilityExtenderMessageProcessingDecoratorFactory();
+    @Mock
+    Environment environment;
+
+    AutoVisibilityExtenderMessageProcessingDecoratorFactory factory;
+
+    @BeforeEach
+    void setUp() {
+        factory = new AutoVisibilityExtenderMessageProcessingDecoratorFactory(environment);
+    }
 
     @Test
     void willBuildDecoratorWhenAnnotationPresent() throws Exception {
@@ -130,12 +145,222 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
         verify(sqsAsyncClient).changeMessageVisibilityBatch(ArgumentMatchers.<Consumer<ChangeMessageVisibilityBatchRequest.Builder>>any());
     }
 
+    @Nested
+    class BuildConfigurationProperties {
+
+        @Test
+        void shouldBeAbleToBuildPropertiesFromStrings() {
+            // arrange
+            when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+            final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
+
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return AutoVisibilityExtender.class;
+                }
+
+                @Override
+                public int visibilityTimeoutInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String visibilityTimeoutInSecondsString() {
+                    return "10";
+                }
+
+                @Override
+                public int maximumDurationInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String maximumDurationInSecondsString() {
+                    return "20";
+                }
+
+                @Override
+                public int bufferTimeInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String bufferTimeInSecondsString() {
+                    return "5";
+                }
+            };
+
+            // act
+            final AutoVisibilityExtenderMessageProcessingDecoratorProperties properties = factory.buildConfigurationProperties(annotation);
+
+            // assert
+            assertThat(properties.visibilityTimeout()).isEqualTo(Duration.ofSeconds(10));
+            assertThat(properties.maxDuration()).isEqualTo(Duration.ofSeconds(20));
+            assertThat(properties.bufferDuration()).isEqualTo(Duration.ofSeconds(5));
+        }
+
+        @Test
+        void noVisibilityTimeoutWillThrowException() {
+            // arrange
+            final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
+
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return AutoVisibilityExtender.class;
+                }
+
+                @Override
+                public int visibilityTimeoutInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String visibilityTimeoutInSecondsString() {
+                    return "";
+                }
+
+                @Override
+                public int maximumDurationInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String maximumDurationInSecondsString() {
+                    return "20";
+                }
+
+                @Override
+                public int bufferTimeInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String bufferTimeInSecondsString() {
+                    return "5";
+                }
+            };
+
+            // act
+            final IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> factory.buildConfigurationProperties(annotation)
+            );
+
+            // assert
+            assertThat(exception).hasMessage("visibilityTimeoutInSeconds should be set/positive");
+        }
+
+        @Test
+        void noMaximumDurationWillThrowException() {
+            // arrange
+            when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+            final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
+
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return AutoVisibilityExtender.class;
+                }
+
+                @Override
+                public int visibilityTimeoutInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String visibilityTimeoutInSecondsString() {
+                    return "5";
+                }
+
+                @Override
+                public int maximumDurationInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String maximumDurationInSecondsString() {
+                    return "";
+                }
+
+                @Override
+                public int bufferTimeInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String bufferTimeInSecondsString() {
+                    return "5";
+                }
+            };
+
+            // act
+            final IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> factory.buildConfigurationProperties(annotation)
+            );
+
+            // assert
+            assertThat(exception).hasMessage("maximumDurationInSeconds should be set/positive");
+        }
+
+        @Test
+        void noBufferTimeInSecondsWillThrowException() {
+            // arrange
+            when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+            final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
+
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return AutoVisibilityExtender.class;
+                }
+
+                @Override
+                public int visibilityTimeoutInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String visibilityTimeoutInSecondsString() {
+                    return "5";
+                }
+
+                @Override
+                public int maximumDurationInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String maximumDurationInSecondsString() {
+                    return "20";
+                }
+
+                @Override
+                public int bufferTimeInSeconds() {
+                    return -1;
+                }
+
+                @Override
+                public String bufferTimeInSecondsString() {
+                    return "";
+                }
+            };
+
+            // act
+            final IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> factory.buildConfigurationProperties(annotation)
+            );
+
+            // assert
+            assertThat(exception).hasMessage("bufferTimeInSeconds should be set/positive");
+        }
+    }
+
     @AutoVisibilityExtender(visibilityTimeoutInSeconds = 2, maximumDurationInSeconds = 99, bufferTimeInSeconds = 1)
     public void methodWithAnnotation() {}
 
     public void methodWithNoAnnotation() {}
 
-    @AutoVisibilityExtender(visibilityTimeoutInSeconds = 30, maximumDurationInSeconds = 100)
+    @AutoVisibilityExtender(visibilityTimeoutInSeconds = 30, maximumDurationInSeconds = 100, bufferTimeInSeconds = 1)
     public CompletableFuture<?> asyncMethodWithAnnotation() {
         return CompletableFuture.completedFuture(null);
     }
