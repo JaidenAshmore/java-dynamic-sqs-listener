@@ -9,9 +9,7 @@ import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerPropertie
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.StaticCoreMessageListenerContainerProperties;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
-import com.jashmore.sqs.processor.DecoratingMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.resolver.MessageResolver;
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
@@ -23,11 +21,11 @@ import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.AbstractAnnotationMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import com.jashmore.sqs.spring.util.IdentifierUtils;
 import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.List;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +45,7 @@ public class PrefetchingMessageListenerContainerFactory
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolver queueResolver;
     private final Environment environment;
-    private final List<MessageProcessingDecorator> messageProcessingDecorators;
+    private final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory;
 
     @Override
     protected Class<PrefetchingQueueListener> getAnnotationClass() {
@@ -104,20 +102,15 @@ public class PrefetchingMessageListenerContainerFactory
         final Object bean,
         final Method method
     ) {
-        return () -> {
-            final CoreMessageProcessor delegateProcessor = new CoreMessageProcessor(
-                argumentResolverService,
-                queueProperties,
+        return () ->
+            decoratingMessageProcessorFactory.decorateMessageProcessor(
                 sqsAsyncClient,
+                identifier,
+                queueProperties,
+                bean,
                 method,
-                bean
+                new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean)
             );
-            if (messageProcessingDecorators.isEmpty()) {
-                return delegateProcessor;
-            } else {
-                return new DecoratingMessageProcessor(identifier, queueProperties, messageProcessingDecorators, delegateProcessor);
-            }
-        };
     }
 
     private int getConcurrencyLevel(final PrefetchingQueueListener annotation) {

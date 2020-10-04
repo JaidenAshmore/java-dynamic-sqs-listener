@@ -42,6 +42,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * <p>As there could be multiple messages all being processed at once, the implementations of this interface must be thread safe.
  */
 @ThreadSafe
+@FunctionalInterface
 public interface MessageProcessor {
     /**
      * Process the message received on the queue.

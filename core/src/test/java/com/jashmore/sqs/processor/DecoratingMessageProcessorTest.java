@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -23,6 +24,7 @@ import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.util.ExpectedTestException;
+import com.jashmore.sqs.util.collections.CollectionUtils;
 import com.jashmore.sqs.util.concurrent.CompletableFutureUtils;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -34,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -572,6 +575,186 @@ class DecoratingMessageProcessorTest {
 
                 // assert
                 verify(decorator).onMessageProcessingThreadComplete(eq(contextReference.get()), eq(message));
+            }
+        }
+
+        @Nested
+        class OnMessageResolve {
+
+            @Test
+            void isCalledOnMessageListenerProcessingSuccess() {
+                // when
+                final CompletableFuture<?> methodFuture = new CompletableFuture<>();
+                final MessageProcessor delegate = new AsyncLambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message -> methodFuture
+                );
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    singletonList(decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                final CompletableFuture<?> future = processor.processMessage(message, mockMessageResolver);
+                assertThat(future).isNotDone();
+                verify(decorator, never()).onMessageResolve(any(), any());
+                methodFuture.complete(null);
+
+                // assert
+                verify(decorator).onMessageResolvedSuccess(eq(emptyContext), eq(message));
+            }
+
+            @Test
+            void isNotCalledOnMessageListenerThread() throws Exception {
+                // arrange
+                final MessageProcessor delegate = new AsyncLambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    // do nothing
+                                }
+                            }
+                        )
+                );
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final AtomicReference<Thread> threadReference = new AtomicReference<>();
+                final MessageProcessingDecorator threadListenerDecorator = new MessageProcessingDecorator() {
+
+                    @Override
+                    public void onMessageResolve(MessageProcessingContext context, Message message) {
+                        threadReference.set(Thread.currentThread());
+                    }
+                };
+
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(threadListenerDecorator, decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get())
+                    .thenAnswer(
+                        invocation -> {
+                            countDownLatch.countDown();
+                            return CompletableFuture.completedFuture(null);
+                        }
+                    );
+
+                // act
+                processor.processMessage(message, mockMessageResolver);
+                assertThat(countDownLatch.await(5, SECONDS)).isTrue();
+
+                // assert
+                assertThat(threadReference.get()).isNotNull();
+                assertThat(threadReference.get()).isNotEqualTo(Thread.currentThread());
+            }
+
+            @Test
+            void willCallSubsequentDecoratorsIfOneFails() throws Exception {
+                // arrange
+                final MessageProcessor delegate = new AsyncLambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message -> CompletableFuture.completedFuture(null)
+                );
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final MessageProcessingDecorator failingDecorator = new MessageProcessingDecorator() {
+
+                    @Override
+                    public void onMessageResolve(MessageProcessingContext context, Message message) {
+                        throw new ExpectedTestException();
+                    }
+                };
+                doAnswer(
+                        invocation -> {
+                            countDownLatch.countDown();
+                            return null;
+                        }
+                    )
+                    .when(decorator)
+                    .onMessageResolve(any(), any());
+
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(failingDecorator, decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                processor.processMessage(message, mockMessageResolver);
+                assertThat(countDownLatch.await(5, SECONDS)).isTrue();
+
+                // assert
+                verify(decorator).onMessageResolve(any(), any());
+            }
+
+            @Test
+            void willNotBeExecutedWhenMessageListenerFails() throws InterruptedException {
+                // arrange
+                final MessageProcessor delegate = new AsyncLambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message -> CompletableFutureUtils.completedExceptionally(new ExpectedTestException())
+                );
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(decorator),
+                    delegate
+                );
+
+                // act
+                Assertions.assertThrows(
+                    ExecutionException.class,
+                    () -> processor.processMessage(message, mockMessageResolver).get(5, SECONDS)
+                );
+                Thread.sleep(100); // make sure all the resolving threads run if they were suppose to
+
+                // assert
+                verify(decorator, never()).onMessageResolve(any(), any());
+            }
+
+            @Test
+            void sameContextIsAppliedThroughDecorator() throws Exception {
+                // when
+                final MessageProcessor delegate = new AsyncLambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message -> CompletableFuture.completedFuture(null)
+                );
+                final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
+                doAnswer(
+                        invocation -> {
+                            contextReference.set(invocation.getArgument(0));
+                            return null;
+                        }
+                    )
+                    .when(decorator)
+                    .onMessageResolve(any(), any());
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    singletonList(decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                processor.processMessage(message, mockMessageResolver).get(5, SECONDS);
+
+                // assert
+                verify(decorator).onMessageResolvedSuccess(eq(contextReference.get()), eq(message));
             }
         }
 
@@ -1323,6 +1506,162 @@ class DecoratingMessageProcessorTest {
 
                 // assert
                 verify(decorator).onMessageProcessingThreadComplete(eq(contextReference.get()), eq(message));
+            }
+        }
+
+        @Nested
+        class OnMessageResolve {
+
+            @Test
+            void isCalledOnMessageListenerProcessingSuccess() throws Exception {
+                // when
+                final CountDownLatch latch = new CountDownLatch(1);
+                final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    singletonList(decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get())
+                    .thenAnswer(
+                        invocation -> {
+                            latch.countDown();
+                            return CompletableFuture.completedFuture(null);
+                        }
+                    );
+
+                // act
+                processor.processMessage(message, mockMessageResolver);
+                assertThat(latch.await(5, SECONDS)).isTrue();
+
+                // assert
+                verify(decorator).onMessageResolve(eq(emptyContext), eq(message));
+            }
+
+            @Test
+            void isCalledOnMessageListenerThread() throws Exception {
+                // arrange
+                final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final AtomicReference<Thread> threadReference = new AtomicReference<>();
+                doAnswer(
+                        invocation -> {
+                            threadReference.set(Thread.currentThread());
+                            countDownLatch.countDown();
+                            return null;
+                        }
+                    )
+                    .when(decorator)
+                    .onMessageResolve(any(), any());
+
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                processor.processMessage(message, mockMessageResolver);
+                assertThat(countDownLatch.await(5, SECONDS)).isTrue();
+
+                // assert
+                assertThat(threadReference.get()).isEqualTo(Thread.currentThread());
+            }
+
+            @Test
+            void willCallSubsequentDecoratorsIfOneFails() throws Exception {
+                // arrange
+                final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final MessageProcessingDecorator failingDecorator = new MessageProcessingDecorator() {
+
+                    @Override
+                    public void onMessageResolve(MessageProcessingContext context, Message message) {
+                        throw new ExpectedTestException();
+                    }
+                };
+                doAnswer(
+                        invocation -> {
+                            countDownLatch.countDown();
+                            return null;
+                        }
+                    )
+                    .when(decorator)
+                    .onMessageResolve(any(), any());
+
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(failingDecorator, decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                processor.processMessage(message, mockMessageResolver);
+                assertThat(countDownLatch.await(5, SECONDS)).isTrue();
+
+                // assert
+                verify(decorator).onMessageResolve(any(), any());
+            }
+
+            @Test
+            void willNotBeExecutedWhenMessageListenerFails() throws InterruptedException {
+                // arrange
+                final MessageProcessor delegate = new LambdaMessageProcessor(
+                    sqsAsyncClient,
+                    QUEUE_PROPERTIES,
+                    message -> {
+                        throw new ExpectedTestException();
+                    }
+                );
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    CollectionUtils.immutableListOf(decorator),
+                    delegate
+                );
+
+                // act
+                Assertions.assertThrows(
+                    ExecutionException.class,
+                    () -> processor.processMessage(message, mockMessageResolver).get(5, SECONDS)
+                );
+                Thread.sleep(100); // make sure all the resolving threads run if they were suppose to
+
+                // assert
+                verify(decorator, never()).onMessageResolve(any(), any());
+            }
+
+            @Test
+            void sameContextIsAppliedThroughDecorator() throws Exception {
+                // when
+                final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
+                final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
+                doAnswer(
+                        invocation -> {
+                            contextReference.set(invocation.getArgument(0));
+                            return null;
+                        }
+                    )
+                    .when(decorator)
+                    .onMessageResolve(any(), any());
+                final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
+                    "identifier",
+                    QUEUE_PROPERTIES,
+                    singletonList(decorator),
+                    delegate
+                );
+                when(mockMessageResolver.get()).thenReturn(CompletableFuture.completedFuture(null));
+
+                // act
+                processor.processMessage(message, mockMessageResolver).get(5, SECONDS);
+
+                // assert
+                verify(decorator).onMessageResolvedSuccess(eq(contextReference.get()), eq(message));
             }
         }
 
