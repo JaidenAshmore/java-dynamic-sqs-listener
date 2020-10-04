@@ -8,16 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
-import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainer;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +75,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(CoreMessageListenerContainer.class);
+        assertThat(messageListenerContainer).isInstanceOf(PrefetchingMessageListenerContainer.class);
     }
 
     @Test
@@ -190,56 +187,6 @@ class PrefetchingMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-    }
-
-    @Test
-    void prefetchingQueueListenerCanBeBuiltFromStringProperties() throws Exception {
-        // arrange
-        when(environment.resolvePlaceholders(anyString())).thenReturn("1");
-        final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        when(environment.resolvePlaceholders("${prop.maxPrefetched}")).thenReturn("30");
-        when(environment.resolvePlaceholders("${prop.desiredMinPrefetchedMessages}")).thenReturn("40");
-        when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
-        final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
-
-        // act
-        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(
-            annotation
-        );
-
-        // assert
-        assertThat(properties)
-            .isEqualTo(
-                StaticPrefetchingMessageRetrieverProperties
-                    .builder()
-                    .maxPrefetchedMessages(30)
-                    .desiredMinPrefetchedMessages(40)
-                    .messageVisibilityTimeout(Duration.ofSeconds(40))
-                    .build()
-            );
-    }
-
-    @Test
-    void prefetchingQueueListenerCanBeBuiltFromProperties() throws Exception {
-        // arrange
-        final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingProperties");
-        final PrefetchingQueueListener annotation = method.getAnnotation(PrefetchingQueueListener.class);
-
-        // act
-        final PrefetchingMessageRetrieverProperties properties = prefetchingMessageListenerContainerFactory.buildMessageRetrieverProperties(
-            annotation
-        );
-
-        // assert
-        assertThat(properties)
-            .isEqualTo(
-                StaticPrefetchingMessageRetrieverProperties
-                    .builder()
-                    .maxPrefetchedMessages(20)
-                    .desiredMinPrefetchedMessages(5)
-                    .messageVisibilityTimeout(Duration.ofSeconds(300))
-                    .build()
-            );
     }
 
     @Test

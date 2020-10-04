@@ -8,16 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
-import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainer;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +75,7 @@ class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-        assertThat(messageListenerContainer).isInstanceOf(CoreMessageListenerContainer.class);
+        assertThat(messageListenerContainer).isInstanceOf(BatchingMessageListenerContainer.class);
     }
 
     @Test
@@ -177,55 +174,6 @@ class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(messageListenerContainer).isNotNull();
-    }
-
-    @Test
-    void batchingMessageRetrieverPropertiesBuiltFromAnnotationValues() throws Exception {
-        // arrange
-        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFields");
-        final QueueListener annotation = method.getAnnotation(QueueListener.class);
-
-        // act
-        final BatchingMessageRetrieverProperties properties = messageListenerContainerFactory.batchingMessageRetrieverProperties(
-            annotation
-        );
-
-        // assert
-        assertThat(properties)
-            .isEqualTo(
-                StaticBatchingMessageRetrieverProperties
-                    .builder()
-                    .messageVisibilityTimeout(Duration.ofSeconds(300))
-                    .batchingPeriod(Duration.ofMillis(40L))
-                    .batchSize(10)
-                    .build()
-            );
-    }
-
-    @Test
-    void batchingMessageRetrieverPropertiesBuiltFromSpringValues() throws Exception {
-        // arrange
-        final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
-        final QueueListener annotation = method.getAnnotation(QueueListener.class);
-        when(environment.resolvePlaceholders("${prop.batchSize}")).thenReturn("8");
-        when(environment.resolvePlaceholders("${prop.period}")).thenReturn("30");
-        when(environment.resolvePlaceholders("${prop.visibility}")).thenReturn("40");
-
-        // act
-        final BatchingMessageRetrieverProperties properties = messageListenerContainerFactory.batchingMessageRetrieverProperties(
-            annotation
-        );
-
-        // assert
-        assertThat(properties)
-            .isEqualTo(
-                StaticBatchingMessageRetrieverProperties
-                    .builder()
-                    .messageVisibilityTimeout(Duration.ofSeconds(40))
-                    .batchingPeriod(Duration.ofMillis(30))
-                    .batchSize(8)
-                    .build()
-            );
     }
 
     @Test

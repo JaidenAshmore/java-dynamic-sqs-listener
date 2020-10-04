@@ -5,8 +5,11 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties
 import com.jashmore.sqs.container.CoreMessageListenerContainer
 import com.jashmore.sqs.container.CoreMessageListenerContainerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainer
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainerProperties
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.retriever.BatchingMessageRetrieverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.resolver.batching.BatchingMessageResolverProperties
 import com.jashmore.sqs.retriever.MessageRetriever
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties
@@ -73,25 +76,32 @@ class BatchingMessageListenerContainerDslBuilder(
     var interruptThreadsProcessingMessagesOnShutdown: Boolean = false
 
     override fun invoke(): MessageListenerContainer {
-        return coreMessageListener(identifier, sqsAsyncClient, queueProperties) {
-            processor = this@BatchingMessageListenerContainerDslBuilder.processor
-            broker = concurrentBroker {
-                concurrencyLevel = this@BatchingMessageListenerContainerDslBuilder.concurrencyLevel
+        val actualConcurrencyLevel = concurrencyLevel ?: throw RequiredFieldException("concurrencyLevel", "BatchingMessageListenerContainer")
+        return BatchingMessageListenerContainer(
+            identifier,
+            queueProperties,
+            sqsAsyncClient,
+            this@BatchingMessageListenerContainerDslBuilder.processor,
+            object : BatchingMessageListenerContainerProperties {
+                override fun concurrencyLevel(): Int = actualConcurrencyLevel()
+
+                override fun concurrencyPollingRate(): Duration? = null
+
+                override fun errorBackoffTime(): Duration? = null
+
+                override fun batchSize(): Int = this@BatchingMessageListenerContainerDslBuilder.batchSize()
+
+                override fun getBatchingPeriod(): Duration = batchingPeriod()
+
+                override fun messageVisibilityTimeout(): Duration? = messageVisibility()
+
+                override fun processAnyExtraRetrievedMessagesOnShutdown(): Boolean =
+                    this@BatchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
+
+                override fun interruptThreadsProcessingMessagesOnShutdown(): Boolean =
+                    this@BatchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
             }
-            retriever = batchingMessageRetriever {
-                batchSize = this@BatchingMessageListenerContainerDslBuilder.batchSize
-                batchingPeriod = this@BatchingMessageListenerContainerDslBuilder.batchingPeriod
-                messageVisibility = this@BatchingMessageListenerContainerDslBuilder.messageVisibility
-            }
-            resolver = batchingResolver {
-                batchSize = this@BatchingMessageListenerContainerDslBuilder.batchSize
-                batchingPeriod = this@BatchingMessageListenerContainerDslBuilder.batchingPeriod
-            }
-            shutdown {
-                shouldInterruptThreadsProcessingMessages = this@BatchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
-                shouldProcessAnyExtraRetrievedMessages = this@BatchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
-            }
-        }
+        )
     }
 }
 

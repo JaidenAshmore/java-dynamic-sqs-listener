@@ -1,24 +1,17 @@
 package com.jashmore.sqs.spring.container.basic;
 
-import com.jashmore.documentation.annotations.VisibleForTesting;
+import com.jashmore.documentation.annotations.Max;
+import com.jashmore.documentation.annotations.Nullable;
+import com.jashmore.documentation.annotations.Positive;
+import com.jashmore.documentation.annotations.PositiveOrZero;
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.broker.MessageBroker;
-import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBroker;
-import com.jashmore.sqs.broker.concurrent.StaticConcurrentMessageBrokerProperties;
-import com.jashmore.sqs.container.CoreMessageListenerContainer;
+import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.StaticCoreMessageListenerContainerProperties;
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainer;
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainerProperties;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.resolver.MessageResolver;
-import com.jashmore.sqs.resolver.batching.BatchingMessageResolver;
-import com.jashmore.sqs.resolver.batching.BatchingMessageResolverProperties;
-import com.jashmore.sqs.resolver.batching.StaticBatchingMessageResolverProperties;
-import com.jashmore.sqs.retriever.MessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetriever;
-import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
-import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.AbstractAnnotationMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
@@ -79,24 +72,73 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
             .build();
 
         final String identifier = IdentifierUtils.buildIdentifierForMethod(annotation.identifier(), bean.getClass(), method);
-        return new CoreMessageListenerContainer(
+        return new BatchingMessageListenerContainer(
             identifier,
-            buildMessageBrokerSupplier(annotation),
-            buildMessageRetrieverSupplier(annotation, queueProperties, sqsAsyncClient),
+            queueProperties,
+            sqsAsyncClient,
             buildProcessorSupplier(identifier, queueProperties, sqsAsyncClient, bean, method),
-            buildMessageResolver(annotation, queueProperties, sqsAsyncClient),
-            StaticCoreMessageListenerContainerProperties
-                .builder()
-                .shouldProcessAnyExtraRetrievedMessagesOnShutdown(annotation.processAnyExtraRetrievedMessagesOnShutdown())
-                .shouldInterruptThreadsProcessingMessagesOnShutdown(annotation.interruptThreadsProcessingMessagesOnShutdown())
-                .build()
+            buildProperties(annotation)
         );
     }
 
-    private Supplier<MessageBroker> buildMessageBrokerSupplier(final QueueListener annotation) {
+    private BatchingMessageListenerContainerProperties buildProperties(final QueueListener annotation) {
         final int concurrencyLevel = getConcurrencyLevel(annotation);
-        return () ->
-            new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(concurrencyLevel).build());
+        final int batchSize = getBatchSize(annotation);
+        final Duration batchingPeriod = getMaxPeriodBetweenBatches(annotation);
+        final Duration messageVisibilityTimeout = getMessageVisibilityTimeout(annotation);
+        final boolean processAnyExtraRetrievedMessagesOnShutdown = annotation.processAnyExtraRetrievedMessagesOnShutdown();
+        final boolean interruptThreadsProcessingMessagesOnShutdown = annotation.interruptThreadsProcessingMessagesOnShutdown();
+        return new BatchingMessageListenerContainerProperties() {
+
+            @PositiveOrZero
+            @Override
+            public int concurrencyLevel() {
+                return concurrencyLevel;
+            }
+
+            @Nullable
+            @Override
+            public Duration concurrencyPollingRate() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public Duration errorBackoffTime() {
+                return null;
+            }
+
+            @Positive
+            @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS)
+            @Override
+            public int batchSize() {
+                return batchSize;
+            }
+
+            @Nullable
+            @Positive
+            @Override
+            public Duration getBatchingPeriod() {
+                return batchingPeriod;
+            }
+
+            @Nullable
+            @Positive
+            @Override
+            public Duration messageVisibilityTimeout() {
+                return messageVisibilityTimeout;
+            }
+
+            @Override
+            public boolean processAnyExtraRetrievedMessagesOnShutdown() {
+                return processAnyExtraRetrievedMessagesOnShutdown;
+            }
+
+            @Override
+            public boolean interruptThreadsProcessingMessagesOnShutdown() {
+                return interruptThreadsProcessingMessagesOnShutdown;
+            }
+        };
     }
 
     private Supplier<MessageProcessor> buildProcessorSupplier(
@@ -115,39 +157,6 @@ public class BasicMessageListenerContainerFactory extends AbstractAnnotationMess
                 method,
                 new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean)
             );
-    }
-
-    private Supplier<MessageRetriever> buildMessageRetrieverSupplier(
-        final QueueListener annotation,
-        final QueueProperties queueProperties,
-        final SqsAsyncClient sqsAsyncClient
-    ) {
-        final BatchingMessageRetrieverProperties properties = batchingMessageRetrieverProperties(annotation);
-        return () -> new BatchingMessageRetriever(queueProperties, sqsAsyncClient, properties);
-    }
-
-    @VisibleForTesting
-    BatchingMessageRetrieverProperties batchingMessageRetrieverProperties(final QueueListener annotation) {
-        return StaticBatchingMessageRetrieverProperties
-            .builder()
-            .messageVisibilityTimeout(getMessageVisibilityTimeout(annotation))
-            .batchingPeriod(getMaxPeriodBetweenBatches(annotation))
-            .batchSize(getBatchSize(annotation))
-            .build();
-    }
-
-    private Supplier<MessageResolver> buildMessageResolver(
-        final QueueListener annotation,
-        final QueueProperties queueProperties,
-        final SqsAsyncClient sqsAsyncClient
-    ) {
-        final BatchingMessageResolverProperties batchingMessageResolverProperties = StaticBatchingMessageResolverProperties
-            .builder()
-            .bufferingSizeLimit(getBatchSize(annotation))
-            .bufferingTime(getMaxPeriodBetweenBatches(annotation))
-            .build();
-
-        return () -> new BatchingMessageResolver(queueProperties, sqsAsyncClient, batchingMessageResolverProperties);
     }
 
     private int getConcurrencyLevel(final QueueListener annotation) {

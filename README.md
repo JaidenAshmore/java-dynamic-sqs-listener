@@ -83,33 +83,25 @@ application with a local ElasticMQ SQS Server.
         public static void main(String[] args) throws InterruptedException {
             final SqsAsyncClient sqsAsyncClient = SqsAsyncClient.create(); // or your own custom client
             final QueueProperties queueProperties = QueueProperties.builder().queueUrl("${insert.queue.url.here}").build();
-            final MessageListenerContainer container = new CoreMessageListenerContainer(
+            final MessageListenerContainer container = new BatchingMessageListenerContainer(
                 "listener-identifier",
-                () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(10).build()),
-                () ->
-                    new PrefetchingMessageRetriever(
-                        sqsAsyncClient,
-                        queueProperties,
-                        StaticPrefetchingMessageRetrieverProperties
-                            .builder()
-                            .desiredMinPrefetchedMessages(10)
-                            .maxPrefetchedMessages(20)
-                            .build()
-                    ),
+                queueProperties,
+                sqsAsyncClient,
                 () ->
                     new LambdaMessageProcessor(
                         sqsAsyncClient,
                         queueProperties,
                         message -> {
-                            // process the message here
+                            // process message here
+
                         }
                     ),
-                () ->
-                    new BatchingMessageResolver(
-                        queueProperties,
-                        sqsAsyncClient,
-                        StaticBatchingMessageResolverProperties.builder().bufferingSizeLimit(1).bufferingTime(Duration.ofSeconds(5)).build()
-                    )
+                ImmutableBatchingMessageListenerContainerProperties
+                    .builder()
+                    .concurrencyLevel(10)
+                    .batchSize(5)
+                    .batchingPeriod(Duration.ofSeconds(20))
+                    .build()
             );
             container.start();
             Runtime.getRuntime().addShutdownHook(new Thread(container::stop));
@@ -156,22 +148,15 @@ of message processing while the app is running.
     fun main() {
         val sqsAsyncClient = SqsAsyncClient.create()
 
-        val container = coreMessageListener("listener-identifier", sqsAsyncClient, "${insert.queue.url.here}") {
-            broker = concurrentBroker {
-                concurrencyLevel = { 10 }
-            }
-            retriever = prefetchingMessageRetriever {
-                desiredPrefetchedMessages = 10
-                maxPrefetchedMessages = 20
-            }
+        val container = batchingMessageListener("identifier", sqsAsyncClient, "url") {
+            concurrencyLevel = { 10 }
+            batchSize = { 5 }
+            batchingPeriod =  { Duration.ofSeconds(20) }
+
             processor = lambdaProcessor {
                 method { message ->
-                    // process the message here
+                    log.info("Message: {}", message.body())
                 }
-            }
-            resolver = batchingResolver {
-                batchSize = { 1 }
-                batchingPeriod = { Duration.ofSeconds(5) }
             }
         }
 
@@ -214,14 +199,14 @@ See the [Core Kotlin Example](examples/core-kotlin-example) for a full example r
         val sqsAsyncClient = SqsAsyncClient.create() // replace with however you want to configure this client
         val queueUrl = "replaceWithQueueUrl"
         val server = embeddedServer(Netty, 8080) {
-             prefetchingMessageListener("listener-identifier", sqsAsyncClient, queueUrl) {
+             batchingMessageListener("listener-identifier", sqsAsyncClient, queueUrl) {
                   concurrencyLevel = { 10 }
-                  desiredPrefetchedMessages = 10
-                  maxPrefetchedMessages = 20
+                  batchSize = { 5 }
+                  batchingPeriod =  { Duration.ofSeconds(20) }
 
                   processor = lambdaProcessor {
                       method { message ->
-                          // process the message payload here
+                          log.info("Message: {}", message.body())
                       }
                   }
              }
@@ -470,10 +455,14 @@ the concurrency to as high of a value as you wish.
 public class SomeClass {
 
     public MessageListenerContainer container() {
-        return new CoreMessageListenerContainer(
-            "identifier",
-            () -> new ConcurrentMessageBroker(StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(100).build())
+        return new BatchingMessageListenerContainer(
             // other configuration
+            ImmutableBatchingMessageListenerContainerProperties
+                .builder()
+                .concurrencyLevel(100)
+                .batchSize(5)
+                .batchingPeriod(Duration.ofSeconds(20))
+                .build()
         );
     }
 }
