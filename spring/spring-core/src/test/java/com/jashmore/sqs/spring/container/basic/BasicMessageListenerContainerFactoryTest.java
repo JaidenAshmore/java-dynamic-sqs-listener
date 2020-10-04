@@ -10,18 +10,16 @@ import static org.mockito.Mockito.when;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.container.CoreMessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.batching.StaticBatchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -37,19 +35,22 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @ExtendWith(MockitoExtension.class)
 class BasicMessageListenerContainerFactoryTest {
     @Mock
-    private ArgumentResolverService argumentResolverService;
+    ArgumentResolverService argumentResolverService;
 
     @Mock
-    private SqsAsyncClientProvider sqsAsyncClientProvider;
+    SqsAsyncClientProvider sqsAsyncClientProvider;
 
     @Mock
-    private SqsAsyncClient defaultSqsAsyncClient;
+    SqsAsyncClient defaultSqsAsyncClient;
 
     @Mock
-    private QueueResolver queueResolver;
+    QueueResolver queueResolver;
 
     @Mock
-    private Environment environment;
+    Environment environment;
+
+    @Mock
+    DecoratingMessageProcessorFactory decoratingMessageProcessorFactory;
 
     private BasicMessageListenerContainerFactory messageListenerContainerFactory;
 
@@ -61,7 +62,7 @@ class BasicMessageListenerContainerFactoryTest {
                 sqsAsyncClientProvider,
                 queueResolver,
                 environment,
-                Collections.emptyList()
+                decoratingMessageProcessorFactory
             );
     }
 
@@ -273,35 +274,6 @@ class BasicMessageListenerContainerFactoryTest {
 
         // assert
         assertThat(container).isNotNull();
-    }
-
-    /**
-     * Sort of nothing tests, mostly tested in integration testing.
-     */
-    @Nested
-    class MessageProcessingDecorators {
-
-        @Test
-        void canBuildContainerWhenMessageProcessingDecoratorsIncluded() throws Exception {
-            // arrange
-            messageListenerContainerFactory =
-                new BasicMessageListenerContainerFactory(
-                    argumentResolverService,
-                    sqsAsyncClientProvider,
-                    queueResolver,
-                    environment,
-                    Collections.singletonList(new MessageProcessingDecorator() {})
-                );
-            when(sqsAsyncClientProvider.getDefaultClient()).thenReturn(Optional.of(defaultSqsAsyncClient));
-            final Object bean = new BasicMessageListenerContainerFactoryTest();
-            final Method method = BasicMessageListenerContainerFactoryTest.class.getMethod("myMethod");
-
-            // act
-            final MessageListenerContainer container = messageListenerContainerFactory.buildContainer(bean, method);
-
-            // assert
-            assertThat(container).isNotNull();
-        }
     }
 
     @QueueListener("test")

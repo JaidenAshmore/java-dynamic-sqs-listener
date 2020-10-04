@@ -82,6 +82,26 @@ public interface MessageProcessingDecorator {
     default void onMessageProcessingThreadComplete(MessageProcessingContext context, Message message) {}
 
     /**
+     * Method called if the message was successfully processed and it is attempting to resolve the message.
+     *
+     * <p>If the message listener is <b>synchronous</b> (it does not return a {@link CompletableFuture}) and <b>does not</b> have an {@link Acknowledge}
+     * argument, this method will be invoked if the message listener returns without throwing an exception and before it attempts to resolve the message.
+     *
+     * <p>If the method is <b>asynchronous</b> (it returns a {@link CompletableFuture}) and <b>does not</b> have an {@link Acknowledge}
+     * argument, this method will be invoked if the message listener returns a completable future that is subsequently completed and before it attempts
+     * to resolve the message.
+     *
+     * <p>If the message listener has an {@link Acknowledge} argument, this method will be invoked if the message listener calls
+     * {@link Acknowledge#acknowledgeSuccessful()} before it attempts to actually resolve the method
+     *
+     * <p>Execution of this method is not guaranteed to be run on the same thread that the message listener was running in.
+     *
+     * @param context details about the message processing functionality, e.g. identifier for this message processor
+     * @param message the message being processed
+     */
+    default void onMessageResolve(MessageProcessingContext context, Message message) {}
+
+    /**
      * Method called if the message was successfully processed and the call to resolve the message was successful.
      *
      * <p>If the message listener is <b>synchronous</b> (it does not return a {@link CompletableFuture}) and <b>does not</b> have an {@link Acknowledge}
@@ -93,7 +113,7 @@ public interface MessageProcessingDecorator {
      * process is completed successfully.
      *
      * <p>If the message listener has an {@link Acknowledge} argument, this method will be invoked if the message listener calls
-     * {@link Acknowledge#acknowledgeSuccessful()} and the message resolving is completed unsuccessfully.
+     * {@link Acknowledge#acknowledgeSuccessful()} and the message resolving is completed successfully.
      *
      * <p>Execution of this method is not guaranteed to be run on the same thread that the message listener was running in. Also note that
      * it is not guaranteed that either this or the {@link #onMessageResolvedFailure(MessageProcessingContext, Message, Throwable)} will be

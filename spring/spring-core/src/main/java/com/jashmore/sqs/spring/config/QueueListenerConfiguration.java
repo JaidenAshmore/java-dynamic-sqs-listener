@@ -22,7 +22,9 @@ import com.jashmore.sqs.spring.container.StaticDefaultMessageListenerContainerCo
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
+import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
 import com.jashmore.sqs.spring.queue.QueueResolver;
 import java.util.Collections;
@@ -71,6 +73,7 @@ public class QueueListenerConfiguration {
      * @param defaultClient the default client
      * @return the provider for obtains {@link SqsAsyncClient}s, in this case only the default client
      */
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
     @ConditionalOnMissingBean({ SqsAsyncClientProvider.class })
     public SqsAsyncClientProvider sqsAsyncClientProvider(final SqsAsyncClient defaultClient) {
@@ -210,6 +213,20 @@ public class QueueListenerConfiguration {
             return new DefaultMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
         }
 
+        @Configuration
+        @ConditionalOnMissingBean(DecoratingMessageProcessorFactory.class)
+        public static class MessageProcessingDecoratorFactories {
+
+            @Bean
+            @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+            public DecoratingMessageProcessorFactory decoratingMessageProcessorFactory(
+                final List<MessageProcessingDecorator> globalDecorators,
+                final List<MessageProcessingDecoratorFactory<? extends MessageProcessingDecorator>> messageProcessingDecoratorFactories
+            ) {
+                return new DecoratingMessageProcessorFactory(globalDecorators, messageProcessingDecoratorFactories);
+            }
+        }
+
         /**
          * Contains all of the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
          *
@@ -225,14 +242,14 @@ public class QueueListenerConfiguration {
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
                 final Environment environment,
-                final List<MessageProcessingDecorator> decorators
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new BasicMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
                     environment,
-                    decorators
+                    decoratingMessageProcessorFactory
                 );
             }
 
@@ -242,14 +259,14 @@ public class QueueListenerConfiguration {
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
                 final Environment environment,
-                final List<MessageProcessingDecorator> decorators
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new PrefetchingMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
                     environment,
-                    decorators
+                    decoratingMessageProcessorFactory
                 );
             }
 
@@ -259,14 +276,14 @@ public class QueueListenerConfiguration {
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
                 final Environment environment,
-                final List<MessageProcessingDecorator> decorators
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new FifoMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
                     environment,
-                    decorators
+                    decoratingMessageProcessorFactory
                 );
             }
         }

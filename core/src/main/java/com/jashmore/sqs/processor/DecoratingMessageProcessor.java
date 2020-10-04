@@ -54,8 +54,9 @@ public class DecoratingMessageProcessor implements MessageProcessor {
         );
 
         try {
-            final Supplier<CompletableFuture<?>> wrappedResolveMessageCallback = () ->
-                resolveMessageCallback
+            final Supplier<CompletableFuture<?>> wrappedResolveMessageCallback = () -> {
+                safelyRun(decorators, decorator -> decorator.onMessageResolve(context, message));
+                return resolveMessageCallback
                     .get()
                     .whenComplete(
                         (returnValue, throwable) -> {
@@ -66,6 +67,7 @@ public class DecoratingMessageProcessor implements MessageProcessor {
                             }
                         }
                     );
+            };
 
             return delegate
                 .processMessage(message, wrappedResolveMessageCallback)
