@@ -2,10 +2,13 @@ package com.jashmore.sqs.spring.config;
 
 import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -14,6 +17,8 @@ import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolve
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
+import com.jashmore.sqs.decorator.MessageProcessingDecorator;
+import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinatorProperties;
@@ -22,18 +27,26 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
+import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 class QueueListenerConfigurationTest {
@@ -478,6 +491,109 @@ class QueueListenerConfigurationTest {
             contextRunner
                 .withUserConfiguration(UserConfigurationWithCustomMessageListenerContainerCoordinator.class)
                 .run(context -> assertThat(context).doesNotHaveBean(MessageListenerContainerFactory.class));
+        }
+    }
+
+    @Nested
+    @ExtendWith(MockitoExtension.class)
+    class MessageProcessingDecoratorFactories {
+        @Mock
+        MessageProcessingDecoratorFactory<MessageProcessingDecorator> decoratorFactory;
+
+        @Mock
+        MessageProcessingDecorator decorator;
+
+        @Test
+        void willIncludeAnyMessageProcessingDecoratorFactories() {
+            when(decoratorFactory.buildDecorator(any(), any(), any(), any(), any())).thenReturn(Optional.of(decorator));
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(MessageProcessingDecoratorFactory.class, () -> decoratorFactory)
+                .run(
+                    context -> {
+                        final SqsAsyncClient sqsAsyncClient = context.getBean(SqsAsyncClient.class);
+                        final DecoratingMessageProcessorFactory processorFactory = context.getBean(DecoratingMessageProcessorFactory.class);
+                        final MessageProcessor processor = processorFactory.decorateMessageProcessor(
+                            sqsAsyncClient,
+                            "id",
+                            QueueProperties.builder().queueUrl("url").build(),
+                            new Object(),
+                            Object.class.getMethod("toString"),
+                            (message, resolveMessageCallback) -> CompletableFuture.completedFuture(null)
+                        );
+
+                        processor.processMessage(Message.builder().build(), () -> CompletableFuture.completedFuture(null));
+
+                        verify(decorator).onPreMessageProcessing(any(), any());
+                    }
+                );
+        }
+
+        @Test
+        void willIncludeGlobalMessageProcessingDecorators() {
+            when(decoratorFactory.buildDecorator(any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(MessageProcessingDecorator.class, () -> decorator)
+                .withBean(MessageProcessingDecoratorFactory.class, () -> decoratorFactory)
+                .run(
+                    context -> {
+                        final SqsAsyncClient sqsAsyncClient = context.getBean(SqsAsyncClient.class);
+                        final DecoratingMessageProcessorFactory processorFactory = context.getBean(DecoratingMessageProcessorFactory.class);
+                        final MessageProcessor processor = processorFactory.decorateMessageProcessor(
+                            sqsAsyncClient,
+                            "id",
+                            QueueProperties.builder().queueUrl("url").build(),
+                            new Object(),
+                            Object.class.getMethod("toString"),
+                            (message, resolveMessageCallback) -> CompletableFuture.completedFuture(null)
+                        );
+
+                        processor.processMessage(Message.builder().build(), () -> CompletableFuture.completedFuture(null));
+
+                        verify(decorator).onPreMessageProcessing(any(), any());
+                    }
+                );
+        }
+
+        @Test
+        void willNotWrapProcessorIfNoMessageProcessingDecoratorsOrDecoratorFactories() {
+            final MessageProcessor delegate = mock(MessageProcessor.class);
+            when(decoratorFactory.buildDecorator(any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(MessageProcessingDecoratorFactory.class, () -> decoratorFactory)
+                .run(
+                    context -> {
+                        final SqsAsyncClient sqsAsyncClient = context.getBean(SqsAsyncClient.class);
+                        final DecoratingMessageProcessorFactory processorFactory = context.getBean(DecoratingMessageProcessorFactory.class);
+                        final MessageProcessor processor = processorFactory.decorateMessageProcessor(
+                            sqsAsyncClient,
+                            "id",
+                            QueueProperties.builder().queueUrl("url").build(),
+                            new Object(),
+                            Object.class.getMethod("toString"),
+                            delegate
+                        );
+
+                        assertThat(processor).isSameAs(delegate);
+                    }
+                );
+        }
+
+        @Test
+        void canProvideOwnDecoratingMessageProcessingFactory() {
+            final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory = mock(DecoratingMessageProcessorFactory.class);
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(DecoratingMessageProcessorFactory.class, () -> decoratingMessageProcessorFactory)
+                .run(
+                    context -> {
+                        final DecoratingMessageProcessorFactory processorFactory = context.getBean(DecoratingMessageProcessorFactory.class);
+
+                        assertThat(processorFactory).isSameAs(decoratingMessageProcessorFactory);
+                    }
+                );
         }
     }
 
