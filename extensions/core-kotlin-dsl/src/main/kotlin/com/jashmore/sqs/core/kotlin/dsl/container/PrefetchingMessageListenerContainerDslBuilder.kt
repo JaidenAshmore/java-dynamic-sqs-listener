@@ -5,8 +5,11 @@ import com.jashmore.sqs.broker.concurrent.ConcurrentMessageBrokerProperties
 import com.jashmore.sqs.container.CoreMessageListenerContainer
 import com.jashmore.sqs.container.CoreMessageListenerContainerProperties
 import com.jashmore.sqs.container.MessageListenerContainer
+import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainer
+import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainerProperties
 import com.jashmore.sqs.core.kotlin.dsl.MessageListenerComponentDslMarker
 import com.jashmore.sqs.core.kotlin.dsl.retriever.PrefetchingMessageRetrieverDslBuilder
+import com.jashmore.sqs.core.kotlin.dsl.utils.RequiredFieldException
 import com.jashmore.sqs.retriever.MessageRetriever
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
@@ -65,22 +68,41 @@ class PrefetchingMessageListenerContainerDslBuilder(
     var interruptThreadsProcessingMessagesOnShutdown: Boolean = false
 
     override fun invoke(): MessageListenerContainer {
-        return coreMessageListener(identifier, sqsAsyncClient, queueProperties) {
-            processor = this@PrefetchingMessageListenerContainerDslBuilder.processor
-            broker = concurrentBroker {
-                concurrencyLevel = this@PrefetchingMessageListenerContainerDslBuilder.concurrencyLevel
+        val actualConcurrencyLevel = this.concurrencyLevel ?: throw RequiredFieldException("concurrencyLevel", "PrefetchingMessageListenerContainer")
+        val actualDesiredPrefetchedMessages = desiredPrefetchedMessages
+            ?: throw RequiredFieldException("desiredPrefetchedMessages", "PrefetchingMessageListenerContainer")
+        val actualMaxPrefetched = maxPrefetchedMessages
+            ?: throw RequiredFieldException("maxPrefetchedMessages", "PrefetchingMessageListenerContainer")
+        val actualProcessor = processor ?: throw RequiredFieldException("processor", "PrefetchingMessageListenerContainer")
+        return PrefetchingMessageListenerContainer(
+            identifier,
+            queueProperties,
+            sqsAsyncClient,
+            actualProcessor,
+            object : PrefetchingMessageListenerContainerProperties {
+                override fun concurrencyLevel(): Int = actualConcurrencyLevel()
+
+                override fun concurrencyPollingRate(): Duration? {
+                    return null
+                }
+
+                override fun errorBackoffTime(): Duration? {
+                    return null
+                }
+
+                override fun desiredMinPrefetchedMessages(): Int = actualDesiredPrefetchedMessages
+
+                override fun maxPrefetchedMessages(): Int = actualMaxPrefetched
+
+                override fun messageVisibilityTimeout(): Duration? = this@PrefetchingMessageListenerContainerDslBuilder.messageVisibility()
+
+                override fun processAnyExtraRetrievedMessagesOnShutdown(): Boolean =
+                    this@PrefetchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
+
+                override fun interruptThreadsProcessingMessagesOnShutdown(): Boolean =
+                    this@PrefetchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
             }
-            retriever = prefetchingMessageRetriever {
-                desiredPrefetchedMessages = this@PrefetchingMessageListenerContainerDslBuilder.desiredPrefetchedMessages
-                maxPrefetchedMessages = this@PrefetchingMessageListenerContainerDslBuilder.maxPrefetchedMessages
-                messageVisibility = this@PrefetchingMessageListenerContainerDslBuilder.messageVisibility
-            }
-            resolver = batchingResolver()
-            shutdown {
-                shouldInterruptThreadsProcessingMessages = this@PrefetchingMessageListenerContainerDslBuilder.interruptThreadsProcessingMessagesOnShutdown
-                shouldProcessAnyExtraRetrievedMessages = this@PrefetchingMessageListenerContainerDslBuilder.processExtraMessagesOnShutdown
-            }
-        }
+        )
     }
 }
 

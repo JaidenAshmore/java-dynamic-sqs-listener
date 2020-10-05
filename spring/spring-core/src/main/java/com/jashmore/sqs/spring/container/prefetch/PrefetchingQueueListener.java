@@ -11,7 +11,7 @@ import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.processor.CoreMessageProcessor;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetriever;
-import com.jashmore.sqs.retriever.prefetch.StaticPrefetchingMessageRetrieverProperties;
+import com.jashmore.sqs.retriever.prefetch.PrefetchingMessageRetrieverProperties;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -100,7 +100,7 @@ public @interface PrefetchingQueueListener {
      * The minimum number of messages that are should be prefetched before it tries to fetch more messages.
      *
      * @return the minimum number of prefetched messages
-     * @see StaticPrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
+     * @see PrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
      */
     int desiredMinPrefetchedMessages() default 1;
 
@@ -113,7 +113,7 @@ public @interface PrefetchingQueueListener {
      * <p>If this value is not empty, the value set by {@link #desiredMinPrefetchedMessages()} will be ignored.
      *
      * @return the minimum number of prefetched messages
-     * @see StaticPrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
+     * @see PrefetchingMessageRetrieverProperties#getDesiredMinPrefetchedMessages() for more details and constraints
      */
     String desiredMinPrefetchedMessagesString() default "";
 
@@ -121,7 +121,7 @@ public @interface PrefetchingQueueListener {
      * The total number of messages that can be prefetched from the server and stored in memory for execution.
      *
      * @return the max number of prefetched issues
-     * @see StaticPrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
+     * @see PrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
      */
     int maxPrefetchedMessages() default MAX_NUMBER_OF_MESSAGES_FROM_SQS;
 
@@ -134,7 +134,7 @@ public @interface PrefetchingQueueListener {
      * <p>If this value is not empty, the value set by {@link #maxPrefetchedMessages()} will be ignored.
      *
      * @return the max number of prefetched issues
-     * @see StaticPrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
+     * @see PrefetchingMessageRetrieverProperties#getMaxPrefetchedMessages()  for more details and constraints
      */
     String maxPrefetchedMessagesString() default "";
 
@@ -142,7 +142,7 @@ public @interface PrefetchingQueueListener {
      * The message visibility that will be used for messages obtained from the queue.
      *
      * @return the message visibility for messages fetched from the queue
-     * @see StaticPrefetchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
+     * @see PrefetchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
     int messageVisibilityTimeoutInSeconds() default 30;
 
