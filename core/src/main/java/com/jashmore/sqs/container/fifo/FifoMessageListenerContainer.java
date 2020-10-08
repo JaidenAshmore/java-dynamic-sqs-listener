@@ -49,6 +49,7 @@ public class FifoMessageListenerContainer implements MessageListenerContainer {
     private final MessageListenerContainer delegate;
 
     public FifoMessageListenerContainer(
+        final String identifier,
         final QueueProperties queueProperties,
         final SqsAsyncClient sqsAsyncClient,
         final Supplier<MessageProcessor> messageProcessorSupplier,
@@ -56,7 +57,7 @@ public class FifoMessageListenerContainer implements MessageListenerContainer {
     ) {
         this.delegate =
             new CoreMessageListenerContainer(
-                properties.identifier(),
+                identifier,
                 messageBrokerSupplier(properties),
                 messageRetrieverSupplier(queueProperties, sqsAsyncClient, properties),
                 messageProcessorSupplier,

@@ -58,7 +58,7 @@ class PrefetchingMessageListenerContainerFactoryTest {
                 argumentResolverService,
                 sqsAsyncClientProvider,
                 queueResolver,
-                environment,
+                new PrefetchingQueueListenerParser(environment),
                 decoratingMessageProcessorFactory
             );
     }

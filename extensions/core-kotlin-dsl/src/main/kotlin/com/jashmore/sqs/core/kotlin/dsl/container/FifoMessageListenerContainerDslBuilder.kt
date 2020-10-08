@@ -75,11 +75,11 @@ class FifoMessageListenerContainerDslBuilder(
     override fun invoke(): MessageListenerContainer {
         val actualConcurrencyLevel = this.concurrencyLevel ?: throw RequiredFieldException("concurrencyLevel", "FifoMessageListener")
         return FifoMessageListenerContainer(
+            identifier,
             queueProperties,
             sqsAsyncClient,
             this@FifoMessageListenerContainerDslBuilder.processor,
             object : FifoMessageListenerContainerProperties {
-                override fun identifier(): String = identifier
 
                 override fun concurrencyLevel(): Int = actualConcurrencyLevel()
 

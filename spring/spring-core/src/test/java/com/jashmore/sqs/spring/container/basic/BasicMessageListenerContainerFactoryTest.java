@@ -58,7 +58,7 @@ class BasicMessageListenerContainerFactoryTest {
                 argumentResolverService,
                 sqsAsyncClientProvider,
                 queueResolver,
-                environment,
+                new QueueListenerParser(environment),
                 decoratingMessageProcessorFactory
             );
     }

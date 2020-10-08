@@ -57,6 +57,7 @@ class FifoMessageListenerContainerIntegrationTest {
         final CountDownLatch messagesProcessedLatch = new CountDownLatch(numberOfMessages);
         final QueueProperties queueProperties = createFifoQueue();
         final MessageListenerContainer container = new FifoMessageListenerContainer(
+            "identifier",
             queueProperties,
             ELASTIC_MQ_SQS_ASYNC_CLIENT,
             () ->
@@ -71,7 +72,6 @@ class FifoMessageListenerContainerIntegrationTest {
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
-                .identifier("identifier")
                 .concurrencyLevel(10)
                 .maximumCachedMessageGroups(8)
                 .maximumMessagesInMessageGroup(2)
@@ -101,6 +101,7 @@ class FifoMessageListenerContainerIntegrationTest {
         final CountDownLatch messagesProcessedLatch = new CountDownLatch(numberOfMessageGroups * numberOfMessages);
         final QueueProperties queueProperties = createFifoQueue();
         final MessageListenerContainer container = new FifoMessageListenerContainer(
+            "identifier",
             queueProperties,
             ELASTIC_MQ_SQS_ASYNC_CLIENT,
             () ->
@@ -122,7 +123,6 @@ class FifoMessageListenerContainerIntegrationTest {
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
-                .identifier("identifier")
                 .concurrencyLevel(10)
                 .maximumCachedMessageGroups(7)
                 .maximumMessagesInMessageGroup(2)
@@ -151,6 +151,7 @@ class FifoMessageListenerContainerIntegrationTest {
         final AtomicBoolean processedMessagesConcurrently = new AtomicBoolean();
         final QueueProperties queueProperties = createFifoQueue();
         final MessageListenerContainer container = new FifoMessageListenerContainer(
+            "identifier",
             queueProperties,
             ELASTIC_MQ_SQS_ASYNC_CLIENT,
             () ->
@@ -177,7 +178,6 @@ class FifoMessageListenerContainerIntegrationTest {
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
-                .identifier("identifier")
                 .concurrencyLevel(10)
                 .maximumCachedMessageGroups(8)
                 .maximumMessagesInMessageGroup(2)
@@ -209,6 +209,7 @@ class FifoMessageListenerContainerIntegrationTest {
             .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
         sendMessages(queueProperties, numberOfMessageGroups, numberOfMessages);
         final MessageListenerContainer container = new FifoMessageListenerContainer(
+            "identifier",
             queueProperties,
             ELASTIC_MQ_SQS_ASYNC_CLIENT,
             () ->
@@ -228,7 +229,6 @@ class FifoMessageListenerContainerIntegrationTest {
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
-                .identifier("error-test")
                 .concurrencyLevel(10)
                 .maximumCachedMessageGroups(8)
                 .maximumMessagesInMessageGroup(2)
@@ -265,6 +265,7 @@ class FifoMessageListenerContainerIntegrationTest {
 
         // act
         final MessageListenerContainer container = new FifoMessageListenerContainer(
+            "identifier",
             queueProperties,
             ELASTIC_MQ_SQS_ASYNC_CLIENT,
             () ->
@@ -294,7 +295,6 @@ class FifoMessageListenerContainerIntegrationTest {
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
-                .identifier("async-error-test")
                 .concurrencyLevel(10)
                 .maximumCachedMessageGroups(10)
                 .maximumMessagesInMessageGroup(2)

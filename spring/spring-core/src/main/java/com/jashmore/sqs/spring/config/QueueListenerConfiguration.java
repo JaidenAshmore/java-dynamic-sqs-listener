@@ -20,8 +20,11 @@ import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.StaticDefaultMessageListenerContainerCoordinatorProperties;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.basic.QueueListenerParser;
 import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.fifo.FifoQueueListenerParser;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerParser;
 import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
@@ -248,20 +251,32 @@ public class QueueListenerConfiguration {
         public static class MessageListenerContainerFactoryConfiguration {
 
             @Bean
+            @ConditionalOnMissingBean(QueueListenerParser.class)
+            public QueueListenerParser queueListenerParser(final Environment environment) {
+                return new QueueListenerParser(environment);
+            }
+
+            @Bean
             public MessageListenerContainerFactory basicMessageListenerContainerFactory(
                 final ArgumentResolverService argumentResolverService,
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
-                final Environment environment,
+                final QueueListenerParser queueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new BasicMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
-                    environment,
+                    queueListenerParser,
                     decoratingMessageProcessorFactory
                 );
+            }
+
+            @Bean
+            @ConditionalOnMissingBean(PrefetchingQueueListenerParser.class)
+            public PrefetchingQueueListenerParser prefetchingQueueListenerParser(final Environment environment) {
+                return new PrefetchingQueueListenerParser(environment);
             }
 
             @Bean
@@ -269,16 +284,22 @@ public class QueueListenerConfiguration {
                 final ArgumentResolverService argumentResolverService,
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
-                final Environment environment,
+                final PrefetchingQueueListenerParser prefetchingQueueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new PrefetchingMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
-                    environment,
+                    prefetchingQueueListenerParser,
                     decoratingMessageProcessorFactory
                 );
+            }
+
+            @Bean
+            @ConditionalOnMissingBean(FifoQueueListenerParser.class)
+            public FifoQueueListenerParser fifoMessageListenerParser(final Environment environment) {
+                return new FifoQueueListenerParser(environment);
             }
 
             @Bean
@@ -286,14 +307,14 @@ public class QueueListenerConfiguration {
                 final ArgumentResolverService argumentResolverService,
                 final SqsAsyncClientProvider sqsAsyncClientProvider,
                 final QueueResolver queueResolver,
-                final Environment environment,
+                final FifoQueueListenerParser fifoQueueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new FifoMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
-                    environment,
+                    fifoQueueListenerParser,
                     decoratingMessageProcessorFactory
                 );
             }

@@ -3,7 +3,6 @@ package com.jashmore.sqs.container.fifo;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.broker.MessageBroker;
 import com.jashmore.sqs.broker.grouping.GroupingMessageBrokerProperties;
-import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.retriever.MessageRetriever;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
 import java.time.Duration;
@@ -16,19 +15,6 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
  */
 @Value.Immutable
 public interface FifoMessageListenerContainerProperties {
-    /**
-     * The unique identifier for this listener.
-     *
-     * <p>This can be used if you need to access the {@link MessageListenerContainer} for this queue listener specifically to start/stop it
-     * specifically.
-     *
-     * <p>The identifier for the queue will also be used to name the threads that will be executing the message processing. For example if your identifier
-     * is <pre>'my-queue-method'</pre> the threads that will be created will be named like <pre>'my-queue-method-0'</pre>, etc.
-     *
-     * @return the unique identifier for this queue listener
-     */
-    String identifier();
-
     /**
      * The number of threads that will be processing messages.
      *
