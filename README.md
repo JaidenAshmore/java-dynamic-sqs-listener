@@ -297,9 +297,11 @@ More in-depth guides on how configure this library:
        for how build a new ArgumentResolver from scratch.
     1. [How to add Brave Tracing](doc/how-to-guides/spring/spring-how-to-add-brave-tracing.md): for including Brave Tracing information to your messages
     1. [How to add custom MessageProcessingDecorators](doc/how-to-guides/spring/spring-how-to-add-custom-message-processing-decorators.md): guide on how
-       to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.
+       to autowire custom `MessageProcessingDecorators` into your Spring Queue Listeners.FifoMessageListenerContainerDslBuilde
     1. [How to Extend Message Visibility](doc/how-to-guides/spring/spring-how-to-extend-message-visibility-during-processing.md): manually or automatically
        extend a message's visibility during processing.
+    1. [How to have dynamic properties](doc/how-to-guides/spring/spring-how-to-have-listener-dynamic-properties.md): guide for overriding the listener
+       annotations to use custom logic.
     1. [How to customise argument resolution](doc/how-to-guides/spring/spring-how-to-customise-argument-resolution.md): guide for overriding the entire
        argument resolution logic
     1. [How to add your own queue listener](doc/how-to-guides/spring/spring-how-to-add-own-queue-listener.md): useful for defining your own annotation for the

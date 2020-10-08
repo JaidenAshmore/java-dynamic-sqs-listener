@@ -17,6 +17,9 @@ import com.jashmore.sqs.argument.attribute.MessageSystemAttributeArgumentResolve
 import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainerProperties;
+import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
+import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainerProperties;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
@@ -25,8 +28,14 @@ import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordina
 import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
 import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.spring.container.basic.QueueListenerParser;
 import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.fifo.FifoQueueListener;
+import com.jashmore.sqs.spring.container.fifo.FifoQueueListenerParser;
 import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
+import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerParser;
 import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
 import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
@@ -35,6 +44,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +56,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
@@ -594,6 +606,117 @@ class QueueListenerConfigurationTest {
                         assertThat(processorFactory).isSameAs(decoratingMessageProcessorFactory);
                     }
                 );
+        }
+    }
+
+    @Nested
+    class CoreAnnotationProcessors {
+
+        @Test
+        void prefetchingQueueListenerCanProvideCustomLogic() {
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(CustomPrefetchingQueueListenerParser.class)
+                .run(
+                    context -> {
+                        final PrefetchingQueueListenerParser parser = context.getBean(PrefetchingQueueListenerParser.class);
+                        assertThat(parser).isInstanceOf(CustomPrefetchingQueueListenerParser.class);
+
+                        final PrefetchingQueueListener annotation = Assertions.assertDoesNotThrow(
+                            () ->
+                                CoreAnnotationProcessors.class.getMethod("prefetchingListener")
+                                    .getAnnotation(PrefetchingQueueListener.class)
+                        );
+
+                        final PrefetchingMessageListenerContainerProperties properties = parser.parse(annotation);
+                        assertThat(properties.concurrencyLevel()).isEqualTo(100);
+                    }
+                );
+        }
+
+        @Test
+        void fifoQueueListenerCanProvideCustomLogic() {
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(CustomFifoQueueListenerParser.class)
+                .run(
+                    context -> {
+                        final FifoQueueListenerParser parser = context.getBean(FifoQueueListenerParser.class);
+                        assertThat(parser).isInstanceOf(CustomFifoQueueListenerParser.class);
+
+                        final FifoQueueListener annotation = Assertions.assertDoesNotThrow(
+                            () -> CoreAnnotationProcessors.class.getMethod("fifoListener").getAnnotation(FifoQueueListener.class)
+                        );
+
+                        final FifoMessageListenerContainerProperties properties = parser.parse(annotation);
+                        assertThat(properties.concurrencyLevel()).isEqualTo(200);
+                    }
+                );
+        }
+
+        @Test
+        void queueListenerCanProvideCustomLogic() {
+            contextRunner
+                .withUserConfiguration(UserConfigurationWithSqsClient.class)
+                .withBean(CustomQueueListenerParser.class)
+                .run(
+                    context -> {
+                        final QueueListenerParser parser = context.getBean(QueueListenerParser.class);
+                        assertThat(parser).isInstanceOf(CustomQueueListenerParser.class);
+
+                        final QueueListener annotation = Assertions.assertDoesNotThrow(
+                            () -> CoreAnnotationProcessors.class.getMethod("queueListener").getAnnotation(QueueListener.class)
+                        );
+
+                        final BatchingMessageListenerContainerProperties properties = parser.parse(annotation);
+                        assertThat(properties.concurrencyLevel()).isEqualTo(300);
+                    }
+                );
+        }
+
+        @PrefetchingQueueListener("url")
+        public void prefetchingListener() {}
+
+        @FifoQueueListener("url")
+        public void fifoListener() {}
+
+        @QueueListener("url")
+        public void queueListener() {}
+    }
+
+    public static class CustomPrefetchingQueueListenerParser extends PrefetchingQueueListenerParser {
+
+        public CustomPrefetchingQueueListenerParser(Environment environment) {
+            super(environment);
+        }
+
+        @Override
+        protected Supplier<Integer> concurrencySupplier(PrefetchingQueueListener annotation) {
+            return () -> 100;
+        }
+    }
+
+    public static class CustomFifoQueueListenerParser extends FifoQueueListenerParser {
+
+        public CustomFifoQueueListenerParser(Environment environment) {
+            super(environment);
+        }
+
+        @Override
+        protected Supplier<Integer> concurrencySupplier(FifoQueueListener annotation) {
+            return () -> 200;
+        }
+    }
+
+    public static class CustomQueueListenerParser extends QueueListenerParser {
+
+        public CustomQueueListenerParser(Environment environment) {
+            super(environment);
+        }
+
+        @Override
+        protected Supplier<Integer> concurrencySupplier(QueueListener annotation) {
+            return () -> 300;
         }
     }
 
