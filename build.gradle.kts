@@ -17,7 +17,7 @@ plugins {
 
 allprojects {
     group = "com.jashmore"
-    version = "4.4.0"
+    version = "4.4.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
