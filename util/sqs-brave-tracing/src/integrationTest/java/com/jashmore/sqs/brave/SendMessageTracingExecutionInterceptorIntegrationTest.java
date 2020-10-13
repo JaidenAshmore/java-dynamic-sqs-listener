@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 public class SendMessageTracingExecutionInterceptorIntegrationTest {
+
     private final TestSpanHandler testSpanHandler = new TestSpanHandler();
     private final Tracing tracing = Tracing.newBuilder().addSpanHandler(testSpanHandler).build();
 

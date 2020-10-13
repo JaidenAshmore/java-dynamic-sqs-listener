@@ -21,6 +21,7 @@ import lombok.ToString;
 @Builder(toBuilder = true)
 @ThreadSafe
 public final class StaticConcurrentMessageBrokerProperties implements ConcurrentMessageBrokerProperties {
+
     private final Integer concurrencyLevel;
     private final Duration preferredConcurrencyPollingRate;
     private final Duration errorBackoffTime;

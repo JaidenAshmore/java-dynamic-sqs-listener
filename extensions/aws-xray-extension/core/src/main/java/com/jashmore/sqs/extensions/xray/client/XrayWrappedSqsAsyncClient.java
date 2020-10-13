@@ -68,6 +68,7 @@ import software.amazon.awssdk.services.sqs.model.UntagQueueResponse;
  * name defined by the {@link ClientSegmentNamingStrategy} provided to this.
  */
 public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
+
     private static final String DEFAULT_SEGMENT_NAME = "message-listener";
 
     private final SqsAsyncClient delegate;
@@ -362,6 +363,7 @@ public class XrayWrappedSqsAsyncClient implements SqsAsyncClient {
     @Value
     @Builder
     public static class Options {
+
         /**
          * Delegate client that will make the underlying calls to the SQS queues.
          */

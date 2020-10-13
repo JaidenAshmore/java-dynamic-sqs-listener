@@ -43,6 +43,7 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
  */
 @Slf4j
 public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
+
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
 

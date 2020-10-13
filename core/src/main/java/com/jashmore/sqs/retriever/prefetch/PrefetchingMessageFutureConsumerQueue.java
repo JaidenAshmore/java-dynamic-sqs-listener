@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ThreadSafe
 class PrefetchingMessageFutureConsumerQueue {
+
     private final Queue<CompletableFuture<Message>> futureQueue;
     private final Queue<Message> messageQueue;
     private final Integer messageCapacity;

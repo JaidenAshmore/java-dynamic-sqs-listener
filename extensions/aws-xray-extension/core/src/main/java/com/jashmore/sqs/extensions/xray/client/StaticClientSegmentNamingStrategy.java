@@ -4,6 +4,7 @@ package com.jashmore.sqs.extensions.xray.client;
  * A {@link ClientSegmentNamingStrategy} that just returns the same segment name whenever it is requested.
  */
 public class StaticClientSegmentNamingStrategy implements ClientSegmentNamingStrategy {
+
     private final String segmentName;
 
     /**

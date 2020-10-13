@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
  * Parser that is used to transform a {@link QueueListener} annotation to a {@link BatchingMessageListenerContainerProperties}.
  */
 public class QueueListenerParser implements CoreAnnotationParser<QueueListener, BatchingMessageListenerContainerProperties> {
+
     private final Environment environment;
 
     public QueueListenerParser(final Environment environment) {
@@ -37,7 +38,6 @@ public class QueueListenerParser implements CoreAnnotationParser<QueueListener, 
             annotation
         );
         return new BatchingMessageListenerContainerProperties() {
-
             @PositiveOrZero
             @Override
             public int concurrencyLevel() {

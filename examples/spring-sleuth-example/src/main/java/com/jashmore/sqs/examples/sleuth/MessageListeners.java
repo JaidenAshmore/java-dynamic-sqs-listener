@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @EnableScheduling
 @AllArgsConstructor
 public class MessageListeners {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final Tracing tracing;
 

@@ -21,6 +21,7 @@ import org.springframework.core.io.Resource;
  * <p>For example it will load all of the schemas in a folder like <pre>resources/avro/{name}.avsc</pre>.
  */
 public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetriever<Schema> {
+
     private final Map<Class<?>, Schema> classSchemaMap;
 
     public AvroClasspathConsumerSchemaRetriever(final List<Resource> schemaImports, final List<Resource> schemaLocations) {

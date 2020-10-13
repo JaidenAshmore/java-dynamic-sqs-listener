@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 @ExtendWith(MockitoExtension.class)
 public class CoreArgumentResolverServiceTest {
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final PayloadMapper payloadMapper = new JacksonPayloadMapper(objectMapper);

@@ -12,6 +12,7 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 @AllArgsConstructor
 public class LatencyAppliedSqsAsyncClient implements SqsAsyncClient {
+
     @Delegate(excludes = { MethodsToOverride.class, SdkAutoCloseable.class })
     private final SqsAsyncClient delegate;
 

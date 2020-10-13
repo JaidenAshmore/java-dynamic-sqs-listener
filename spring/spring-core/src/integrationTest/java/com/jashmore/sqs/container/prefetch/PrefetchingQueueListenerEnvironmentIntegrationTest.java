@@ -26,6 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(classes = { PrefetchingQueueListenerEnvironmentIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 class PrefetchingQueueListenerEnvironmentIntegrationTest {
+
     private static final String QUEUE_NAME = "PrefetchingQueueListenerIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(NUMBER_OF_MESSAGES_TO_SEND);

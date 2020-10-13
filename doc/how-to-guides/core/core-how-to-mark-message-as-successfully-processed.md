@@ -13,6 +13,7 @@ an exception, and it will resolve the message.
 
 ```java
 public class MyClass {
+
     private final SomeService someService;
 
     public MyClass(final SomeService someService) {
@@ -39,6 +40,7 @@ _Note: that this returns a `CompletableFuture` and will only guarantee to be com
 
 ```java
 public class MyClass {
+
     private final SomeService someService;
 
     public MyClass(final SomeService someService) {
@@ -68,6 +70,7 @@ will wait forever and ultimately you will have no more messages processing as al
 
 ```java
 public class MyClass {
+
     private final SomeService someService;
 
     public MyClass(final SomeService someService) {

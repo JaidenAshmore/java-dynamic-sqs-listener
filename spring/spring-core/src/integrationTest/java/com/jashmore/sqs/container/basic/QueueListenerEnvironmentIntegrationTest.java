@@ -27,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = { "prop.concurrency=5" })
 class QueueListenerEnvironmentIntegrationTest {
+
     private static final String QUEUE_NAME = "QueueListenerEnvironmentIntegrationTest";
 
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;

@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class DecoratingMessageProcessorFactoryTest {
+
     @Mock
     SqsAsyncClient sqsAsyncClient;
 

@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  */
 public class AutoVisibilityExtenderMessageProcessingDecoratorFactory
     implements MessageProcessingDecoratorFactory<AutoVisibilityExtenderMessageProcessingDecorator> {
+
     private final Environment environment;
 
     public AutoVisibilityExtenderMessageProcessingDecoratorFactory(final Environment environment) {
@@ -63,7 +64,6 @@ public class AutoVisibilityExtenderMessageProcessingDecoratorFactory
         final Duration maximumDuration = getMaximumDuration(annotation);
         final Duration bufferDuration = getBufferDuration(annotation);
         return new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
             @Override
             public Duration visibilityTimeout() {
                 return visibilityTimeout;

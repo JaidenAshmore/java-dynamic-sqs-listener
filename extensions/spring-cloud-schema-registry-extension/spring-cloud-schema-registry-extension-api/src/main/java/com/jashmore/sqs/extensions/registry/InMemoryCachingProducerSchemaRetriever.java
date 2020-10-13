@@ -11,6 +11,7 @@ import org.springframework.cloud.schema.registry.SchemaReference;
  */
 @ThreadSafe
 public class InMemoryCachingProducerSchemaRetriever<T> implements ProducerSchemaRetriever<T> {
+
     private final Map<SchemaReference, T> cache = new ConcurrentHashMap<>();
     private final ProducerSchemaRetriever<T> delegate;
 

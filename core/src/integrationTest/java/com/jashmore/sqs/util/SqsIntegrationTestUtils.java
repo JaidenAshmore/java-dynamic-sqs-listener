@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 @Slf4j
 @UtilityClass
 public class SqsIntegrationTestUtils {
+
     private static final int MAX_SEND_MESSAGE_BATCH_SIZE = 10;
 
     public void assertNoMessagesInQueue(final SqsAsyncClient sqsAsyncClient, final String queueUrl) {

@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class JacksonPayloadMapperTest {
+
     @Mock
     private ObjectMapper objectMapper;
 
@@ -69,6 +70,7 @@ class JacksonPayloadMapperTest {
 
     @SuppressWarnings("WeakerAccess")
     public static class Pojo {
+
         private final String field;
 
         public Pojo(final String field) {

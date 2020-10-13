@@ -44,6 +44,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class PrefetchingMessageRetrieverTest {
+
     private static final String QUEUE_URL = "queueUrl";
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl(QUEUE_URL).build();
 
@@ -487,7 +488,6 @@ class PrefetchingMessageRetrieverTest {
             sqsAsyncClient,
             QUEUE_PROPERTIES,
             new PrefetchingMessageRetrieverProperties() {
-
                 @Override
                 public @Positive int getDesiredMinPrefetchedMessages() {
                     return 2;

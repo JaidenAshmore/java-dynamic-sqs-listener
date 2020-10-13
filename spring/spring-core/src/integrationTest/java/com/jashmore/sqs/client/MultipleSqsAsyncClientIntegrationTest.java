@@ -29,6 +29,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 @SpringBootTest(classes = { MultipleSqsAsyncClientIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 class MultipleSqsAsyncClientIntegrationTest {
+
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(3);
 
     @Autowired

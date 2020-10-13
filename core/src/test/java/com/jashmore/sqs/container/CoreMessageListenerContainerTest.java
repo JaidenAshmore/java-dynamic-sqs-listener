@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class CoreMessageListenerContainerTest {
+
     private static final CompletableFuture<Message> STUB_MESSAGE_BROKER_DONE = CompletableFutureUtils.completedExceptionally(
         new RuntimeException("Expected Messages Done")
     );

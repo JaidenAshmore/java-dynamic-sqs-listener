@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 class LocalSqsAsyncClientImplTest {
+
     private String queueServerUrl;
     private SQSRestServer sqsRestServer;
 

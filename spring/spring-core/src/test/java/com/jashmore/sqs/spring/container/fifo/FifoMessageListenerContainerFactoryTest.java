@@ -34,6 +34,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = { "prop.concurrency=5" })
 public class FifoMessageListenerContainerFactoryTest {
+
     private static final String QUEUE_NAME = "FifoMessageListenerContainerFactoryTest.fifo";
     private static final int NUMBER_OF_MESSAGE_GROUPS = 5;
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 20;

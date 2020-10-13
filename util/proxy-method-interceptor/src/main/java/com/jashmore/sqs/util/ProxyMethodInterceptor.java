@@ -11,6 +11,7 @@ import net.sf.cglib.proxy.MethodProxy;
  * @param <T> the type of the original object to proxy
  */
 public class ProxyMethodInterceptor<T> implements MethodInterceptor {
+
     private final T original;
 
     private ProxyMethodInterceptor(final T original) {

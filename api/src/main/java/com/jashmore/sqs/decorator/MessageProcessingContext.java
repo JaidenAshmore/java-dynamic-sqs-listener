@@ -10,6 +10,7 @@ import lombok.Value;
 @Value
 @Builder
 public class MessageProcessingContext {
+
     /**
      * The unique identifier for this message listener.
      *

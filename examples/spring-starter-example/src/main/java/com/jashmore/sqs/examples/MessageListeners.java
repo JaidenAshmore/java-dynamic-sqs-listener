@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @SuppressWarnings("unused")
 @Slf4j
 public class MessageListeners {
+
     private final AtomicInteger numberMessagesConcurrentlyBeingProcessed = new AtomicInteger(0);
     private final AtomicInteger numberMessagesConcurrentlyBeingProcessedBatching = new AtomicInteger(0);
 

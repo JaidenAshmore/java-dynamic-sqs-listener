@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 @Slf4j
 class ConcurrentMessageBrokerIntegrationTest {
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
 
@@ -197,6 +198,7 @@ class ConcurrentMessageBrokerIntegrationTest {
 
     @SuppressWarnings("WeakerAccess")
     public static class MessageConsumer {
+
         private final CountDownLatch messagesReceivedLatch;
 
         public MessageConsumer(final CountDownLatch messagesReceivedLatch) {

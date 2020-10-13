@@ -28,6 +28,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 public class SendMessageTracingExecutionInterceptorTest {
+
     private final TestSpanHandler spanHandler = new TestSpanHandler();
     private final Tracing tracing = Tracing.newBuilder().addSpanHandler(spanHandler).build();
 
@@ -139,7 +140,6 @@ public class SendMessageTracingExecutionInterceptorTest {
             .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-
             @Override
             public void decorateMessageSpan(SendMessageRequest request, Span span) {
                 span.tag("test", "value");
@@ -301,7 +301,6 @@ public class SendMessageTracingExecutionInterceptorTest {
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionSuccess(request, "message-id");
         final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-
             @Override
             public void decorateMessageSpanOnSuccess(
                 SendMessageRequest request,
@@ -335,7 +334,6 @@ public class SendMessageTracingExecutionInterceptorTest {
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 500);
         final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-
             @Override
             public void decorateMessageSpanOnFailure(
                 SendMessageRequest sendMessageRequest,

@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultSqsAsyncClientProviderTest {
+
     @Mock
     private SqsAsyncClient client;
 

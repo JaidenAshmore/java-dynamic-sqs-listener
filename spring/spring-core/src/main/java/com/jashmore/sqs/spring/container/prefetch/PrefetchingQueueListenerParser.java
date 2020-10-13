@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
  */
 public class PrefetchingQueueListenerParser
     implements CoreAnnotationParser<PrefetchingQueueListener, PrefetchingMessageListenerContainerProperties> {
+
     private final Environment environment;
 
     public PrefetchingQueueListenerParser(final Environment environment) {
@@ -37,7 +38,6 @@ public class PrefetchingQueueListenerParser
         );
 
         return new PrefetchingMessageListenerContainerProperties() {
-
             @PositiveOrZero
             @Override
             public int concurrencyLevel() {

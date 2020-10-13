@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
  * Parser that is used to transform a {@link FifoQueueListener} annotation to a {@link FifoMessageListenerContainerProperties}.
  */
 public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueListener, FifoMessageListenerContainerProperties> {
+
     private final Environment environment;
 
     public FifoQueueListenerParser(final Environment environment) {
@@ -33,7 +34,6 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
             annotation
         );
         return new FifoMessageListenerContainerProperties() {
-
             @Override
             public int concurrencyLevel() {
                 return concurrencySupplier.get();

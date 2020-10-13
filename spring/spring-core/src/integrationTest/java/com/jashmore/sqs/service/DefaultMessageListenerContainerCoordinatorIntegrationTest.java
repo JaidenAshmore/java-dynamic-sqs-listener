@@ -24,6 +24,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(classes = { DefaultMessageListenerContainerCoordinatorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 public class DefaultMessageListenerContainerCoordinatorIntegrationTest {
+
     private static final String QUEUE_NAME = "DefaultMessageListenerContainerCoordinatorIntegrationTest";
     private static final int MESSAGE_VISIBILITY_IN_SECONDS = 1;
 

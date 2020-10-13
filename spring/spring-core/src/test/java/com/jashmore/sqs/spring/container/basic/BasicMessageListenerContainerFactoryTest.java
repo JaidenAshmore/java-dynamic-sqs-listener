@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @SuppressWarnings("WeakerAccess")
 @ExtendWith(MockitoExtension.class)
 class BasicMessageListenerContainerFactoryTest {
+
     @Mock
     ArgumentResolverService argumentResolverService;
 

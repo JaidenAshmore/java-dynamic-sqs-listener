@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @SuppressWarnings("checkstyle:TypeName")
 @ExtendWith(MockitoExtension.class)
 class PayloadArgumentResolver_ProxyClassTest {
+
     @Mock
     private PayloadMapper payloadMapper;
 

@@ -5,6 +5,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class BatchingMessageRetrieverConstants {
+
     /**
      * The default amount of time to sleep the thread when there was an error obtaining messages.
      */

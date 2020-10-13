@@ -60,6 +60,7 @@ the default [ArgumentResolverService](../../../api/src/main/java/com/jashmore/sq
 ```java
 @Configuration
 public class MyConfiguration {
+
     private static final ObjectMapper MY_OBJECT_MAPPER_FOR_SQS = new ObjectMapper();
 
     @Bean

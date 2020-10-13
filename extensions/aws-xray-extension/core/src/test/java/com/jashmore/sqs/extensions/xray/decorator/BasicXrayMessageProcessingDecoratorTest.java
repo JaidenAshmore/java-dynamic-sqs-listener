@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 @ExtendWith(MockitoExtension.class)
 class BasicXrayMessageProcessingDecoratorTest {
+
     @Mock
     AWSXRayRecorder recorder;
 

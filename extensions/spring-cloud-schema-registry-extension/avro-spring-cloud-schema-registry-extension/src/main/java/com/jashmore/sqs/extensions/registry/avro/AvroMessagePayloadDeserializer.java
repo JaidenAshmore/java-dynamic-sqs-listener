@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * the producer schema.
  */
 public class AvroMessagePayloadDeserializer implements MessagePayloadDeserializer<Schema> {
+
     private final AvroSchemaServiceManager avroSchemaServiceManager;
     private final Function<Message, byte[]> payloadExtractor;
 

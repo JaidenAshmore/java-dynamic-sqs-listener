@@ -78,6 +78,7 @@ module would be good examples.
 
     ```java
     public class MyServiceTest {
+
         // Configuration defined above...
 
         @Autowired

@@ -15,6 +15,7 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticBatchingMessageResolverProperties implements BatchingMessageResolverProperties {
+
     int bufferingSizeLimit;
     Duration bufferingTime;
 

@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class XrayWrappedSqsAsyncClientTest {
+
     @Mock
     SqsAsyncClient delegate;
 

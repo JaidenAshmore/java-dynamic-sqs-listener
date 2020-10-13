@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AutoVisibilityExtenderMessageProcessingDecoratorIntegrationTest {
+
     private final Logger log = LoggerFactory.getLogger(AutoVisibilityExtenderMessageProcessingDecoratorIntegrationTest.class);
     static final ElasticMqSqsAsyncClient ELASTIC_MQ_SQS_ASYNC_CLIENT = new ElasticMqSqsAsyncClient();
 
@@ -73,7 +74,6 @@ public class AutoVisibilityExtenderMessageProcessingDecoratorIntegrationTest {
                             ELASTIC_MQ_SQS_ASYNC_CLIENT,
                             queueProperties,
                             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                                 @Override
                                 public Duration visibilityTimeout() {
                                     return Duration.ofSeconds(3);
@@ -169,7 +169,6 @@ public class AutoVisibilityExtenderMessageProcessingDecoratorIntegrationTest {
                             ELASTIC_MQ_SQS_ASYNC_CLIENT,
                             queueProperties,
                             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                                 @Override
                                 public Duration visibilityTimeout() {
                                     return Duration.ofSeconds(3);

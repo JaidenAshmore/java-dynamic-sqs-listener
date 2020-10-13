@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @Slf4j
 public class AsyncLambdaMessageProcessor implements MessageProcessor {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final MessageProcessingFunction messageProcessingFunction;

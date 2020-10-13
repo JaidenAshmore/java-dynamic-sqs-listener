@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 @Component
 @RequiredArgsConstructor
 public class ScheduledMessageProducer {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final AtomicInteger count = new AtomicInteger();
 

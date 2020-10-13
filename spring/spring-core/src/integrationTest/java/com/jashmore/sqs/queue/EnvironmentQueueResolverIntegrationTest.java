@@ -20,6 +20,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 )
 @ExtendWith(SpringExtension.class)
 class EnvironmentQueueResolverIntegrationTest {
+
     private static final String QUEUE_NAME = "EnvironmentQueueResolverIntegrationTest";
 
     @Autowired

@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 @Slf4j
 @Component
 public class MessageListeners {
+
     private static final int MINIMUM_PROCESSING_TIME_IN_MS = 500;
     private static final int MAXIMUM_PROCESSING_TIME_IN_MS = 2000;
     private final Map<String, Integer> messageGroups = new ConcurrentHashMap<>();

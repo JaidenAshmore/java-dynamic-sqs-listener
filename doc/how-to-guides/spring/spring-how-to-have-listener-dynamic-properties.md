@@ -12,6 +12,7 @@ and [FifoQueueListenerParser](../../../spring/spring-core/src/main/java/com/jash
 
     ```java
     public class CustomPrefetchingQueueListenerParser extends PrefetchingQueueListenerParser {
+
         private static final Random random = new Random();
 
         public CustomPrefetchingQueueListenerParser(Environment environment) {

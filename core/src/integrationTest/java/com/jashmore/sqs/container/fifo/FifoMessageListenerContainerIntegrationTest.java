@@ -41,6 +41,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 @Slf4j
 class FifoMessageListenerContainerIntegrationTest {
+
     static final ElasticMqSqsAsyncClient ELASTIC_MQ_SQS_ASYNC_CLIENT = new ElasticMqSqsAsyncClient();
 
     @AfterAll

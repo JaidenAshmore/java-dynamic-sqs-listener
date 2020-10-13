@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @ExtendWith(MockitoExtension.class)
 class SqsListenerXrayConfigurationTest {
+
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
     .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class, SqsListenerXrayConfiguration.class));
 

@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultQueueResolverTest {
+
     @Mock
     private SqsAsyncClient sqsAsyncClient;
 
@@ -67,7 +68,6 @@ class DefaultQueueResolverTest {
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
             .thenReturn(
                 new CompletableFuture<GetQueueUrlResponse>() {
-
                     @Override
                     public GetQueueUrlResponse get() throws ExecutionException {
                         throw new ExecutionException(exceptionCause);
@@ -93,7 +93,6 @@ class DefaultQueueResolverTest {
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
             .thenReturn(
                 new CompletableFuture<GetQueueUrlResponse>() {
-
                     @Override
                     public GetQueueUrlResponse get() throws ExecutionException {
                         throw new ExecutionException(exceptionCause);
@@ -119,7 +118,6 @@ class DefaultQueueResolverTest {
         when(sqsAsyncClient.getQueueUrl(ArgumentMatchers.<Consumer<GetQueueUrlRequest.Builder>>any()))
             .thenReturn(
                 new CompletableFuture<GetQueueUrlResponse>() {
-
                     @Override
                     public GetQueueUrlResponse get() throws InterruptedException {
                         throw interruptedException;

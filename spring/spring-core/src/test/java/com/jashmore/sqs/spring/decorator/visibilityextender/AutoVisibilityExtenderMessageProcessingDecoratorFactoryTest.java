@@ -35,6 +35,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
+
     @Mock
     SqsAsyncClient sqsAsyncClient;
 
@@ -153,7 +154,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
             // arrange
             when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
             final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
-
                 @Override
                 public Class<? extends Annotation> annotationType() {
                     return AutoVisibilityExtender.class;
@@ -203,7 +203,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
         void noVisibilityTimeoutWillThrowException() {
             // arrange
             final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
-
                 @Override
                 public Class<? extends Annotation> annotationType() {
                     return AutoVisibilityExtender.class;
@@ -255,7 +254,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
             // arrange
             when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
             final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
-
                 @Override
                 public Class<? extends Annotation> annotationType() {
                     return AutoVisibilityExtender.class;
@@ -307,7 +305,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
             // arrange
             when(environment.resolvePlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
             final AutoVisibilityExtender annotation = new AutoVisibilityExtender() {
-
                 @Override
                 public Class<? extends Annotation> annotationType() {
                     return AutoVisibilityExtender.class;

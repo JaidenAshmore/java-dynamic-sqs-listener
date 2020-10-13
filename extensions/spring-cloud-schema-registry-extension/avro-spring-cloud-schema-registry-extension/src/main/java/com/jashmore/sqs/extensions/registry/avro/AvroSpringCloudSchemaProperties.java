@@ -15,6 +15,7 @@ import org.springframework.core.io.Resource;
 @AllArgsConstructor
 @ConfigurationProperties("spring.cloud.schema.avro")
 public class AvroSpringCloudSchemaProperties {
+
     /**
      * The list of schema resources that should be loaded before the {@link #schemaLocations} for the
      * scenario that these are reliant on other schemas.

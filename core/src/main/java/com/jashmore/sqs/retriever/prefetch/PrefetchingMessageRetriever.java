@@ -57,6 +57,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
  */
 @Slf4j
 public class PrefetchingMessageRetriever implements MessageRetriever {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final PrefetchingMessageRetrieverProperties properties;

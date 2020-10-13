@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchResultEntry;
  * for consumers to continue the trace.
  */
 public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInterceptor {
+
     static final ExecutionAttribute<Map<String, Span>> MESSAGE_SPANS_EXECUTION_ATTRIBUTE = new ExecutionAttribute<>("message-spans");
 
     private final Tracing tracing;

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @SpringBootTest(classes = { SqsSpringStarterIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 class SqsSpringStarterIntegrationTest {
+
     private static final String QUEUE_NAME = "SqsSpringStarterIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(NUMBER_OF_MESSAGES_TO_SEND + 1);

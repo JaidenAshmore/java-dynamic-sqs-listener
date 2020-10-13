@@ -62,6 +62,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 class QueueListenerConfigurationTest {
+
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
     .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class));
 
@@ -509,6 +510,7 @@ class QueueListenerConfigurationTest {
     @Nested
     @ExtendWith(MockitoExtension.class)
     class MessageProcessingDecoratorFactories {
+
         @Mock
         MessageProcessingDecoratorFactory<MessageProcessingDecorator> decoratorFactory;
 

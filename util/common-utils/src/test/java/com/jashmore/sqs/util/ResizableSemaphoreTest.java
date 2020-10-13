@@ -48,7 +48,6 @@ class ResizableSemaphoreTest {
     void changingPermitSizeToSameAmountWhilstSomeAcquiredDoesNothing() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(1) {
-
             @Override
             public void release(final int permits) {
                 fail("Should not have released 0 permits");
@@ -74,7 +73,6 @@ class ResizableSemaphoreTest {
     void increasingPermitSizeShouldReleaseTheNumberOfExtraPermits() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(1) {
-
             @Override
             public void release(final int permits) {
                 assertThat(permits).isEqualTo(5);
@@ -98,7 +96,6 @@ class ResizableSemaphoreTest {
     void decreasePermitSizeShouldReduceTheNumberOfExtraPermits() throws InterruptedException {
         // arrange
         final ResizableSemaphore resizableSemaphore = new ResizableSemaphore(6) {
-
             @Override
             public void release(final int permits) {
                 fail("Should not have released permits");

@@ -338,6 +338,7 @@ public class MyMessageListener {
     }
 
     public static class MyPojo {
+
         private String name;
 
         public MyPojo() {

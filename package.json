@@ -5,7 +5,7 @@
         "lint-staged": "10.4.0",
         "markdown-link-check": "3.8.3",
         "prettier": "2.1.2",
-        "prettier-plugin-java": "0.8.2"
+        "prettier-plugin-java": "0.8.3"
     },
     "scripts": {
         "md-links-check": "find . -name \\*.md -not -path \"*/target/*\" -not -path \"*/build/*\" -not -path \"*/node_modules/*\" | tr '\\n' '\\0' | xargs -0 -n1 sh -c 'npx markdown-link-check -c \".markdownlinkcheck.json\" $0 || exit 255'",

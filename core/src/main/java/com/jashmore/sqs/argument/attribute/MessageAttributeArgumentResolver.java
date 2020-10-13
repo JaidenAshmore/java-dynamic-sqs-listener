@@ -28,6 +28,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
  * @see MessageAttributeValue
  */
 public class MessageAttributeArgumentResolver implements ArgumentResolver<Object> {
+
     private final ObjectMapper objectMapper;
 
     public MessageAttributeArgumentResolver(final ObjectMapper objectMapper) {

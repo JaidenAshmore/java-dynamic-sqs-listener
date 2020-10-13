@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Slf4j
 class MessageSystemAttributeIntegrationTest {
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final PayloadMapper PAYLOAD_MAPPER = new JacksonPayloadMapper(OBJECT_MAPPER);
     private static final ArgumentResolverService ARGUMENT_RESOLVER_SERVICE = new CoreArgumentResolverService(PAYLOAD_MAPPER, OBJECT_MAPPER);
@@ -108,6 +109,7 @@ class MessageSystemAttributeIntegrationTest {
     @SuppressWarnings("WeakerAccess")
     @AllArgsConstructor
     public static class MessageConsumer {
+
         private final CountDownLatch latch;
         private final AtomicReference<OffsetDateTime> valueAtomicReference;
 

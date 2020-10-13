@@ -6,6 +6,7 @@ import java.util.concurrent.Semaphore;
  * Semaphore that is able to dynamically update the number of available permits.
  */
 public class ResizableSemaphore extends Semaphore {
+
     private int maximumPermits;
 
     public ResizableSemaphore(final int permits) {

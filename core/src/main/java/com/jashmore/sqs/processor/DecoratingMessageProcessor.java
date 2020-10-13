@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @Slf4j
 public class DecoratingMessageProcessor implements MessageProcessor {
+
     private final String listenerIdentifier;
     private final QueueProperties queueProperties;
     private final List<MessageProcessingDecorator> decorators;

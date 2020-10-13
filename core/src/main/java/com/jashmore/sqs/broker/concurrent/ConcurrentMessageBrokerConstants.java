@@ -5,6 +5,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ConcurrentMessageBrokerConstants {
+
     /**
      * The default amount of time to sleep the thread when there was an error organising the message processing threads.
      */

@@ -11,6 +11,7 @@ import lombok.Value;
 @Value
 @Builder
 public class SqsQueuesConfig {
+
     /**
      * Default URL for a SQS server being built using localstack.
      */
@@ -33,6 +34,7 @@ public class SqsQueuesConfig {
     @Value
     @Builder
     public static class QueueConfig {
+
         public static final int DEFAULT_MAX_RECEIVE_COUNT = 3;
 
         /**

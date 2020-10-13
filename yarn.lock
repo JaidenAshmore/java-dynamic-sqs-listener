@@ -887,10 +887,10 @@ please-upgrade-node@^3.2.0:
   dependencies:
     semver-compare "^1.0.0"
 
-prettier-plugin-java@0.8.2:
-  version "0.8.2"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-java/-/prettier-plugin-java-0.8.2.tgz#8cbeef028b40d1e8d9968b2c36a769441a719e83"
-  integrity sha512-G11PMutlfhUjLqmrB0gW9n6hTIvlnXX+lhzgH3Uhc1QSlDQoLBky5lNSRgvdYSDPpSF3DmyYd3/7U3Ez8n0ckg==
+prettier-plugin-java@0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-java/-/prettier-plugin-java-0.8.3.tgz#a7d381c2945a2cdda4f7baa6ced2205cb6cceebb"
+  integrity sha512-LyFle106727RkY1NBGzHHnzEJKjILigSfHPPqalNi5yJ/DkM5hjOVxWa4374gm44LStMl1arNgzpCnYPL0F8cg==
   dependencies:
     java-parser "0.8.2"
     lodash "4.17.20"

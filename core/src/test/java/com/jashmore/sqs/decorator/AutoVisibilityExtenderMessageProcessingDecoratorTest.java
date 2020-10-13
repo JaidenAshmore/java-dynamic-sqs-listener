@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class AutoVisibilityExtenderMessageProcessingDecoratorTest {
+
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("url").build();
 
     @Mock
@@ -51,7 +52,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         changingVisibilityIsSuccessful();
         final DecoratingMessageProcessor decoratingMessageProcessor = buildProcessor(
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofSeconds(2);
@@ -93,7 +93,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         // arrange
         final DecoratingMessageProcessor decoratingMessageProcessor = buildProcessor(
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofSeconds(99);
@@ -137,7 +136,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         changingVisibilityIsSuccessful();
         final DecoratingMessageProcessor decoratingMessageProcessor = buildProcessor(
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofSeconds(4);
@@ -198,7 +196,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         // arrange
         final DecoratingMessageProcessor decoratingMessageProcessor = buildProcessor(
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofSeconds(1);
@@ -242,7 +239,6 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         changingVisibilityIsSuccessful();
         final DecoratingMessageProcessor decoratingMessageProcessor = buildProcessor(
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofSeconds(2);

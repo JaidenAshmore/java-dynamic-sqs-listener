@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 @Slf4j
 @SuppressWarnings("checkstyle:ParameterName")
 class MessageAttributeArgumentResolverTest {
+
     private final MessageAttributeArgumentResolver messageAttributeArgumentResolver = new MessageAttributeArgumentResolver(
         new ObjectMapper()
     );
@@ -637,6 +638,7 @@ class MessageAttributeArgumentResolverTest {
     @Builder
     @SuppressWarnings("WeakerAccess")
     public static class MyPojo {
+
         String name;
     }
 }

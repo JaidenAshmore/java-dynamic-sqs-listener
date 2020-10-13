@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class DelegatingArgumentResolverService implements ArgumentResolverService {
+
     private final List<ArgumentResolver<?>> argumentResolvers;
 
     @Override

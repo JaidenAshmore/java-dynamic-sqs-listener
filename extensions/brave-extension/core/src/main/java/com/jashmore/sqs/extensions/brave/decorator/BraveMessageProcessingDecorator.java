@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
  * here, otherwise a new trace will be started.
  */
 public class BraveMessageProcessingDecorator implements MessageProcessingDecorator {
+
     private static final BiFunction<MessageProcessingContext, Message, String> DEFAULT_SPAN_NAME_CREATOR = (details, message) ->
         "sqs-listener-" + details.getListenerIdentifier();
 
@@ -79,6 +80,7 @@ public class BraveMessageProcessingDecorator implements MessageProcessingDecorat
     @Value
     @Builder
     public static class Options {
+
         /**
          * The extractor that will be used to obtain the trace information out of the message.
          *

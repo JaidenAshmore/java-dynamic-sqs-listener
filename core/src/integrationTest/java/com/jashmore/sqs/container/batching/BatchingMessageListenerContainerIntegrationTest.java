@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 public class BatchingMessageListenerContainerIntegrationTest {
+
     ElasticMqSqsAsyncClient sqsAsyncClient = new ElasticMqSqsAsyncClient();
 
     @Test

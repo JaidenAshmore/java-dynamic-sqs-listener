@@ -45,6 +45,7 @@ import software.amazon.awssdk.utils.StringUtils;
 @Slf4j
 @ThreadSafe
 public class CoreMessageListenerContainer implements MessageListenerContainer {
+
     private final String identifier;
     private final Supplier<MessageBroker> messageBrokerSupplier;
     private final Supplier<MessageRetriever> messageRetrieverSupplier;

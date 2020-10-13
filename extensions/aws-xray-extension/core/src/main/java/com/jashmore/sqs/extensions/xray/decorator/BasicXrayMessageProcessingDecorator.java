@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
  * <p>See <a href="https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sqs.html">Xray SQS Services</a>
  */
 public class BasicXrayMessageProcessingDecorator implements MessageProcessingDecorator {
+
     private static final String SEGMENT_CONTEXT_ATTRIBUTE_NAME = BasicXrayMessageProcessingDecorator.class.getSimpleName() + ":segment";
     private static final String SUBSEGMENT_CONTEXT_ATTRIBUTE_NAME =
         BasicXrayMessageProcessingDecorator.class.getSimpleName() + ":subsegment";
@@ -113,6 +114,7 @@ public class BasicXrayMessageProcessingDecorator implements MessageProcessingDec
     @Value
     @Builder
     public static class Options {
+
         /**
          * The Xray recorder that will be used to start the segments and subsegments for the message listeners.
          *

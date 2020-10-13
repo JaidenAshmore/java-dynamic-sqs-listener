@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 @Slf4j
 @Component
 public class ScheduledMessageProducer {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final AtomicInteger count;
     private final String queueUrl;

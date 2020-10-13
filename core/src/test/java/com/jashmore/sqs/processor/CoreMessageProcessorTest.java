@@ -37,6 +37,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class CoreMessageProcessorTest {
+
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("queueUrl").build();
     private static final Message MESSAGE = Message.builder().body("test").build();
     private static final SynchronousMessageListenerScenarios syncMessageListener = new SynchronousMessageListenerScenarios();
@@ -380,6 +381,7 @@ class CoreMessageProcessorTest {
 
     @Nested
     class AsynchronousMessageProcessing {
+
         private final AsynchronousMessageListenerScenarios asyncMessageListener = new AsynchronousMessageListenerScenarios();
 
         @Test

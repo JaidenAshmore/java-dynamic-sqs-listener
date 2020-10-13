@@ -35,6 +35,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class ConcurrentMessageBrokerTest {
+
     private static final Function<Message, CompletableFuture<?>> MESSAGE_NO_OP = message -> CompletableFuture.completedFuture(null);
     private static final StaticConcurrentMessageBrokerProperties DEFAULT_PROPERTIES = StaticConcurrentMessageBrokerProperties
         .builder()

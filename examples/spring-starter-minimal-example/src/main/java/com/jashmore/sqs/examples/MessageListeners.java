@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @SuppressWarnings("unused")
 public class MessageListeners {
+
     private static final Logger log = LoggerFactory.getLogger(MessageListeners.class);
 
     @QueueListener(value = "myQueueName")

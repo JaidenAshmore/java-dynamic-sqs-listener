@@ -12,6 +12,7 @@ A message listener may manually extend the timeout by using the
 
 ```java
 public class MyClass {
+
     private final SomeService someService;
 
     public MyClass(final SomeService someService) {
@@ -50,7 +51,6 @@ public class MyClass {
             sqsAsyncClient,
             queueProperties,
             new AutoVisibilityExtenderMessageProcessingDecoratorProperties() {
-
                 @Override
                 public Duration visibilityTimeout() {
                     return Duration.ofMinutes(1);

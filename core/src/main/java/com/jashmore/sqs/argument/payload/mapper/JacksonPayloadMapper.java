@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @AllArgsConstructor
 public class JacksonPayloadMapper implements PayloadMapper {
+
     private final ObjectMapper objectMapper;
 
     @Override

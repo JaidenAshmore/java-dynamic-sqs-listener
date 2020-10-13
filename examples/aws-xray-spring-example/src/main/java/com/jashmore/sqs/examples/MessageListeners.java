@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @Component
 public class MessageListeners {
+
     private final SomeService someService;
 
     @Autowired

@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @AllArgsConstructor
 public class PayloadArgumentResolver implements ArgumentResolver<Object> {
+
     private final PayloadMapper payloadMapper;
 
     @Override

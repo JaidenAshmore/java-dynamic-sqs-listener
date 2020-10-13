@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @SpringBootTest(classes = { QueueListenerIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 class QueueListenerIntegrationTest {
+
     private static final String QUEUE_NAME = "QueueListenerIntegrationTest";
 
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 100;
