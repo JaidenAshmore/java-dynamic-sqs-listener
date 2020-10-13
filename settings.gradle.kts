@@ -7,7 +7,6 @@ pluginManagement {
         id("com.commercehub.gradle.plugin.avro-base") version "0.21.0"
         id("org.jlleitschuh.gradle.ktlint") version "9.4.0"
         id("com.github.spotbugs") version "4.5.1"
-        kotlin("jvm") version "1.4.0"
         id("io.gitlab.arturbosch.detekt") version "1.14.1"
         id("com.jashmore.gradle.github.release") version "0.0.2"
     }
