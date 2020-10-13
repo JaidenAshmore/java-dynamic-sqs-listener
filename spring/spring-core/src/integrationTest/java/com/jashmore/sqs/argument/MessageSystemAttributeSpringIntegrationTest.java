@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 @SpringBootTest(classes = { MessageSystemAttributeSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 public class MessageSystemAttributeSpringIntegrationTest {
+
     private static final String QUEUE_NAME = "MessageAttributeSpringIntegrationTest";
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
     private static final AtomicReference<OffsetDateTime> messageAttributeReference = new AtomicReference<>();

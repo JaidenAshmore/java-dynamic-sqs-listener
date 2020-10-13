@@ -52,6 +52,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
  */
 @Slf4j
 public class GroupingMessageBroker implements MessageBroker {
+
     private final GroupingMessageBrokerProperties properties;
     private final ConcurrentMessageBroker concurrentMessageBroker;
     private final ReentrantLock reentrantLock = new ReentrantLock();
@@ -89,7 +90,6 @@ public class GroupingMessageBroker implements MessageBroker {
         this.concurrentMessageBroker =
             new ConcurrentMessageBroker(
                 new ConcurrentMessageBrokerProperties() {
-
                     @Override
                     public @PositiveOrZero int getConcurrencyLevel() {
                         return properties.getConcurrencyLevel();

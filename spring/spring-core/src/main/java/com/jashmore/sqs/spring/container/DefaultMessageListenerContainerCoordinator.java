@@ -33,6 +33,7 @@ import org.springframework.context.SmartLifecycle;
 @ThreadSafe
 public class DefaultMessageListenerContainerCoordinator
     implements MessageListenerContainerCoordinator, ApplicationContextAware, SmartLifecycle {
+
     private final DefaultMessageListenerContainerCoordinatorProperties properties;
     /**
      * These {@link MessageListenerContainerFactory}s should be injected by the spring application and therefore to add more wrappers into the

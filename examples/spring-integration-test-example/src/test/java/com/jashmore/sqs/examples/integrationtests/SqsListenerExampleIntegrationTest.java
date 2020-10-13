@@ -32,6 +32,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = { "sqs.queues.integrationTestingQueue=" + SqsListenerExampleIntegrationTest.QUEUE_NAME })
 class SqsListenerExampleIntegrationTest {
+
     static final String QUEUE_NAME = "SqsListenerExampleIntegrationTest";
     private static final int QUEUE_MAX_RECEIVE_COUNT = 3;
     private static final int VISIBILITY_TIMEOUT_IN_SECONDS = 2;

@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class AsyncLambdaMessageProcessorTest {
+
     private static final QueueProperties queueProperties = QueueProperties.builder().queueUrl("url").build();
     private static final Message message = Message.builder().receiptHandle("handle").build();
 

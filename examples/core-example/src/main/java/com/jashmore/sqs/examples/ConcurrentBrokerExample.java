@@ -55,6 +55,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
  */
 @Slf4j
 public class ConcurrentBrokerExample {
+
     private static final long CONCURRENCY_LEVEL_PERIOD_IN_MS = 5000L;
     private static final int CONCURRENCY_LEVEL_LIMIT = 10;
 
@@ -195,12 +196,14 @@ public class ConcurrentBrokerExample {
     @Data
     @AllArgsConstructor
     private static class Request {
+
         private final String key;
     }
 
     @Slf4j
     @SuppressWarnings("WeakerAccess")
     public static class MessageConsumer {
+
         private static final AtomicInteger concurrentMessagesBeingProcessed = new AtomicInteger(0);
         private final Random processingTimeRandom = new Random();
 

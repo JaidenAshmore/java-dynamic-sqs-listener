@@ -35,6 +35,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class BatchingMessageResolverTest {
+
     private static final Duration BUFFERING_TIME = Duration.ofSeconds(1);
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("queueUrl").build();
 

@@ -14,6 +14,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class StaticPrefetchingMessageRetrieverProperties implements PrefetchingMessageRetrieverProperties {
+
     @NonNull
     private final Integer desiredMinPrefetchedMessages;
 

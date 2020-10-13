@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
  * in the message attribute of the message.
  */
 public class MessageAttributeSchemaReferenceExtractor implements SchemaReferenceExtractor {
+
     private static final Pattern MIME_TYPE_PATTERN = Pattern.compile(
         "application/([^.]+)\\.([\\p{Alnum}\\$\\.]+)\\.v(\\p{Digit}+)\\+([^.]+)"
     );

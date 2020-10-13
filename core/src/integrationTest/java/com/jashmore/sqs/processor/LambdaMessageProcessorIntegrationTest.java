@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 public class LambdaMessageProcessorIntegrationTest {
+
     private static final ElasticMqSqsAsyncClient client = new ElasticMqSqsAsyncClient();
 
     @AfterAll

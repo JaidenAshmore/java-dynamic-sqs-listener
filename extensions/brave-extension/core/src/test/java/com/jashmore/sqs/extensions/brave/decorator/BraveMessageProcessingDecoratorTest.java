@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 class BraveMessageProcessingDecoratorTest {
+
     private final TestSpanHandler spanHandler = new TestSpanHandler();
     private ThreadLocalCurrentTraceContext currentTraceContext;
     private Tracing tracing;

@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class CoreMessageListenerContainerConstants {
+
     /**
      * The default time that the container will wait for a component to shutdown before giving up.
      */

@@ -44,6 +44,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
     }
 )
 public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
+
     private static final String QUEUE_NAME = "BraveMessageProcessingDecoratorIntegrationTest";
 
     private static final TestSpanHandler spanHandler = new TestSpanHandler();
@@ -66,7 +67,6 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
         @Bean
         public MessageProcessingDecorator messageFinishedDecorator() {
             return new MessageProcessingDecorator() {
-
                 @Override
                 public void onMessageResolvedSuccess(final MessageProcessingContext context, final Message message) {
                     messageResolvedLatch.countDown();
@@ -81,6 +81,7 @@ public class BraveMessageProcessingDecoratorAsynchronousIntegrationTest {
 
         @Service
         public static class MessageListener {
+
             private final Tracing tracing;
 
             public MessageListener(final Tracing tracing) {

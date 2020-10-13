@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class GroupingMessageBrokerTest {
+
     static final String GROUP_A = "groupA";
     static final String GROUP_B = "groupB";
     static final String GROUP_C = "groupC";

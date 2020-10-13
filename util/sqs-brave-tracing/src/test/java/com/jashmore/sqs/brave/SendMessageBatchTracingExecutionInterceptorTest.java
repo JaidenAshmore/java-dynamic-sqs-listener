@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageBatchResultEntry;
 import software.amazon.awssdk.utils.ImmutableMap;
 
 public class SendMessageBatchTracingExecutionInterceptorTest {
+
     private final TestSpanHandler spanHandler = new TestSpanHandler();
     private final Tracing tracing = Tracing.newBuilder().addSpanHandler(spanHandler).build();
 
@@ -156,7 +157,6 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
             .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-
             @Override
             public void decorateMessageSpan(SendMessageBatchRequest request, SendMessageBatchRequestEntry entry, Span span) {
                 span.tag("test", "value");
@@ -399,7 +399,6 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 500);
         final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-
             @Override
             public void decorateRequestFailedMessageSpan(SendMessageBatchRequest request, SdkHttpResponse httpResponse, Span span) {
                 span.tag("test", "value");

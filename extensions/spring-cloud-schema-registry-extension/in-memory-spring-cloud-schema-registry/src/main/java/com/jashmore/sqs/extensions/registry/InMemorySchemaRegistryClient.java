@@ -15,6 +15,7 @@ import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
  */
 @ThreadSafe
 public class InMemorySchemaRegistryClient implements SchemaRegistryClient {
+
     private final Map<SchemaReference, SchemaDetails> schemas = new ConcurrentHashMap<>();
 
     private final AtomicInteger schemaVersionNumber = new AtomicInteger(1);
@@ -50,6 +51,7 @@ public class InMemorySchemaRegistryClient implements SchemaRegistryClient {
     @Value
     @Builder
     private static class SchemaDetails {
+
         int id;
         String schemaDefinition;
     }

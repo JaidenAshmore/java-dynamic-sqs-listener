@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ExampleConstants {
+
     /**
      * The number of messages to place onto the queue before beginning to process the messages.
      */

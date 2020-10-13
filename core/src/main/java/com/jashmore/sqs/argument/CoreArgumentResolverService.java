@@ -19,6 +19,7 @@ import lombok.experimental.Delegate;
  * <p>If you desire more/different resolves use the {@link DelegatingArgumentResolverService} to consume these.
  */
 public class CoreArgumentResolverService implements ArgumentResolverService {
+
     @Delegate
     private final DelegatingArgumentResolverService delegatingArgumentResolverService;
 

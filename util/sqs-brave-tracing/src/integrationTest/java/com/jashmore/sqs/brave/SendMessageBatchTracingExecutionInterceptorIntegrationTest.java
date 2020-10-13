@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 public class SendMessageBatchTracingExecutionInterceptorIntegrationTest {
+
     private final TestSpanHandler testSpanHandler = new TestSpanHandler();
     private final Tracing tracing = Tracing.newBuilder().addSpanHandler(testSpanHandler).build();
 

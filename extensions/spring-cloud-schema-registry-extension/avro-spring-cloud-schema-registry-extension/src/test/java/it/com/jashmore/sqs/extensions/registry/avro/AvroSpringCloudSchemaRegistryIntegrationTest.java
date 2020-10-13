@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Primary;
 @SpringBootTest(classes = AvroSpringCloudSchemaRegistryIntegrationTest.Application.class)
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 public class AvroSpringCloudSchemaRegistryIntegrationTest {
+
     private static final String QUEUE_NAME = "test";
 
     @Autowired

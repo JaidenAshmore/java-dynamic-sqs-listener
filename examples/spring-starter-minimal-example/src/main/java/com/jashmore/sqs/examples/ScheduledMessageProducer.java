@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Component
 @EnableScheduling
 public class ScheduledMessageProducer {
+
     private final SqsAsyncClient sqsAsyncClient;
 
     @Autowired

@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationContext;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class DefaultMessageListenerContainerCoordinatorTest {
+
     @Mock
     private DefaultMessageListenerContainerCoordinatorProperties properties;
 

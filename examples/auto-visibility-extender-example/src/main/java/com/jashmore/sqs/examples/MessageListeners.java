@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 @Slf4j
 @Component
 public class MessageListeners {
+
     private static final int MAXIMUM_DURATION_IN_SECONDS = 16;
     private static final Set<String> interruptedMessages = ConcurrentHashMap.newKeySet();
     private static final Random random = new Random();

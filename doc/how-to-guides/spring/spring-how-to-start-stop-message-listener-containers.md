@@ -40,6 +40,7 @@ public class MyClass {
 ```java
 @Service
 public class MyService {
+
     private final MessageListenerContainerCoordinator messageListenerContainerCoordinator;
 
     @Autowired
@@ -63,6 +64,7 @@ public class MyService {
 ```java
 @Service
 public class MyService {
+
     private final MessageListenerContainerCoordinator messageListenerContainerCoordinator;
 
     @Autowired

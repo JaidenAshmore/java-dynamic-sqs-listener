@@ -33,6 +33,7 @@ public class ThreadUtils {
     }
 
     private class NamedThreadFactory implements ThreadFactory {
+
         private final ThreadFactory delegate;
         private final AtomicLong threadCount = new AtomicLong(0);
         private Function<Long, String> nameGenerator;

@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Value
 @Builder
 public class QueueDrain {
+
     Queue<CompletableFuture<Message>> futuresWaitingForMessages;
     Queue<Message> messagesAvailableForProcessing;
 }

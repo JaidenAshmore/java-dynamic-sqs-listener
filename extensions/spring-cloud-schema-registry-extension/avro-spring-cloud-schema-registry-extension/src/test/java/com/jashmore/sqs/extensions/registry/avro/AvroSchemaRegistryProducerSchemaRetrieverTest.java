@@ -18,6 +18,7 @@ import org.springframework.core.io.ClassPathResource;
 
 @ExtendWith(MockitoExtension.class)
 class AvroSchemaRegistryProducerSchemaRetrieverTest {
+
     private static final Schema.Parser SCHEMA_PARSER = new Schema.Parser();
     private static final Schema SCHEMA;
 

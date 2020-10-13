@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @EnableScheduling
 @SpringBootApplication
 public class Application {
+
     static final String QUEUE_NAME = "queue";
 
     public static void main(String[] args) {

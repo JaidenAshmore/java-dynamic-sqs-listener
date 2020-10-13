@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * Default implementation that stores the default {@link SqsAsyncClient}, if it exists, and the map of available clients.
  */
 public class DefaultSqsAsyncClientProvider implements SqsAsyncClientProvider {
+
     private final SqsAsyncClient defaultClient;
     private final Map<String, SqsAsyncClient> clientMap;
 

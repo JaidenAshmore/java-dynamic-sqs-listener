@@ -75,6 +75,7 @@ class AvroClasspathConsumerSchemaRetrieverTest {
 
     @Nested
     class GetSchema {
+
         private AvroClasspathConsumerSchemaRetriever avroClasspathConsumerSchemaRetriever;
 
         @BeforeEach

@@ -43,6 +43,7 @@ import software.amazon.awssdk.utils.SdkAutoCloseable;
  */
 @Slf4j
 public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
+
     @Delegate(excludes = SdkAutoCloseable.class)
     private final SqsAsyncClient delegate;
 
@@ -165,6 +166,7 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
     @Value
     @Builder
     private static class RegisteredSchema {
+
         SchemaReference reference;
         Schema schema;
     }

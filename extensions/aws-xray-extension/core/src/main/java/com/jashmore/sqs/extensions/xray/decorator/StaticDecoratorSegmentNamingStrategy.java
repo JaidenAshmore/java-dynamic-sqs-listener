@@ -7,6 +7,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * Static implementation that will return the same segment name regardless of the message listener or message being processed.
  */
 public class StaticDecoratorSegmentNamingStrategy implements DecoratorSegmentNamingStrategy {
+
     private final String segmentName;
 
     /**

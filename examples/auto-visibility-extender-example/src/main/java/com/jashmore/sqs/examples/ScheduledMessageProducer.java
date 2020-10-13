@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Slf4j
 @Component
 public class ScheduledMessageProducer {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final String queueUrl;
 

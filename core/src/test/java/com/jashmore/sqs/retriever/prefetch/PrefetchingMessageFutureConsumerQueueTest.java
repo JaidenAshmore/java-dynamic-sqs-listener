@@ -26,6 +26,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class PrefetchingMessageFutureConsumerQueueTest {
+
     @Mock
     private CompletableFuture<Message> messageCompletableFuture;
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class SomeService {
+
     private static final Random RANDOM = new Random();
 
     public void someMethod() throws InterruptedException {

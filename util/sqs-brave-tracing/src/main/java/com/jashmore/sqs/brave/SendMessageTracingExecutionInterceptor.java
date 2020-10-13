@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
  * <p>This will allow the trace to be continued by all consuming services.
  */
 public class SendMessageTracingExecutionInterceptor implements ExecutionInterceptor {
+
     static final ExecutionAttribute<Span> SPAN_EXECUTION_ATTRIBUTE = new ExecutionAttribute<>("span");
 
     private final Tracing tracing;

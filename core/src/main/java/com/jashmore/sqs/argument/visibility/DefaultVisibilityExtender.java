@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @AllArgsConstructor
 public class DefaultVisibilityExtender implements VisibilityExtender {
+
     private final SqsAsyncClient sqsAsyncClient;
     private final QueueProperties queueProperties;
     private final Message message;

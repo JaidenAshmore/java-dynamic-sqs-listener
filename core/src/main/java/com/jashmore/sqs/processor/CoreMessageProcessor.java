@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ThreadSafe
 public class CoreMessageProcessor implements MessageProcessor {
+
     private final MessageProcessor delegate;
 
     public CoreMessageProcessor(

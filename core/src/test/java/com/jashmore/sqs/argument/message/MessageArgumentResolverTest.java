@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 class MessageArgumentResolverTest {
+
     private final MessageArgumentResolver messageArgumentResolver = new MessageArgumentResolver();
 
     @Test

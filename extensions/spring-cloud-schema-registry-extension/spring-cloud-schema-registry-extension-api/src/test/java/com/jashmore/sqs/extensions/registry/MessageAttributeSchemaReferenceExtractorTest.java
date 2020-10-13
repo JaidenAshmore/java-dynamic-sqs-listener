@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 class MessageAttributeSchemaReferenceExtractorTest {
+
     private final MessageAttributeSchemaReferenceExtractor messageAttributeSchemaReferenceExtractor = new MessageAttributeSchemaReferenceExtractor();
 
     @Test

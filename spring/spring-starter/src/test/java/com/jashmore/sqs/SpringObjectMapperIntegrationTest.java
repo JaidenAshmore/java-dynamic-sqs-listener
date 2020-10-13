@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
     }
 )
 class SpringObjectMapperIntegrationTest {
+
     private static final String QUEUE_NAME = "SpringObjectMapperIntegrationTest";
 
     private static final CountDownLatch MESSAGE_RECEIVED = new CountDownLatch(1);
@@ -140,6 +141,7 @@ class SpringObjectMapperIntegrationTest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class User {
+
         private String username;
     }
 }

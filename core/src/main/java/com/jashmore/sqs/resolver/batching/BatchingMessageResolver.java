@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @ThreadSafe
 public class BatchingMessageResolver implements MessageResolver {
+
     private final QueueProperties queueProperties;
     private final SqsAsyncClient sqsAsyncClient;
     private final BatchingMessageResolverProperties properties;
@@ -243,6 +244,7 @@ public class BatchingMessageResolver implements MessageResolver {
     @Value
     @AllArgsConstructor
     private static class MessageResolutionBean {
+
         /**
          * The message to be resolved.
          */

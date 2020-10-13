@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 
 class PrefetchingQueueListenerParserTest {
+
     MockEnvironment mockEnvironment;
 
     PrefetchingQueueListenerParser parser;

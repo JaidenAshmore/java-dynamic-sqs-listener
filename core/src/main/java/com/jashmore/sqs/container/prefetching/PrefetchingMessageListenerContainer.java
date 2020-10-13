@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * @see PrefetchingMessageListenerContainerProperties for configuration options
  */
 public class PrefetchingMessageListenerContainer implements MessageListenerContainer {
+
     private final MessageListenerContainer delegate;
 
     public PrefetchingMessageListenerContainer(
@@ -55,7 +56,6 @@ public class PrefetchingMessageListenerContainer implements MessageListenerConta
         return () ->
             new ConcurrentMessageBroker(
                 new ConcurrentMessageBrokerProperties() {
-
                     @PositiveOrZero
                     @Override
                     public int getConcurrencyLevel() {
@@ -89,7 +89,6 @@ public class PrefetchingMessageListenerContainer implements MessageListenerConta
                 sqsAsyncClient,
                 queueProperties,
                 new PrefetchingMessageRetrieverProperties() {
-
                     @Positive
                     @Override
                     public int getDesiredMinPrefetchedMessages() {

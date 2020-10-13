@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 @SuppressWarnings("unused")
 @Slf4j
 public class MessageListeners {
+
     private final AtomicInteger count = new AtomicInteger(0);
     private final AtomicLong firstTime = new AtomicLong(0);
 

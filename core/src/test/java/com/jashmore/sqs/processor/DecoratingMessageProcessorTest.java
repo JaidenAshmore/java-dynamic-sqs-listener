@@ -47,6 +47,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class DecoratingMessageProcessorTest {
+
     static QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().build();
 
     MessageProcessingContext emptyContext = MessageProcessingContext
@@ -72,6 +73,7 @@ class DecoratingMessageProcessorTest {
 
     @Nested
     class OnPreMessageProcessing {
+
         SynchronousMessageListenerScenarios synchronousMessageListener = new SynchronousMessageListenerScenarios();
 
         @Test
@@ -143,6 +145,7 @@ class DecoratingMessageProcessorTest {
 
     @Nested
     class Asynchronous {
+
         AsynchronousMessageListenerScenarios asynchronousMessageListenerScenarios = new AsynchronousMessageListenerScenarios();
 
         @Mock
@@ -210,7 +213,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
                         decoratorThread.set(Thread.currentThread());
@@ -270,7 +272,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(MessageProcessingContext context, Message message) {
                         contextReference.set(context);
@@ -354,7 +355,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyRejected");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingFailure(MessageProcessingContext context, Message message, Throwable object) {
                         decoratorThread.set(Thread.currentThread());
@@ -413,7 +413,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -496,7 +495,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingThreadComplete(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         decoratorThread.set(Thread.currentThread());
@@ -556,7 +554,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -628,7 +625,6 @@ class DecoratingMessageProcessorTest {
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final AtomicReference<Thread> threadReference = new AtomicReference<>();
                 final MessageProcessingDecorator threadListenerDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolve(MessageProcessingContext context, Message message) {
                         threadReference.set(Thread.currentThread());
@@ -668,7 +664,6 @@ class DecoratingMessageProcessorTest {
                 );
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final MessageProcessingDecorator failingDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolve(MessageProcessingContext context, Message message) {
                         throw new ExpectedTestException();
@@ -845,7 +840,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolvedSuccess(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         decoratorThread.set(Thread.currentThread());
@@ -917,7 +911,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1002,7 +995,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = AsynchronousMessageListenerScenarios.getMethod("methodReturnFutureSubsequentlyResolved");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolvedFailure(
                         @Nonnull MessageProcessingContext context,
@@ -1079,7 +1071,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(asynchronousMessageListenerScenarios, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1104,6 +1095,7 @@ class DecoratingMessageProcessorTest {
 
     @Nested
     class Synchronous {
+
         SynchronousMessageListenerScenarios synchronousMessageListener = new SynchronousMessageListenerScenarios();
 
         @Nested
@@ -1160,7 +1152,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingSuccess(MessageProcessingContext context, Message message, @Nullable Object object) {
                         decoratorThread.set(Thread.currentThread());
@@ -1218,7 +1209,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1294,7 +1284,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodThatThrowsException");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingFailure(
                         @Nonnull MessageProcessingContext context,
@@ -1354,7 +1343,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1429,7 +1417,6 @@ class DecoratingMessageProcessorTest {
                 final Method method = SynchronousMessageListenerScenarios.getMethod("methodWithNoArguments");
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageProcessingThreadComplete(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         decoratorThread.set(Thread.currentThread());
@@ -1487,7 +1474,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1577,7 +1563,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final MessageProcessingDecorator failingDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolve(MessageProcessingContext context, Message message) {
                         throw new ExpectedTestException();
@@ -1721,7 +1706,6 @@ class DecoratingMessageProcessorTest {
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final CountDownLatch resolvingComplete = new CountDownLatch(1);
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolvedSuccess(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         decoratorThread.set(Thread.currentThread());
@@ -1794,7 +1778,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);
@@ -1847,7 +1830,6 @@ class DecoratingMessageProcessorTest {
                 final AtomicReference<Thread> decoratorThread = new AtomicReference<>();
                 final CountDownLatch resolvingComplete = new CountDownLatch(1);
                 final MessageProcessingDecorator decorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onMessageResolvedFailure(
                         @Nonnull MessageProcessingContext context,
@@ -1925,7 +1907,6 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = createCoreProcessor(synchronousMessageListener, method);
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
                 final MessageProcessingDecorator otherDecorator = new MessageProcessingDecorator() {
-
                     @Override
                     public void onPreMessageProcessing(@Nonnull MessageProcessingContext context, @Nonnull Message message) {
                         contextReference.set(context);

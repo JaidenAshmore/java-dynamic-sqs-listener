@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  */
 public abstract class AbstractCoreMessageListenerContainerFactory<A extends Annotation, P>
     extends AbstractAnnotationMessageListenerContainerFactory<A> {
+
     private final SqsAsyncClientProvider sqsAsyncClientProvider;
     private final QueueResolver queueResolver;
     private final CoreAnnotationParser<A, P> annotationParser;

@@ -34,6 +34,7 @@ public class IntegrationTestExampleApplication {
     @Component
     @AllArgsConstructor
     public static class MessageListener {
+
         private final SomeService someService;
 
         /**

@@ -45,6 +45,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @ThreadSafe
 public class AutoVisibilityExtenderMessageProcessingDecorator implements MessageProcessingDecorator {
+
     private static final Logger log = LoggerFactory.getLogger(AutoVisibilityExtenderMessageProcessingDecorator.class);
 
     private final SqsAsyncClient sqsAsyncClient;

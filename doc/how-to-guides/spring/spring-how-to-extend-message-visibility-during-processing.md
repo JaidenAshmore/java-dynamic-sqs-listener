@@ -9,6 +9,7 @@ A message listener may manually extend the timeout by using the
 
 ```java
 public class MyClass {
+
     private final SomeService someService;
 
     public MyClass(final SomeService someService) {

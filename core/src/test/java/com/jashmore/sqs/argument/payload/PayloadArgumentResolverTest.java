@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class PayloadArgumentResolverTest {
+
     @Mock
     private PayloadMapper payloadMapper;
 
@@ -106,6 +107,7 @@ class PayloadArgumentResolverTest {
 
     @SuppressWarnings({ "WeakerAccess", "unused" })
     public static class Pojo {
+
         private final String field;
 
         public Pojo(final String field) {

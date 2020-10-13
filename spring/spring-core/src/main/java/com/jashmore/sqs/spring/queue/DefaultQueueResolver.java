@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Service
 @AllArgsConstructor
 public class DefaultQueueResolver implements QueueResolver {
+
     private final Environment environment;
 
     @Override

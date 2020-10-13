@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 @SpringBootTest(classes = { MessageArgumentResolutionSpringIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 @ExtendWith(SpringExtension.class)
 public class MessageArgumentResolutionSpringIntegrationTest {
+
     private static final String QUEUE_NAME = "MessageArgumentResolutionSpringIntegrationTest";
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
     private static final AtomicReference<Message> messageAttributeReference = new AtomicReference<>();

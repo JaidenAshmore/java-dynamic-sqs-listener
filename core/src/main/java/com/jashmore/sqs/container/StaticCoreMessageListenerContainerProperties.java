@@ -9,6 +9,7 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticCoreMessageListenerContainerProperties implements CoreMessageListenerContainerProperties {
+
     Boolean shouldProcessAnyExtraRetrievedMessagesOnShutdown;
     Boolean shouldInterruptThreadsProcessingMessagesOnShutdown;
     Duration messageProcessingShutdownTimeout;

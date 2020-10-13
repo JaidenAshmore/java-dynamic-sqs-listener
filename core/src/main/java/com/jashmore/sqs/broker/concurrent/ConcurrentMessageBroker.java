@@ -37,6 +37,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  */
 @Slf4j
 public class ConcurrentMessageBroker implements MessageBroker {
+
     private final ConcurrentMessageBrokerProperties properties;
     private final ResizableSemaphore concurrentMessagesBeingProcessedSemaphore;
 

@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
 
 @Slf4j
 public class ElasticMqSqsAsyncClient implements LocalSqsAsyncClient {
+
     @Delegate(excludes = SdkClient.class)
     private final LocalSqsAsyncClient delegate;
 

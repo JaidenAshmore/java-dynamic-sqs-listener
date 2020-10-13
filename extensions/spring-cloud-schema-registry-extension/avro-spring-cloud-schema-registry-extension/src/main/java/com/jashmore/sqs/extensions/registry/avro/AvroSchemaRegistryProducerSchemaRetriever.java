@@ -11,6 +11,7 @@ import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
  * messages using.
  */
 public class AvroSchemaRegistryProducerSchemaRetriever implements ProducerSchemaRetriever<Schema> {
+
     private final SchemaRegistryClient schemaRegistryClient;
 
     public AvroSchemaRegistryProducerSchemaRetriever(final SchemaRegistryClient schemaRegistryClient) {

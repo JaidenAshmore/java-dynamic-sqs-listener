@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * @see BatchingMessageListenerContainerProperties for configuration options
  */
 public class BatchingMessageListenerContainer implements MessageListenerContainer {
+
     private final MessageListenerContainer delegate;
 
     public BatchingMessageListenerContainer(
@@ -48,7 +49,6 @@ public class BatchingMessageListenerContainer implements MessageListenerContaine
                 messageProcessorSupplier,
                 buildMessageResolver(queueProperties, sqsAsyncClient, properties),
                 new CoreMessageListenerContainerProperties() {
-
                     @Nullable
                     @Override
                     public Boolean shouldInterruptThreadsProcessingMessagesOnShutdown() {
@@ -116,7 +116,6 @@ public class BatchingMessageListenerContainer implements MessageListenerContaine
         return () ->
             new ConcurrentMessageBroker(
                 new ConcurrentMessageBrokerProperties() {
-
                     @Override
                     public @PositiveOrZero int getConcurrencyLevel() {
                         return properties.concurrencyLevel();
@@ -145,7 +144,6 @@ public class BatchingMessageListenerContainer implements MessageListenerContaine
                 queueProperties,
                 sqsAsyncClient,
                 new BatchingMessageRetrieverProperties() {
-
                     @Positive
                     @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS)
                     @Override
@@ -187,7 +185,6 @@ public class BatchingMessageListenerContainer implements MessageListenerContaine
                 queueProperties,
                 sqsAsyncClient,
                 new BatchingMessageResolverProperties() {
-
                     @Positive
                     @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_IN_BATCH)
                     @Override

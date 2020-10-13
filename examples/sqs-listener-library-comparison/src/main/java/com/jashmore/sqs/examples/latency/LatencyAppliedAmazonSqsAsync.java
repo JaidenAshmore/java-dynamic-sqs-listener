@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @AllArgsConstructor
 public class LatencyAppliedAmazonSqsAsync implements AmazonSQSAsync {
+
     @Delegate(excludes = MethodsToOverride.class)
     private final AmazonSQSAsync delegate;
 

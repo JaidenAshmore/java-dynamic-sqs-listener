@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @Slf4j
 @SpringBootTest(classes = { QueueListenerMessageDecoratorIntegrationTest.TestConfig.class, QueueListenerConfiguration.class })
 public class QueueListenerMessageDecoratorIntegrationTest {
+
     private static final String QUEUE_NAME = "QueueListenerMessageDecoratorIntegrationTest";
     private static final AtomicReference<String> mdcValue = new AtomicReference<>();
     private static final CountDownLatch MESSAGE_PROCESSED_LATCH = new CountDownLatch(1);
@@ -42,7 +43,6 @@ public class QueueListenerMessageDecoratorIntegrationTest {
         @Bean
         public MessageProcessingDecorator mdcDecorator() {
             return new MessageProcessingDecorator() {
-
                 @Override
                 public void onPreMessageProcessing(final MessageProcessingContext context, final Message message) {
                     MDC.put("test", "value");

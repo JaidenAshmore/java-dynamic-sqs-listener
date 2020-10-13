@@ -69,6 +69,7 @@ we wrote.
     ```java
     public class MySleepingMessageListenerContainerFactory
         extends AbstractAnnotationMessageListenerContainerFactory<SleepingQueueListener> {
+
         private final ArgumentResolverService argumentResolverService;
         private final SqsAsyncClientProvider sqsAsyncClientProvider;
 

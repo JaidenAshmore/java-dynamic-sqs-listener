@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
 @RequiredArgsConstructor
 @SuppressWarnings("checkstyle:javadocmethod")
 public class MessageProducers {
+
     private final AvroSchemaRegistrySqsAsyncClient sqsAsyncClient;
 
     @Scheduled(initialDelay = 1000, fixedDelay = 1000)

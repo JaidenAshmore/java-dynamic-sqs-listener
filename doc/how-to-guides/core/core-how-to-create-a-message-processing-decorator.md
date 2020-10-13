@@ -149,6 +149,7 @@ You want to monitor the number of messages attempting to be processed as well as
 
 ```java
 public class MetricsMessageProcessingDecorator implements MessageProcessingDecorator {
+
     private final MyMetricsService metrics;
 
     public MetricsMessageProcessingDecorator(final MyMetricsService metrics) {

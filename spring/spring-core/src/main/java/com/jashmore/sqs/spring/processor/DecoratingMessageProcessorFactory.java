@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
  * specific message listener via a {@link MessageProcessingDecoratorFactory}.
  */
 public class DecoratingMessageProcessorFactory {
+
     private final List<MessageProcessingDecorator> globalDecorators;
     private final List<MessageProcessingDecoratorFactory<? extends MessageProcessingDecorator>> decoratorFactories;
 

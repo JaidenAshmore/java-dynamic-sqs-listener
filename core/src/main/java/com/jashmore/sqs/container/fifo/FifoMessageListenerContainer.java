@@ -46,6 +46,7 @@ import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
  *     about FIFO SQS queues
  */
 public class FifoMessageListenerContainer implements MessageListenerContainer {
+
     private final MessageListenerContainer delegate;
 
     public FifoMessageListenerContainer(
@@ -74,7 +75,6 @@ public class FifoMessageListenerContainer implements MessageListenerContainer {
         return () ->
             new GroupingMessageBroker(
                 new GroupingMessageBrokerProperties() {
-
                     @Override
                     public @PositiveOrZero int getConcurrencyLevel() {
                         return properties.concurrencyLevel();
@@ -123,7 +123,6 @@ public class FifoMessageListenerContainer implements MessageListenerContainer {
                 queueProperties,
                 sqsAsyncClient,
                 new BatchingMessageRetrieverProperties() {
-
                     @Override
                     @Positive
                     @Max(AwsConstants.MAX_NUMBER_OF_MESSAGES_FROM_SQS)

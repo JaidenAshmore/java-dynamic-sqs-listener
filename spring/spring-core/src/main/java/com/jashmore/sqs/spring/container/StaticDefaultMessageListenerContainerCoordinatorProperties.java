@@ -9,6 +9,7 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticDefaultMessageListenerContainerCoordinatorProperties implements DefaultMessageListenerContainerCoordinatorProperties {
+
     boolean isAutoStartContainersEnabled;
 
     @Override

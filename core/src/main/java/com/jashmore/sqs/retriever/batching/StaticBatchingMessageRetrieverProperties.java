@@ -13,6 +13,7 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class StaticBatchingMessageRetrieverProperties implements BatchingMessageRetrieverProperties {
+
     int batchSize;
     Duration batchingPeriod;
     Duration messageVisibilityTimeout;

@@ -61,6 +61,7 @@ public void messageListener(@UserGroup final String userGroup) {
 
     ```java
     public class UserGroupArgumentResolver implements ArgumentResolver<String> {
+
         private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
         @Override

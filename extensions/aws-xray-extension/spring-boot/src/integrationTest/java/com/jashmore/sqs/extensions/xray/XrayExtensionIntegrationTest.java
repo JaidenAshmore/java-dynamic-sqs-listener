@@ -34,6 +34,7 @@ import org.springframework.test.context.TestPropertySource;
 )
 @TestPropertySource(properties = { "spring.application.name=my-test-service" })
 public class XrayExtensionIntegrationTest {
+
     static final int XRAY_DAEMON_PORT = 4455;
     private static final String QUEUE_NAME = "XrayExtensionIntegrationTest";
 

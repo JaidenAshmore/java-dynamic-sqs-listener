@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public final class AwsConstants {
+
     /**
      * AWS has a maximum wait time of for receiving a message and some implementations like ElasticMQ will
      * throw errors for any value greater than this.

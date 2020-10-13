@@ -27,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @Slf4j
 class ProxyBeanQueueListenerResolutionIntegrationTest {
+
     private static final String QUEUE_NAME = "ProxyBeanQueueListenerResolutionIntegrationTest";
 
     private static final CountDownLatch proxiedTestMethodCompleted = new CountDownLatch(2);

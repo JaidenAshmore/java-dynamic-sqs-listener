@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultVisibilityExtenderTest {
+
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl("queueUrl").build();
     private static final String RECEIPT_HANDLE = "receipt_handle";
 

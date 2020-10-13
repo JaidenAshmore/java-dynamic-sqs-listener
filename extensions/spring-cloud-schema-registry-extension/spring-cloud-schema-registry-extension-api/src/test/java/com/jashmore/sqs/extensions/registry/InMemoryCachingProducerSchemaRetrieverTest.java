@@ -15,6 +15,7 @@ import org.springframework.cloud.schema.registry.SchemaReference;
 
 @ExtendWith(MockitoExtension.class)
 class InMemoryCachingProducerSchemaRetrieverTest {
+
     @Mock
     private ProducerSchemaRetriever<String> mockDelegate;
 

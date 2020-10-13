@@ -27,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = { "prop.concurrency=5" })
 class PrefetchingQueueListenerIntegrationTest {
+
     private static final String QUEUE_NAME = "PrefetchingQueueListenerIntegrationTest";
     private static final int NUMBER_OF_MESSAGES_TO_SEND = 5;
     private static final CyclicBarrier CYCLIC_BARRIER = new CyclicBarrier(NUMBER_OF_MESSAGES_TO_SEND + 1);

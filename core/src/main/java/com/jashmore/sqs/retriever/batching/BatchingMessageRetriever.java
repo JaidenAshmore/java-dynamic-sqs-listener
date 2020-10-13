@@ -36,6 +36,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
  */
 @Slf4j
 public class BatchingMessageRetriever implements MessageRetriever {
+
     private final QueueProperties queueProperties;
     private final SqsAsyncClient sqsAsyncClient;
     private final BatchingMessageRetrieverProperties properties;

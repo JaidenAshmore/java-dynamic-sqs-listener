@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
  * @param <T> the spring cloud registry schema type used to resolve this argument
  */
 public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Object> {
+
     private final SchemaReferenceExtractor schemaReferenceExtractor;
     private final ConsumerSchemaRetriever<T> consumerSchemaRetriever;
     private final ProducerSchemaRetriever<T> producerSchemaRetriever;
