@@ -6,7 +6,7 @@ pluginManagement {
         id("org.springframework.boot") version "2.3.4.RELEASE"
         id("com.commercehub.gradle.plugin.avro-base") version "0.21.0"
         id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
-        id("com.github.spotbugs") version "4.5.1"
+        id("com.github.spotbugs") version "4.1.4"
         id("io.gitlab.arturbosch.detekt") version "1.14.1"
         id("com.jashmore.gradle.github.release") version "0.0.2"
     }
