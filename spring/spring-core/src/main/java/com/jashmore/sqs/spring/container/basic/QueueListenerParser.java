@@ -186,7 +186,12 @@ public class QueueListenerParser implements CoreAnnotationParser<QueueListener, 
     protected Supplier<Duration> messageVisibilityTimeoutSupplier(final QueueListener annotation) {
         final Duration messageVisibilityTimeout;
         if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
-            messageVisibilityTimeout = Duration.ofSeconds(annotation.messageVisibilityTimeoutInSeconds());
+            final int visibilityTimeout = annotation.messageVisibilityTimeoutInSeconds();
+            if (visibilityTimeout < 0) {
+                messageVisibilityTimeout = null;
+            } else {
+                messageVisibilityTimeout = Duration.ofSeconds(visibilityTimeout);
+            }
         } else {
             messageVisibilityTimeout =
                 Duration.ofSeconds(Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
