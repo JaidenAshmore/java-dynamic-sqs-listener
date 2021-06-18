@@ -19,4 +19,5 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-starter-aop")
     testImplementation(project(":elasticmq-sqs-client"))
+    testImplementation(project(":expected-test-exception"))
 }

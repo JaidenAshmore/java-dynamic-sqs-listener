@@ -32,7 +32,7 @@ class QueueListenerParserTest {
         assertThat(properties.concurrencyLevel()).isEqualTo(5);
         assertThat(properties.batchSize()).isEqualTo(5);
         assertThat(properties.getBatchingPeriod()).isEqualTo(Duration.ofSeconds(2));
-        assertThat(properties.messageVisibilityTimeout()).isEqualTo(Duration.ofSeconds(30));
+        assertThat(properties.messageVisibilityTimeout()).isNull();
         assertThat(properties.processAnyExtraRetrievedMessagesOnShutdown()).isTrue();
         assertThat(properties.interruptThreadsProcessingMessagesOnShutdown()).isFalse();
     }

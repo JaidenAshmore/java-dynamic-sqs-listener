@@ -33,7 +33,7 @@ class PrefetchingQueueListenerParserTest {
         assertThat(properties.concurrencyLevel()).isEqualTo(5);
         assertThat(properties.desiredMinPrefetchedMessages()).isEqualTo(1);
         assertThat(properties.maxPrefetchedMessages()).isEqualTo(10);
-        assertThat(properties.messageVisibilityTimeout()).isEqualTo(Duration.ofSeconds(30));
+        assertThat(properties.messageVisibilityTimeout()).isNull();
         assertThat(properties.processAnyExtraRetrievedMessagesOnShutdown()).isTrue();
         assertThat(properties.interruptThreadsProcessingMessagesOnShutdown()).isFalse();
     }
