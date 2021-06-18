@@ -87,7 +87,7 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
      */
     protected Supplier<Integer> concurrencySupplier(final FifoQueueListener annotation) {
         final int concurrencyLevel;
-        if (StringUtils.isEmpty(annotation.concurrencyLevelString())) {
+        if (!StringUtils.hasText(annotation.concurrencyLevelString())) {
             concurrencyLevel = annotation.concurrencyLevel();
         } else {
             concurrencyLevel = Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
@@ -119,7 +119,7 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
      */
     protected Supplier<Integer> maximumMessagesInGroupSupplier(final FifoQueueListener annotation) {
         final int batchSize;
-        if (StringUtils.isEmpty(annotation.maximumMessagesInMessageGroupString())) {
+        if (!StringUtils.hasText(annotation.maximumMessagesInMessageGroupString())) {
             batchSize = annotation.maximumMessagesInMessageGroup();
         } else {
             batchSize = Integer.parseInt(environment.resolvePlaceholders(annotation.maximumMessagesInMessageGroupString()));
@@ -139,7 +139,7 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
      */
     protected Supplier<Integer> maximumCachedMessageGroupsSupplier(final FifoQueueListener annotation) {
         final int maximumCachedMessageGroups;
-        if (StringUtils.isEmpty(annotation.maximumCachedMessageGroupsString())) {
+        if (!StringUtils.hasText(annotation.maximumCachedMessageGroupsString())) {
             maximumCachedMessageGroups = annotation.maximumCachedMessageGroups();
         } else {
             maximumCachedMessageGroups = Integer.parseInt(environment.resolvePlaceholders(annotation.maximumCachedMessageGroupsString()));
@@ -172,7 +172,7 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
      */
     protected Supplier<Duration> messageVisibilityTimeoutSupplier(final FifoQueueListener annotation) {
         final Duration messageVisibilityTimeout;
-        if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
+        if (!StringUtils.hasText(annotation.messageVisibilityTimeoutInSecondsString())) {
             if (annotation.messageVisibilityTimeoutInSeconds() <= 0) {
                 messageVisibilityTimeout = null;
             } else {

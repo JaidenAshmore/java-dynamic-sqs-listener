@@ -107,7 +107,7 @@ public class AutoVisibilityExtenderMessageProcessingDecoratorFactory
         final Supplier<Integer> integerSupplier
     ) {
         final String stringPropertyValue = stringProperty.get();
-        if (!StringUtils.isEmpty(stringPropertyValue)) {
+        if (StringUtils.hasText(stringPropertyValue)) {
             return Duration.ofSeconds(Integer.parseInt(environment.resolvePlaceholders(stringPropertyValue)));
         }
 
