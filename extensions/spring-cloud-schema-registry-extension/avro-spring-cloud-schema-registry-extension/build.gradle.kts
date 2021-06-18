@@ -1,9 +1,9 @@
-import com.commercehub.gradle.plugin.avro.GenerateAvroJavaTask
+import com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask
 
 description = "Apache Avro implementation of the Spring Cloud Schema Registry Extension"
 
 plugins {
-    id("com.commercehub.gradle.plugin.avro-base")
+    id("com.github.davidmc24.gradle.plugin.avro")
 }
 
 val avroVersion: String by project

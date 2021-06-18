@@ -1,10 +1,10 @@
-import com.commercehub.gradle.plugin.avro.GenerateAvroJavaTask
+import com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask
 
 description = "Includes a second example of a service producing messages whose schema is registered in the Spring Cloud Schema Registry\n and is in a different format to the first."
 
 plugins {
     id("org.springframework.boot")
-    id("com.commercehub.gradle.plugin.avro-base")
+    id("com.github.davidmc24.gradle.plugin.avro")
 }
 
 val awsVersion: String by project
