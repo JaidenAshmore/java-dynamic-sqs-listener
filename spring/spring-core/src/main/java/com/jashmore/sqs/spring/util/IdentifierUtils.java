@@ -18,7 +18,7 @@ public class IdentifierUtils {
      * @return an identifier for this class' method
      */
     public String buildIdentifierForMethod(final String identifier, final Class<?> clazz, final Method method) {
-        if (StringUtils.isEmpty(identifier.trim())) {
+        if (!StringUtils.hasText(identifier.trim())) {
             return toLowerHyphenCase(clazz.getSimpleName() + "-" + method.getName());
         } else {
             return identifier.trim();
