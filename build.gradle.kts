@@ -18,7 +18,7 @@ plugins {
 
 allprojects {
     group = "com.jashmore"
-    version = "4.4.1-SNAPSHOT"
+    version = "5.0.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
@@ -36,11 +36,14 @@ val spotbugsVersion: String by project
 
 subprojects {
     val isKotlinProject = project.name.contains("kotlin") || project.name.contains("ktor")
+    val isExampleProject = project.name.contains("example")
     apply(plugin = "java-library")
     apply(plugin = "jacoco")
     apply(plugin = "org.unbroken-dome.test-sets")
     if (!isKotlinProject) {
-        apply(plugin = "com.github.spotbugs")
+        if (!isExampleProject) {
+            apply(plugin = "com.github.spotbugs")
+        }
     } else {
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
         apply(plugin = "io.gitlab.arturbosch.detekt")
@@ -63,7 +66,7 @@ subprojects {
         testImplementation("ch.qos.logback:logback-core:$logbackVersion")
         testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
 
-        if (!isKotlinProject) {
+        if (!isKotlinProject && !isExampleProject) {
             // SpotBugs
             spotbugs("com.github.spotbugs:spotbugs:$spotbugsVersion")
         }
@@ -78,8 +81,10 @@ subprojects {
     }
 
     if (!isKotlinProject) {
-        spotbugs {
-            excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
+        if (!isExampleProject) {
+            spotbugs {
+                excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
+            }
         }
     } else {
         detekt {

@@ -117,7 +117,7 @@ public abstract class AbstractCoreMessageListenerContainerFactory<A extends Anno
     private SqsAsyncClient getSqsAsyncClient(A annotation) {
         final String sqsClient = getSqsClientIdentifier(annotation);
 
-        if (StringUtils.isEmpty(sqsClient)) {
+        if (!StringUtils.hasText(sqsClient)) {
             return sqsAsyncClientProvider
                 .getDefaultClient()
                 .orElseThrow(

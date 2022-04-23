@@ -150,10 +150,14 @@ public @interface QueueListener {
     /**
      * The message visibility that will be used for messages obtained from the queue.
      *
+     * <p>If this value is not set, the default visibility timeout from the SQS queue will be used.
+     *
+     * <p>This value is ignored when {@link #messageVisibilityTimeoutInSecondsString()} has been set and is not an empty string.
+     *
      * @return the message visibility for messages fetched from the queue
      * @see BatchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
-    int messageVisibilityTimeoutInSeconds() default 30;
+    int messageVisibilityTimeoutInSeconds() default -1;
 
     /**
      * The message visibility that will be used for messages obtained from the queue converted from a string representation.

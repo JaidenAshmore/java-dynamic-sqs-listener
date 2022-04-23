@@ -9,7 +9,7 @@ dependencies {
     implementation(project(":common-utils"))
     compileOnly(project(":documentation-annotations"))
 
-    testImplementation("org.checkerframework:checker-qual:3.7.0")
+    testImplementation("org.checkerframework:checker-qual:3.7.1")
     testImplementation(project(":java-dynamic-sqs-listener-core"))
     testImplementation(project(":expected-test-exception"))
 }

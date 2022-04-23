@@ -144,7 +144,7 @@ public @interface PrefetchingQueueListener {
      * @return the message visibility for messages fetched from the queue
      * @see PrefetchingMessageRetrieverProperties#getMessageVisibilityTimeout() for more details and constraints
      */
-    int messageVisibilityTimeoutInSeconds() default 30;
+    int messageVisibilityTimeoutInSeconds() default -1;
 
     /**
      * The message visibility that will be used for messages obtained from the queue converted from a string representation.

@@ -26,7 +26,6 @@ class BatchingMessageListenerContainerDslBuilder(
     companion object {
         private const val DEFAULT_BATCH_SIZE = 5
         private val DEFAULT_BATCHING_PERIOD = Duration.ofSeconds(2)
-        private val DEFAULT_MESSAGE_VISIBILITY = Duration.ofSeconds(30)
     }
 
     /**
@@ -58,10 +57,11 @@ class BatchingMessageListenerContainerDslBuilder(
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
+     * By default it will use the message visibility set on the queue
+     *
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
-     * @see DEFAULT_MESSAGE_VISIBILITY for the default message visibility
      */
-    var messageVisibility: (() -> Duration?) = { DEFAULT_MESSAGE_VISIBILITY }
+    var messageVisibility: (() -> Duration?) = { null }
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *

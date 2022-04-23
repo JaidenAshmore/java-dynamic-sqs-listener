@@ -21,9 +21,6 @@ class PrefetchingMessageListenerContainerDslBuilder(
     sqsAsyncClient: SqsAsyncClient,
     queueProperties: QueueProperties
 ) : AbstractMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties) {
-    companion object {
-        private val DEFAULT_MESSAGE_VISIBILITY = Duration.ofSeconds(30)
-    }
 
     /**
      * Supplier for getting the number of messages that should be processed concurrently.
@@ -50,10 +47,11 @@ class PrefetchingMessageListenerContainerDslBuilder(
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
+     * By default it will use the message visibility set on the SQS queue.
+     *
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
-     * @see DEFAULT_MESSAGE_VISIBILITY for the default value for the message visiblity
      */
-    var messageVisibility: (() -> Duration?) = { DEFAULT_MESSAGE_VISIBILITY }
+    var messageVisibility: (() -> Duration?) = { null }
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *

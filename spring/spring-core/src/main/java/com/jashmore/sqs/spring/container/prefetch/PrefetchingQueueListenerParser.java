@@ -98,7 +98,7 @@ public class PrefetchingQueueListenerParser
      */
     protected Supplier<Integer> concurrencySupplier(final PrefetchingQueueListener annotation) {
         final int concurrencyLevel;
-        if (StringUtils.isEmpty(annotation.concurrencyLevelString())) {
+        if (!StringUtils.hasText(annotation.concurrencyLevelString())) {
             concurrencyLevel = annotation.concurrencyLevel();
         } else {
             concurrencyLevel = Integer.parseInt(environment.resolvePlaceholders(annotation.concurrencyLevelString()));
@@ -130,7 +130,7 @@ public class PrefetchingQueueListenerParser
      */
     protected Supplier<Integer> desiredMinPrefetchedMessagesSupplier(final PrefetchingQueueListener annotation) {
         final int desiredMinPrefetchedMessages;
-        if (StringUtils.isEmpty(annotation.desiredMinPrefetchedMessagesString())) {
+        if (!StringUtils.hasText(annotation.desiredMinPrefetchedMessagesString())) {
             desiredMinPrefetchedMessages = annotation.desiredMinPrefetchedMessages();
         } else {
             desiredMinPrefetchedMessages =
@@ -150,7 +150,7 @@ public class PrefetchingQueueListenerParser
      */
     protected Supplier<Integer> maxPrefetchedMessagesSupplier(final PrefetchingQueueListener annotation) {
         final int maxPrefetchedMessages;
-        if (StringUtils.isEmpty(annotation.maxPrefetchedMessagesString())) {
+        if (!StringUtils.hasText(annotation.maxPrefetchedMessagesString())) {
             maxPrefetchedMessages = annotation.maxPrefetchedMessages();
         } else {
             maxPrefetchedMessages = Integer.parseInt(environment.resolvePlaceholders(annotation.maxPrefetchedMessagesString()));
@@ -183,8 +183,13 @@ public class PrefetchingQueueListenerParser
      */
     protected Supplier<Duration> messageVisibilityTimeoutSupplier(final PrefetchingQueueListener annotation) {
         final Duration messageVisibilityTimeout;
-        if (StringUtils.isEmpty(annotation.messageVisibilityTimeoutInSecondsString())) {
-            messageVisibilityTimeout = Duration.ofSeconds(annotation.messageVisibilityTimeoutInSeconds());
+        if (!StringUtils.hasText(annotation.messageVisibilityTimeoutInSecondsString())) {
+            final int visibilityTimeout = annotation.messageVisibilityTimeoutInSeconds();
+            if (visibilityTimeout < 0) {
+                messageVisibilityTimeout = null;
+            } else {
+                messageVisibilityTimeout = Duration.ofSeconds(visibilityTimeout);
+            }
         } else {
             messageVisibilityTimeout =
                 Duration.ofSeconds(Integer.parseInt(environment.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
