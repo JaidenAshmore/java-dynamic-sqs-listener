@@ -19,5 +19,5 @@ dependencies {
     implementation(project(":local-sqs-async-client"))
     implementation("org.springframework.cloud:spring-cloud-aws-messaging:$springCloudMessagingVersion")
     implementation("org.springframework:spring-jms:${springJmsVersion}")
-    implementation("com.amazonaws:amazon-sqs-java-messaging-lib:${awsV1Version}")
+    implementation("com.amazonaws:amazon-sqs-java-messaging-lib:${awsSqsJavaMessagingLib}")
 }
