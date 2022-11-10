@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.auth.credentials;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * Default implementation that stores the default {@link SqsAsyncClient}, if it exists, and the map of available clients.
