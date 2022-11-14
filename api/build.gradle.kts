@@ -4,7 +4,7 @@ val awsVersion: String by project
 
 dependencies {
     api(platform("software.amazon.awssdk:bom:${awsVersion}"))
-    api(platform("com.amazonaws:aws-java-sdk-sts:${awsVersion}"))
     api("software.amazon.awssdk:sqs")
     compileOnly(project(":documentation-annotations"))
+    api(implementation("com.amazonaws:aws-java-sdk-sts:${awsVersion}"))
 }
