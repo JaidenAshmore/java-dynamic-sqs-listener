@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import software.amazon.awssdk.auth.credentials;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
