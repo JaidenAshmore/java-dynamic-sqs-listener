@@ -6,6 +6,5 @@ dependencies {
     api(platform("software.amazon.awssdk:bom:${awsVersion}"))
     api(platform("com.amazonaws:aws-java-sdk-sts:${awsVersion}"))
     api("software.amazon.awssdk:sqs")
-    api("software.amazon.awssdk:sts")
     compileOnly(project(":documentation-annotations"))
 }
