@@ -2,10 +2,8 @@ package com.jashmore.sqs.ktor.container
 
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient
 import com.jashmore.sqs.util.LocalSqsAsyncClient
-import io.ktor.application.log
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.application.log
+import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
@@ -25,8 +23,8 @@ class KtorCoreExtensionTest {
     fun `message listener can be registered`() {
         val queueUrl = sqsClient.createRandomQueue().get().queueUrl()
         val countDownLatch = CountDownLatch(1)
-        withTestApplication({
-            val server = embeddedServer(Netty, 8080) {
+        testApplication {
+            application {
                 messageListener("core-listener", sqsClient, queueUrl) {
                     processor = lambdaProcessor {
                         method { message ->
@@ -48,8 +46,8 @@ class KtorCoreExtensionTest {
                     }
                 }
             }
-            server.start()
-        }) {
+            startApplication()
+
             sqsClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }.get()
 
             assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
@@ -60,8 +58,8 @@ class KtorCoreExtensionTest {
     fun `prefetching message listener can be registered`() {
         val queueUrl = sqsClient.createRandomQueue().get().queueUrl()
         val countDownLatch = CountDownLatch(1)
-        withTestApplication({
-            val server = embeddedServer(Netty, 8080) {
+        testApplication {
+            application {
                 prefetchingMessageListener("prefetching-listener", sqsClient, queueUrl) {
                     concurrencyLevel = { 5 }
                     desiredPrefetchedMessages = 1
@@ -74,8 +72,8 @@ class KtorCoreExtensionTest {
                     }
                 }
             }
-            server.start()
-        }) {
+            startApplication()
+
             sqsClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }.get()
 
             assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
@@ -86,8 +84,8 @@ class KtorCoreExtensionTest {
     fun `batching message listener can be registered`() {
         val queueUrl = sqsClient.createRandomQueue().get().queueUrl()
         val countDownLatch = CountDownLatch(1)
-        withTestApplication({
-            val server = embeddedServer(Netty, 8080) {
+        testApplication {
+            application {
                 batchingMessageListener("batching-listener", sqsClient, queueUrl) {
                     concurrencyLevel = { 5 }
                     processor = lambdaProcessor {
@@ -98,8 +96,8 @@ class KtorCoreExtensionTest {
                     }
                 }
             }
-            server.start()
-        }) {
+            startApplication()
+
             sqsClient.sendMessage { it.queueUrl(queueUrl).messageBody("body") }.get()
 
             assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
@@ -110,8 +108,8 @@ class KtorCoreExtensionTest {
     fun `fifo message listener can be registered`() {
         val queueUrl = sqsClient.createRandomFifoQueue().get().response.queueUrl()
         val countDownLatch = CountDownLatch(1)
-        withTestApplication({
-            val server = embeddedServer(Netty, 8080) {
+        testApplication {
+            application {
                 fifoMessageListener("fifo-listener", sqsClient, queueUrl) {
                     concurrencyLevel = { 5 }
                     processor = lambdaProcessor {
@@ -122,8 +120,8 @@ class KtorCoreExtensionTest {
                     }
                 }
             }
-            server.start()
-        }) {
+            startApplication()
+
             sqsClient.sendMessage {
                 it.queueUrl(queueUrl)
                     .messageBody("body")
