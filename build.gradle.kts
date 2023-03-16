@@ -99,7 +99,7 @@ subprojects {
 
         // Only run Jacoco in the test phase, not the integration test phase
         jacoco {
-            toolVersion = "0.8.5"
+            toolVersion = "0.8.8"
         }
     }
 
