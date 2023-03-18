@@ -8,7 +8,7 @@ plugins {
     `java-library`
     checkstyle
     jacoco
-    kotlin("jvm") version "1.4.32"
+    kotlin("jvm") version "1.6.21"
     id("com.github.spotbugs")
     id("com.jashmore.gradle.github.release")
     id("org.jlleitschuh.gradle.ktlint") apply false

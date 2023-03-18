@@ -6,14 +6,14 @@ import com.jashmore.sqs.core.kotlin.dsl.container.CoreMessageListenerContainerDs
 import com.jashmore.sqs.core.kotlin.dsl.container.FifoMessageListenerContainerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.container.PrefetchingMessageListenerContainerDslBuilder
 import com.jashmore.sqs.core.kotlin.dsl.container.coreMessageListener
-import io.ktor.application.Application
-import io.ktor.application.ApplicationEnvironment
-import io.ktor.application.ApplicationStarted
-import io.ktor.application.ApplicationStopped
-import io.ktor.util.pipeline.ContextDsl
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationEnvironment
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.util.KtorDsl
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 
-@ContextDsl
+@KtorDsl
 fun Application.messageListener(
     identifier: String,
     sqsAsyncClient: SqsAsyncClient,
@@ -23,7 +23,7 @@ fun Application.messageListener(
     return initMessageListener(environment, coreMessageListener(identifier, sqsAsyncClient, queueUrl, config))
 }
 
-@ContextDsl
+@KtorDsl
 fun Application.prefetchingMessageListener(
     identifier: String,
     sqsAsyncClient: SqsAsyncClient,
@@ -33,7 +33,7 @@ fun Application.prefetchingMessageListener(
     return initMessageListener(environment, com.jashmore.sqs.core.kotlin.dsl.container.prefetchingMessageListener(identifier, sqsAsyncClient, queueUrl, init))
 }
 
-@ContextDsl
+@KtorDsl
 fun Application.batchingMessageListener(
     identifier: String,
     sqsAsyncClient: SqsAsyncClient,
@@ -43,7 +43,7 @@ fun Application.batchingMessageListener(
     return initMessageListener(environment, com.jashmore.sqs.core.kotlin.dsl.container.batchingMessageListener(identifier, sqsAsyncClient, queueUrl, init))
 }
 
-@ContextDsl
+@KtorDsl
 fun Application.fifoMessageListener(
     identifier: String,
     sqsAsyncClient: SqsAsyncClient,
@@ -57,12 +57,18 @@ fun initMessageListener(
     environment: ApplicationEnvironment,
     container: MessageListenerContainer
 ): MessageListenerContainer {
+    val hook = Thread { container.stop() }
     environment.monitor.subscribe(ApplicationStarted) {
+        environment.monitor.subscribe(ApplicationStopped) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(hook)
+            } catch (alreadyShuttingDown: IllegalStateException) {
+                // ignore
+            }
+            container.stop()
+        }
+        Runtime.getRuntime().addShutdownHook(hook)
         container.start()
-    }
-
-    environment.monitor.subscribe(ApplicationStopped) {
-        container.stop()
     }
 
     return container
