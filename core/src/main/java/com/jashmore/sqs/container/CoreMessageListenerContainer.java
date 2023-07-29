@@ -214,16 +214,14 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         final MessageProcessor messageProcessor,
         final MessageResolver messageResolver,
         final ExecutorService messageProcessingExecutorService
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         try {
-            runBrokerUntilInterrupted(
-                () ->
-                    messageBroker.processMessages(
-                        messageProcessingExecutorService,
-                        messageRetriever::retrieveMessage,
-                        message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
-                    )
+            runBrokerUntilInterrupted(() ->
+                messageBroker.processMessages(
+                    messageProcessingExecutorService,
+                    messageRetriever::retrieveMessage,
+                    message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
+                )
             );
         } catch (final ExecutionException executionException) {
             log.error("Error processing messages", executionException.getCause());
@@ -246,17 +244,15 @@ public class CoreMessageListenerContainer implements MessageListenerContainer {
         final MessageResolver messageResolver,
         final ExecutorService messageProcessingExecutorService,
         final Queue<Message> messages
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         try {
-            runBrokerUntilInterrupted(
-                () ->
-                    messageBroker.processMessages(
-                        messageProcessingExecutorService,
-                        () -> !messages.isEmpty(),
-                        () -> CompletableFuture.completedFuture(messages.poll()),
-                        message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
-                    )
+            runBrokerUntilInterrupted(() ->
+                messageBroker.processMessages(
+                    messageProcessingExecutorService,
+                    () -> !messages.isEmpty(),
+                    () -> CompletableFuture.completedFuture(messages.poll()),
+                    message -> messageProcessor.processMessage(message, () -> messageResolver.resolveMessage(message))
+                )
             );
         } catch (final ExecutionException executionException) {
             log.error("Exception thrown processing extra messages", executionException.getCause());

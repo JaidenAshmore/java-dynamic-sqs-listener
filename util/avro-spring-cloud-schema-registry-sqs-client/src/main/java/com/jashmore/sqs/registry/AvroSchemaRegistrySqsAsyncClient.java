@@ -85,21 +85,20 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
         final RegisteredSchema registeredSchema = schemaCache.get(payload.getClass());
         final SchemaReference reference = registeredSchema.reference;
 
-        return delegate.sendMessage(
-            builder ->
-                builder
-                    .applyMutation(requestBuilder)
-                    .messageAttributes(
-                        singletonMap(
-                            messageAttributeName,
-                            MessageAttributeValue
-                                .builder()
-                                .dataType("String")
-                                .stringValue(generateContentType(contentTypePrefix, reference))
-                                .build()
-                        )
+        return delegate.sendMessage(builder ->
+            builder
+                .applyMutation(requestBuilder)
+                .messageAttributes(
+                    singletonMap(
+                        messageAttributeName,
+                        MessageAttributeValue
+                            .builder()
+                            .dataType("String")
+                            .stringValue(generateContentType(contentTypePrefix, reference))
+                            .build()
                     )
-                    .messageBody(serializeObject(payload, registeredSchema.schema))
+                )
+                .messageBody(serializeObject(payload, registeredSchema.schema))
         );
     }
 
@@ -113,21 +112,19 @@ public class AvroSchemaRegistrySqsAsyncClient implements SqsAsyncClient {
             .filter(arr -> !ObjectUtils.isEmpty(arr))
             .distinct()
             .flatMap(List::stream)
-            .flatMap(
-                resource -> {
-                    final Schema schema;
-                    try {
-                        schema = schemaParser.parse(resource.getInputStream());
-                    } catch (IOException ioException) {
-                        throw new RuntimeException("Error parsing schema: " + resource.getFilename(), ioException);
-                    }
-                    if (schema.getType().equals(Schema.Type.UNION)) {
-                        return schema.getTypes().stream();
-                    } else {
-                        return Stream.of(schema);
-                    }
+            .flatMap(resource -> {
+                final Schema schema;
+                try {
+                    schema = schemaParser.parse(resource.getInputStream());
+                } catch (IOException ioException) {
+                    throw new RuntimeException("Error parsing schema: " + resource.getFilename(), ioException);
                 }
-            )
+                if (schema.getType().equals(Schema.Type.UNION)) {
+                    return schema.getTypes().stream();
+                } else {
+                    return Stream.of(schema);
+                }
+            })
             .map(this::createObjectMapping)
             .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

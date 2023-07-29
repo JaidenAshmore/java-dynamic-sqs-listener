@@ -67,13 +67,11 @@ class QueueListenerEnvironmentIntegrationTest {
         // arrange
         IntStream
             .range(0, NUMBER_OF_MESSAGES_TO_SEND)
-            .forEach(
-                index -> {
-                    final String messageBody = "message: " + index;
-                    log.info("Sent message: {}", messageBody);
-                    localSqsAsyncClient.sendMessage(QUEUE_NAME, messageBody);
-                }
-            );
+            .forEach(index -> {
+                final String messageBody = "message: " + index;
+                log.info("Sent message: {}", messageBody);
+                localSqsAsyncClient.sendMessage(QUEUE_NAME, messageBody);
+            });
 
         // act
         CYCLIC_BARRIER.await(10, TimeUnit.SECONDS);

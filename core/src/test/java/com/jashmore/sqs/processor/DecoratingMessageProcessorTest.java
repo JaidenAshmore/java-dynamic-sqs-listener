@@ -612,15 +612,13 @@ class DecoratingMessageProcessorTest {
                     sqsAsyncClient,
                     QUEUE_PROPERTIES,
                     message ->
-                        CompletableFuture.runAsync(
-                            () -> {
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException e) {
-                                    // do nothing
-                                }
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                // do nothing
                             }
-                        )
+                        })
                 );
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final AtomicReference<Thread> threadReference = new AtomicReference<>();
@@ -638,12 +636,10 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation -> {
-                            countDownLatch.countDown();
-                            return CompletableFuture.completedFuture(null);
-                        }
-                    );
+                    .thenAnswer(invocation -> {
+                        countDownLatch.countDown();
+                        return CompletableFuture.completedFuture(null);
+                    });
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -669,12 +665,10 @@ class DecoratingMessageProcessorTest {
                         throw new ExpectedTestException();
                     }
                 };
-                doAnswer(
-                        invocation -> {
-                            countDownLatch.countDown();
-                            return null;
-                        }
-                    )
+                doAnswer(invocation -> {
+                        countDownLatch.countDown();
+                        return null;
+                    })
                     .when(decorator)
                     .onMessageResolve(any(), any());
 
@@ -729,12 +723,10 @@ class DecoratingMessageProcessorTest {
                     message -> CompletableFuture.completedFuture(null)
                 );
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
-                doAnswer(
-                        invocation -> {
-                            contextReference.set(invocation.getArgument(0));
-                            return null;
-                        }
-                    )
+                doAnswer(invocation -> {
+                        contextReference.set(invocation.getArgument(0));
+                        return null;
+                    })
                     .when(decorator)
                     .onMessageResolve(any(), any());
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
@@ -859,17 +851,14 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation ->
-                            CompletableFuture.runAsync(
-                                () -> {
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException interruptedException) {
-                                        // do nothing
-                                    }
-                                }
-                            )
+                    .thenAnswer(invocation ->
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException interruptedException) {
+                                // do nothing
+                            }
+                        })
                     );
                 final Thread currentThread = Thread.currentThread();
 
@@ -1018,18 +1007,15 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation ->
-                            CompletableFuture.runAsync(
-                                () -> {
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException interruptedException) {
-                                        // do nothing
-                                    }
-                                    throw new ExpectedTestException();
-                                }
-                            )
+                    .thenAnswer(invocation ->
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException interruptedException) {
+                                // do nothing
+                            }
+                            throw new ExpectedTestException();
+                        })
                     );
                 final Thread currentThread = Thread.currentThread();
 
@@ -1510,12 +1496,10 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation -> {
-                            latch.countDown();
-                            return CompletableFuture.completedFuture(null);
-                        }
-                    );
+                    .thenAnswer(invocation -> {
+                        latch.countDown();
+                        return CompletableFuture.completedFuture(null);
+                    });
 
                 // act
                 processor.processMessage(message, mockMessageResolver);
@@ -1531,13 +1515,11 @@ class DecoratingMessageProcessorTest {
                 final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final AtomicReference<Thread> threadReference = new AtomicReference<>();
-                doAnswer(
-                        invocation -> {
-                            threadReference.set(Thread.currentThread());
-                            countDownLatch.countDown();
-                            return null;
-                        }
-                    )
+                doAnswer(invocation -> {
+                        threadReference.set(Thread.currentThread());
+                        countDownLatch.countDown();
+                        return null;
+                    })
                     .when(decorator)
                     .onMessageResolve(any(), any());
 
@@ -1568,12 +1550,10 @@ class DecoratingMessageProcessorTest {
                         throw new ExpectedTestException();
                     }
                 };
-                doAnswer(
-                        invocation -> {
-                            countDownLatch.countDown();
-                            return null;
-                        }
-                    )
+                doAnswer(invocation -> {
+                        countDownLatch.countDown();
+                        return null;
+                    })
                     .when(decorator)
                     .onMessageResolve(any(), any());
 
@@ -1626,12 +1606,10 @@ class DecoratingMessageProcessorTest {
                 // when
                 final MessageProcessor delegate = new LambdaMessageProcessor(sqsAsyncClient, QUEUE_PROPERTIES, message -> {});
                 final AtomicReference<MessageProcessingContext> contextReference = new AtomicReference<>();
-                doAnswer(
-                        invocation -> {
-                            contextReference.set(invocation.getArgument(0));
-                            return null;
-                        }
-                    )
+                doAnswer(invocation -> {
+                        contextReference.set(invocation.getArgument(0));
+                        return null;
+                    })
                     .when(decorator)
                     .onMessageResolve(any(), any());
                 final DecoratingMessageProcessor processor = new DecoratingMessageProcessor(
@@ -1726,17 +1704,14 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation ->
-                            CompletableFuture.runAsync(
-                                () -> {
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException interruptedException) {
-                                        // do nothing
-                                    }
-                                }
-                            )
+                    .thenAnswer(invocation ->
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException interruptedException) {
+                                // do nothing
+                            }
+                        })
                     );
                 final Thread currentThread = Thread.currentThread();
 
@@ -1854,18 +1829,15 @@ class DecoratingMessageProcessorTest {
                     delegate
                 );
                 when(mockMessageResolver.get())
-                    .thenAnswer(
-                        invocation ->
-                            CompletableFuture.runAsync(
-                                () -> {
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException interruptedException) {
-                                        // do nothing
-                                    }
-                                    throw new ExpectedTestException();
-                                }
-                            )
+                    .thenAnswer(invocation ->
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException interruptedException) {
+                                // do nothing
+                            }
+                            throw new ExpectedTestException();
+                        })
                     );
                 final Thread currentThread = Thread.currentThread();
 

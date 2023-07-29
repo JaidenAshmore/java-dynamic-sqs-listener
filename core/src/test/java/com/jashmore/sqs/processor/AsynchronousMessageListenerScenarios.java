@@ -19,28 +19,24 @@ public class AsynchronousMessageListenerScenarios {
     }
 
     public CompletableFuture<?> methodReturnFutureSubsequentlyResolved() {
-        return CompletableFuture.runAsync(
-            () -> {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException interruptedException) {
-                    // ignore
-                }
+        return CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException interruptedException) {
+                // ignore
             }
-        );
+        });
     }
 
     public CompletableFuture<?> methodReturnFutureSubsequentlyRejected() {
-        return CompletableFuture.runAsync(
-            () -> {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException interruptedException) {
-                    // ignore
-                }
-                throw new ExpectedTestException();
+        return CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException interruptedException) {
+                // ignore
             }
-        );
+            throw new ExpectedTestException();
+        });
     }
 
     public CompletableFuture<?> methodThatThrowsException() {

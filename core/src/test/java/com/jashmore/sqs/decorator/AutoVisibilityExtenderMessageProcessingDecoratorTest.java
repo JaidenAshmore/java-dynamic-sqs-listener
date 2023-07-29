@@ -169,16 +169,16 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
         final Message thirdMessage = Message.builder().messageId("c").receiptHandle("cHandle").build();
 
         // act
-        final CompletableFuture<Void> firstMessageFuture = CompletableFuture.runAsync(
-            () -> decoratingMessageProcessor.processMessage(firstMessage, () -> CompletableFuture.completedFuture(null))
+        final CompletableFuture<Void> firstMessageFuture = CompletableFuture.runAsync(() ->
+            decoratingMessageProcessor.processMessage(firstMessage, () -> CompletableFuture.completedFuture(null))
         );
         Thread.sleep(1000);
-        final CompletableFuture<Void> secondMessageFuture = CompletableFuture.runAsync(
-            () -> decoratingMessageProcessor.processMessage(secondMessage, () -> CompletableFuture.completedFuture(null))
+        final CompletableFuture<Void> secondMessageFuture = CompletableFuture.runAsync(() ->
+            decoratingMessageProcessor.processMessage(secondMessage, () -> CompletableFuture.completedFuture(null))
         );
         Thread.sleep(1000);
-        final CompletableFuture<Void> thirdMessageFuture = CompletableFuture.runAsync(
-            () -> decoratingMessageProcessor.processMessage(thirdMessage, () -> CompletableFuture.completedFuture(null))
+        final CompletableFuture<Void> thirdMessageFuture = CompletableFuture.runAsync(() ->
+            decoratingMessageProcessor.processMessage(thirdMessage, () -> CompletableFuture.completedFuture(null))
         );
         final CompletableFuture<?> done = CompletableFutureUtils.allOf(
             CollectionUtils.immutableListOf(firstMessageFuture, secondMessageFuture, thirdMessageFuture)
@@ -289,15 +289,13 @@ class AutoVisibilityExtenderMessageProcessingDecoratorTest {
 
     private void changingVisibilityIsSuccessful() {
         when(sqsAsyncClient.changeMessageVisibilityBatch(ArgumentMatchers.<Consumer<ChangeMessageVisibilityBatchRequest.Builder>>any()))
-            .thenAnswer(
-                invocation -> {
-                    Consumer<ChangeMessageVisibilityBatchRequest.Builder> builder = invocation.getArgument(0);
-                    final ChangeMessageVisibilityBatchRequest.Builder requestBuilder = ChangeMessageVisibilityBatchRequest.builder();
-                    builder.accept(requestBuilder);
-                    changeVisibilityRequests.add(requestBuilder.build());
-                    return CompletableFuture.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                Consumer<ChangeMessageVisibilityBatchRequest.Builder> builder = invocation.getArgument(0);
+                final ChangeMessageVisibilityBatchRequest.Builder requestBuilder = ChangeMessageVisibilityBatchRequest.builder();
+                builder.accept(requestBuilder);
+                changeVisibilityRequests.add(requestBuilder.build());
+                return CompletableFuture.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
+            });
     }
 
     private void verifyVisibilityNeverChanged(final Message message) {

@@ -21,4 +21,8 @@ lombok.config
 *.kt
 *.kts
 
+.husky
+
+org.springframework.boot.autoconfigure.AutoConfiguration.imports
+
 doc/resources/**/*.xml

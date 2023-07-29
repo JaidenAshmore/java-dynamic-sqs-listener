@@ -34,7 +34,7 @@ class AvroMessagePayloadDeserializerTest {
 
         // act
         final Object deserializedObject = new AvroMessagePayloadDeserializer(avroSchemaServiceManager)
-        .deserialize(message, mock(Schema.class), mock(Schema.class), String.class);
+            .deserialize(message, mock(Schema.class), mock(Schema.class), String.class);
 
         // assert
         assertThat(deserializedObject).isEqualTo("Result");
@@ -50,7 +50,7 @@ class AvroMessagePayloadDeserializerTest {
 
         // act
         final Object deserializedObject = new AvroMessagePayloadDeserializer(avroSchemaServiceManager, m -> transformedBytes)
-        .deserialize(message, mock(Schema.class), mock(Schema.class), String.class);
+            .deserialize(message, mock(Schema.class), mock(Schema.class), String.class);
 
         // assert
         assertThat(deserializedObject).isEqualTo("Result");

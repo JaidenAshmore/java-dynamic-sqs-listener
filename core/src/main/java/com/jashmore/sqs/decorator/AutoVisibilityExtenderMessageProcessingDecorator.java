@@ -89,13 +89,11 @@ public class AutoVisibilityExtenderMessageProcessingDecorator implements Message
                             ThreadUtils.singleNamedThreadFactory(context.getListenerIdentifier() + "-auto-visibility-extender")
                         )
                     )
-                    .whenComplete(
-                        (ignored, throwable) -> {
-                            if (throwable != null) {
-                                log.error("Unexpected error with visibility timeout extender", throwable);
-                            }
+                    .whenComplete((ignored, throwable) -> {
+                        if (throwable != null) {
+                            log.error("Unexpected error with visibility timeout extender", throwable);
                         }
-                    );
+                    });
             }
 
             // We need to notify the background thread to recalculate the updated time in case it has configured this message to have a smaller visibility
@@ -155,13 +153,11 @@ public class AutoVisibilityExtenderMessageProcessingDecorator implements Message
             .filter(messageStateEntry -> timeNow.compareTo(messageStateEntry.getValue().startTime().plus(maxDuration)) >= 0)
             .collect(CollectionUtils.pairsToMap());
 
-        messagesToInterrupt.forEach(
-            (message, state) -> {
-                log.info("Interrupting message processing thread due to exceeded time for message {}", message.messageId());
-                state.thread().interrupt();
-                currentMessagesProcessing.remove(message);
-            }
-        );
+        messagesToInterrupt.forEach((message, state) -> {
+            log.info("Interrupting message processing thread due to exceeded time for message {}", message.messageId());
+            state.thread().interrupt();
+            currentMessagesProcessing.remove(message);
+        });
     }
 
     /**
@@ -206,43 +202,39 @@ public class AutoVisibilityExtenderMessageProcessingDecorator implements Message
 
     private void extendMessageBatch(final List<Message> messageBatch) {
         sqsAsyncClient
-            .changeMessageVisibilityBatch(
-                builder ->
-                    builder
-                        .queueUrl(queueProperties.getQueueUrl())
-                        .entries(
-                            messageBatch
-                                .stream()
-                                .map(
-                                    message ->
-                                        ChangeMessageVisibilityBatchRequestEntry
-                                            .builder()
-                                            .id(message.messageId())
-                                            .receiptHandle(message.receiptHandle())
-                                            .visibilityTimeout((int) decoratorProperties.visibilityTimeout(message).getSeconds())
-                                            .build()
-                                )
-                                .collect(Collectors.toList())
-                        )
+            .changeMessageVisibilityBatch(builder ->
+                builder
+                    .queueUrl(queueProperties.getQueueUrl())
+                    .entries(
+                        messageBatch
+                            .stream()
+                            .map(message ->
+                                ChangeMessageVisibilityBatchRequestEntry
+                                    .builder()
+                                    .id(message.messageId())
+                                    .receiptHandle(message.receiptHandle())
+                                    .visibilityTimeout((int) decoratorProperties.visibilityTimeout(message).getSeconds())
+                                    .build()
+                            )
+                            .collect(Collectors.toList())
+                    )
             )
-            .whenComplete(
-                (ignoredResponse, throwable) -> {
-                    if (throwable != null) {
-                        log.error(
-                            "Error changing visibility timeout for message. The following messages were not extended: " +
-                            messageBatch.stream().map(Message::messageId).collect(Collectors.toList()),
-                            throwable
-                        );
-                    }
-
-                    if (ignoredResponse.hasFailed()) {
-                        log.error(
-                            "Some messages failed to be have their visibility timeout changed: {}",
-                            ignoredResponse.failed().stream().map(BatchResultErrorEntry::id).collect(Collectors.toList())
-                        );
-                    }
+            .whenComplete((ignoredResponse, throwable) -> {
+                if (throwable != null) {
+                    log.error(
+                        "Error changing visibility timeout for message. The following messages were not extended: " +
+                        messageBatch.stream().map(Message::messageId).collect(Collectors.toList()),
+                        throwable
+                    );
                 }
-            );
+
+                if (ignoredResponse.hasFailed()) {
+                    log.error(
+                        "Some messages failed to be have their visibility timeout changed: {}",
+                        ignoredResponse.failed().stream().map(BatchResultErrorEntry::id).collect(Collectors.toList())
+                    );
+                }
+            });
     }
 
     /**

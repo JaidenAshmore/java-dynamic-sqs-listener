@@ -110,15 +110,13 @@ class ConcurrentMessageBrokerTest {
         when(properties.getConcurrencyPollingRate()).thenReturn(Duration.ofMillis(concurrencyPollingRateInMs));
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         when(properties.getConcurrencyLevel())
-            .thenAnswer(
-                invocation -> {
-                    if (numberTimesConcurrencyPolled.incrementAndGet() == 3) {
-                        countDownLatch.countDown();
-                    }
-
-                    return 0;
+            .thenAnswer(invocation -> {
+                if (numberTimesConcurrencyPolled.incrementAndGet() == 3) {
+                    countDownLatch.countDown();
                 }
-            );
+
+                return 0;
+            });
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 
         // act
@@ -250,12 +248,10 @@ class ConcurrentMessageBrokerTest {
         when(properties.getConcurrencyPollingRate()).thenReturn(Duration.ofMillis(1000));
         final CountDownLatch enteredBackoffSection = new CountDownLatch(1);
         when(properties.getErrorBackoffTime())
-            .thenAnswer(
-                invocation -> {
-                    enteredBackoffSection.countDown();
-                    return Duration.ofMillis(backoffTimeInMs);
-                }
-            );
+            .thenAnswer(invocation -> {
+                enteredBackoffSection.countDown();
+                return Duration.ofMillis(backoffTimeInMs);
+            });
         when(messageSupplier.get()).thenThrow(new ExpectedTestException());
         final ConcurrentMessageBroker broker = new ConcurrentMessageBroker(properties);
 

@@ -173,48 +173,43 @@ public class BatchingMessageResolver implements MessageResolver {
         return CompletableFuture
             .supplyAsync(() -> buildBatchDeleteMessageRequest(batchOfMessagesToResolve))
             .thenComposeAsync(sqsAsyncClient::deleteMessageBatch, executorService)
-            .whenComplete(
-                (response, exception) -> {
-                    if (exception != null) {
-                        log.error("Error deleting messages", exception);
+            .whenComplete((response, exception) -> {
+                if (exception != null) {
+                    log.error("Error deleting messages", exception);
 
-                        messageCompletableFutures.values().forEach(completableFuture -> completableFuture.completeExceptionally(exception));
-                        return;
-                    }
-
-                    log.debug("{} messages successfully deleted, {} failed", response.successful().size(), response.failed().size());
-
-                    response
-                        .successful()
-                        .stream()
-                        .map(entry -> messageCompletableFutures.remove(entry.id()))
-                        .forEach(completableFuture -> completableFuture.complete("completed"));
-
-                    response
-                        .failed()
-                        .forEach(
-                            entry -> {
-                                final CompletableFuture<?> completableFuture = messageCompletableFutures.remove(entry.id());
-                                completableFuture.completeExceptionally(new RuntimeException(entry.message()));
-                            }
-                        );
-
-                    if (!messageCompletableFutures.isEmpty()) {
-                        log.error(
-                            "{} messages were not handled in the deletion. This could be a bug in the AWS SDK",
-                            messageCompletableFutures.size()
-                        );
-                        messageCompletableFutures
-                            .values()
-                            .forEach(
-                                completableFuture ->
-                                    completableFuture.completeExceptionally(
-                                        new RuntimeException("Message not handled by batch delete. This should not happen")
-                                    )
-                            );
-                    }
+                    messageCompletableFutures.values().forEach(completableFuture -> completableFuture.completeExceptionally(exception));
+                    return;
                 }
-            );
+
+                log.debug("{} messages successfully deleted, {} failed", response.successful().size(), response.failed().size());
+
+                response
+                    .successful()
+                    .stream()
+                    .map(entry -> messageCompletableFutures.remove(entry.id()))
+                    .forEach(completableFuture -> completableFuture.complete("completed"));
+
+                response
+                    .failed()
+                    .forEach(entry -> {
+                        final CompletableFuture<?> completableFuture = messageCompletableFutures.remove(entry.id());
+                        completableFuture.completeExceptionally(new RuntimeException(entry.message()));
+                    });
+
+                if (!messageCompletableFutures.isEmpty()) {
+                    log.error(
+                        "{} messages were not handled in the deletion. This could be a bug in the AWS SDK",
+                        messageCompletableFutures.size()
+                    );
+                    messageCompletableFutures
+                        .values()
+                        .forEach(completableFuture ->
+                            completableFuture.completeExceptionally(
+                                new RuntimeException("Message not handled by batch delete. This should not happen")
+                            )
+                        );
+                }
+            });
     }
 
     private DeleteMessageBatchRequest buildBatchDeleteMessageRequest(final List<MessageResolutionBean> batchOfMessagesToResolve) {
@@ -225,13 +220,12 @@ public class BatchingMessageResolver implements MessageResolver {
                 batchOfMessagesToResolve
                     .stream()
                     .map(MessageResolutionBean::getMessage)
-                    .map(
-                        messageToDelete ->
-                            DeleteMessageBatchRequestEntry
-                                .builder()
-                                .id(messageToDelete.messageId())
-                                .receiptHandle(messageToDelete.receiptHandle())
-                                .build()
+                    .map(messageToDelete ->
+                        DeleteMessageBatchRequestEntry
+                            .builder()
+                            .id(messageToDelete.messageId())
+                            .receiptHandle(messageToDelete.receiptHandle())
+                            .build()
                     )
                     .collect(Collectors.toSet())
             )

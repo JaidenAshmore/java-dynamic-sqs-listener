@@ -86,26 +86,22 @@ public class FifoMessageListenerContainerFactoryTest {
         for (int i = 0; i < NUMBER_OF_MESSAGES_TO_SEND; ++i) {
             final int messageIndex = i;
             localSqsAsyncClient
-                .sendMessageBatch(
-                    sendMessageBuilder -> {
-                        final List<SendMessageBatchRequestEntry> entries = IntStream
-                            .range(0, NUMBER_OF_MESSAGE_GROUPS)
-                            .mapToObj(
-                                groupIndex -> {
-                                    final String messageId = "" + messageIndex + "-" + groupIndex;
-                                    return SendMessageBatchRequestEntry
-                                        .builder()
-                                        .id(messageId)
-                                        .messageGroupId(String.valueOf(groupIndex))
-                                        .messageBody("" + messageIndex)
-                                        .messageDeduplicationId(messageId)
-                                        .build();
-                                }
-                            )
-                            .collect(Collectors.toList());
-                        sendMessageBuilder.queueUrl(queueUrl).entries(entries);
-                    }
-                )
+                .sendMessageBatch(sendMessageBuilder -> {
+                    final List<SendMessageBatchRequestEntry> entries = IntStream
+                        .range(0, NUMBER_OF_MESSAGE_GROUPS)
+                        .mapToObj(groupIndex -> {
+                            final String messageId = "" + messageIndex + "-" + groupIndex;
+                            return SendMessageBatchRequestEntry
+                                .builder()
+                                .id(messageId)
+                                .messageGroupId(String.valueOf(groupIndex))
+                                .messageBody("" + messageIndex)
+                                .messageDeduplicationId(messageId)
+                                .build();
+                        })
+                        .collect(Collectors.toList());
+                    sendMessageBuilder.queueUrl(queueUrl).entries(entries);
+                })
                 .get(5, TimeUnit.SECONDS);
         }
 
@@ -115,9 +111,8 @@ public class FifoMessageListenerContainerFactoryTest {
         // assert
         assertThat(MESSAGE_GROUPS_PROCESSED).containsOnlyKeys(listOfNumberStrings(NUMBER_OF_MESSAGE_GROUPS));
         assertThat(MESSAGE_GROUPS_PROCESSED)
-            .allSatisfy(
-                (groupId, messagesNumbers) ->
-                    assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(NUMBER_OF_MESSAGES_TO_SEND))
+            .allSatisfy((groupId, messagesNumbers) ->
+                assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(NUMBER_OF_MESSAGES_TO_SEND))
             );
     }
 

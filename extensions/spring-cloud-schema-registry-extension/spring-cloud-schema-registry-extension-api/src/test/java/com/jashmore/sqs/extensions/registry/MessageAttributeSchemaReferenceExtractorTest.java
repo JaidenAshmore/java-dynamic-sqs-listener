@@ -13,7 +13,8 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 class MessageAttributeSchemaReferenceExtractorTest {
 
-    private final MessageAttributeSchemaReferenceExtractor messageAttributeSchemaReferenceExtractor = new MessageAttributeSchemaReferenceExtractor();
+    private final MessageAttributeSchemaReferenceExtractor messageAttributeSchemaReferenceExtractor =
+        new MessageAttributeSchemaReferenceExtractor();
 
     @Test
     void noMessageAttributeWIthNameThrowsException() {

@@ -8,11 +8,11 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - name: Install Yarn
-              uses: borales/actions-yarn@v2.0.0
+              uses: borales/actions-yarn@v4
               with:
                   cmd: install
             - name: Markdown link checks and code formatting
-              uses: borales/actions-yarn@v2.0.0
+              uses: borales/actions-yarn@v4
               with:
                   cmd: test
             - name: Set up JDK 17

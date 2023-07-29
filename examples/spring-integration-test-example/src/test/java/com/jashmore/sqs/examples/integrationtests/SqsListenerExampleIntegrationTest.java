@@ -70,12 +70,10 @@ class SqsListenerExampleIntegrationTest {
     void messagesPlacedOntoQueueArePickedUpMessageListener() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
-        doAnswer(
-                invocationOnMock -> {
-                    messageReceivedCountDownLatch.countDown();
-                    return null;
-                }
-            )
+        doAnswer(invocationOnMock -> {
+                messageReceivedCountDownLatch.countDown();
+                return null;
+            })
             .when(mockSomeService)
             .run(anyString());
 
@@ -92,15 +90,13 @@ class SqsListenerExampleIntegrationTest {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(1);
         final AtomicBoolean processedMessageOnce = new AtomicBoolean();
-        doAnswer(
-                invocationOnMock -> {
-                    if (!processedMessageOnce.getAndSet(true)) {
-                        throw new ExpectedTestException();
-                    }
-                    messageReceivedCountDownLatch.countDown();
-                    return null;
+        doAnswer(invocationOnMock -> {
+                if (!processedMessageOnce.getAndSet(true)) {
+                    throw new ExpectedTestException();
                 }
-            )
+                messageReceivedCountDownLatch.countDown();
+                return null;
+            })
             .when(mockSomeService)
             .run(anyString());
 
@@ -116,12 +112,10 @@ class SqsListenerExampleIntegrationTest {
     void messageThatContinuesToFailWillBePlacedIntoDlq() throws Exception {
         // arrange
         final CountDownLatch messageReceivedCountDownLatch = new CountDownLatch(QUEUE_MAX_RECEIVE_COUNT);
-        doAnswer(
-                invocationOnMock -> {
-                    messageReceivedCountDownLatch.countDown();
-                    throw new ExpectedTestException();
-                }
-            )
+        doAnswer(invocationOnMock -> {
+                messageReceivedCountDownLatch.countDown();
+                throw new ExpectedTestException();
+            })
             .when(mockSomeService)
             .run(anyString());
 

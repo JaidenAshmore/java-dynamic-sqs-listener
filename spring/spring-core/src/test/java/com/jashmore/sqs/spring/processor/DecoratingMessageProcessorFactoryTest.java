@@ -55,7 +55,13 @@ class DecoratingMessageProcessorFactoryTest {
     void willApplyDecoratosWhenReturnedFrom() throws Exception {
         // arrange
         final MessageProcessingDecorator decorator = mock(MessageProcessingDecorator.class);
-        final MessageProcessingDecoratorFactory<MessageProcessingDecorator> decoratorFactory = (sqsAsyncClient, queueProperties, identifier, bean, method) ->
+        final MessageProcessingDecoratorFactory<MessageProcessingDecorator> decoratorFactory = (
+                sqsAsyncClient,
+                queueProperties,
+                identifier,
+                bean,
+                method
+            ) ->
             Optional.of(decorator);
 
         final DecoratingMessageProcessorFactory factory = new DecoratingMessageProcessorFactory(

@@ -24,8 +24,7 @@ public class MessageArgumentResolver implements ArgumentResolver<Message> {
         final QueueProperties queueProperties,
         final MethodParameter methodParameter,
         final Message message
-    )
-        throws ArgumentResolutionException {
+    ) throws ArgumentResolutionException {
         return message;
     }
 }

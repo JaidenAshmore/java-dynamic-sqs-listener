@@ -32,18 +32,13 @@ public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetri
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
                 .distinct()
-                .map(
-                    resource -> {
-                        try {
-                            return parser.parse(resource.getInputStream());
-                        } catch (SchemaParseException | IOException exception) {
-                            throw new AvroSchemaProcessingException(
-                                "Error processing schema definition: " + resource.getFilename(),
-                                exception
-                            );
-                        }
+                .map(resource -> {
+                    try {
+                        return parser.parse(resource.getInputStream());
+                    } catch (SchemaParseException | IOException exception) {
+                        throw new AvroSchemaProcessingException("Error processing schema definition: " + resource.getFilename(), exception);
                     }
-                )
+                })
                 .collect(toMap(this::getClassForSchema, Function.identity()));
     }
 

@@ -44,43 +44,37 @@ public class DecoratingMessageProcessor implements MessageProcessor {
             .attributes(new HashMap<>())
             .build();
 
-        decorators.forEach(
-            decorator -> {
-                try {
-                    decorator.onPreMessageProcessing(context, message);
-                } catch (RuntimeException runtimeException) {
-                    throw new MessageProcessingException(runtimeException);
-                }
+        decorators.forEach(decorator -> {
+            try {
+                decorator.onPreMessageProcessing(context, message);
+            } catch (RuntimeException runtimeException) {
+                throw new MessageProcessingException(runtimeException);
             }
-        );
+        });
 
         try {
             final Supplier<CompletableFuture<?>> wrappedResolveMessageCallback = () -> {
                 safelyRun(decorators, decorator -> decorator.onMessageResolve(context, message));
                 return resolveMessageCallback
                     .get()
-                    .whenComplete(
-                        (returnValue, throwable) -> {
-                            if (throwable != null) {
-                                safelyRun(decorators, decorator -> decorator.onMessageResolvedFailure(context, message, throwable));
-                            } else {
-                                safelyRun(decorators, decorator -> decorator.onMessageResolvedSuccess(context, message));
-                            }
+                    .whenComplete((returnValue, throwable) -> {
+                        if (throwable != null) {
+                            safelyRun(decorators, decorator -> decorator.onMessageResolvedFailure(context, message, throwable));
+                        } else {
+                            safelyRun(decorators, decorator -> decorator.onMessageResolvedSuccess(context, message));
                         }
-                    );
+                    });
             };
 
             return delegate
                 .processMessage(message, wrappedResolveMessageCallback)
-                .whenComplete(
-                    (returnValue, throwable) -> {
-                        if (throwable != null) {
-                            safelyRun(decorators, decorator -> decorator.onMessageProcessingFailure(context, message, throwable));
-                        } else {
-                            safelyRun(decorators, decorator -> decorator.onMessageProcessingSuccess(context, message, returnValue));
-                        }
+                .whenComplete((returnValue, throwable) -> {
+                    if (throwable != null) {
+                        safelyRun(decorators, decorator -> decorator.onMessageProcessingFailure(context, message, throwable));
+                    } else {
+                        safelyRun(decorators, decorator -> decorator.onMessageProcessingSuccess(context, message, returnValue));
                     }
-                );
+                });
         } catch (RuntimeException runtimeException) {
             safelyRun(decorators, decorator -> decorator.onMessageProcessingFailure(context, message, runtimeException));
             throw runtimeException;
@@ -100,14 +94,12 @@ public class DecoratingMessageProcessor implements MessageProcessor {
         final List<MessageProcessingDecorator> messageProcessingDecorators,
         final Consumer<MessageProcessingDecorator> decoratorConsumer
     ) {
-        messageProcessingDecorators.forEach(
-            decorator -> {
-                try {
-                    decoratorConsumer.accept(decorator);
-                } catch (RuntimeException runtimeException) {
-                    log.error("Error processing decorator: " + decorator.getClass().getSimpleName(), runtimeException);
-                }
+        messageProcessingDecorators.forEach(decorator -> {
+            try {
+                decoratorConsumer.accept(decorator);
+            } catch (RuntimeException runtimeException) {
+                log.error("Error processing decorator: " + decorator.getClass().getSimpleName(), runtimeException);
             }
-        );
+        });
     }
 }

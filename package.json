@@ -1,26 +1,23 @@
 {
     "devDependencies": {
-        "@prettier/plugin-xml": "0.12.0",
-        "husky": "4.3.0",
-        "lint-staged": "10.4.2",
-        "markdown-link-check": "3.8.3",
-        "prettier": "2.1.2",
-        "prettier-plugin-java": "0.8.3"
+        "@prettier/plugin-xml": "^3.0.0",
+        "husky": "^8.0.0",
+        "lint-staged": "^13.2.3",
+        "markdown-link-check": "^3.11.2",
+        "prettier": "^3.0.0",
+        "prettier-plugin-java": "^2.2.0"
     },
     "scripts": {
         "md-links-check": "find . -name \\*.md -not -path \"*/target/*\" -not -path \"*/build/*\" -not -path \"*/node_modules/*\" | tr '\\n' '\\0' | xargs -0 -n1 sh -c 'npx markdown-link-check -c \".markdownlinkcheck.json\" $0 || exit 255'",
         "format": "npx prettier --write \"**/*\"",
-        "test": "npm run md-links-check && npx prettier --check \"**/*\""
-    },
-    "husky": {
-        "hooks": {
-            "pre-commit": "lint-staged"
-        }
+        "test": "npm run md-links-check && npx prettier --check \"**/*\"",
+        "prepare": "husky install"
     },
     "lint-staged": {
         "*": [
             "prettier --write",
             "git add"
         ]
-    }
+    },
+    "packageManager": "yarn@3.6.1"
 }

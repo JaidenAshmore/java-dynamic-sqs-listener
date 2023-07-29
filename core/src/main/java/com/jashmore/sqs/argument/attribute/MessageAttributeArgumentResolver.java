@@ -45,12 +45,11 @@ public class MessageAttributeArgumentResolver implements ArgumentResolver<Object
         final QueueProperties queueProperties,
         final MethodParameter methodParameter,
         final Message message
-    )
-        throws ArgumentResolutionException {
+    ) throws ArgumentResolutionException {
         final MessageAttribute annotation = AnnotationUtils
             .findParameterAnnotation(methodParameter, MessageAttribute.class)
-            .orElseThrow(
-                () -> new ArgumentResolutionException("Parameter passed in does not contain the MessageAttribute annotation when it should")
+            .orElseThrow(() ->
+                new ArgumentResolutionException("Parameter passed in does not contain the MessageAttribute annotation when it should")
             );
 
         final String attributeName = annotation.value();

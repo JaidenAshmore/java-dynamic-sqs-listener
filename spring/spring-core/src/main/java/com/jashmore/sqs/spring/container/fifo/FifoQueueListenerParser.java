@@ -27,9 +27,8 @@ public class FifoQueueListenerParser implements CoreAnnotationParser<FifoQueueLi
         final Supplier<Integer> maximumCachedMessageGroupsSupplier = maximumCachedMessageGroupsSupplier(annotation);
         final Supplier<Duration> errorBackoffTimeSupplier = errorBackoffTimeSupplier(annotation);
         final Supplier<Duration> getMessageVisibilityTimeoutSupplier = messageVisibilityTimeoutSupplier(annotation);
-        final Supplier<Boolean> tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier = tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier(
-            annotation
-        );
+        final Supplier<Boolean> tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier =
+            tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier(annotation);
         final Supplier<Boolean> interruptThreadsProcessingMessagesOnShutdownSupplier = interruptThreadsProcessingMessagesOnShutdownSupplier(
             annotation
         );

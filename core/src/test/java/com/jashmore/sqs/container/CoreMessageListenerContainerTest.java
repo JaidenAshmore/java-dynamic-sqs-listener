@@ -202,12 +202,10 @@ class CoreMessageListenerContainerTest {
     void messageResolverBackgroundThreadNameCreatedFromIdentifier() {
         // arrange
         final AtomicReference<String> resolverThreadName = new AtomicReference<>();
-        doAnswer(
-                invocation -> {
-                    resolverThreadName.set(Thread.currentThread().getName());
-                    return null;
-                }
-            )
+        doAnswer(invocation -> {
+                resolverThreadName.set(Thread.currentThread().getName());
+                return null;
+            })
             .when(messageResolver)
             .run();
         final CoreMessageListenerContainer container = buildContainer(
@@ -231,12 +229,10 @@ class CoreMessageListenerContainerTest {
         // arrange
         final AtomicReference<String> retrieverThreadName = new AtomicReference<>();
         when(messageRetriever.run())
-            .thenAnswer(
-                invocation -> {
-                    retrieverThreadName.set(Thread.currentThread().getName());
-                    return emptyMap();
-                }
-            );
+            .thenAnswer(invocation -> {
+                retrieverThreadName.set(Thread.currentThread().getName());
+                return emptyMap();
+            });
         final CoreMessageListenerContainer container = buildContainer(
             "container-id",
             messageBroker,
@@ -257,13 +253,11 @@ class CoreMessageListenerContainerTest {
     void messageProcessingThreadNamesShouldBeMadeFromIdentifier() {
         // arrange
         final AtomicReference<String> retrieverThreadName = new AtomicReference<>();
-        doAnswer(
-                invocation -> {
-                    retrieverThreadName.set(Thread.currentThread().getName());
-                    log.info("Processing message");
-                    return null;
-                }
-            )
+        doAnswer(invocation -> {
+                retrieverThreadName.set(Thread.currentThread().getName());
+                log.info("Processing message");
+                return null;
+            })
             .when(messageProcessor)
             .processMessage(any(Message.class), any());
         when(messageRetriever.retrieveMessage())
@@ -367,24 +361,20 @@ class CoreMessageListenerContainerTest {
         final Message firstExtraMessage = Message.builder().body("first").build();
         when(messageRetriever.retrieveMessage())
             .thenReturn(CompletableFuture.completedFuture(firstExtraMessage))
-            .thenAnswer(
-                invocationOnMock -> {
-                    messageProcessing.await();
-                    return STUB_MESSAGE_BROKER_DONE;
-                }
-            );
+            .thenAnswer(invocationOnMock -> {
+                messageProcessing.await();
+                return STUB_MESSAGE_BROKER_DONE;
+            });
         final AtomicBoolean wasThreadInterrupted = new AtomicBoolean(false);
-        doAnswer(
-                invocation -> {
-                    try {
-                        messageProcessing.countDown();
-                        Thread.sleep(500);
-                    } catch (InterruptedException interruptedException) {
-                        wasThreadInterrupted.set(true);
-                    }
-                    return null;
+        doAnswer(invocation -> {
+                try {
+                    messageProcessing.countDown();
+                    Thread.sleep(500);
+                } catch (InterruptedException interruptedException) {
+                    wasThreadInterrupted.set(true);
                 }
-            )
+                return null;
+            })
             .when(messageProcessor)
             .processMessage(any(Message.class), any());
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES
@@ -414,24 +404,20 @@ class CoreMessageListenerContainerTest {
         final Message firstExtraMessage = Message.builder().body("first").build();
         when(messageRetriever.retrieveMessage())
             .thenReturn(CompletableFuture.completedFuture(firstExtraMessage))
-            .thenAnswer(
-                invocationOnMock -> {
-                    messageProcessing.await();
-                    return STUB_MESSAGE_BROKER_DONE;
-                }
-            );
+            .thenAnswer(invocationOnMock -> {
+                messageProcessing.await();
+                return STUB_MESSAGE_BROKER_DONE;
+            });
         final AtomicBoolean wasThreadInterrupted = new AtomicBoolean(false);
-        doAnswer(
-                invocation -> {
-                    try {
-                        messageProcessing.countDown();
-                        Thread.sleep(500);
-                    } catch (InterruptedException interruptedException) {
-                        wasThreadInterrupted.set(true);
-                    }
-                    return null;
+        doAnswer(invocation -> {
+                try {
+                    messageProcessing.countDown();
+                    Thread.sleep(500);
+                } catch (InterruptedException interruptedException) {
+                    wasThreadInterrupted.set(true);
                 }
-            )
+                return null;
+            })
             .when(messageProcessor)
             .processMessage(any(Message.class), any());
         final StaticCoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES
@@ -460,16 +446,14 @@ class CoreMessageListenerContainerTest {
         final AtomicBoolean messageRetrieverInterrupted = new AtomicBoolean(false);
         when(messageRetriever.retrieveMessage()).thenReturn(STUB_MESSAGE_BROKER_DONE);
         when(messageRetriever.run())
-            .thenAnswer(
-                invocation -> {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (final InterruptedException interruptedException) {
-                        messageRetrieverInterrupted.set(true);
-                    }
-                    return null;
+            .thenAnswer(invocation -> {
+                try {
+                    Thread.sleep(5000);
+                } catch (final InterruptedException interruptedException) {
+                    messageRetrieverInterrupted.set(true);
                 }
-            );
+                return null;
+            });
 
         final CoreMessageListenerContainer container = buildContainer(
             "id",
@@ -492,16 +476,14 @@ class CoreMessageListenerContainerTest {
         // arrange
         final AtomicBoolean messageResolverInterrupted = new AtomicBoolean(false);
         when(messageRetriever.retrieveMessage()).thenReturn(STUB_MESSAGE_BROKER_DONE);
-        doAnswer(
-                invocation -> {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (final InterruptedException interruptedException) {
-                        messageResolverInterrupted.set(true);
-                    }
-                    return null;
+        doAnswer(invocation -> {
+                try {
+                    Thread.sleep(5000);
+                } catch (final InterruptedException interruptedException) {
+                    messageResolverInterrupted.set(true);
                 }
-            )
+                return null;
+            })
             .when(messageResolver)
             .run();
 
@@ -526,27 +508,23 @@ class CoreMessageListenerContainerTest {
         // arrange
         when(messageRetriever.retrieveMessage()).thenReturn(STUB_MESSAGE_BROKER_DONE);
         when(messageRetriever.run())
-            .thenAnswer(
-                invocation -> {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (final InterruptedException interruptedException) {
-                        Thread.sleep(2000);
-                    }
-                    return emptyMap();
+            .thenAnswer(invocation -> {
+                try {
+                    Thread.sleep(2000);
+                } catch (final InterruptedException interruptedException) {
+                    Thread.sleep(2000);
                 }
-            );
+                return emptyMap();
+            });
         final AtomicBoolean messageResolverInterrupted = new AtomicBoolean(false);
-        doAnswer(
-                invocation -> {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (final InterruptedException interruptedException) {
-                        messageResolverInterrupted.set(true);
-                    }
-                    return null;
+        doAnswer(invocation -> {
+                try {
+                    Thread.sleep(2000);
+                } catch (final InterruptedException interruptedException) {
+                    messageResolverInterrupted.set(true);
                 }
-            )
+                return null;
+            })
             .when(messageResolver)
             .run();
         final CoreMessageListenerContainerProperties properties = DEFAULT_PROPERTIES
@@ -574,12 +552,10 @@ class CoreMessageListenerContainerTest {
         // arrange
         final CountDownLatch messageRetrievedLatched = new CountDownLatch(1);
         when(messageRetriever.retrieveMessage())
-            .thenAnswer(
-                invocation -> {
-                    messageRetrievedLatched.countDown();
-                    return STUB_MESSAGE_BROKER_DONE;
-                }
-            );
+            .thenAnswer(invocation -> {
+                messageRetrievedLatched.countDown();
+                return STUB_MESSAGE_BROKER_DONE;
+            });
 
         final CoreMessageListenerContainer container = buildContainer(
             "id",
@@ -603,12 +579,10 @@ class CoreMessageListenerContainerTest {
         // arrange
         final CountDownLatch messageRetrievedLatched = new CountDownLatch(1);
         when(messageRetriever.retrieveMessage())
-            .thenAnswer(
-                invocation -> {
-                    messageRetrievedLatched.countDown();
-                    return STUB_MESSAGE_BROKER_DONE;
-                }
-            );
+            .thenAnswer(invocation -> {
+                messageRetrievedLatched.countDown();
+                return STUB_MESSAGE_BROKER_DONE;
+            });
 
         final CoreMessageListenerContainer container = buildContainer(
             "id",
@@ -632,13 +606,11 @@ class CoreMessageListenerContainerTest {
     void stoppingContainerThatHasStartedWillShutDownContainer() throws Exception {
         // arrange
         final CountDownLatch messageBrokerStartedLatch = new CountDownLatch(1);
-        doAnswer(
-                invocation -> {
-                    messageBrokerStartedLatch.countDown();
-                    Thread.sleep(5000);
-                    return null;
-                }
-            )
+        doAnswer(invocation -> {
+                messageBrokerStartedLatch.countDown();
+                Thread.sleep(5000);
+                return null;
+            })
             .when(messageBroker)
             .processMessages(any(), any(), any());
         final CoreMessageListenerContainer container = buildContainer(
@@ -689,8 +661,7 @@ class CoreMessageListenerContainerTest {
             final BooleanSupplier keepProcessingMessages,
             final Supplier<CompletableFuture<Message>> messageSupplier,
             final Function<Message, CompletableFuture<?>> messageProcessor
-        )
-            throws InterruptedException {
+        ) throws InterruptedException {
             while (keepProcessingMessages.getAsBoolean()) {
                 final CompletableFuture<Message> messageFuture = messageSupplier.get();
                 if (messageFuture.isCompletedExceptionally()) {

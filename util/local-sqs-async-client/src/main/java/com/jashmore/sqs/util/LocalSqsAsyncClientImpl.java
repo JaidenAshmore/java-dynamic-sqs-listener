@@ -106,14 +106,11 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     ) {
         return getQueueUrl(builder -> builder.queueName(queueName))
             .thenApply(GetQueueUrlResponse::queueUrl)
-            .thenCompose(
-                queueUrl ->
-                    sendMessage(
-                        builder -> {
-                            sendMessageRequestBuilderConsumer.accept(builder);
-                            builder.queueUrl(queueUrl);
-                        }
-                    )
+            .thenCompose(queueUrl ->
+                sendMessage(builder -> {
+                    sendMessageRequestBuilderConsumer.accept(builder);
+                    builder.queueUrl(queueUrl);
+                })
             );
     }
 
@@ -123,8 +120,7 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
 
         log.info("Creating queue with name: {}", queueName);
         return createQueue(requestBuilder -> requestBuilder.queueName(queueName).build())
-            .thenApply(
-                createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
+            .thenApply(createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
             );
     }
 
@@ -140,18 +136,15 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
         final String queueName = UUID.randomUUID().toString().replace("-", "") + ".fifo";
 
         log.info("Creating FIFO queue with name: {}", queueName);
-        return createQueue(
-                requestBuilder -> {
-                    sendMessageRequestBuilderConsumer.accept(requestBuilder);
-                    final Map<QueueAttributeName, String> originalAttributes = requestBuilder.build().attributes();
-                    final Map<QueueAttributeName, String> actualAttributes = new HashMap<>(originalAttributes);
-                    actualAttributes.putIfAbsent(QueueAttributeName.FIFO_QUEUE, String.valueOf(true));
-                    actualAttributes.putIfAbsent(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
-                    requestBuilder.queueName(queueName).attributes(actualAttributes).build();
-                }
-            )
-            .thenApply(
-                createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
+        return createQueue(requestBuilder -> {
+                sendMessageRequestBuilderConsumer.accept(requestBuilder);
+                final Map<QueueAttributeName, String> originalAttributes = requestBuilder.build().attributes();
+                final Map<QueueAttributeName, String> actualAttributes = new HashMap<>(originalAttributes);
+                actualAttributes.putIfAbsent(QueueAttributeName.FIFO_QUEUE, String.valueOf(true));
+                actualAttributes.putIfAbsent(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
+                requestBuilder.queueName(queueName).attributes(actualAttributes).build();
+            })
+            .thenApply(createQueueResponse -> CreateRandomQueueResponse.builder().response(createQueueResponse).queueName(queueName).build()
             );
     }
 
@@ -160,11 +153,8 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
         return delegate
             .listQueues()
             .thenApply(ListQueuesResponse::queueUrls)
-            .thenCompose(
-                queueUrls ->
-                    CompletableFutureUtils.allOf(
-                        queueUrls.stream().map(url -> purgeQueue(builder -> builder.queueUrl(url))).collect(toList())
-                    )
+            .thenCompose(queueUrls ->
+                CompletableFutureUtils.allOf(queueUrls.stream().map(url -> purgeQueue(builder -> builder.queueUrl(url))).collect(toList()))
             );
     }
 
@@ -172,20 +162,15 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
     public CompletableFuture<Integer> getApproximateMessages(final String queueName) {
         return getQueueUrl(builder -> builder.queueName(queueName))
             .thenApply(GetQueueUrlResponse::queueUrl)
-            .thenCompose(
-                queueUrl ->
-                    getQueueAttributes(
-                        builder ->
-                            builder
-                                .queueUrl(queueUrl)
-                                .attributeNames(APPROXIMATE_NUMBER_OF_MESSAGES, APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
-                    )
+            .thenCompose(queueUrl ->
+                getQueueAttributes(builder ->
+                    builder.queueUrl(queueUrl).attributeNames(APPROXIMATE_NUMBER_OF_MESSAGES, APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
+                )
             )
             .thenApply(GetQueueAttributesResponse::attributes)
-            .thenApply(
-                attributes ->
-                    Integer.parseInt(attributes.get(APPROXIMATE_NUMBER_OF_MESSAGES)) +
-                    Integer.parseInt(attributes.get(APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE))
+            .thenApply(attributes ->
+                Integer.parseInt(attributes.get(APPROXIMATE_NUMBER_OF_MESSAGES)) +
+                Integer.parseInt(attributes.get(APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE))
             );
     }
 
@@ -217,16 +202,15 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
             final int maxReceiveCount = Optional.ofNullable(queueConfig.getMaxReceiveCount()).orElse(DEFAULT_MAX_RECEIVE_COUNT);
             createDeadLetterQueueFuture =
                 createDeadLetterQueue(delegate, queueConfig, deadLetterQueueName)
-                    .thenAccept(
-                        deadLetterQueueArn ->
-                            attributes.put(
-                                QueueAttributeName.REDRIVE_POLICY,
-                                String.format(
-                                    "{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}",
-                                    deadLetterQueueArn,
-                                    maxReceiveCount
-                                )
+                    .thenAccept(deadLetterQueueArn ->
+                        attributes.put(
+                            QueueAttributeName.REDRIVE_POLICY,
+                            String.format(
+                                "{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"%d\"}",
+                                deadLetterQueueArn,
+                                maxReceiveCount
                             )
+                        )
                     );
         } else {
             createDeadLetterQueueFuture = CompletableFuture.completedFuture(null);
@@ -240,8 +224,8 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
             attributes.put(QueueAttributeName.CONTENT_BASED_DEDUPLICATION, String.valueOf(false));
         }
 
-        return createDeadLetterQueueFuture.thenCompose(
-            ignored -> delegate.createQueue(builder -> builder.queueName(queueConfig.getQueueName()).attributes(attributes))
+        return createDeadLetterQueueFuture.thenCompose(ignored ->
+            delegate.createQueue(builder -> builder.queueName(queueConfig.getQueueName()).attributes(attributes))
         );
     }
 
@@ -271,11 +255,10 @@ public class LocalSqsAsyncClientImpl implements LocalSqsAsyncClient {
                     }
                 )
             )
-            .thenCompose(
-                createQueueResponse ->
-                    delegate.getQueueAttributes(
-                        builder -> builder.queueUrl(createQueueResponse.queueUrl()).attributeNames(QueueAttributeName.QUEUE_ARN)
-                    )
+            .thenCompose(createQueueResponse ->
+                delegate.getQueueAttributes(builder ->
+                    builder.queueUrl(createQueueResponse.queueUrl()).attributeNames(QueueAttributeName.QUEUE_ARN)
+                )
             )
             .thenApply(queueAttributes -> queueAttributes.attributes().get(QueueAttributeName.QUEUE_ARN));
     }

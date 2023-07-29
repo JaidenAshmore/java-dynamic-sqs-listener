@@ -116,16 +116,14 @@ public class PropertyUtils {
         try {
             return Optional
                 .ofNullable(valueSupplier.get())
-                .filter(
-                    value -> {
-                        if (!valueValidator.test(value)) {
-                            log.error("Invalid value {} for property {} returning default value {}", value, propertyName, defaultValue);
-                            return false;
-                        }
-
-                        return true;
+                .filter(value -> {
+                    if (!valueValidator.test(value)) {
+                        log.error("Invalid value {} for property {} returning default value {}", value, propertyName, defaultValue);
+                        return false;
                     }
-                )
+
+                    return true;
+                })
                 .orElse(defaultValue);
         } catch (final RuntimeException throwable) {
             log.error("Error obtaining Property value {} returning default value {}", propertyName, defaultValue, throwable);

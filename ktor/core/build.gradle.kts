@@ -17,7 +17,7 @@ dependencies {
 
     testImplementation(project(":elasticmq-sqs-client"))
     testImplementation(project(":expected-test-exception"))
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:$mockitoKotlinVersion")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
 }

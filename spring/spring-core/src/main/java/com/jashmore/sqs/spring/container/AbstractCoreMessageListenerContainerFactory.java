@@ -120,16 +120,14 @@ public abstract class AbstractCoreMessageListenerContainerFactory<A extends Anno
         if (!StringUtils.hasText(sqsClient)) {
             return sqsAsyncClientProvider
                 .getDefaultClient()
-                .orElseThrow(
-                    () -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none")
+                .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none")
                 );
         }
 
         return sqsAsyncClientProvider
             .getClient(sqsClient)
-            .orElseThrow(
-                () ->
-                    new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found")
+            .orElseThrow(() ->
+                new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found")
             );
     }
 

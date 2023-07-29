@@ -139,12 +139,13 @@ public class SendMessageTracingExecutionInterceptorTest {
             .messageAttributes(new HashMap<>())
             .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
-        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-            @Override
-            public void decorateMessageSpan(SendMessageRequest request, Span span) {
-                span.tag("test", "value");
-            }
-        };
+        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator =
+            new SendMessageTracingExecutionInterceptor.SpanDecorator() {
+                @Override
+                public void decorateMessageSpan(SendMessageRequest request, Span span) {
+                    span.tag("test", "value");
+                }
+            };
 
         // act
         final SendMessageTracingExecutionInterceptor interceptor = new SendMessageTracingExecutionInterceptor(tracing, spanDecorator);
@@ -300,17 +301,18 @@ public class SendMessageTracingExecutionInterceptorTest {
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionSuccess(request, "message-id");
-        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-            @Override
-            public void decorateMessageSpanOnSuccess(
-                SendMessageRequest request,
-                SendMessageResponse response,
-                SdkHttpResponse sdkHttpResponse,
-                Span span
-            ) {
-                span.tag("test", "value");
-            }
-        };
+        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator =
+            new SendMessageTracingExecutionInterceptor.SpanDecorator() {
+                @Override
+                public void decorateMessageSpanOnSuccess(
+                    SendMessageRequest request,
+                    SendMessageResponse response,
+                    SdkHttpResponse sdkHttpResponse,
+                    Span span
+                ) {
+                    span.tag("test", "value");
+                }
+            };
 
         // act
         final SendMessageTracingExecutionInterceptor interceptor = new SendMessageTracingExecutionInterceptor(tracing, spanDecorator);
@@ -333,17 +335,18 @@ public class SendMessageTracingExecutionInterceptorTest {
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 500);
-        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageTracingExecutionInterceptor.SpanDecorator() {
-            @Override
-            public void decorateMessageSpanOnFailure(
-                SendMessageRequest sendMessageRequest,
-                SendMessageResponse response,
-                SdkHttpResponse sdkHttpResponse,
-                Span span
-            ) {
-                span.tag("test", "value");
-            }
-        };
+        final SendMessageTracingExecutionInterceptor.SpanDecorator spanDecorator =
+            new SendMessageTracingExecutionInterceptor.SpanDecorator() {
+                @Override
+                public void decorateMessageSpanOnFailure(
+                    SendMessageRequest sendMessageRequest,
+                    SendMessageResponse response,
+                    SdkHttpResponse sdkHttpResponse,
+                    Span span
+                ) {
+                    span.tag("test", "value");
+                }
+            };
 
         // act
         final SendMessageTracingExecutionInterceptor interceptor = new SendMessageTracingExecutionInterceptor(tracing, spanDecorator);

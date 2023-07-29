@@ -1,4 +1,5 @@
 {
+    "plugins": ["prettier-plugin-java", "@prettier/plugin-xml"],
     "printWidth": 140,
     "tabWidth": 4,
     "useTabs": false,

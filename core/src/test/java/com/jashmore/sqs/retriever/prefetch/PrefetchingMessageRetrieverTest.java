@@ -48,15 +48,11 @@ class PrefetchingMessageRetrieverTest {
     private static final String QUEUE_URL = "queueUrl";
     private static final QueueProperties QUEUE_PROPERTIES = QueueProperties.builder().queueUrl(QUEUE_URL).build();
 
-    private static final CompletableFuture<ReceiveMessageResponse> RECEIVE_MESSAGES_INTERRUPTED = CompletableFutureUtils.completedExceptionally(
-        SdkClientException.builder().cause(new SdkInterruptedException()).build()
-    );
+    private static final CompletableFuture<ReceiveMessageResponse> RECEIVE_MESSAGES_INTERRUPTED =
+        CompletableFutureUtils.completedExceptionally(SdkClientException.builder().cause(new SdkInterruptedException()).build());
 
-    private static final StaticPrefetchingMessageRetrieverProperties DEFAULT_PREFETCHING_PROPERTIES = StaticPrefetchingMessageRetrieverProperties
-        .builder()
-        .desiredMinPrefetchedMessages(1)
-        .maxPrefetchedMessages(2)
-        .build();
+    private static final StaticPrefetchingMessageRetrieverProperties DEFAULT_PREFETCHING_PROPERTIES =
+        StaticPrefetchingMessageRetrieverProperties.builder().desiredMinPrefetchedMessages(1).maxPrefetchedMessages(2).build();
 
     @Mock
     private SqsAsyncClient sqsAsyncClient;

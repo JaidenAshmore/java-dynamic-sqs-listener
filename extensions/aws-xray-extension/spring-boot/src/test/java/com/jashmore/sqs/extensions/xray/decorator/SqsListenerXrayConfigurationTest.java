@@ -35,7 +35,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 class SqsListenerXrayConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-    .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class, SqsListenerXrayConfiguration.class));
+        .withConfiguration(AutoConfigurations.of(QueueListenerConfiguration.class, SqsListenerXrayConfiguration.class));
 
     @Mock
     private AWSXRayRecorder mockGlobalRecorder;
@@ -67,24 +67,22 @@ class SqsListenerXrayConfigurationTest {
         void willSetSegmentAsDefaultNameWhenApplicationNameNotPresent() {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        when(mockGlobalRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
-                        final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
-                        decorator.onPreMessageProcessing(
-                            MessageProcessingContext
-                                .builder()
-                                .attributes(new HashMap<>())
-                                .listenerIdentifier("identifier")
-                                .queueProperties(QueueProperties.builder().queueUrl("url").build())
-                                .build(),
-                            Message.builder().build()
-                        );
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    when(mockGlobalRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
+                    final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
+                    decorator.onPreMessageProcessing(
+                        MessageProcessingContext
+                            .builder()
+                            .attributes(new HashMap<>())
+                            .listenerIdentifier("identifier")
+                            .queueProperties(QueueProperties.builder().queueUrl("url").build())
+                            .build(),
+                        Message.builder().build()
+                    );
 
-                        verify(mockGlobalRecorder).beginSegment("service");
-                    }
-                );
+                    verify(mockGlobalRecorder).beginSegment("service");
+                });
         }
 
         @Test
@@ -92,24 +90,22 @@ class SqsListenerXrayConfigurationTest {
             contextRunner
                 .withPropertyValues("spring.application.name=my-service-name")
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        when(mockGlobalRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
-                        final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
-                        decorator.onPreMessageProcessing(
-                            MessageProcessingContext
-                                .builder()
-                                .attributes(new HashMap<>())
-                                .listenerIdentifier("identifier")
-                                .queueProperties(QueueProperties.builder().queueUrl("url").build())
-                                .build(),
-                            Message.builder().build()
-                        );
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    when(mockGlobalRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
+                    final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
+                    decorator.onPreMessageProcessing(
+                        MessageProcessingContext
+                            .builder()
+                            .attributes(new HashMap<>())
+                            .listenerIdentifier("identifier")
+                            .queueProperties(QueueProperties.builder().queueUrl("url").build())
+                            .build(),
+                        Message.builder().build()
+                    );
 
-                        verify(mockGlobalRecorder).beginSegment("my-service-name");
-                    }
-                );
+                    verify(mockGlobalRecorder).beginSegment("my-service-name");
+                });
         }
 
         @Test
@@ -118,24 +114,22 @@ class SqsListenerXrayConfigurationTest {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
                 .withBean("sqsXrayRecorder", AWSXRayRecorder.class, () -> mockRecorder)
-                .run(
-                    context -> {
-                        when(mockRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        when(mockRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
-                        final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
-                        decorator.onPreMessageProcessing(
-                            MessageProcessingContext
-                                .builder()
-                                .attributes(new HashMap<>())
-                                .listenerIdentifier("identifier")
-                                .queueProperties(QueueProperties.builder().queueUrl("url").build())
-                                .build(),
-                            Message.builder().build()
-                        );
+                .run(context -> {
+                    when(mockRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    when(mockRecorder.beginSubsegment(anyString())).thenReturn(mock(Subsegment.class));
+                    final BasicXrayMessageProcessingDecorator decorator = context.getBean(BasicXrayMessageProcessingDecorator.class);
+                    decorator.onPreMessageProcessing(
+                        MessageProcessingContext
+                            .builder()
+                            .attributes(new HashMap<>())
+                            .listenerIdentifier("identifier")
+                            .queueProperties(QueueProperties.builder().queueUrl("url").build())
+                            .build(),
+                        Message.builder().build()
+                    );
 
-                        verify(mockRecorder).beginSegment("service");
-                    }
-                );
+                    verify(mockRecorder).beginSegment("service");
+                });
         }
     }
 
@@ -153,38 +147,34 @@ class SqsListenerXrayConfigurationTest {
 
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> defaultClient)
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        final SqsAsyncClientProvider provider = context.getBean(SqsAsyncClientProvider.class);
-                        final SqsAsyncClient client = provider.getDefaultClient().orElseThrow(() -> new RuntimeException("Error"));
-                        assertThat(client).isInstanceOf(XrayWrappedSqsAsyncClient.class);
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    final SqsAsyncClientProvider provider = context.getBean(SqsAsyncClientProvider.class);
+                    final SqsAsyncClient client = provider.getDefaultClient().orElseThrow(() -> new RuntimeException("Error"));
+                    assertThat(client).isInstanceOf(XrayWrappedSqsAsyncClient.class);
 
-                        client.sendMessage(SendMessageRequest.builder().build());
+                    client.sendMessage(SendMessageRequest.builder().build());
 
-                        verify(defaultClient).sendMessage(any(SendMessageRequest.class));
-                    }
-                );
+                    verify(defaultClient).sendMessage(any(SendMessageRequest.class));
+                });
         }
 
         @Test
         void willPublishMetricsWithDefaultSegmentNameIfApplicationNameMissing() {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        final SqsAsyncClient client = context
-                            .getBean(SqsAsyncClientProvider.class)
-                            .getDefaultClient()
-                            .orElseThrow(() -> new RuntimeException("Error"));
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    final SqsAsyncClient client = context
+                        .getBean(SqsAsyncClientProvider.class)
+                        .getDefaultClient()
+                        .orElseThrow(() -> new RuntimeException("Error"));
 
-                        client.sendMessage(SendMessageRequest.builder().build());
+                    client.sendMessage(SendMessageRequest.builder().build());
 
-                        verify(mockGlobalRecorder).beginSegment("service");
-                        verify(mockGlobalRecorder).endSegment();
-                    }
-                );
+                    verify(mockGlobalRecorder).beginSegment("service");
+                    verify(mockGlobalRecorder).endSegment();
+                });
         }
 
         @Test
@@ -192,20 +182,18 @@ class SqsListenerXrayConfigurationTest {
             contextRunner
                 .withPropertyValues("spring.application.name=my-service-name")
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        final SqsAsyncClient client = context
-                            .getBean(SqsAsyncClientProvider.class)
-                            .getDefaultClient()
-                            .orElseThrow(() -> new RuntimeException("Error"));
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    final SqsAsyncClient client = context
+                        .getBean(SqsAsyncClientProvider.class)
+                        .getDefaultClient()
+                        .orElseThrow(() -> new RuntimeException("Error"));
 
-                        client.sendMessage(SendMessageRequest.builder().build());
+                    client.sendMessage(SendMessageRequest.builder().build());
 
-                        verify(mockGlobalRecorder).beginSegment("my-service-name");
-                        verify(mockGlobalRecorder).endSegment();
-                    }
-                );
+                    verify(mockGlobalRecorder).beginSegment("my-service-name");
+                    verify(mockGlobalRecorder).endSegment();
+                });
         }
 
         @Test
@@ -221,13 +209,11 @@ class SqsListenerXrayConfigurationTest {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
                 .withBean("anotherXrayRecorder", AWSXRayRecorder.class, () -> mock(AWSXRayRecorder.class))
-                .run(
-                    context -> {
-                        assertThat(context).hasBean("anotherXrayRecorder");
-                        assertThat(context).hasBean("sqsXrayRecorder");
-                        context.getBean(SqsAsyncClientProvider.class);
-                    }
-                );
+                .run(context -> {
+                    assertThat(context).hasBean("anotherXrayRecorder");
+                    assertThat(context).hasBean("sqsXrayRecorder");
+                    context.getBean(SqsAsyncClientProvider.class);
+                });
         }
 
         @Test
@@ -236,40 +222,36 @@ class SqsListenerXrayConfigurationTest {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
                 .withBean("sqsXrayRecorder", AWSXRayRecorder.class, () -> mockRecorder)
-                .run(
-                    context -> {
-                        when(mockRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        assertThat(context).hasSingleBean(AWSXRayRecorder.class);
-                        assertThat(context.getBean("sqsXrayRecorder")).isSameAs(mockRecorder);
+                .run(context -> {
+                    when(mockRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    assertThat(context).hasSingleBean(AWSXRayRecorder.class);
+                    assertThat(context.getBean("sqsXrayRecorder")).isSameAs(mockRecorder);
 
-                        final SqsAsyncClient sqsAsyncClient = context
-                            .getBean(SqsAsyncClientProvider.class)
-                            .getDefaultClient()
-                            .orElseThrow(() -> new RuntimeException(""));
-                        sqsAsyncClient.sendMessage(SendMessageRequest.builder().build());
-                        verify(mockRecorder).beginSegment(anyString());
-                    }
-                );
+                    final SqsAsyncClient sqsAsyncClient = context
+                        .getBean(SqsAsyncClientProvider.class)
+                        .getDefaultClient()
+                        .orElseThrow(() -> new RuntimeException(""));
+                    sqsAsyncClient.sendMessage(SendMessageRequest.builder().build());
+                    verify(mockRecorder).beginSegment(anyString());
+                });
         }
 
         @Test
         void willUseGlobalRecorderIfNoneExplicitlySet() {
             contextRunner
                 .withBean(SqsAsyncClient.class, () -> mock(SqsAsyncClient.class))
-                .run(
-                    context -> {
-                        when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
-                        assertThat(context).hasSingleBean(AWSXRayRecorder.class);
-                        assertThat(context.getBean("sqsXrayRecorder")).isSameAs(mockGlobalRecorder);
+                .run(context -> {
+                    when(mockGlobalRecorder.beginSegment(anyString())).thenReturn(mock(Segment.class));
+                    assertThat(context).hasSingleBean(AWSXRayRecorder.class);
+                    assertThat(context.getBean("sqsXrayRecorder")).isSameAs(mockGlobalRecorder);
 
-                        final SqsAsyncClient sqsAsyncClient = context
-                            .getBean(SqsAsyncClientProvider.class)
-                            .getDefaultClient()
-                            .orElseThrow(() -> new RuntimeException(""));
-                        sqsAsyncClient.sendMessage(SendMessageRequest.builder().build());
-                        verify(mockGlobalRecorder).beginSegment(anyString());
-                    }
-                );
+                    final SqsAsyncClient sqsAsyncClient = context
+                        .getBean(SqsAsyncClientProvider.class)
+                        .getDefaultClient()
+                        .orElseThrow(() -> new RuntimeException(""));
+                    sqsAsyncClient.sendMessage(SendMessageRequest.builder().build());
+                    verify(mockGlobalRecorder).beginSegment(anyString());
+                });
         }
     }
 }

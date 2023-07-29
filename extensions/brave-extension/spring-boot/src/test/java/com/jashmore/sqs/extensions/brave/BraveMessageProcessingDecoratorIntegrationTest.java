@@ -57,8 +57,8 @@ public class BraveMessageProcessingDecoratorIntegrationTest {
             return new ElasticMqSqsAsyncClient(
                 QUEUE_NAME,
                 clientBuilder ->
-                    clientBuilder.overrideConfiguration(
-                        overrideBuilder -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
+                    clientBuilder.overrideConfiguration(overrideBuilder ->
+                        overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
                     )
             );
         }

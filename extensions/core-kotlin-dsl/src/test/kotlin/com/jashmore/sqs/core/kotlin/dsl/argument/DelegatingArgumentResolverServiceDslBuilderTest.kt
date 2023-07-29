@@ -11,12 +11,12 @@ import com.jashmore.sqs.argument.message.MessageArgumentResolver
 import com.jashmore.sqs.argument.messageid.MessageId
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver
 import com.jashmore.sqs.argument.payload.Payload
-import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.whenever
 import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName
@@ -24,7 +24,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
 class DelegatingArgumentResolverServiceDslBuilderTest {
-    private val objectMapper = ObjectMapper().registerModule(KotlinModule())
+    private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
     private val queueProperties = QueueProperties.builder().queueUrl("url").build()
     private val method: Method = DelegatingArgumentResolverServiceDslBuilderTest::class.java.getMethod(
         "myMethod",

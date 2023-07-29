@@ -73,19 +73,17 @@ public class XrayExtensionIntegrationTest {
         throws InterruptedException, SocketException, TimeoutException, ExecutionException {
         // arrange
         final DatagramSocket socket = new DatagramSocket(XRAY_DAEMON_PORT);
-        final CompletableFuture<String> receiveDataFuture = CompletableFuture.supplyAsync(
-            () -> {
-                final byte[] buf = new byte[4096];
-                final DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                try {
-                    socket.receive(packet);
-                } catch (IOException ioException) {
-                    throw new RuntimeException(ioException);
-                }
-                socket.close();
-                return new String(packet.getData(), 0, packet.getLength());
+        final CompletableFuture<String> receiveDataFuture = CompletableFuture.supplyAsync(() -> {
+            final byte[] buf = new byte[4096];
+            final DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            try {
+                socket.receive(packet);
+            } catch (IOException ioException) {
+                throw new RuntimeException(ioException);
             }
-        );
+            socket.close();
+            return new String(packet.getData(), 0, packet.getLength());
+        });
 
         // act
         sqsAsyncClient.sendMessage(QUEUE_NAME, "body");

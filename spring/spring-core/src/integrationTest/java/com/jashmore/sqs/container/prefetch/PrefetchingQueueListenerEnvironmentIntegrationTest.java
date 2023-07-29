@@ -60,12 +60,10 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
         // arrange
         IntStream
             .range(0, NUMBER_OF_MESSAGES_TO_SEND)
-            .forEach(
-                index -> {
-                    log.info("Sending message: " + index);
-                    localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + index);
-                }
-            );
+            .forEach(index -> {
+                log.info("Sending message: " + index);
+                localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + index);
+            });
 
         // act
         // Wait the visibility timeout to make sure that all messages were processed and deleted from the queue

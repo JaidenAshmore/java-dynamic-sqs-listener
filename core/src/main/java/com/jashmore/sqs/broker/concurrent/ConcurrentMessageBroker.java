@@ -52,8 +52,7 @@ public class ConcurrentMessageBroker implements MessageBroker {
         final BooleanSupplier keepProcessingMessages,
         final Supplier<CompletableFuture<Message>> messageSupplier,
         final Function<Message, CompletableFuture<?>> messageProcessor
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         log.debug("Beginning processing of messages");
         while (!Thread.currentThread().isInterrupted() && keepProcessingMessages.getAsBoolean()) {
             try {
@@ -72,14 +71,12 @@ public class ConcurrentMessageBroker implements MessageBroker {
                     messageSupplier
                         .get()
                         .thenComposeAsync(messageProcessor::apply, messageProcessingExecutorService)
-                        .whenComplete(
-                            (ignoredResult, throwable) -> {
-                                if (throwable != null && !(throwable.getCause() instanceof CancellationException)) {
-                                    log.error("Error processing message", throwable.getCause());
-                                }
-                                concurrentMessagesBeingProcessedSemaphore.release();
+                        .whenComplete((ignoredResult, throwable) -> {
+                            if (throwable != null && !(throwable.getCause() instanceof CancellationException)) {
+                                log.error("Error processing message", throwable.getCause());
                             }
-                        );
+                            concurrentMessagesBeingProcessedSemaphore.release();
+                        });
                 } catch (final RuntimeException runtimeException) {
                     concurrentMessagesBeingProcessedSemaphore.release();
                     // bubble the exception to deal with backing off, as we don't want to duplicate that code

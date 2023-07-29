@@ -53,8 +53,7 @@ public interface MessageBroker {
         BooleanSupplier keepProcessingMessages,
         Supplier<CompletableFuture<Message>> messageSupplier,
         Function<Message, CompletableFuture<?>> messageProcessor
-    )
-        throws InterruptedException;
+    ) throws InterruptedException;
 
     /**
      * Requests for messages and consume these when they are eventually obtained by the provided message {@link Consumer}.
@@ -74,8 +73,7 @@ public interface MessageBroker {
         ExecutorService messageProcessingExecutorService,
         Supplier<CompletableFuture<Message>> messageSupplier,
         Function<Message, CompletableFuture<?>> messageProcessor
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         processMessages(messageProcessingExecutorService, () -> true, messageSupplier, messageProcessor);
     }
 }

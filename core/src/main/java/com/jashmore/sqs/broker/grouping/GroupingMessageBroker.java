@@ -114,8 +114,7 @@ public class GroupingMessageBroker implements MessageBroker {
         final BooleanSupplier keepProcessingMessages,
         final Supplier<CompletableFuture<Message>> messageSupplier,
         final Function<Message, CompletableFuture<?>> messageProcessor
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         log.debug("Beginning processing of messages");
         normalProcessingOfMessage(messageProcessingExecutorService, keepProcessingMessages, messageSupplier, messageProcessor);
         cancelAllRequestsForMessages();
@@ -150,8 +149,7 @@ public class GroupingMessageBroker implements MessageBroker {
         final ExecutorService messageProcessingExecutorService,
         final Supplier<CompletableFuture<Message>> messageSupplier,
         final Function<Message, CompletableFuture<?>> messageProcessor
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         concurrentMessageBroker.processMessages(
             messageProcessingExecutorService,
             () -> !internalMessageCache.isEmpty(),
@@ -182,32 +180,30 @@ public class GroupingMessageBroker implements MessageBroker {
             final String messageGroupKey = properties.messageGroupingFunction().apply(message);
             return messageProcessor
                 .apply(message)
-                .handle(
-                    (ignored, throwable) -> {
-                        reentrantLock.lock();
-                        try {
-                            if (throwable != null) {
-                                final Throwable actualThrowable;
-                                if (throwable instanceof CompletionException) {
-                                    actualThrowable = throwable.getCause();
-                                } else {
-                                    actualThrowable = throwable;
-                                }
-                                log.error("Error processing message", actualThrowable);
-                                if (properties.purgeExtraMessagesInGroupOnError()) {
-                                    failingMessages.put(messageGroupKey, System.currentTimeMillis());
-                                    internalMessageCache.remove(messageGroupKey);
-                                }
+                .handle((ignored, throwable) -> {
+                    reentrantLock.lock();
+                    try {
+                        if (throwable != null) {
+                            final Throwable actualThrowable;
+                            if (throwable instanceof CompletionException) {
+                                actualThrowable = throwable.getCause();
+                            } else {
+                                actualThrowable = throwable;
                             }
-                            messageGroupsCurrentlyProcessing.remove(properties.messageGroupingFunction().apply(message));
-
-                            tryProcessAnotherMessage();
-                        } finally {
-                            reentrantLock.unlock();
+                            log.error("Error processing message", actualThrowable);
+                            if (properties.purgeExtraMessagesInGroupOnError()) {
+                                failingMessages.put(messageGroupKey, System.currentTimeMillis());
+                                internalMessageCache.remove(messageGroupKey);
+                            }
                         }
-                        return null;
+                        messageGroupsCurrentlyProcessing.remove(properties.messageGroupingFunction().apply(message));
+
+                        tryProcessAnotherMessage();
+                    } finally {
+                        reentrantLock.unlock();
                     }
-                );
+                    return null;
+                });
         };
     }
 
@@ -262,32 +258,30 @@ public class GroupingMessageBroker implements MessageBroker {
                 final CompletableFuture<Message> messageRetrievalFuture = messageSupplier.get();
                 actualMessageRequests.add(messageRetrievalFuture);
 
-                messageRetrievalFuture.thenAccept(
-                    message -> {
-                        final String messageGroupKey = properties.messageGroupingFunction().apply(message);
-                        reentrantLock.lock();
-                        try {
-                            final boolean messageWithSameGroupFailedInShortPeriod = failingMessages
-                                .entrySet()
-                                .stream()
-                                .filter(entry -> System.currentTimeMillis() - entry.getValue() < Duration.ofSeconds(1).toMillis())
-                                .anyMatch(entry -> entry.getKey().equals(messageGroupKey));
+                messageRetrievalFuture.thenAccept(message -> {
+                    final String messageGroupKey = properties.messageGroupingFunction().apply(message);
+                    reentrantLock.lock();
+                    try {
+                        final boolean messageWithSameGroupFailedInShortPeriod = failingMessages
+                            .entrySet()
+                            .stream()
+                            .filter(entry -> System.currentTimeMillis() - entry.getValue() < Duration.ofSeconds(1).toMillis())
+                            .anyMatch(entry -> entry.getKey().equals(messageGroupKey));
 
-                            actualMessageRequests.remove(messageRetrievalFuture);
-                            if (!messageWithSameGroupFailedInShortPeriod) {
-                                failingMessages.remove(messageGroupKey);
-                                internalMessageCache.putIfAbsent(messageGroupKey, new LinkedList<>());
-                                internalMessageCache.get(messageGroupKey).add(message);
-                            }
-
-                            tryProcessAnotherMessage();
-
-                            performMessageRetrieval(messageSupplier);
-                        } finally {
-                            reentrantLock.unlock();
+                        actualMessageRequests.remove(messageRetrievalFuture);
+                        if (!messageWithSameGroupFailedInShortPeriod) {
+                            failingMessages.remove(messageGroupKey);
+                            internalMessageCache.putIfAbsent(messageGroupKey, new LinkedList<>());
+                            internalMessageCache.get(messageGroupKey).add(message);
                         }
+
+                        tryProcessAnotherMessage();
+
+                        performMessageRetrieval(messageSupplier);
+                    } finally {
+                        reentrantLock.unlock();
                     }
-                );
+                });
             }
         } finally {
             reentrantLock.unlock();
@@ -333,15 +327,13 @@ public class GroupingMessageBroker implements MessageBroker {
             }
 
             getInternalCachedMessageAvailableForProcessing()
-                .ifPresent(
-                    messageToProcess -> {
-                        final String messageToProcessGroupKey = properties.messageGroupingFunction().apply(messageToProcess);
-                        log.trace("Processing message for group: {}", messageToProcessGroupKey);
-                        messageGroupsCurrentlyProcessing.add(messageToProcessGroupKey);
-                        final CompletableFuture<Message> future = delegateBrokerRequestsForMessages.removeFirst();
-                        future.complete(messageToProcess);
-                    }
-                );
+                .ifPresent(messageToProcess -> {
+                    final String messageToProcessGroupKey = properties.messageGroupingFunction().apply(messageToProcess);
+                    log.trace("Processing message for group: {}", messageToProcessGroupKey);
+                    messageGroupsCurrentlyProcessing.add(messageToProcessGroupKey);
+                    final CompletableFuture<Message> future = delegateBrokerRequestsForMessages.removeFirst();
+                    future.complete(messageToProcess);
+                });
         } finally {
             reentrantLock.unlock();
         }

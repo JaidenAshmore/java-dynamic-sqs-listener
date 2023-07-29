@@ -131,14 +131,12 @@ public class AsyncLambdaMessageProcessor implements MessageProcessor {
             try {
                 resolveMessageCallback
                     .get()
-                    .handle(
-                        (i, throwable) -> {
-                            if (throwable != null) {
-                                log.error("Error resolving successfully processed message", throwable);
-                            }
-                            return null;
+                    .handle((i, throwable) -> {
+                        if (throwable != null) {
+                            log.error("Error resolving successfully processed message", throwable);
                         }
-                    );
+                        return null;
+                    });
             } catch (RuntimeException runtimeException) {
                 log.error("Failed to trigger message resolving", runtimeException);
             }
