@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.schema.registry.avro.AvroSchemaServiceManager;
+import org.springframework.cloud.schema.registry.avro.AvroSchemaServiceManagerImpl;
 import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,12 @@ import org.springframework.context.annotation.Import;
 @Import(SpringCloudSchemaSqsConfiguration.class)
 @SuppressWarnings("checkstyle:javadocmethod")
 public class AvroSqsSpringCloudSchemaRegistryConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AvroSchemaServiceManager avroSchemaServiceManager() {
+        return new AvroSchemaServiceManagerImpl();
+    }
 
     @Bean
     @ConditionalOnMissingBean

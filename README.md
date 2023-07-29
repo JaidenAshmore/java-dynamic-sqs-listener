@@ -720,14 +720,6 @@ fifoMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
 }
 ```
 
-### Comparing other SQS Libraries
-
-If you want to see the difference in usage between this library and others like the
-[Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and
-[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at
-the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison) module. This allows you to test the performance and usage of
-each library for different scenarios, such as heavy IO message processing, etc.
-
 ## Examples
 
 See [examples](./examples) for all the available examples.

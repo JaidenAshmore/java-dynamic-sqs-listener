@@ -3,7 +3,7 @@ rootProject.name = "java-dynamic-sqs-listener-parent"
 
 pluginManagement {
     plugins {
-        id("org.springframework.boot") version "2.3.12.RELEASE"
+        id("org.springframework.boot") version "3.1.2"
         id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"
         id("org.jlleitschuh.gradle.ktlint") version "11.5.0"
         id("com.github.spotbugs") version "4.5.1"
@@ -69,8 +69,7 @@ include(
     ":example:spring-multiple-aws-account-example",
     ":example:spring-sleuth-example",
     ":example:spring-starter-example",
-    ":example:spring-starter-minimal-example",
-    ":example:sqs-listener-library-comparison"
+    ":example:spring-starter-minimal-example"
 )
 
 // Core
@@ -120,4 +119,3 @@ project(":example:spring-multiple-aws-account-example").projectDir = file("examp
 project(":example:spring-sleuth-example").projectDir = file("examples/spring-sleuth-example")
 project(":example:spring-starter-example").projectDir = file("examples/spring-starter-example")
 project(":example:spring-starter-minimal-example").projectDir = file("examples/spring-starter-minimal-example")
-project(":example:sqs-listener-library-comparison").projectDir = file("examples/sqs-listener-library-comparison")
