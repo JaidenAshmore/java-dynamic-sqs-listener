@@ -138,7 +138,8 @@ class FifoMessageListenerContainerDslBuilderTest {
                         QueueAttributeName.REDRIVE_POLICY to """{
                             |  "deadLetterTargetArn": "${attributes.attributes()[QueueAttributeName.QUEUE_ARN]}",
                             |  "maxReceiveCount":"3"
-                            |}""".trimMargin(),
+                            |}
+                        """.trimMargin(),
                         QueueAttributeName.VISIBILITY_TIMEOUT to "10"
                     )
                 )

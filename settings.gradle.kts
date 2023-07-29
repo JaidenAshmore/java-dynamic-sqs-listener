@@ -5,7 +5,7 @@ pluginManagement {
     plugins {
         id("org.springframework.boot") version "2.3.12.RELEASE"
         id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"
-        id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
+        id("org.jlleitschuh.gradle.ktlint") version "11.5.0"
         id("com.github.spotbugs") version "4.5.1"
         id("io.gitlab.arturbosch.detekt") version "1.14.2"
         id("com.jashmore.gradle.github.release") version "0.0.2"

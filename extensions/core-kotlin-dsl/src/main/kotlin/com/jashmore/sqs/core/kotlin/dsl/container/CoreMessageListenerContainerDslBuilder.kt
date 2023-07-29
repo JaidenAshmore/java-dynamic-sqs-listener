@@ -177,6 +177,7 @@ class ShutdownBuilder {
      * @see [CoreMessageListenerContainerProperties.shouldProcessAnyExtraRetrievedMessagesOnShutdown] for more details about this field
      */
     var shouldProcessAnyExtraRetrievedMessages: Boolean? = null
+
     /**
      * Set whether the message processing threads should be interrupted when a shutdown is requested.
      *
@@ -190,18 +191,21 @@ class ShutdownBuilder {
      * @see [CoreMessageListenerContainerProperties.getMessageProcessingShutdownTimeout] for more details about this field
      */
     var messageProcessingShutdownTimeout: Duration? = null
+
     /**
      * Set the timeout for how long to wait for the [MessageRetriever] background thread to finish.
      *
      * @see [CoreMessageListenerContainerProperties.getMessageRetrieverShutdownTimeout] for more details about this field
      */
     var messageRetrieverShutdownTimeout: Duration? = null
+
     /**
      * Set the timeout for how to wait for the [MessageResolver] background thread to finish.
      *
      * @see [CoreMessageListenerContainerProperties.getMessageResolverShutdownTimeout] for more details about this field
      */
     var messageResolverShutdownTimeout: Duration? = null
+
     /**
      * Set the timeout for how to wait for the [MessageBroker] background thread to finish.
      *
@@ -276,7 +280,6 @@ fun coreMessageListener(
     queueProperties: QueueProperties,
     init: CoreMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-
     val listener = CoreMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()

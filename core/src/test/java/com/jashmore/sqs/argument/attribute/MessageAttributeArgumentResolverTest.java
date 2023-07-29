@@ -235,7 +235,7 @@ class MessageAttributeArgumentResolverTest {
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
 
         // assert
-        assertThat(value).isEqualTo(new Byte("1"));
+        assertThat(value).isEqualTo((byte) 1);
     }
 
     @Test
@@ -380,7 +380,7 @@ class MessageAttributeArgumentResolverTest {
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
 
         // assert
-        assertThat(value).isEqualTo(new Byte("12"));
+        assertThat(value).isEqualTo((byte) 12);
     }
 
     @Test
@@ -410,7 +410,7 @@ class MessageAttributeArgumentResolverTest {
         final Object value = messageAttributeArgumentResolver.resolveArgumentForParameter(null, methodParameter, message);
 
         // assert
-        assertThat(value).isEqualTo(new Short("12"));
+        assertThat(value).isEqualTo((short) 12);
     }
 
     @Test

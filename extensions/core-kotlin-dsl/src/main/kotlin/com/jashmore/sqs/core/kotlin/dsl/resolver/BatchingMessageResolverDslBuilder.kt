@@ -22,6 +22,7 @@ class BatchingMessageResolverDslBuilder(private val sqsAsyncClient: SqsAsyncClie
      * @see [BatchingMessageResolverProperties.getBufferingSizeLimit] for in-depth details about this field
      */
     var batchSize: (() -> Int)? = null
+
     /**
      * Supplier for getting the amount of time to wait for the buffer to fill to the limit before sending out any currently buffered messages.
      *

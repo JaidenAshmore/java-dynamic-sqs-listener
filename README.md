@@ -257,7 +257,7 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 
 -   [Core Framework](./core)
-    -   JDK 1.8 or higher
+    -   JDK 17 or higher
     -   [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
     -   [Jackson Databind](https://github.com/FasterXML/jackson-databind)
     -   [SLF4J API](https://github.com/qos-ch/slf4j)
