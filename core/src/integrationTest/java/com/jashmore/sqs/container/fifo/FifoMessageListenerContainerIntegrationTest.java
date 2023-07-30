@@ -244,8 +244,8 @@ class FifoMessageListenerContainerIntegrationTest {
         // assert
         assertThat(processedMessages).containsOnlyKeys(listOfNumberStrings(numberOfMessageGroups));
         assertThat(processedMessages)
-            .allSatisfy(
-                (groupId, messagesNumbers) -> assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(numberOfMessages))
+            .allSatisfy((groupId, messagesNumbers) ->
+                assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(numberOfMessages))
             );
     }
 
@@ -274,25 +274,23 @@ class FifoMessageListenerContainerIntegrationTest {
                     ELASTIC_MQ_SQS_ASYNC_CLIENT,
                     queueProperties,
                     message ->
-                        CompletableFuture.runAsync(
-                            () -> {
-                                try {
-                                    Thread.sleep(100);
-                                } catch (final InterruptedException interruptedException) {
-                                    return;
-                                }
-
-                                synchronized (processedMessages) {
-                                    final String groupKey = message.attributes().get(MessageSystemAttributeName.MESSAGE_GROUP_ID);
-                                    if (!failedMessageIds.contains(groupKey + "-" + message.body()) && random.nextInt(10) < 2) {
-                                        failedMessageIds.add(groupKey + "-" + message.body());
-                                        throw new ExpectedTestException();
-                                    }
-                                    processedMessages.get(groupKey).add(message.body());
-                                    successfulMessagesLatch.countDown();
-                                }
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(100);
+                            } catch (final InterruptedException interruptedException) {
+                                return;
                             }
-                        )
+
+                            synchronized (processedMessages) {
+                                final String groupKey = message.attributes().get(MessageSystemAttributeName.MESSAGE_GROUP_ID);
+                                if (!failedMessageIds.contains(groupKey + "-" + message.body()) && random.nextInt(10) < 2) {
+                                    failedMessageIds.add(groupKey + "-" + message.body());
+                                    throw new ExpectedTestException();
+                                }
+                                processedMessages.get(groupKey).add(message.body());
+                                successfulMessagesLatch.countDown();
+                            }
+                        })
                 ),
             ImmutableFifoMessageListenerContainerProperties
                 .builder()
@@ -308,8 +306,8 @@ class FifoMessageListenerContainerIntegrationTest {
         // assert
         assertThat(processedMessages).containsOnlyKeys(listOfNumberStrings(numberOfMessageGroups));
         assertThat(processedMessages)
-            .allSatisfy(
-                (groupId, messagesNumbers) -> assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(numberOfMessages))
+            .allSatisfy((groupId, messagesNumbers) ->
+                assertThat(messagesNumbers).containsExactlyElementsOf(listOfNumberStrings(numberOfMessages))
             );
     }
 
@@ -325,31 +323,26 @@ class FifoMessageListenerContainerIntegrationTest {
         final QueueProperties queueProperties,
         @Max(10) final int numberOfGroups,
         @Min(1) final int numberOfMessages
-    )
-        throws Exception {
+    ) throws Exception {
         for (int i = 0; i < numberOfMessages; ++i) {
             final int messageIndex = i;
             ELASTIC_MQ_SQS_ASYNC_CLIENT
-                .sendMessageBatch(
-                    sendMessageBuilder -> {
-                        final List<SendMessageBatchRequestEntry> entries = IntStream
-                            .range(0, numberOfGroups)
-                            .mapToObj(
-                                groupIndex -> {
-                                    final String messageId = "" + messageIndex + "-" + groupIndex;
-                                    return SendMessageBatchRequestEntry
-                                        .builder()
-                                        .id(messageId)
-                                        .messageGroupId(String.valueOf(groupIndex))
-                                        .messageBody("" + messageIndex)
-                                        .messageDeduplicationId(messageId)
-                                        .build();
-                                }
-                            )
-                            .collect(Collectors.toList());
-                        sendMessageBuilder.queueUrl(queueProperties.getQueueUrl()).entries(entries);
-                    }
-                )
+                .sendMessageBatch(sendMessageBuilder -> {
+                    final List<SendMessageBatchRequestEntry> entries = IntStream
+                        .range(0, numberOfGroups)
+                        .mapToObj(groupIndex -> {
+                            final String messageId = "" + messageIndex + "-" + groupIndex;
+                            return SendMessageBatchRequestEntry
+                                .builder()
+                                .id(messageId)
+                                .messageGroupId(String.valueOf(groupIndex))
+                                .messageBody("" + messageIndex)
+                                .messageDeduplicationId(messageId)
+                                .build();
+                        })
+                        .collect(Collectors.toList());
+                    sendMessageBuilder.queueUrl(queueProperties.getQueueUrl()).entries(entries);
+                })
                 .get(5, TimeUnit.SECONDS);
         }
     }
@@ -357,26 +350,23 @@ class FifoMessageListenerContainerIntegrationTest {
     private QueueProperties createFifoQueueWithDlq() throws Exception {
         final CreateRandomQueueResponse deadLetterQueueResponse = ELASTIC_MQ_SQS_ASYNC_CLIENT.createRandomFifoQueue().get();
         final GetQueueAttributesResponse attributes = ELASTIC_MQ_SQS_ASYNC_CLIENT
-            .getQueueAttributes(
-                builder -> builder.queueUrl(deadLetterQueueResponse.queueUrl()).attributeNames(QueueAttributeName.QUEUE_ARN)
+            .getQueueAttributes(builder -> builder.queueUrl(deadLetterQueueResponse.queueUrl()).attributeNames(QueueAttributeName.QUEUE_ARN)
             )
             .get();
 
         final String queueUrl = ELASTIC_MQ_SQS_ASYNC_CLIENT
-            .createRandomFifoQueue(
-                builder -> {
-                    final Map<QueueAttributeName, String> queueAttributes = new HashMap<>();
-                    queueAttributes.put(
-                        QueueAttributeName.REDRIVE_POLICY,
-                        String.format(
-                            "{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"3\"}",
-                            attributes.attributes().get(QueueAttributeName.QUEUE_ARN)
-                        )
-                    );
-                    queueAttributes.put(QueueAttributeName.VISIBILITY_TIMEOUT, "10");
-                    builder.attributes(queueAttributes);
-                }
-            )
+            .createRandomFifoQueue(builder -> {
+                final Map<QueueAttributeName, String> queueAttributes = new HashMap<>();
+                queueAttributes.put(
+                    QueueAttributeName.REDRIVE_POLICY,
+                    String.format(
+                        "{\"deadLetterTargetArn\":\"%s\",\"maxReceiveCount\":\"3\"}",
+                        attributes.attributes().get(QueueAttributeName.QUEUE_ARN)
+                    )
+                );
+                queueAttributes.put(QueueAttributeName.VISIBILITY_TIMEOUT, "10");
+                builder.attributes(queueAttributes);
+            })
             .get()
             .queueUrl();
 

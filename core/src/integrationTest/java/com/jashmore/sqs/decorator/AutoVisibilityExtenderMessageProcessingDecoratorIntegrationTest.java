@@ -119,8 +119,8 @@ public class AutoVisibilityExtenderMessageProcessingDecoratorIntegrationTest {
 
         IntStream
             .range(0, numberOfMessages)
-            .forEach(
-                i -> ELASTIC_MQ_SQS_ASYNC_CLIENT.sendMessage(builder -> builder.queueUrl(queueProperties.getQueueUrl()).messageBody("" + i))
+            .forEach(i ->
+                ELASTIC_MQ_SQS_ASYNC_CLIENT.sendMessage(builder -> builder.queueUrl(queueProperties.getQueueUrl()).messageBody("" + i))
             );
 
         // act

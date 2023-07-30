@@ -27,15 +27,11 @@ public class MessageSystemAttributeArgumentResolver implements ArgumentResolver<
         final QueueProperties queueProperties,
         final MethodParameter methodParameter,
         final Message message
-    )
-        throws ArgumentResolutionException {
+    ) throws ArgumentResolutionException {
         final MessageSystemAttribute annotation = AnnotationUtils
             .findParameterAnnotation(methodParameter, MessageSystemAttribute.class)
-            .orElseThrow(
-                () ->
-                    new ArgumentResolutionException(
-                        "Parameter passed in does not contain the MessageSystemAttribute annotation when it should"
-                    )
+            .orElseThrow(() ->
+                new ArgumentResolutionException("Parameter passed in does not contain the MessageSystemAttribute annotation when it should")
             );
 
         final MessageSystemAttributeName messageSystemAttributeName = annotation.value();

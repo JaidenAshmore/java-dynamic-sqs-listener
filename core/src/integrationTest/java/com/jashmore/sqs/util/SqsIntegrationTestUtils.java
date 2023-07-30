@@ -29,17 +29,15 @@ public class SqsIntegrationTestUtils {
             .build();
         sqsAsyncClient
             .getQueueAttributes(request)
-            .handle(
-                (queueState, error) -> {
-                    if (error != null) {
-                        throw new RuntimeException(error);
-                    }
-
-                    assertThat(queueState.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES)).isEqualTo("0");
-                    assertThat(queueState.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)).isEqualTo("0");
-                    return null;
+            .handle((queueState, error) -> {
+                if (error != null) {
+                    throw new RuntimeException(error);
                 }
-            );
+
+                assertThat(queueState.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES)).isEqualTo("0");
+                assertThat(queueState.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)).isEqualTo("0");
+                return null;
+            });
     }
 
     public void sendNumberOfMessages(int numberOfMessages, final SqsAsyncClient sqsAsyncClient, final String queueUrl) {

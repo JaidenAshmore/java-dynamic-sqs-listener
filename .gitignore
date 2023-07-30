@@ -36,4 +36,16 @@ hs_err_pid*
 .idea
 *.iml
 
+# Java Dumps
+*.hprof
+
+# Yarn
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 !gradle-wrapper.jar

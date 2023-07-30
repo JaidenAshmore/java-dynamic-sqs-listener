@@ -59,12 +59,10 @@ class QueueListenerIntegrationTest {
         // arrange
         IntStream
             .range(0, NUMBER_OF_MESSAGES_TO_SEND)
-            .forEach(
-                i -> {
-                    log.info("Sending message: " + i);
-                    localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i);
-                }
-            );
+            .forEach(i -> {
+                log.info("Sending message: " + i);
+                localSqsAsyncClient.sendMessage(QUEUE_NAME, "message: " + i);
+            });
 
         // act
         COUNT_DOWN_LATCH.await(20, TimeUnit.SECONDS);

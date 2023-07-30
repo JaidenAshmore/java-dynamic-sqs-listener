@@ -128,14 +128,12 @@ class AutoVisibilityExtenderMessageProcessingDecoratorFactoryTest {
             )
         );
         when(sqsAsyncClient.changeMessageVisibilityBatch(ArgumentMatchers.<Consumer<ChangeMessageVisibilityBatchRequest.Builder>>any()))
-            .thenAnswer(
-                invocation -> {
-                    Consumer<ChangeMessageVisibilityBatchRequest.Builder> builder = invocation.getArgument(0);
-                    final ChangeMessageVisibilityBatchRequest.Builder requestBuilder = ChangeMessageVisibilityBatchRequest.builder();
-                    builder.accept(requestBuilder);
-                    return CompletableFuture.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                Consumer<ChangeMessageVisibilityBatchRequest.Builder> builder = invocation.getArgument(0);
+                final ChangeMessageVisibilityBatchRequest.Builder requestBuilder = ChangeMessageVisibilityBatchRequest.builder();
+                builder.accept(requestBuilder);
+                return CompletableFuture.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
+            });
 
         // act
         messageProcessor

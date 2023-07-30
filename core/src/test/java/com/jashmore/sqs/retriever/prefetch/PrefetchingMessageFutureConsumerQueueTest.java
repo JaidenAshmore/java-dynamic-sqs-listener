@@ -47,15 +47,13 @@ class PrefetchingMessageFutureConsumerQueueTest {
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
 
         // act
-        final Thread thread = new Thread(
-            () -> {
-                try {
-                    prefetchingMessageRetriever.pushMessage(Message.builder().build());
-                } catch (InterruptedException interruptedException) {
-                    // do nothing
-                }
+        final Thread thread = new Thread(() -> {
+            try {
+                prefetchingMessageRetriever.pushMessage(Message.builder().build());
+            } catch (InterruptedException interruptedException) {
+                // do nothing
             }
-        );
+        });
         thread.start();
 
         // assert
@@ -68,15 +66,13 @@ class PrefetchingMessageFutureConsumerQueueTest {
         final PrefetchingMessageFutureConsumerQueue prefetchingMessageRetriever = new PrefetchingMessageFutureConsumerQueue(1);
         prefetchingMessageRetriever.pushMessage(Message.builder().build());
         thread =
-            new Thread(
-                () -> {
-                    try {
-                        prefetchingMessageRetriever.pushMessage(Message.builder().build());
-                    } catch (InterruptedException interruptedException) {
-                        // do nothing
-                    }
+            new Thread(() -> {
+                try {
+                    prefetchingMessageRetriever.pushMessage(Message.builder().build());
+                } catch (InterruptedException interruptedException) {
+                    // do nothing
                 }
-            );
+            });
         thread.start();
         waitUntilThreadInState(thread, WAITING);
 
@@ -126,48 +122,38 @@ class PrefetchingMessageFutureConsumerQueueTest {
         final List<CompletableFuture<?>> allFutures = new LinkedList<>();
 
         // act
-        executorService.submit(
-            () -> {
-                IntStream
-                    .range(0, totalMessages)
-                    .mapToObj(String::valueOf)
-                    .map(index -> Message.builder().body(index).build())
-                    .forEach(
-                        message -> {
-                            try {
-                                prefetchingMessageRetriever.pushMessage(message);
-                            } catch (final InterruptedException interruptedException) {
-                                // do nothing
-                            }
-                        }
-                    );
+        executorService.submit(() -> {
+            IntStream
+                .range(0, totalMessages)
+                .mapToObj(String::valueOf)
+                .map(index -> Message.builder().body(index).build())
+                .forEach(message -> {
+                    try {
+                        prefetchingMessageRetriever.pushMessage(message);
+                    } catch (final InterruptedException interruptedException) {
+                        // do nothing
+                    }
+                });
 
-                log.debug("Added all messages");
-            }
-        );
-        executorService.submit(
-            () -> {
-                IntStream
-                    .range(0, totalMessages)
-                    .mapToObj(String::valueOf)
-                    .forEach(
-                        index -> {
-                            final CompletableFuture<Message> completableFuture = new CompletableFuture<>();
-                            allFutures.add(completableFuture);
-                            completableFuture.thenApply(
-                                message -> {
-                                    futuresCompleted.add(index);
-                                    log.debug("Matched message {} with future {}", message.body(), index);
-                                    messagesCompleted.add(message.body());
-                                    return message;
-                                }
-                            );
-                            prefetchingMessageRetriever.pushCompletableFuture(completableFuture);
-                        }
-                    );
-                log.debug("Added all futures");
-            }
-        );
+            log.debug("Added all messages");
+        });
+        executorService.submit(() -> {
+            IntStream
+                .range(0, totalMessages)
+                .mapToObj(String::valueOf)
+                .forEach(index -> {
+                    final CompletableFuture<Message> completableFuture = new CompletableFuture<>();
+                    allFutures.add(completableFuture);
+                    completableFuture.thenApply(message -> {
+                        futuresCompleted.add(index);
+                        log.debug("Matched message {} with future {}", message.body(), index);
+                        messagesCompleted.add(message.body());
+                        return message;
+                    });
+                    prefetchingMessageRetriever.pushCompletableFuture(completableFuture);
+                });
+            log.debug("Added all futures");
+        });
         executorService.shutdown();
         executorService.awaitTermination(5, TimeUnit.SECONDS);
         CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[0])).get(1, TimeUnit.SECONDS);

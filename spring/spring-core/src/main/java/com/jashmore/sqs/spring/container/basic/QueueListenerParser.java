@@ -31,9 +31,8 @@ public class QueueListenerParser implements CoreAnnotationParser<QueueListener, 
         final Supplier<Duration> batchingPeriodSupplier = batchingPeriodSupplier(annotation);
         final Supplier<Duration> errorBackoffTimeSupplier = errorBackoffTimeSupplier(annotation);
         final Supplier<Duration> messageVisibilityTimeoutSupplier = messageVisibilityTimeoutSupplier(annotation);
-        final Supplier<Boolean> tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier = tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier(
-            annotation
-        );
+        final Supplier<Boolean> tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier =
+            tryAndProcessAnyExtraRetrievedMessagesOnShutdownSupplier(annotation);
         final Supplier<Boolean> interruptThreadsProcessingMessagesOnShutdownSupplier = interruptThreadsProcessingMessagesOnShutdownSupplier(
             annotation
         );

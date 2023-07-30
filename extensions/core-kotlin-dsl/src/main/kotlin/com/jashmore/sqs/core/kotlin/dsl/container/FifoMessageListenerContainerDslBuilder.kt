@@ -158,7 +158,6 @@ fun fifoMessageListener(
     queueProperties: QueueProperties,
     init: FifoMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-
     val listener = FifoMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()

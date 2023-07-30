@@ -22,9 +22,8 @@ public abstract class AbstractAnnotationMessageListenerContainerFactory<T extend
     public MessageListenerContainer buildContainer(final Object bean, final Method method) {
         final T annotation = AnnotationUtils
             .findMethodAnnotation(method, getAnnotationClass())
-            .orElseThrow(
-                () ->
-                    new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName())
+            .orElseThrow(() ->
+                new RuntimeException("Trying to wrap method that does not contain annotation: @" + getAnnotationClass().getSimpleName())
             );
 
         return wrapMethodContainingAnnotation(bean, method, annotation);

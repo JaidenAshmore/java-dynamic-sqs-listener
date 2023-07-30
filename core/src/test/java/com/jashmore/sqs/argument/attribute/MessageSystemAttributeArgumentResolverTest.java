@@ -22,7 +22,8 @@ import software.amazon.awssdk.services.sqs.model.Message;
 @SuppressWarnings({ "unused", "WeakerAccess" })
 public class MessageSystemAttributeArgumentResolverTest {
 
-    private final MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver = new MessageSystemAttributeArgumentResolver();
+    private final MessageSystemAttributeArgumentResolver messageSystemAttributeArgumentResolver =
+        new MessageSystemAttributeArgumentResolver();
 
     @Test
     public void systemAttributesThatDoNotExistForNonRequiredAttributeWillReturnNull() throws Exception {

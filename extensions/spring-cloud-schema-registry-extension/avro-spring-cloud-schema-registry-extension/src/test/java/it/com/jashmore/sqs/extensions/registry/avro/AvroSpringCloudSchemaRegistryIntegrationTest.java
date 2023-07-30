@@ -67,7 +67,7 @@ public class AvroSpringCloudSchemaRegistryIntegrationTest {
         }
 
         @SuppressWarnings("unused")
-        @QueueListener(value = "test")
+        @QueueListener(value = QUEUE_NAME)
         public void myMethod(@SpringCloudSchemaRegistryPayload Book book) {
             RECEIVED_BOOK.set(book);
             MESSAGE_RECEIVED_LATCH.countDown();

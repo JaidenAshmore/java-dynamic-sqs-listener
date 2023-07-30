@@ -3,7 +3,6 @@ package com.jashmore.sqs.core.kotlin.dsl.processor
 import com.jashmore.sqs.QueueProperties
 import com.jashmore.sqs.processor.argument.Acknowledge
 import com.jashmore.sqs.processor.argument.VisibilityExtender
-import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.whenever
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest
 import software.amazon.awssdk.services.sqs.model.Message

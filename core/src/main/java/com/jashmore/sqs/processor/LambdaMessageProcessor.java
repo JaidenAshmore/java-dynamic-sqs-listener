@@ -125,24 +125,20 @@ public class LambdaMessageProcessor implements MessageProcessor {
 
         return CompletableFuture
             .completedFuture(null)
-            .thenAccept(
-                ignored -> {
-                    try {
-                        resolveMessageCallback
-                            .get()
-                            .handle(
-                                (i, throwable) -> {
-                                    if (throwable != null) {
-                                        log.error("Error resolving successfully processed message", throwable);
-                                    }
-                                    return null;
-                                }
-                            );
-                    } catch (final RuntimeException runtimeException) {
-                        log.error("Failed to trigger message resolving", runtimeException);
-                    }
+            .thenAccept(ignored -> {
+                try {
+                    resolveMessageCallback
+                        .get()
+                        .handle((i, throwable) -> {
+                            if (throwable != null) {
+                                log.error("Error resolving successfully processed message", throwable);
+                            }
+                            return null;
+                        });
+                } catch (final RuntimeException runtimeException) {
+                    log.error("Failed to trigger message resolving", runtimeException);
                 }
-            );
+            });
     }
 
     /**

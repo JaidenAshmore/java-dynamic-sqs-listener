@@ -256,8 +256,8 @@ class LocalSqsAsyncClientImplTest {
 
         // act
         final GetQueueAttributesResponse queueAttributesResponse = sqsAsyncClient
-            .getQueueAttributes(
-                builder -> builder.queueUrl(queueUrl).attributeNames(FIFO_QUEUE, REDRIVE_POLICY, CONTENT_BASED_DEDUPLICATION)
+            .getQueueAttributes(builder ->
+                builder.queueUrl(queueUrl).attributeNames(FIFO_QUEUE, REDRIVE_POLICY, CONTENT_BASED_DEDUPLICATION)
             )
             .get(30, TimeUnit.SECONDS);
         final GetQueueAttributesResponse dlqAttributesResponse = sqsAsyncClient
@@ -286,8 +286,8 @@ class LocalSqsAsyncClientImplTest {
             // act
             final CreateRandomQueueResponse response = sqsAsyncClient.createRandomFifoQueue().get(5, TimeUnit.SECONDS);
             final GetQueueAttributesResponse attributes = sqsAsyncClient
-                .getQueueAttributes(
-                    builder -> builder.queueUrl(response.getResponse().queueUrl()).attributeNames(QueueAttributeName.FIFO_QUEUE)
+                .getQueueAttributes(builder ->
+                    builder.queueUrl(response.getResponse().queueUrl()).attributeNames(QueueAttributeName.FIFO_QUEUE)
                 )
                 .get();
 
@@ -308,8 +308,8 @@ class LocalSqsAsyncClientImplTest {
                 .createRandomFifoQueue(builder -> builder.attributes(Collections.singletonMap(VISIBILITY_TIMEOUT, "3")))
                 .get(5, TimeUnit.SECONDS);
             final GetQueueAttributesResponse attributes = sqsAsyncClient
-                .getQueueAttributes(
-                    builder -> builder.queueUrl(response.getResponse().queueUrl()).attributeNames(VISIBILITY_TIMEOUT, FIFO_QUEUE)
+                .getQueueAttributes(builder ->
+                    builder.queueUrl(response.getResponse().queueUrl()).attributeNames(VISIBILITY_TIMEOUT, FIFO_QUEUE)
                 )
                 .get();
 

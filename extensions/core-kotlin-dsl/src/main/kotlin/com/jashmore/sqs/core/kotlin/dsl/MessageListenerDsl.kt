@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package com.jashmore.sqs.core.kotlin.dsl
 
 import com.jashmore.sqs.argument.ArgumentResolverService

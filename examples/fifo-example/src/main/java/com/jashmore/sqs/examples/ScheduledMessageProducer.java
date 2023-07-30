@@ -61,18 +61,16 @@ public class ScheduledMessageProducer {
             .entries(
                 IntStream
                     .range(0, 10)
-                    .mapToObj(
-                        i -> {
-                            final String messageId = "" + currentValue + "-" + i;
-                            return SendMessageBatchRequestEntry
-                                .builder()
-                                .id(messageId)
-                                .messageBody(String.valueOf(currentValue))
-                                .messageGroupId("" + i)
-                                .messageDeduplicationId(messageId)
-                                .build();
-                        }
-                    )
+                    .mapToObj(i -> {
+                        final String messageId = "" + currentValue + "-" + i;
+                        return SendMessageBatchRequestEntry
+                            .builder()
+                            .id(messageId)
+                            .messageBody(String.valueOf(currentValue))
+                            .messageGroupId("" + i)
+                            .messageDeduplicationId(messageId)
+                            .build();
+                    })
                     .collect(Collectors.toList())
             );
 
@@ -84,18 +82,16 @@ public class ScheduledMessageProducer {
             .entries(
                 IntStream
                     .range(10, 20)
-                    .mapToObj(
-                        i -> {
-                            final String messageId = "" + currentValue + "-" + i;
-                            return SendMessageBatchRequestEntry
-                                .builder()
-                                .id(messageId)
-                                .messageBody(String.valueOf(currentValue))
-                                .messageGroupId("" + i)
-                                .messageDeduplicationId(messageId)
-                                .build();
-                        }
-                    )
+                    .mapToObj(i -> {
+                        final String messageId = "" + currentValue + "-" + i;
+                        return SendMessageBatchRequestEntry
+                            .builder()
+                            .id(messageId)
+                            .messageBody(String.valueOf(currentValue))
+                            .messageGroupId("" + i)
+                            .messageDeduplicationId(messageId)
+                            .build();
+                    })
                     .collect(Collectors.toList())
             );
 
@@ -106,19 +102,17 @@ public class ScheduledMessageProducer {
             .entries(
                 IntStream
                     .range(0, 10)
-                    .mapToObj(
-                        i -> {
-                            final String messageId = "individual-" + currentValue + "-" + i;
-                            final String messageBody = String.valueOf((currentValue - 1) * 10 + i + 1);
-                            return SendMessageBatchRequestEntry
-                                .builder()
-                                .id(messageId)
-                                .messageBody(messageBody)
-                                .messageGroupId("21")
-                                .messageDeduplicationId(messageId)
-                                .build();
-                        }
-                    )
+                    .mapToObj(i -> {
+                        final String messageId = "individual-" + currentValue + "-" + i;
+                        final String messageBody = String.valueOf((currentValue - 1) * 10 + i + 1);
+                        return SendMessageBatchRequestEntry
+                            .builder()
+                            .id(messageId)
+                            .messageBody(messageBody)
+                            .messageGroupId("21")
+                            .messageDeduplicationId(messageId)
+                            .build();
+                    })
                     .collect(Collectors.toList())
             );
 

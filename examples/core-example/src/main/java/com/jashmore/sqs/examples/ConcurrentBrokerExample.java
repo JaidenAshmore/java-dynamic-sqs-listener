@@ -143,29 +143,26 @@ public class ConcurrentBrokerExample {
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(
             () -> {
-                sqsAsyncClient.sendMessageBatch(
-                    builder ->
-                        builder
-                            .queueUrl(queueUrl)
-                            .entries(
-                                IntStream
-                                    .range(0, 10)
-                                    .mapToObj(
-                                        index -> {
-                                            final Request request = new Request("key_" + count.getAndIncrement());
-                                            try {
-                                                return SendMessageBatchRequestEntry
-                                                    .builder()
-                                                    .id("" + index)
-                                                    .messageBody(OBJECT_MAPPER.writeValueAsString(request))
-                                                    .build();
-                                            } catch (JsonProcessingException exception) {
-                                                throw new RuntimeException(exception);
-                                            }
-                                        }
-                                    )
-                                    .collect(toSet())
-                            )
+                sqsAsyncClient.sendMessageBatch(builder ->
+                    builder
+                        .queueUrl(queueUrl)
+                        .entries(
+                            IntStream
+                                .range(0, 10)
+                                .mapToObj(index -> {
+                                    final Request request = new Request("key_" + count.getAndIncrement());
+                                    try {
+                                        return SendMessageBatchRequestEntry
+                                            .builder()
+                                            .id("" + index)
+                                            .messageBody(OBJECT_MAPPER.writeValueAsString(request))
+                                            .build();
+                                    } catch (JsonProcessingException exception) {
+                                        throw new RuntimeException(exception);
+                                    }
+                                })
+                                .collect(toSet())
+                        )
                 );
                 log.info("Put 10 messages onto queue");
             },
@@ -178,17 +175,15 @@ public class ConcurrentBrokerExample {
         Runtime
             .getRuntime()
             .addShutdownHook(
-                new Thread(
-                    () -> {
-                        scheduledExecutorService.shutdownNow();
-                        try {
-                            scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
-                        } catch (InterruptedException interruptedException) {
-                            // do nothing
-                        }
-                        container.stop();
+                new Thread(() -> {
+                    scheduledExecutorService.shutdownNow();
+                    try {
+                        scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+                    } catch (InterruptedException interruptedException) {
+                        // do nothing
                     }
-                )
+                    container.stop();
+                })
             );
         Thread.currentThread().join();
     }

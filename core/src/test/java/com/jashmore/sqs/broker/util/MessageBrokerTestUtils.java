@@ -23,19 +23,17 @@ public class MessageBrokerTestUtils {
         final Function<Message, CompletableFuture<?>> messageConsumer,
         final ExecutorService brokerExecutorService
     ) {
-        return brokerExecutorService.submit(
-            () -> {
-                final ExecutorService messageProcessingExecutorService = Executors.newCachedThreadPool();
-                try {
-                    broker.processMessages(messageProcessingExecutorService, messageRetriever, messageConsumer);
-                } catch (InterruptedException interruptedException) {
-                    // do nothing
-                } finally {
-                    log.info("Shutting down processing threads service");
-                    messageProcessingExecutorService.shutdown();
-                }
+        return brokerExecutorService.submit(() -> {
+            final ExecutorService messageProcessingExecutorService = Executors.newCachedThreadPool();
+            try {
+                broker.processMessages(messageProcessingExecutorService, messageRetriever, messageConsumer);
+            } catch (InterruptedException interruptedException) {
+                // do nothing
+            } finally {
+                log.info("Shutting down processing threads service");
+                messageProcessingExecutorService.shutdown();
             }
-        );
+        });
     }
 
     public static Future<?> runBrokerProcessMessageOnThread(
@@ -45,18 +43,16 @@ public class MessageBrokerTestUtils {
         final Function<Message, CompletableFuture<?>> messageConsumer,
         final ExecutorService brokerExecutorService
     ) {
-        return brokerExecutorService.submit(
-            () -> {
-                final ExecutorService executorService = Executors.newCachedThreadPool();
-                try {
-                    broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
-                } catch (InterruptedException interruptedException) {
-                    // do nothing
-                } finally {
-                    executorService.shutdownNow();
-                }
+        return brokerExecutorService.submit(() -> {
+            final ExecutorService executorService = Executors.newCachedThreadPool();
+            try {
+                broker.processMessages(executorService, keepProcessingMessages, messageRetriever, messageConsumer);
+            } catch (InterruptedException interruptedException) {
+                // do nothing
+            } finally {
+                executorService.shutdownNow();
             }
-        );
+        });
     }
 
     public static Function<Message, CompletableFuture<?>> processingMessageWillBlockUntilInterrupted(

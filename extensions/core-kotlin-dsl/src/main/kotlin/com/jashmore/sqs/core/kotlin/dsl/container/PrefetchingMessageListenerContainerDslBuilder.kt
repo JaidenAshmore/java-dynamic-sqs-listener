@@ -32,18 +32,21 @@ class PrefetchingMessageListenerContainerDslBuilder(
      * @see [ConcurrentMessageBrokerProperties.getConcurrencyLevel] for in-depth details about this field
      */
     var concurrencyLevel: (() -> Int)? = null
+
     /**
      * The desired messages to be prefetched.
      *
      * @see PrefetchingMessageRetrieverProperties.getDesiredMinPrefetchedMessages for more details about this field
      */
     var desiredPrefetchedMessages: Int? = null
+
     /**
      * The maximum numbers that can be prefetched, must be less than [PrefetchingMessageRetrieverDslBuilder.desiredPrefetchedMessages].
      *
      * @see PrefetchingMessageRetrieverProperties.getMaxPrefetchedMessages for more details about this field
      */
     var maxPrefetchedMessages: Int? = null
+
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
@@ -52,12 +55,14 @@ class PrefetchingMessageListenerContainerDslBuilder(
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
      */
     var messageVisibility: (() -> Duration?) = { null }
+
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *
      * @see [CoreMessageListenerContainerProperties.shouldProcessAnyExtraRetrievedMessagesOnShutdown] for more details about this field
      */
     var processExtraMessagesOnShutdown: Boolean = true
+
     /**
      * Set whether the message processing threads should be interrupted when a shutdown is requested.
      *
@@ -165,7 +170,6 @@ fun prefetchingMessageListener(
     queueProperties: QueueProperties,
     init: PrefetchingMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-
     val listener = PrefetchingMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()

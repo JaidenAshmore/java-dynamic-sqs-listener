@@ -134,14 +134,12 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(spanHandler.spans())
-            .allSatisfy(
-                span -> {
-                    assertThat(span.kind()).isEqualTo(Span.Kind.PRODUCER);
-                    assertThat(span.name()).isEqualTo("sqs-send-message-batch");
-                    assertThat(span.remoteServiceName()).isEqualTo("aws-sqs");
-                    assertThat(span.tag("queue.url")).isEqualTo("queueUrl");
-                }
-            );
+            .allSatisfy(span -> {
+                assertThat(span.kind()).isEqualTo(Span.Kind.PRODUCER);
+                assertThat(span.name()).isEqualTo("sqs-send-message-batch");
+                assertThat(span.remoteServiceName()).isEqualTo("aws-sqs");
+                assertThat(span.tag("queue.url")).isEqualTo("queueUrl");
+            });
     }
 
     @Test
@@ -156,12 +154,13 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
             )
             .build();
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
-        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-            @Override
-            public void decorateMessageSpan(SendMessageBatchRequest request, SendMessageBatchRequestEntry entry, Span span) {
-                span.tag("test", "value");
-            }
-        };
+        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator =
+            new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
+                @Override
+                public void decorateMessageSpan(SendMessageBatchRequest request, SendMessageBatchRequestEntry entry, Span span) {
+                    span.tag("test", "value");
+                }
+            };
 
         // act
         final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(
@@ -174,13 +173,11 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(spanHandler.spans())
-            .allSatisfy(
-                span -> {
-                    assertThat(span.name()).isNull();
-                    assertThat(span.remoteServiceName()).isNull();
-                    assertThat(span.tag("test")).isEqualTo("value");
-                }
-            );
+            .allSatisfy(span -> {
+                assertThat(span.name()).isNull();
+                assertThat(span.remoteServiceName()).isNull();
+                assertThat(span.tag("test")).isEqualTo("value");
+            });
     }
 
     @Test
@@ -222,16 +219,14 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
 
         // assert
         assertThat(newRequest.entries())
-            .allSatisfy(
-                entry -> {
-                    assertThat(entry.messageAttributes()).containsKeys("b3");
-                    final TraceContextOrSamplingFlags traceContextOrSamplingFlags = extractor.extract(entry.messageAttributes());
-                    assertThat(traceContextOrSamplingFlags).isNotNull();
-                    final Span entrySpan = spans.get(entry.id());
-                    assertThat(traceContextOrSamplingFlags.context().traceIdString()).isEqualTo(entrySpan.context().traceIdString());
-                    assertThat(traceContextOrSamplingFlags.context().spanIdString()).isEqualTo(entrySpan.context().spanIdString());
-                }
-            );
+            .allSatisfy(entry -> {
+                assertThat(entry.messageAttributes()).containsKeys("b3");
+                final TraceContextOrSamplingFlags traceContextOrSamplingFlags = extractor.extract(entry.messageAttributes());
+                assertThat(traceContextOrSamplingFlags).isNotNull();
+                final Span entrySpan = spans.get(entry.id());
+                assertThat(traceContextOrSamplingFlags.context().traceIdString()).isEqualTo(entrySpan.context().traceIdString());
+                assertThat(traceContextOrSamplingFlags.context().spanIdString()).isEqualTo(entrySpan.context().spanIdString());
+            });
     }
 
     @Test
@@ -376,12 +371,10 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         // assert
         assertThat(spanHandler.spans()).hasSize(2);
         assertThat(spanHandler.spans())
-            .allSatisfy(
-                span -> {
-                    assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
-                    assertThat(span.tag("response.code")).isEqualTo("400");
-                }
-            );
+            .allSatisfy(span -> {
+                assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
+                assertThat(span.tag("response.code")).isEqualTo("400");
+            });
     }
 
     @Test
@@ -398,12 +391,13 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         final ExecutionAttributes executionAttributes = new ExecutionAttributes();
         interceptor.beforeExecution(() -> request, executionAttributes);
         final Context.AfterExecution afterExecution = mockAfterExecutionFailure(request, 500);
-        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator = new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
-            @Override
-            public void decorateRequestFailedMessageSpan(SendMessageBatchRequest request, SdkHttpResponse httpResponse, Span span) {
-                span.tag("test", "value");
-            }
-        };
+        final SendMessageBatchTracingExecutionInterceptor.SpanDecorator spanDecorator =
+            new SendMessageBatchTracingExecutionInterceptor.SpanDecorator() {
+                @Override
+                public void decorateRequestFailedMessageSpan(SendMessageBatchRequest request, SdkHttpResponse httpResponse, Span span) {
+                    span.tag("test", "value");
+                }
+            };
 
         // act
         final SendMessageBatchTracingExecutionInterceptor interceptor = new SendMessageBatchTracingExecutionInterceptor(
@@ -446,12 +440,10 @@ public class SendMessageBatchTracingExecutionInterceptorTest {
         assertThat(spanHandler.spans())
             .anyMatch(span -> span.tag("message.request.id").equals("first") && span.tag("message.id").equals("first-message-id"));
         assertThat(spanHandler.spans())
-            .anySatisfy(
-                span -> {
-                    assertThat(span.tag("message.request.id")).isEqualTo("second");
-                    assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
-                }
-            );
+            .anySatisfy(span -> {
+                assertThat(span.tag("message.request.id")).isEqualTo("second");
+                assertThat(span.error()).hasMessage("Error placing message onto SQS queue");
+            });
     }
 
     private Context.AfterExecution mockAfterExecutionSuccess(

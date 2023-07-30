@@ -110,16 +110,14 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
         if (!context.httpResponse().isSuccessful()) {
             individualMessageSpans
                 .values()
-                .forEach(
-                    span -> {
-                        try {
-                            spanDecorator.decorateRequestFailedMessageSpan(request, context.httpResponse(), span);
-                            span.error(new RuntimeException("Error placing message onto SQS queue"));
-                        } finally {
-                            span.finish();
-                        }
+                .forEach(span -> {
+                    try {
+                        spanDecorator.decorateRequestFailedMessageSpan(request, context.httpResponse(), span);
+                        span.error(new RuntimeException("Error placing message onto SQS queue"));
+                    } finally {
+                        span.finish();
                     }
-                );
+                });
             return;
         }
 
@@ -127,40 +125,36 @@ public class SendMessageBatchTracingExecutionInterceptor implements ExecutionInt
 
         response
             .successful()
-            .forEach(
-                result -> {
-                    final Span messageSpan = individualMessageSpans.get(result.id());
-                    if (messageSpan == null) {
-                        // for some reason the individual message's span cannot be found
-                        return;
-                    }
-
-                    try {
-                        spanDecorator.decorateMessageSuccessfulSpan(response, context.httpResponse(), result, messageSpan);
-                    } finally {
-                        messageSpan.finish();
-                    }
+            .forEach(result -> {
+                final Span messageSpan = individualMessageSpans.get(result.id());
+                if (messageSpan == null) {
+                    // for some reason the individual message's span cannot be found
+                    return;
                 }
-            );
+
+                try {
+                    spanDecorator.decorateMessageSuccessfulSpan(response, context.httpResponse(), result, messageSpan);
+                } finally {
+                    messageSpan.finish();
+                }
+            });
 
         response
             .failed()
-            .forEach(
-                result -> {
-                    final Span messageSpan = individualMessageSpans.get(result.id());
-                    if (messageSpan == null) {
-                        // for some reason the individual message's span cannot be found
-                        return;
-                    }
-
-                    try {
-                        spanDecorator.decorateMessageFailureSpan(response, context.httpResponse(), result, messageSpan);
-                        messageSpan.error(new RuntimeException("Error placing message onto SQS queue"));
-                    } finally {
-                        messageSpan.finish();
-                    }
+            .forEach(result -> {
+                final Span messageSpan = individualMessageSpans.get(result.id());
+                if (messageSpan == null) {
+                    // for some reason the individual message's span cannot be found
+                    return;
                 }
-            );
+
+                try {
+                    spanDecorator.decorateMessageFailureSpan(response, context.httpResponse(), result, messageSpan);
+                    messageSpan.error(new RuntimeException("Error placing message onto SQS queue"));
+                } finally {
+                    messageSpan.finish();
+                }
+            });
     }
 
     private Span startSpanForMessage(final SendMessageBatchRequest request, final SendMessageBatchRequestEntry requestEntry) {

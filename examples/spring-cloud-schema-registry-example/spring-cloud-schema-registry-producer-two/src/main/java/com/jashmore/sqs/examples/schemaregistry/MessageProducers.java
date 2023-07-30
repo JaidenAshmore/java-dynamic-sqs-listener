@@ -36,22 +36,14 @@ public class MessageProducers {
         sqsAsyncClient
             .getQueueUrl(request -> request.queueName("test"))
             .thenApply(GetQueueUrlResponse::queueUrl)
-            .thenCompose(
-                queueUrl ->
-                    sqsAsyncClient.sendAvroMessage(
-                        "ProducerV2",
-                        "contentType",
-                        payload,
-                        requestBuilder -> requestBuilder.queueUrl(queueUrl)
-                    )
+            .thenCompose(queueUrl ->
+                sqsAsyncClient.sendAvroMessage("ProducerV2", "contentType", payload, requestBuilder -> requestBuilder.queueUrl(queueUrl))
             )
-            .whenComplete(
-                (result, throwable) -> {
-                    if (throwable != null) {
-                        log.error("Error sending message", throwable);
-                    }
-                    log.info("Published message with id {}", payload.getId());
+            .whenComplete((result, throwable) -> {
+                if (throwable != null) {
+                    log.error("Error sending message", throwable);
                 }
-            );
+                log.info("Published message with id {}", payload.getId());
+            });
     }
 }

@@ -32,13 +32,11 @@ public class SendMessageTracingExecutionInterceptorIntegrationTest {
     @SneakyThrows
     public void setUp() {
         sqsAsyncClient =
-            new ElasticMqSqsAsyncClient(
-                builder -> {
-                    builder.overrideConfiguration(
-                        overrideBuilder -> overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
-                    );
-                }
-            );
+            new ElasticMqSqsAsyncClient(builder -> {
+                builder.overrideConfiguration(overrideBuilder ->
+                    overrideBuilder.addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
+                );
+            });
 
         queueUrl = sqsAsyncClient.createRandomQueue().get(5, TimeUnit.SECONDS).getResponse().queueUrl();
     }

@@ -38,6 +38,7 @@ class BatchingMessageListenerContainerDslBuilder(
      * @see [ConcurrentMessageBrokerProperties.getConcurrencyLevel] for in-depth details about this field
      */
     var concurrencyLevel: (() -> Int)? = null
+
     /**
      * The batch size for the number of messages to receive at once
      *
@@ -46,6 +47,7 @@ class BatchingMessageListenerContainerDslBuilder(
      * @see DEFAULT_BATCH_SIZE for the default batch size
      */
     var batchSize: (() -> Int) = { DEFAULT_BATCH_SIZE }
+
     /**
      * The maximum amount of time to wait for the number of messages requested to reach the [BatchingMessageRetrieverDslBuilder.batchSize].
      *
@@ -54,6 +56,7 @@ class BatchingMessageListenerContainerDslBuilder(
      * @see DEFAULT_BATCHING_PERIOD for the default batching period
      */
     var batchingPeriod: (() -> Duration) = { DEFAULT_BATCHING_PERIOD }
+
     /**
      * Function for obtaining the visibility timeout for the message being retrieved.
      *
@@ -62,12 +65,14 @@ class BatchingMessageListenerContainerDslBuilder(
      * @see PrefetchingMessageRetrieverProperties.getMessageVisibilityTimeout for more details about this field
      */
     var messageVisibility: (() -> Duration?) = { null }
+
     /**
      * Set whether any extra messages that may have been internally stored in the [MessageRetriever] should be processed before shutting down.
      *
      * @see [CoreMessageListenerContainerProperties.shouldProcessAnyExtraRetrievedMessagesOnShutdown] for more details about this field
      */
     var processExtraMessagesOnShutdown: Boolean = true
+
     /**
      * Set whether the message processing threads should be interrupted when a shutdown is requested.
      *
@@ -166,7 +171,6 @@ fun batchingMessageListener(
     queueProperties: QueueProperties,
     init: BatchingMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-
     val listener = BatchingMessageListenerContainerDslBuilder(identifier, sqsAsyncClient, queueProperties)
     listener.init()
     return listener()

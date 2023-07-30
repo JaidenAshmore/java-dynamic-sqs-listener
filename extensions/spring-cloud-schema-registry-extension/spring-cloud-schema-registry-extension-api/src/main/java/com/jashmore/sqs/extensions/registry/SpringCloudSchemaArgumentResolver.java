@@ -58,8 +58,7 @@ public class SpringCloudSchemaArgumentResolver<T> implements ArgumentResolver<Ob
         final QueueProperties queueProperties,
         final MethodParameter methodParameter,
         final Message message
-    )
-        throws ArgumentResolutionException {
+    ) throws ArgumentResolutionException {
         try {
             final Class<?> clazz = methodParameter.getParameter().getType();
             final SchemaReference schemaReference = schemaReferenceExtractor.extract(message);

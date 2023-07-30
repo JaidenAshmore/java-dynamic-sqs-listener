@@ -107,15 +107,13 @@ class QueueUtilsTest {
     }
 
     private CompletableFuture<Void> runInBackgroundThread(BlockingRunnable runnable) {
-        return CompletableFuture.runAsync(
-            () -> {
-                try {
-                    runnable.run();
-                } catch (InterruptedException interruptedException) {
-                    throw new RuntimeException(interruptedException);
-                }
+        return CompletableFuture.runAsync(() -> {
+            try {
+                runnable.run();
+            } catch (InterruptedException interruptedException) {
+                throw new RuntimeException(interruptedException);
             }
-        );
+        });
     }
 
     /**

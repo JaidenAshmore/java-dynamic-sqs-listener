@@ -40,16 +40,14 @@ public class AsyncLambdaMessageProcessorIntegrationTest {
             client,
             queueProperties,
             message ->
-                CompletableFuture.runAsync(
-                    () -> {
-                        try {
-                            Thread.sleep(20);
-                        } catch (InterruptedException interruptedException) {
-                            // ignore
-                        }
-                        countDownLatch.countDown();
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException interruptedException) {
+                        // ignore
                     }
-                )
+                    countDownLatch.countDown();
+                })
         );
         final ConcurrentMessageBroker messageBroker = new ConcurrentMessageBroker(
             StaticConcurrentMessageBrokerProperties.builder().concurrencyLevel(1).build()

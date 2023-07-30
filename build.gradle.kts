@@ -8,12 +8,12 @@ plugins {
     `java-library`
     checkstyle
     jacoco
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.9.0"
     id("com.github.spotbugs")
     id("com.jashmore.gradle.github.release")
     id("org.jlleitschuh.gradle.ktlint") apply false
     id("io.gitlab.arturbosch.detekt") apply false
-    id("org.unbroken-dome.test-sets") version "3.0.1"
+    id("org.unbroken-dome.test-sets") version "4.0.0"
 }
 
 allprojects {
@@ -73,8 +73,8 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
 
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(setOf("-Xlint:all", "-Werror", "-Xlint:-processing", "-Xlint:-serial"))

@@ -25,8 +25,7 @@ public class MessageIdArgumentResolver implements ArgumentResolver<String> {
         final QueueProperties queueProperties,
         final MethodParameter methodParameter,
         final Message message
-    )
-        throws ArgumentResolutionException {
+    ) throws ArgumentResolutionException {
         return message.messageId();
     }
 }

@@ -44,13 +44,11 @@ public class ScheduledMessageProducer {
         batchRequestBuilder.entries(
             IntStream
                 .range(0, 10)
-                .mapToObj(
-                    i -> {
-                        final String messageId = "" + currentValue + "-" + i;
-                        final String messageContent = "Message, loop: " + currentValue + " id: " + i;
-                        return SendMessageBatchRequestEntry.builder().id(messageId).messageBody(messageContent).build();
-                    }
-                )
+                .mapToObj(i -> {
+                    final String messageId = "" + currentValue + "-" + i;
+                    final String messageContent = "Message, loop: " + currentValue + " id: " + i;
+                    return SendMessageBatchRequestEntry.builder().id(messageId).messageBody(messageContent).build();
+                })
                 .collect(Collectors.toSet())
         );
 

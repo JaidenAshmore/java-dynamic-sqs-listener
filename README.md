@@ -257,7 +257,7 @@ The framework relies on the following dependencies and therefore it is recommend
 for compatibility.
 
 -   [Core Framework](./core)
-    -   JDK 1.8 or higher
+    -   JDK 17 or higher
     -   [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
     -   [Jackson Databind](https://github.com/FasterXML/jackson-databind)
     -   [SLF4J API](https://github.com/qos-ch/slf4j)
@@ -719,14 +719,6 @@ fifoMessageListener("identifier", sqsAsyncClient, "${insert.queue.url.here}") {
     }
 }
 ```
-
-### Comparing other SQS Libraries
-
-If you want to see the difference in usage between this library and others like the
-[Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) and
-[Amazon SQS Java Messaging Library](https://github.com/awslabs/amazon-sqs-java-messaging-lib), take a look at
-the [sqs-listener-library-comparison](./examples/sqs-listener-library-comparison) module. This allows you to test the performance and usage of
-each library for different scenarios, such as heavy IO message processing, etc.
 
 ## Examples
 

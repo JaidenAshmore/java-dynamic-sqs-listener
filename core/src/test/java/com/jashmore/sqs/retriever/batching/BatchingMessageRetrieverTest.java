@@ -74,12 +74,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         startRunnableInThread(
             retriever::run,
@@ -106,12 +104,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         final long timeStarted = System.currentTimeMillis();
         startRunnableInThread(
@@ -139,12 +135,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -174,12 +168,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -209,12 +201,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -244,12 +234,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -282,19 +270,15 @@ class BatchingMessageRetrieverTest {
         final CountDownLatch waitUntilSecondRequestSubmitted = new CountDownLatch(1);
         final CountDownLatch secondRequestMade = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    firstRequestMade.countDown();
-                    waitUntilSecondRequestSubmitted.await();
-                    return mockReceiveMessageResponse();
-                }
-            )
-            .thenAnswer(
-                invocation -> {
-                    secondRequestMade.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build(), Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                firstRequestMade.countDown();
+                waitUntilSecondRequestSubmitted.await();
+                return mockReceiveMessageResponse();
+            })
+            .thenAnswer(invocation -> {
+                secondRequestMade.countDown();
+                return mockReceiveMessageResponse(Message.builder().build(), Message.builder().build());
+            });
 
         startRunnableInThread(
             retriever::run,
@@ -326,12 +310,10 @@ class BatchingMessageRetrieverTest {
         final CountDownLatch secondMessageRequestedLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
             .thenReturn(CompletableFutureUtils.completedExceptionally(new ExpectedTestException()))
-            .thenAnswer(
-                invocation -> {
-                    secondMessageRequestedLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                secondMessageRequestedLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         startRunnableInThread(
             retriever::run,
@@ -389,14 +371,12 @@ class BatchingMessageRetrieverTest {
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         final CountDownLatch threadStoppedLatched = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    log.info("Requesting messages");
-                    receiveMessageRequestLatch.countDown();
-                    threadStoppedLatched.await();
-                    return mockReceiveMessageResponse();
-                }
-            );
+            .thenAnswer(invocation -> {
+                log.info("Requesting messages");
+                receiveMessageRequestLatch.countDown();
+                threadStoppedLatched.await();
+                return mockReceiveMessageResponse();
+            });
 
         // act
         startRunnableInThread(
@@ -424,12 +404,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -456,12 +434,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -488,12 +464,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(
@@ -523,12 +497,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, properties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         startRunnableInThread(
             retriever::run,
@@ -552,12 +524,10 @@ class BatchingMessageRetrieverTest {
         final BatchingMessageRetriever retriever = new BatchingMessageRetriever(QUEUE_PROPERTIES, sqsAsyncClient, retrieverProperties);
         final CountDownLatch receiveMessageRequestLatch = new CountDownLatch(1);
         when(sqsAsyncClient.receiveMessage(any(ReceiveMessageRequest.class)))
-            .thenAnswer(
-                invocation -> {
-                    receiveMessageRequestLatch.countDown();
-                    return mockReceiveMessageResponse(Message.builder().build());
-                }
-            );
+            .thenAnswer(invocation -> {
+                receiveMessageRequestLatch.countDown();
+                return mockReceiveMessageResponse(Message.builder().build());
+            });
 
         // act
         startRunnableInThread(

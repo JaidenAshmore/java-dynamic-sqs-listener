@@ -30,19 +30,17 @@ public class MessageListeners {
             throw new RuntimeException("Expected segment");
         }
         log.info("Segment ID: {}", currentSegment.getTraceId());
-        return CompletableFuture.runAsync(
-            () -> {
-                AWSXRay.setTraceEntity(currentTraceEntity);
-                try {
-                    someService.someMethod();
-                } catch (final InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(interruptedException);
-                } finally {
-                    log.info("Done");
-                    AWSXRay.clearTraceEntity();
-                }
+        return CompletableFuture.runAsync(() -> {
+            AWSXRay.setTraceEntity(currentTraceEntity);
+            try {
+                someService.someMethod();
+            } catch (final InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(interruptedException);
+            } finally {
+                log.info("Done");
+                AWSXRay.clearTraceEntity();
             }
-        );
+        });
     }
 }

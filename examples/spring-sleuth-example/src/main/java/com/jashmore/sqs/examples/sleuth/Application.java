@@ -25,11 +25,10 @@ public class Application {
         return new ElasticMqSqsAsyncClient(
             "test",
             sqsAsyncClientBuilder ->
-                sqsAsyncClientBuilder.overrideConfiguration(
-                    overrideConfigurationBuilder ->
-                        overrideConfigurationBuilder
-                            .addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
-                            .addExecutionInterceptor(new SendMessageBatchTracingExecutionInterceptor(tracing))
+                sqsAsyncClientBuilder.overrideConfiguration(overrideConfigurationBuilder ->
+                    overrideConfigurationBuilder
+                        .addExecutionInterceptor(new SendMessageTracingExecutionInterceptor(tracing))
+                        .addExecutionInterceptor(new SendMessageBatchTracingExecutionInterceptor(tracing))
                 )
         );
     }

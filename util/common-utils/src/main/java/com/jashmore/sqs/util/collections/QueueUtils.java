@@ -27,8 +27,7 @@ public class QueueUtils {
         final Collection<T> drainToCollection,
         final int desiredElements,
         final Duration durationToWait
-    )
-        throws InterruptedException {
+    ) throws InterruptedException {
         final long endTimeInMs = System.currentTimeMillis() + durationToWait.toMillis();
 
         int elementsLeft = desiredElements;

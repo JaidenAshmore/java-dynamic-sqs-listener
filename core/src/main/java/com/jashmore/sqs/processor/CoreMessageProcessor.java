@@ -128,30 +128,28 @@ public class CoreMessageProcessor implements MessageProcessor {
         final Parameter[] parameters = method.getParameters();
         List<InternalArgumentResolver> argumentResolvers = IntStream
             .range(0, parameters.length)
-            .<InternalArgumentResolver>mapToObj(
-                parameterIndex -> {
-                    final Parameter parameter = parameters[parameterIndex];
+            .<InternalArgumentResolver>mapToObj(parameterIndex -> {
+                final Parameter parameter = parameters[parameterIndex];
 
-                    final MethodParameter methodParameter = DefaultMethodParameter
-                        .builder()
-                        .method(method)
-                        .parameter(parameter)
-                        .parameterIndex(parameterIndex)
-                        .build();
+                final MethodParameter methodParameter = DefaultMethodParameter
+                    .builder()
+                    .method(method)
+                    .parameter(parameter)
+                    .parameterIndex(parameterIndex)
+                    .build();
 
-                    if (isAcknowledgeParameter(parameter)) {
-                        return (message, acknowledge, visibilityExtender) -> acknowledge;
-                    }
-
-                    if (isVisibilityExtenderParameter(parameter)) {
-                        return (message, acknowledge, visibilityExtender) -> visibilityExtender;
-                    }
-
-                    final ArgumentResolver<?> argumentResolver = argumentResolverService.getArgumentResolver(methodParameter);
-                    return (message, acknowledge, visibilityExtender) ->
-                        argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
+                if (isAcknowledgeParameter(parameter)) {
+                    return (message, acknowledge, visibilityExtender) -> acknowledge;
                 }
-            )
+
+                if (isVisibilityExtenderParameter(parameter)) {
+                    return (message, acknowledge, visibilityExtender) -> visibilityExtender;
+                }
+
+                final ArgumentResolver<?> argumentResolver = argumentResolverService.getArgumentResolver(methodParameter);
+                return (message, acknowledge, visibilityExtender) ->
+                    argumentResolver.resolveArgumentForParameter(queueProperties, methodParameter, message);
+            })
             .collect(toList());
 
         return (message, acknowledge, visibilityExtender) ->
