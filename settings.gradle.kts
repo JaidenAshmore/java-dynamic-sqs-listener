@@ -4,7 +4,7 @@ rootProject.name = "java-dynamic-sqs-listener-parent"
 pluginManagement {
     plugins {
         id("org.springframework.boot") version "3.1.2"
-        id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"
+        id("com.github.davidmc24.gradle.plugin.avro") version "1.8.0"
         id("org.jlleitschuh.gradle.ktlint") version "11.5.0"
         id("com.github.spotbugs") version "4.5.1"
         id("io.gitlab.arturbosch.detekt") version "1.14.2"
