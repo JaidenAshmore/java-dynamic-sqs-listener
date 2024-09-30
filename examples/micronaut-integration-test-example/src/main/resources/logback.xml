@@ -1,0 +1,19 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- We reduce the log messages from ElasticMQ, Akka and Netty to reduce the amount of unnecessary log messages being published -->
+    <logger name="org.elasticmq" level="OFF" />
+    <logger name="akka" level="OFF" />
+    <logger name="io.netty" level="ERROR" />
+
+    <logger name="com.jashmore" level="DEBUG" />
+
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

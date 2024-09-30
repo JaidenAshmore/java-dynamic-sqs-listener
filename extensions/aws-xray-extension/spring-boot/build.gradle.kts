@@ -3,6 +3,15 @@ description = "Extension for integration AWS Xray Tracing into the Message Liste
 
 val springBootVersion: String by project
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group.startsWith("com.fasterxml.jackson")) {
+            // 2.17.2 is incompatible but needed by other subprojects
+            useVersion("2.15.2")
+        }
+    }
+}
+
 dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
 
