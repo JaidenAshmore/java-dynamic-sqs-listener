@@ -41,7 +41,11 @@ class FifoMessageListenerContainerDslBuilderTest {
             }
         }
         container.start()
-        sqsAsyncClient.sendMessage { it.queueUrl(queueUrl).messageGroupId("groupId").messageBody("body").messageDeduplicationId("id") }
+        sqsAsyncClient.sendMessage {
+            it.queueUrl(
+                queueUrl
+            ).messageGroupId("groupId").messageBody("body").messageDeduplicationId("id")
+        }
         // assert
         assertThat(countDownLatch.await(5, TimeUnit.SECONDS)).isTrue()
     }
@@ -97,7 +101,11 @@ class FifoMessageListenerContainerDslBuilderTest {
         // assert
         assertThat(processedMessages).containsOnlyKeys((0 until numberOfMessageGroups).map { "$it" })
         assertThat(processedMessages)
-            .allSatisfy { _, messagesNumbers -> assertThat(messagesNumbers).containsExactlyElementsOf((0 until numberOfMessages).map { "$it" }) }
+            .allSatisfy { _, messagesNumbers ->
+                assertThat(
+                    messagesNumbers
+                ).containsExactlyElementsOf((0 until numberOfMessages).map { "$it" })
+            }
     }
 
     private fun sendMessages(
@@ -129,7 +137,11 @@ class FifoMessageListenerContainerDslBuilderTest {
     private fun createFifoQueueWithDlq(sqsAsyncClient: ElasticMqSqsAsyncClient): QueueProperties {
         val deadLetterQueueResponse = sqsAsyncClient.createRandomFifoQueue().get()
         val attributes = sqsAsyncClient
-            .getQueueAttributes { builder: GetQueueAttributesRequest.Builder -> builder.queueUrl(deadLetterQueueResponse.queueUrl()).attributeNames(QueueAttributeName.QUEUE_ARN) }
+            .getQueueAttributes { builder: GetQueueAttributesRequest.Builder ->
+                builder.queueUrl(
+                    deadLetterQueueResponse.queueUrl()
+                ).attributeNames(QueueAttributeName.QUEUE_ARN)
+            }
             .get()
         val queueUrl = sqsAsyncClient
             .createRandomFifoQueue { builder ->

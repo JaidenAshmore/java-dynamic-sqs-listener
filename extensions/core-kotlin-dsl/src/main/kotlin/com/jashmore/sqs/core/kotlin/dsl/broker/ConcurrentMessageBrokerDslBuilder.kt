@@ -69,4 +69,6 @@ class ConcurrentMessageBrokerDslBuilder : MessageBrokerDslBuilder {
  * }
  * ```
  */
-fun concurrentBroker(init: ConcurrentMessageBrokerDslBuilder.() -> Unit) = initComponent(ConcurrentMessageBrokerDslBuilder(), init)
+fun concurrentBroker(
+    init: ConcurrentMessageBrokerDslBuilder.() -> Unit
+) = initComponent(ConcurrentMessageBrokerDslBuilder(), init)

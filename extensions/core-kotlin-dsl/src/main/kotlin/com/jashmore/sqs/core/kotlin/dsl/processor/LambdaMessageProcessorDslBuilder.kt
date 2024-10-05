@@ -25,7 +25,12 @@ class LambdaMessageProcessorDslBuilder(
      */
     var decorators = listOf<MessageProcessingDecorator>()
 
-    private var processorBuilder: () -> MessageProcessor = { throw RequiredFieldException("method", "LambdaMessageProcessor") }
+    private var processorBuilder: () -> MessageProcessor = {
+        throw RequiredFieldException(
+            "method",
+            "LambdaMessageProcessor"
+        )
+    }
 
     /**
      * Set the lambda as a method that just consumes the [Message].

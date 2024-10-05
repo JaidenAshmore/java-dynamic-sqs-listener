@@ -2,7 +2,7 @@
 
 This extension allows the SQS consumer to be able to parse messages that have been serialized using a schema
 like [Avro](https://avro.apache.org/docs/1.9.2/gettingstartedjava.html) and these definitions have been stored in the
-[Spring Cloud Schema Registry](https://cloud.spring.io/spring-cloud-static/spring-cloud-schema-registry/1.0.0.RC1/reference/html/spring-cloud-schema-registry.html).
+[Spring Cloud Schema Registry](https://docs.spring.io/spring-cloud-schema-registry/docs/current/reference/html/spring-cloud-schema-registry.html).
 
 ## Why would you want this
 

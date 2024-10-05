@@ -10,5 +10,6 @@
     </Match>
     <Match>
         <Source name="~.*generated-sources.*" />
+        <Source name="~.*generated-test-sources.*" />
     </Match>
 </FindBugsFilter>

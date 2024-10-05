@@ -91,5 +91,7 @@ class BatchingMessageResolverDslBuilderTest {
         assertThat(endTime - startTime).isGreaterThanOrEqualTo(500)
     }
 
-    private fun runResolver(resolver: MessageResolver) = CompletableFuture.runAsync { resolver.run() }.get(5, TimeUnit.SECONDS)
+    private fun runResolver(resolver: MessageResolver) = CompletableFuture.runAsync {
+        resolver.run()
+    }.get(5, TimeUnit.SECONDS)
 }

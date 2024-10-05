@@ -13,3 +13,12 @@ dependencies {
     testImplementation(project(":java-dynamic-sqs-listener-core"))
     testImplementation(project(":expected-test-exception"))
 }
+
+configurations.all {
+    resolutionStrategy.eachDependency {
+        // xray requires an older version of jackson
+        if (requested.group.startsWith("com.fasterxml.jackson")) {
+            useVersion("2.15.2")
+        }
+    }
+}

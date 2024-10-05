@@ -15,7 +15,10 @@ import java.time.Duration
  * [MessageResolverDslBuilder] that will construct a [BatchingMessageResolver] for usage in this container.
  */
 @MessageListenerComponentDslMarker
-class BatchingMessageResolverDslBuilder(private val sqsAsyncClient: SqsAsyncClient, private val queueProperties: QueueProperties) : MessageResolverDslBuilder {
+class BatchingMessageResolverDslBuilder(
+    private val sqsAsyncClient: SqsAsyncClient,
+    private val queueProperties: QueueProperties
+) : MessageResolverDslBuilder {
     /**
      * Supplier for getting the buffer size for resolving the messages.
      *

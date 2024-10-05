@@ -30,7 +30,9 @@ class CoreMessageProcessorDslBuilder(
      *
      * If this is not supplied, a default [CoreArgumentResolverService] will be used which configures the core argument resolvers.
      */
-    var argumentResolverService: ArgumentResolverServiceDslBuilder = CoreArgumentResolverServiceDslBuilder(ObjectMapper())
+    var argumentResolverService: ArgumentResolverServiceDslBuilder = CoreArgumentResolverServiceDslBuilder(
+        ObjectMapper()
+    )
 
     /**
      * The object instance that will execute the message listener method.

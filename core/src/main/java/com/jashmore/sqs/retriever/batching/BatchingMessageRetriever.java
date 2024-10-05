@@ -23,6 +23,7 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkInterruptedException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
@@ -187,7 +188,7 @@ public class BatchingMessageRetriever implements MessageRetriever {
         final ReceiveMessageRequest.Builder requestBuilder = ReceiveMessageRequest
             .builder()
             .queueUrl(queueProperties.getQueueUrl())
-            .attributeNames(QueueAttributeName.ALL)
+            .messageSystemAttributeNames(MessageSystemAttributeName.ALL)
             .messageAttributeNames(QueueAttributeName.ALL.toString())
             .maxNumberOfMessages(numberOfMessagesToObtain)
             .waitTimeSeconds(MAX_SQS_RECEIVE_WAIT_TIME_IN_SECONDS);

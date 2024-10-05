@@ -7,12 +7,12 @@ import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.FIFO_
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.REDRIVE_POLICY;
 import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.VISIBILITY_TIMEOUT;
 
-import akka.http.scaladsl.Http;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.pekko.http.scaladsl.Http;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -151,7 +151,7 @@ class LocalSqsAsyncClientImplTest {
         // assert
         final ListQueuesResponse listQueuesResponse = sqsAsyncClient.listQueues().get();
         assertThat(listQueuesResponse.queueUrls()).hasSize(2);
-        assertThat(listQueuesResponse.queueUrls()).contains(queueServerUrl + "/queue/queueName-dlq");
+        assertThat(listQueuesResponse.queueUrls()).anyMatch(url -> url.endsWith("/queueName-dlq"));
     }
 
     @Test

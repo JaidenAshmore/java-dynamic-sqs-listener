@@ -74,7 +74,9 @@ class CoreMessageProcessorDslBuilderTest {
             method = CoreMessageProcessorDslBuilderTest::class.java.getMethod("myMethod", String::class.java)
         }()
 
-        coreProcessor.processMessage(Message.builder().body("test").build()) { CompletableFuture.completedFuture(null) }.get(5, TimeUnit.SECONDS)
+        coreProcessor.processMessage(Message.builder().body("test").build()) {
+            CompletableFuture.completedFuture(null)
+        }.get(5, TimeUnit.SECONDS)
 
         // assert
         assertThat(payloadReference.get()).isEqualTo("test")
@@ -101,7 +103,9 @@ class CoreMessageProcessorDslBuilderTest {
             method = CoreMessageProcessorDslBuilderTest::class.java.getMethod("myMethod", String::class.java)
         }()
 
-        coreProcessor.processMessage(Message.builder().body("test").build()) { CompletableFuture.completedFuture(null) }.get(5, TimeUnit.SECONDS)
+        coreProcessor.processMessage(Message.builder().body("test").build()) {
+            CompletableFuture.completedFuture(null)
+        }.get(5, TimeUnit.SECONDS)
 
         // assert
         assertThat(payloadReference.get()).isEqualTo("some value")

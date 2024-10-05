@@ -1,7 +1,7 @@
 # Spring - How to version message payload Schemas using Spring Cloud Schema Registry
 
 As your application grows over time the format of the data that needs to be sent in the SQS messages may change as well. To allow for
-these changes, the [Spring Cloud Schema Registry](https://cloud.spring.io/spring-cloud-static/spring-cloud-schema-registry/1.0.0.RC1/reference/html/spring-cloud-schema-registry.html)
+these changes, the [Spring Cloud Schema Registry](https://docs.spring.io/spring-cloud-schema-registry/docs/current/reference/html/spring-cloud-schema-registry.html)
 can be used to track the version of your schemas, allowing the SQS consumer to be able to interpret multiple versions of your payload.
 
 ## Full reference
