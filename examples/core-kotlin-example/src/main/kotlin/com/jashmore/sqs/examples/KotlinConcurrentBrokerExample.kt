@@ -29,7 +29,7 @@ private val log: Logger = LoggerFactory.getLogger("example")
 private val CONCURRENCY_LEVEL_PERIOD = Duration.ofSeconds(5)
 private const val CONCURRENCY_LIMIT = 10
 
-private val objectMapper = ObjectMapper().registerModule(KotlinModule())
+private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
 /**
  * This example shows the core framework being used to processing messages place onto the queue with a dynamic level of concurrency via the

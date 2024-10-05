@@ -51,7 +51,7 @@ public class XrayExtensionIntegrationTest {
 
         @Bean
         @Qualifier("sqsXrayRecorder")
-        public AWSXRayRecorder recorder() throws IOException {
+        public AWSXRayRecorder sqsXrayRecorder() throws IOException {
             final DaemonConfiguration daemonConfiguration = new DaemonConfiguration();
             daemonConfiguration.setDaemonAddress("localhost:" + XRAY_DAEMON_PORT);
             final AWSXRayRecorder recorder = AWSXRayRecorderBuilder.standard().withEmitter(Emitter.create(daemonConfiguration)).build();

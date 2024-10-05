@@ -138,7 +138,12 @@ fun prefetchingMessageListener(
     queueUrl: String,
     init: PrefetchingMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-    return prefetchingMessageListener(identifier, sqsAsyncClient, QueueProperties.builder().queueUrl(queueUrl).build(), init)
+    return prefetchingMessageListener(
+        identifier,
+        sqsAsyncClient,
+        QueueProperties.builder().queueUrl(queueUrl).build(),
+        init
+    )
 }
 
 /**

@@ -1,6 +1,5 @@
 package com.jashmore.sqs.elasticmq;
 
-import akka.http.scaladsl.Http;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pekko.http.scaladsl.Http;
 import org.elasticmq.rest.sqs.SQSRestServer;
 import org.elasticmq.rest.sqs.SQSRestServerBuilder;
 import software.amazon.awssdk.core.SdkClient;

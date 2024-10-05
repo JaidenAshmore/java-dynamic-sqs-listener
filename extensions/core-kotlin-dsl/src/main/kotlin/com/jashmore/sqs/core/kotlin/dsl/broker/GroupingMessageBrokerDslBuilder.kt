@@ -78,7 +78,11 @@ class GroupingMessageBrokerDslBuilder : MessageBrokerDslBuilder {
 
                 override fun getMaximumNumberOfCachedMessageGroups(): Int = maximumNumberOfCachedMessageGroups()
 
-                override fun messageGroupingFunction(): Function<Message, String> = Function { t -> actualMessageGroupingFunction(t) }
+                override fun messageGroupingFunction(): Function<Message, String> = Function { t ->
+                    actualMessageGroupingFunction(
+                        t
+                    )
+                }
             }
         )
     }
@@ -94,4 +98,6 @@ class GroupingMessageBrokerDslBuilder : MessageBrokerDslBuilder {
  * }
  * ```
  */
-fun groupingBroker(init: GroupingMessageBrokerDslBuilder.() -> Unit) = initComponent(GroupingMessageBrokerDslBuilder(), init)
+fun groupingBroker(
+    init: GroupingMessageBrokerDslBuilder.() -> Unit
+) = initComponent(GroupingMessageBrokerDslBuilder(), init)

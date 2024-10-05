@@ -47,7 +47,9 @@ class DelegatingArgumentResolverServiceDslBuilderTest {
         val argumentResolverService = argumentResolverServiceDslBuilder()
 
         // assert
-        assertThat(argumentResolverService.getArgumentResolver(MethodParameterRecord(method, parameterIndex = 1))).isSameAs(messageIdArgumentResolver)
+        assertThat(
+            argumentResolverService.getArgumentResolver(MethodParameterRecord(method, parameterIndex = 1))
+        ).isSameAs(messageIdArgumentResolver)
     }
 
     @Test

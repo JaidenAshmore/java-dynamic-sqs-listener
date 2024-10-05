@@ -18,7 +18,11 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
  *
  * <p>This only provides access to the processor object
  */
-abstract class AbstractMessageListenerContainerDslBuilder(val identifier: String, val sqsAsyncClient: SqsAsyncClient, val queueProperties: QueueProperties) :
+abstract class AbstractMessageListenerContainerDslBuilder(
+    val identifier: String,
+    val sqsAsyncClient: SqsAsyncClient,
+    val queueProperties: QueueProperties
+) :
     MessageListenerComponentDslBuilder<MessageListenerContainer> {
     var processor: MessageProcessorDslBuilder? = null
 
@@ -72,5 +76,10 @@ abstract class AbstractMessageListenerContainerDslBuilder(val identifier: String
      * ```
      */
     fun asyncLambdaProcessor(init: AsyncLambdaMessageProcessorDslBuilder.() -> Unit) =
-        com.jashmore.sqs.core.kotlin.dsl.processor.asyncLambdaProcessor(identifier, sqsAsyncClient, queueProperties, init)
+        com.jashmore.sqs.core.kotlin.dsl.processor.asyncLambdaProcessor(
+            identifier,
+            sqsAsyncClient,
+            queueProperties,
+            init
+        )
 }

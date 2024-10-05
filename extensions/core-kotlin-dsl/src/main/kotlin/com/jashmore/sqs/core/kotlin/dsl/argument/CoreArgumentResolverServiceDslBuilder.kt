@@ -13,7 +13,9 @@ import com.jashmore.sqs.processor.MessageProcessor
  * [ArgumentResolverServiceDslBuilder] that constructs a [CoreArgumentResolverService] for the [MessageProcessor].
  */
 @MessageListenerComponentDslMarker
-class CoreArgumentResolverServiceDslBuilder(private val objectMapper: ObjectMapper) : ArgumentResolverServiceDslBuilder {
+class CoreArgumentResolverServiceDslBuilder(
+    private val objectMapper: ObjectMapper
+) : ArgumentResolverServiceDslBuilder {
 
     override fun invoke(): ArgumentResolverService {
         return CoreArgumentResolverService(
@@ -33,5 +35,8 @@ class CoreArgumentResolverServiceDslBuilder(private val objectMapper: ObjectMapp
  *
  * @param init the DSL function for configuring this processor
  */
-fun coreArgumentResolverService(objectMapper: ObjectMapper = ObjectMapper(), init: CoreArgumentResolverServiceDslBuilder.() -> Unit = { }) =
+fun coreArgumentResolverService(
+    objectMapper: ObjectMapper = ObjectMapper(),
+    init: CoreArgumentResolverServiceDslBuilder.() -> Unit = { }
+) =
     initComponent(CoreArgumentResolverServiceDslBuilder(objectMapper), init)

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,17 +43,22 @@ class MultipleSqsAsyncClientIntegrationTest {
     public static class TestConfig {
 
         @Bean
+        @Qualifier("firstClient")
         public LocalSqsAsyncClient firstClient() {
             return new ElasticMqSqsAsyncClient("firstClientQueueName");
         }
 
         @Bean
+        @Qualifier("secondClient")
         public LocalSqsAsyncClient secondClient() {
             return new ElasticMqSqsAsyncClient("secondClientQueueName");
         }
 
         @Bean
-        public SqsAsyncClientProvider sqsAsyncClientProvider(SqsAsyncClient firstClient, SqsAsyncClient secondClient) {
+        public SqsAsyncClientProvider sqsAsyncClientProvider(
+            @Qualifier("firstClient") SqsAsyncClient firstClient,
+            @Qualifier("secondClient") SqsAsyncClient secondClient
+        ) {
             final Map<String, SqsAsyncClient> clients = new HashMap<>();
             clients.put("firstClient", firstClient);
             clients.put("secondClient", secondClient);

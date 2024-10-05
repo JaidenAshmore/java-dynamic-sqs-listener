@@ -139,7 +139,12 @@ fun batchingMessageListener(
     queueUrl: String,
     init: BatchingMessageListenerContainerDslBuilder.() -> Unit
 ): MessageListenerContainer {
-    return batchingMessageListener(identifier, sqsAsyncClient, QueueProperties.builder().queueUrl(queueUrl).build(), init)
+    return batchingMessageListener(
+        identifier,
+        sqsAsyncClient,
+        QueueProperties.builder().queueUrl(queueUrl).build(),
+        init
+    )
 }
 
 /**

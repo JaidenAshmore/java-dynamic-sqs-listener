@@ -11,14 +11,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
 import org.springframework.core.io.Resource;
 
 /**
- * Implementation that loads all of the schema definitions from resources in the classpath.
+ * Implementation that loads all the schema definitions from resources in the classpath.
  *
- * <p>For example it will load all of the schemas in a folder like <pre>resources/avro/{name}.avsc</pre>.
+ * <p>For example it will load all the schemas in a folder like <pre>resources/avro/{name}.avsc</pre>.
  */
 public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetriever<Schema> {
 
@@ -35,7 +36,7 @@ public class AvroClasspathConsumerSchemaRetriever implements ConsumerSchemaRetri
                 .map(resource -> {
                     try {
                         return parser.parse(resource.getInputStream());
-                    } catch (SchemaParseException | IOException exception) {
+                    } catch (AvroTypeException | SchemaParseException | IOException exception) {
                         throw new AvroSchemaProcessingException("Error processing schema definition: " + resource.getFilename(), exception);
                     }
                 })

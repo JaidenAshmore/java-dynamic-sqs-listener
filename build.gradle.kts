@@ -1,7 +1,6 @@
 import com.jashmore.gradle.JacocoCoverallsPlugin
 import com.jashmore.gradle.ReleasePlugin
 import com.jashmore.gradle.release
-import io.gitlab.arturbosch.detekt.detekt
 
 plugins {
     java
@@ -12,7 +11,6 @@ plugins {
     id("com.github.spotbugs")
     id("com.jashmore.gradle.github.release")
     id("org.jlleitschuh.gradle.ktlint") apply false
-    id("io.gitlab.arturbosch.detekt") apply false
     id("org.unbroken-dome.test-sets") version "4.0.0"
 }
 
@@ -46,7 +44,6 @@ subprojects {
         }
     } else {
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
-        apply(plugin = "io.gitlab.arturbosch.detekt")
     }
 
     dependencies {
@@ -85,12 +82,6 @@ subprojects {
             spotbugs {
                 excludeFilter.set(file("${project.rootDir}/configuration/spotbugs/bugsExcludeFilter.xml"))
             }
-        }
-    } else {
-        detekt {
-            failFast = true
-            buildUponDefaultConfig = true
-            config = files("${project.rootDir}/configuration/detekt/detekt-configuration.yml")
         }
     }
 

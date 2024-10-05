@@ -23,7 +23,12 @@ class AsyncLambdaMessageProcessorDslBuilder(
 
     var decorators = mutableListOf<MessageProcessingDecorator>()
 
-    private var processorBuilder: () -> MessageProcessor = { throw RequiredFieldException("method", "LambdaMessageProcessor") }
+    private var processorBuilder: () -> MessageProcessor = {
+        throw RequiredFieldException(
+            "method",
+            "LambdaMessageProcessor"
+        )
+    }
 
     fun method(func: (message: Message) -> CompletableFuture<*>) {
         processorBuilder = {
