@@ -13,15 +13,14 @@ import com.jashmore.sqs.processor.MessageProcessor;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
 import com.jashmore.sqs.util.identifier.IdentifierUtils;
 import com.jashmore.sqs.util.string.StringUtils;
-import lombok.Builder;
-import org.immutables.value.Value;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.Builder;
+import org.immutables.value.Value;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**
  * {@link MessageListenerContainerFactory} that can be used to build against an annotated method.
@@ -29,6 +28,7 @@ import java.util.function.Supplier;
  * @param <A> annotation that is applied on the method
  */
 public class AnnotationMessageListenerContainerFactory<A extends Annotation> implements MessageListenerContainerFactory {
+
     private final Class<A> annotationClass;
     private final Function<A, String> identifierMapper;
     private final Function<A, String> sqsClientIdentifier;
@@ -52,15 +52,17 @@ public class AnnotationMessageListenerContainerFactory<A extends Annotation> imp
      * @param argumentResolverService to map the parameters of the method to values in the message
      * @param containerFactory converts details about the annotation to the final {@link MessageListenerContainer}
      */
-    public AnnotationMessageListenerContainerFactory(final Class<A> annotationClass,
-                                                     final Function<A, String> identifierMapper,
-                                                     final Function<A, String> sqsClientIdentifierMapper,
-                                                     final Function<A, String> queueNameOrUrlMapper,
-                                                     final QueueResolver queueResolver,
-                                                     final SqsAsyncClientProvider sqsAsyncClientProvider,
-                                                     final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory,
-                                                     final ArgumentResolverService argumentResolverService,
-                                                     final Function<AnnotationDetails<A>, MessageListenerContainer> containerFactory) {
+    public AnnotationMessageListenerContainerFactory(
+        final Class<A> annotationClass,
+        final Function<A, String> identifierMapper,
+        final Function<A, String> sqsClientIdentifierMapper,
+        final Function<A, String> queueNameOrUrlMapper,
+        final QueueResolver queueResolver,
+        final SqsAsyncClientProvider sqsAsyncClientProvider,
+        final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory,
+        final ArgumentResolverService argumentResolverService,
+        final Function<AnnotationDetails<A>, MessageListenerContainer> containerFactory
+    ) {
         this.annotationClass = annotationClass;
         this.identifierMapper = identifierMapper;
         this.sqsClientIdentifier = sqsClientIdentifierMapper;
@@ -73,34 +75,43 @@ public class AnnotationMessageListenerContainerFactory<A extends Annotation> imp
     }
 
     @Override
-    public Optional<MessageListenerContainer> buildContainer(final Object bean, final Method method) throws MessageListenerContainerInitialisationException {
+    public Optional<MessageListenerContainer> buildContainer(final Object bean, final Method method)
+        throws MessageListenerContainerInitialisationException {
         return AnnotationUtils
-                .findMethodAnnotation(method, this.annotationClass)
-                .map(annotation -> {
-                    final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation);
-                    final QueueProperties queueProperties = QueueProperties.builder()
-                            .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, queueNameOrUrlMapper.apply(annotation)))
-                            .build();
-                    final String identifier = IdentifierUtils.buildIdentifierForMethod(identifierMapper.apply(annotation), bean.getClass(), method);
+            .findMethodAnnotation(method, this.annotationClass)
+            .map(annotation -> {
+                final SqsAsyncClient sqsAsyncClient = getSqsAsyncClient(annotation);
+                final QueueProperties queueProperties = QueueProperties
+                    .builder()
+                    .queueUrl(queueResolver.resolveQueueUrl(sqsAsyncClient, queueNameOrUrlMapper.apply(annotation)))
+                    .build();
+                final String identifier = IdentifierUtils.buildIdentifierForMethod(
+                    identifierMapper.apply(annotation),
+                    bean.getClass(),
+                    method
+                );
 
-                    final Supplier<MessageProcessor> messageProcessorSupplier = () ->
-                            decoratingMessageProcessorFactory.decorateMessageProcessor(
-                                    sqsAsyncClient,
-                                    identifier,
-                                    queueProperties,
-                                    bean,
-                                    method,
-                                    new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean)
-                            );
+                final Supplier<MessageProcessor> messageProcessorSupplier = () ->
+                    decoratingMessageProcessorFactory.decorateMessageProcessor(
+                        sqsAsyncClient,
+                        identifier,
+                        queueProperties,
+                        bean,
+                        method,
+                        new CoreMessageProcessor(argumentResolverService, queueProperties, sqsAsyncClient, method, bean)
+                    );
 
-                    return containerFactory.apply(AnnotationDetails.<A>builder()
-                            .identifier(identifier)
-                            .queueProperties(queueProperties)
-                            .sqsAsyncClient(sqsAsyncClient)
-                            .messageProcessorSupplier(messageProcessorSupplier)
-                            .annotation(annotation)
-                            .build());
-                });
+                return containerFactory.apply(
+                    AnnotationDetails
+                        .<A>builder()
+                        .identifier(identifier)
+                        .queueProperties(queueProperties)
+                        .sqsAsyncClient(sqsAsyncClient)
+                        .messageProcessorSupplier(messageProcessorSupplier)
+                        .annotation(annotation)
+                        .build()
+                );
+            });
     }
 
     private SqsAsyncClient getSqsAsyncClient(final A annotation) {
@@ -108,21 +119,22 @@ public class AnnotationMessageListenerContainerFactory<A extends Annotation> imp
 
         if (!StringUtils.hasText(sqsClient)) {
             return sqsAsyncClientProvider
-                    .getDefaultClient()
-                    .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none")
-                    );
+                .getDefaultClient()
+                .orElseThrow(() -> new MessageListenerContainerInitialisationException("Expected the default SQS Client but there is none")
+                );
         }
 
         return sqsAsyncClientProvider
-                .getClient(sqsClient)
-                .orElseThrow(() ->
-                        new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found")
-                );
+            .getClient(sqsClient)
+            .orElseThrow(() ->
+                new MessageListenerContainerInitialisationException("Expected a client with id '" + sqsClient + "' but none were found")
+            );
     }
 
     @Value
     @Builder
     public static class AnnotationDetails<A extends Annotation> {
+
         public String identifier;
         public SqsAsyncClient sqsAsyncClient;
         public QueueProperties queueProperties;

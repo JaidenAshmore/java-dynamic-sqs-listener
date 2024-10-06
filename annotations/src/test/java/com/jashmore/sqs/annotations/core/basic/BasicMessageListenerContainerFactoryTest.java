@@ -8,13 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.batching.BatchingMessageListenerContainer;
+import com.jashmore.sqs.client.QueueResolver;
 import com.jashmore.sqs.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.container.batching.BatchingMessageListenerContainer;
 import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
-import com.jashmore.sqs.client.QueueResolver;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

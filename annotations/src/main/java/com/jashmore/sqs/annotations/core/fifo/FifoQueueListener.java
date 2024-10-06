@@ -4,14 +4,14 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.broker.grouping.GroupingMessageBroker;
 import com.jashmore.sqs.broker.grouping.GroupingMessageBrokerProperties;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.retriever.batching.BatchingMessageRetrieverProperties;
-import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;

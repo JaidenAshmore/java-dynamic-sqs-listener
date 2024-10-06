@@ -1,13 +1,13 @@
 package com.jashmore.sqs.util.identifier;
 
-import java.lang.reflect.Method;
-
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.sqs.util.string.StringUtils;
+import java.lang.reflect.Method;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class IdentifierUtils {
+
     /**
      * Builds an identifier from a provided identifier if it is not empty, otherwise build an identifier from the class and method.
      *

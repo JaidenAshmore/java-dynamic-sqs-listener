@@ -1,7 +1,6 @@
 package com.jashmore.sqs.placeholder;
 
 import com.jashmore.documentation.annotations.Nonnull;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ import java.util.Map;
  * replace from a static map of values. This is mostly only useful for testing.
  */
 public class StaticPlaceholderResolver implements PlaceholderResolver {
+
     private final Map<String, String> placeholderMap;
 
     public StaticPlaceholderResolver() {

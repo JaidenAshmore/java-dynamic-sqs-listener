@@ -1,8 +1,8 @@
 package com.jashmore.sqs.examples;
 
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

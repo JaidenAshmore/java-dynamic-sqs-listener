@@ -2,15 +2,14 @@ package com.jashmore.sqs.annotations.core.fifo;
 
 import com.jashmore.sqs.annotations.container.AnnotationMessageListenerContainerFactory;
 import com.jashmore.sqs.argument.ArgumentResolverService;
+import com.jashmore.sqs.client.QueueResolver;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.container.MessageListenerContainerInitialisationException;
 import com.jashmore.sqs.container.fifo.FifoMessageListenerContainer;
 import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
-import com.jashmore.sqs.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
-import com.jashmore.sqs.client.QueueResolver;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
 
@@ -36,7 +35,8 @@ public class FifoAnnotationMessageListenerContainerFactory implements MessageLis
         final FifoQueueListenerParser annotationParser,
         final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
     ) {
-        this.delegate = new AnnotationMessageListenerContainerFactory<>(
+        this.delegate =
+            new AnnotationMessageListenerContainerFactory<>(
                 FifoQueueListener.class,
                 FifoQueueListener::identifier,
                 FifoQueueListener::sqsClient,
@@ -45,21 +45,22 @@ public class FifoAnnotationMessageListenerContainerFactory implements MessageLis
                 sqsAsyncClientProvider,
                 decoratingMessageProcessorFactory,
                 argumentResolverService,
-                (details) -> {
+                details -> {
                     final FifoMessageListenerContainerProperties properties = annotationParser.parse(details.annotation);
                     return new FifoMessageListenerContainer(
-                            details.identifier,
-                            details.queueProperties,
-                            details.sqsAsyncClient,
-                            details.messageProcessorSupplier,
-                            properties
+                        details.identifier,
+                        details.queueProperties,
+                        details.sqsAsyncClient,
+                        details.messageProcessorSupplier,
+                        properties
                     );
                 }
-        );
+            );
     }
 
     @Override
-    public Optional<MessageListenerContainer> buildContainer(Object bean, Method method) throws MessageListenerContainerInitialisationException {
+    public Optional<MessageListenerContainer> buildContainer(Object bean, Method method)
+        throws MessageListenerContainerInitialisationException {
         return this.delegate.buildContainer(bean, method);
     }
 }

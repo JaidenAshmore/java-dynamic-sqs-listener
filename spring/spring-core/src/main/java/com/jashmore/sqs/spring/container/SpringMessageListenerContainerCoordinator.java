@@ -4,6 +4,8 @@ import com.jashmore.documentation.annotations.GuardedBy;
 import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,9 +19,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
-import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -217,17 +216,18 @@ public class SpringMessageListenerContainerCoordinator
             final Object bean = applicationContext.getBean(beanName);
             for (final Method method : bean.getClass().getMethods()) {
                 for (final MessageListenerContainerFactory annotationProcessor : messageListenerContainerFactories) {
-                    annotationProcessor.buildContainer(bean, method)
-                            .ifPresent(messageListenerContainer -> {
-                                if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
-                                    throw new IllegalStateException(
-                                            "Created two MessageListenerContainers with the same identifier: " +
-                                                    messageListenerContainer.getIdentifier()
-                                    );
-                                }
-                                log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
-                                messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);
-                            });
+                    annotationProcessor
+                        .buildContainer(bean, method)
+                        .ifPresent(messageListenerContainer -> {
+                            if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
+                                throw new IllegalStateException(
+                                    "Created two MessageListenerContainers with the same identifier: " +
+                                    messageListenerContainer.getIdentifier()
+                                );
+                            }
+                            log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
+                            messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);
+                        });
                 }
             }
         }

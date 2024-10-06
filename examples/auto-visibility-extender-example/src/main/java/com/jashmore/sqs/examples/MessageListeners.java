@@ -2,16 +2,15 @@ package com.jashmore.sqs.examples;
 
 import static com.jashmore.sqs.examples.Application.QUEUE_NAME;
 
-import java.time.Duration;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.annotations.decorator.visibilityextender.AutoVisibilityExtender;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.processor.argument.Acknowledge;
+import java.time.Duration;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;

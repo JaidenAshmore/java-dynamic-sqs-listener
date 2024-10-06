@@ -1,7 +1,6 @@
 package com.jashmore.sqs.decorator;
 
 import com.jashmore.sqs.QueueProperties;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;

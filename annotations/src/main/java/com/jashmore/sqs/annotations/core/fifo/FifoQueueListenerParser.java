@@ -1,10 +1,9 @@
 package com.jashmore.sqs.annotations.core.fifo;
 
 import com.jashmore.documentation.annotations.Nullable;
-import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.util.string.StringUtils;
-
 import java.time.Duration;
 import java.util.function.Supplier;
 
@@ -140,7 +139,8 @@ public class FifoQueueListenerParser {
         if (!StringUtils.hasText(annotation.maximumCachedMessageGroupsString())) {
             maximumCachedMessageGroups = annotation.maximumCachedMessageGroups();
         } else {
-            maximumCachedMessageGroups = Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.maximumCachedMessageGroupsString()));
+            maximumCachedMessageGroups =
+                Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.maximumCachedMessageGroupsString()));
         }
         return () -> maximumCachedMessageGroups;
     }
@@ -178,7 +178,9 @@ public class FifoQueueListenerParser {
             }
         } else {
             messageVisibilityTimeout =
-                Duration.ofSeconds(Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
+                Duration.ofSeconds(
+                    Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()))
+                );
         }
 
         return () -> messageVisibilityTimeout;

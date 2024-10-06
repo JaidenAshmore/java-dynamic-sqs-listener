@@ -1,7 +1,7 @@
 package com.jashmore.sqs.examples;
 
-import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
+import com.jashmore.sqs.argument.payload.Payload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

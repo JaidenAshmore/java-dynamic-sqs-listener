@@ -2,19 +2,18 @@ package com.jashmore.sqs.annotations.decorator.visibilityextender;
 
 import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.QueueProperties;
-import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecorator;
 import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecoratorProperties;
 import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactoryException;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.util.annotation.AnnotationUtils;
+import com.jashmore.sqs.util.string.StringUtils;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-
-import com.jashmore.sqs.util.string.StringUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**

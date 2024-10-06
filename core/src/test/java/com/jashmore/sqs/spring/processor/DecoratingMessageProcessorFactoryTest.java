@@ -6,9 +6,9 @@ import static org.mockito.Mockito.verify;
 
 import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
+import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

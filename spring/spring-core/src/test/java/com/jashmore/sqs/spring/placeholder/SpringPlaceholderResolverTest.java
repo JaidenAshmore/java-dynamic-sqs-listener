@@ -1,16 +1,18 @@
 package com.jashmore.sqs.spring.placeholder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-
 class SpringPlaceholderResolverTest {
+
     MockEnvironment environment;
 
     SpringPlaceholderResolver resolver;
+
     @BeforeEach
     void setUp() {
         environment = new MockEnvironment();

@@ -3,9 +3,8 @@ package com.jashmore.sqs.annotations.core.fifo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
-import java.time.Duration;
-
 import com.jashmore.sqs.placeholder.StaticPlaceholderResolver;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

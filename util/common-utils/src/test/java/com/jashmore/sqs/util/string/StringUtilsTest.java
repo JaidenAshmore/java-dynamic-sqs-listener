@@ -43,6 +43,7 @@ class StringUtilsTest {
 
     @Nested
     class HasText {
+
         @Test
         void willReturnFalseWhenNull() {
             assertThat(StringUtils.hasText(null)).isFalse();

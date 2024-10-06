@@ -4,11 +4,10 @@ import com.jashmore.documentation.annotations.Max;
 import com.jashmore.documentation.annotations.Nullable;
 import com.jashmore.documentation.annotations.Positive;
 import com.jashmore.documentation.annotations.PositiveOrZero;
-import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.aws.AwsConstants;
 import com.jashmore.sqs.container.batching.BatchingMessageListenerContainerProperties;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.util.string.StringUtils;
-
 import java.time.Duration;
 import java.util.function.Supplier;
 
@@ -153,7 +152,8 @@ public class QueueListenerParser {
         if (!StringUtils.hasText(annotation.batchingPeriodInMsString())) {
             batchingPeriod = Duration.ofMillis(annotation.batchingPeriodInMs());
         } else {
-            batchingPeriod = Duration.ofMillis(Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.batchingPeriodInMsString())));
+            batchingPeriod =
+                Duration.ofMillis(Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.batchingPeriodInMsString())));
         }
         return () -> batchingPeriod;
     }
@@ -192,7 +192,9 @@ public class QueueListenerParser {
             }
         } else {
             messageVisibilityTimeout =
-                Duration.ofSeconds(Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString())));
+                Duration.ofSeconds(
+                    Integer.parseInt(placeholderResolver.resolvePlaceholders(annotation.messageVisibilityTimeoutInSecondsString()))
+                );
         }
 
         return () -> messageVisibilityTimeout;

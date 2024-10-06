@@ -1,8 +1,7 @@
 package com.jashmore.sqs.client;
 
-import java.util.concurrent.ExecutionException;
-
 import com.jashmore.sqs.placeholder.PlaceholderResolver;
+import java.util.concurrent.ExecutionException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 /**

@@ -5,7 +5,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecorator;
 import com.jashmore.sqs.decorator.AutoVisibilityExtenderMessageProcessingDecoratorProperties;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 

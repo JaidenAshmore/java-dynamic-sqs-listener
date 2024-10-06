@@ -1,9 +1,9 @@
 package com.jashmore.sqs.examples.schemaregistry;
 
 import com.example.Sensor;
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.extensions.registry.SpringCloudSchemaRegistryPayload;
 import com.jashmore.sqs.extensions.registry.avro.EnableSchemaRegistrySqsExtension;
-import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;

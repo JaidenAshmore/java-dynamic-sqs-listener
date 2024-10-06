@@ -8,13 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.argument.ArgumentResolverService;
-import com.jashmore.sqs.container.MessageListenerContainer;
-import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainer;
+import com.jashmore.sqs.client.QueueResolver;
 import com.jashmore.sqs.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.container.MessageListenerContainerInitialisationException;
+import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainer;
 import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
-import com.jashmore.sqs.client.QueueResolver;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +72,10 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
         // act
-        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(bean, method);
+        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(
+            bean,
+            method
+        );
 
         // assert
         assertThat(messageListenerContainer).containsInstanceOf(PrefetchingMessageListenerContainer.class);
@@ -86,11 +89,15 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethod");
 
         // act
-        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(bean, method);
+        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(
+            bean,
+            method
+        );
 
         // assert
         assertThat(messageListenerContainer).isNotEmpty();
-        assertThat(messageListenerContainer.get().getIdentifier()).isEqualTo("prefetching-message-listener-container-factory-test-my-method");
+        assertThat(messageListenerContainer.get().getIdentifier())
+            .isEqualTo("prefetching-message-listener-container-factory-test-my-method");
     }
 
     @Test
@@ -101,7 +108,10 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("myMethodWithIdentifier");
 
         // act
-        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(bean, method);
+        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(
+            bean,
+            method
+        );
 
         // assert
         assertThat(messageListenerContainer).isNotEmpty();
@@ -183,7 +193,10 @@ class PrefetchingMessageListenerContainerFactoryTest {
         final Method method = PrefetchingMessageListenerContainerFactoryTest.class.getMethod("methodWithFieldsUsingEnvironmentProperties");
 
         // act
-        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(bean, method);
+        final Optional<MessageListenerContainer> messageListenerContainer = prefetchingMessageListenerContainerFactory.buildContainer(
+            bean,
+            method
+        );
 
         // assert
         assertThat(messageListenerContainer).isNotEmpty();

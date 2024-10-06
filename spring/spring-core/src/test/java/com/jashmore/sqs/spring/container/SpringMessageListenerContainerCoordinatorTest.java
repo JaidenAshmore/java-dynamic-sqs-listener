@@ -14,11 +14,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Optional;
-
-import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

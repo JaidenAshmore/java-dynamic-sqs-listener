@@ -2,6 +2,7 @@ package it.com.jashmore.sqs.extensions.registry.avro;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.extensions.registry.InMemorySchemaRegistryClient;
 import com.jashmore.sqs.extensions.registry.SpringCloudSchemaRegistryPayload;
@@ -10,7 +11,6 @@ import com.jashmore.sqs.extensions.registry.avro.EnableSchemaRegistrySqsExtensio
 import com.jashmore.sqs.extensions.registry.model.Author;
 import com.jashmore.sqs.extensions.registry.model.Book;
 import com.jashmore.sqs.registry.AvroSchemaRegistrySqsAsyncClient;
-import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
