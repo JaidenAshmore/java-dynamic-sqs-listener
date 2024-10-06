@@ -2,7 +2,7 @@
 
 [MessageListenerContainer](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainer.java) can be started and stopped while the Spring
 application is executing via the
-[MessageListenerContainerCoordinator](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/container/MessageListenerContainerCoordinator.java).
+[MessageListenerContainerCoordinator](../../../api/src/main/java/com/jashmore/sqs/container/MessageListenerContainerCoordinator.java).
 Each container has a unique identifier and this can be used to indicate which container to start or stop. The core message listeners allow for a custom
 identifier to be supplied, otherwise a default will be generated from the class and method name of the message listener.
 

@@ -1,6 +1,6 @@
 package com.jashmore.sqs.examples;
 
-import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;

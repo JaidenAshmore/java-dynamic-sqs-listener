@@ -2,9 +2,9 @@ package com.jashmore.sqs.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.jashmore.sqs.client.QueueResolver;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
-import com.jashmore.sqs.spring.queue.QueueResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

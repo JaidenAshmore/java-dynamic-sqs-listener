@@ -11,7 +11,7 @@ For more information about each component this is auto configuring for you, take
 
 1.  Add the [AWS XRay Spring Boot Extension](../../../extensions/aws-xray-extension/spring-boot) as a dependency. This will auto configure
     a [BasicXrayMessageProcessingDecorator](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/decorator/BasicXrayMessageProcessingDecorator.java)
-    and a [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java) which will wrap
+    and a [SqsAsyncClientProvider](../../../api/src/main/java/com/jashmore/sqs/client/SqsAsyncClientProvider.java) which will wrap
     the `SqsAsyncClient` in a
     [XrayWrappedSqsAsyncClient](../../../extensions/aws-xray-extension/core/src/main/java/com/jashmore/sqs/extensions/xray/client/XrayWrappedSqsAsyncClient.java).
 
@@ -117,7 +117,7 @@ public class MyConfiguration {
 ### Communicating with Multiple AWS Accounts
 
 As seen in [Spring - How to connect to multiple AWS Accounts](spring-how-to-connect-to-multiple-aws-accounts.md), you can create a custom
-[SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java) to communicate with multiple
+[SqsAsyncClientProvider](../../../api/src/main/java/com/jashmore/sqs/client/SqsAsyncClientProvider.java) to communicate with multiple
 SQS queues across multiple accounts. If you are have included
 the [AWS Xray SDK V2 Instrumentor](https://github.com/aws/aws-xray-sdk-java/tree/master/aws-xray-recorder-sdk-aws-sdk-v2-instrumentor) dependency you will
 need to make sure to wrap each `SqsAsyncClient` in an

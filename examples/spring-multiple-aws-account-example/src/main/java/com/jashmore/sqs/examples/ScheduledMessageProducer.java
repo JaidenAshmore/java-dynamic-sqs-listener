@@ -1,6 +1,6 @@
 package com.jashmore.sqs.examples;
 
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;

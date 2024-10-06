@@ -1,8 +1,8 @@
 package com.jashmore.sqs.examples;
 
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClientImpl;
 import com.jashmore.sqs.util.SqsQueuesConfig;
 import lombok.extern.slf4j.Slf4j;

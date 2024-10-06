@@ -2,11 +2,11 @@ package com.jashmore.sqs.examples;
 
 import static com.jashmore.sqs.examples.Application.QUEUE_NAME;
 
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
+import com.jashmore.sqs.annotations.decorator.visibilityextender.AutoVisibilityExtender;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.argument.messageid.MessageId;
 import com.jashmore.sqs.processor.argument.Acknowledge;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.spring.decorator.visibilityextender.AutoVisibilityExtender;
 import java.time.Duration;
 import java.util.Random;
 import java.util.Set;

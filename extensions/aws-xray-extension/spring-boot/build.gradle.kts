@@ -9,6 +9,7 @@ dependencies {
     api(project(":aws-xray-extension-core"))
     implementation("org.springframework:spring-context")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
+    implementation(project(":java-dynamic-sqs-listener-core"))
     implementation(project(":java-dynamic-sqs-listener-spring-core"))
 
     testImplementation("org.checkerframework:checker-qual:3.7.1")

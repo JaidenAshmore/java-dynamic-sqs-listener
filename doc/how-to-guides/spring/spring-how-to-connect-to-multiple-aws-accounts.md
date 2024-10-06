@@ -32,7 +32,7 @@ connect to two locally running ElasticMQ servers.
     ```
 
 1.  You will need to add to your `@Configuration` a bean of type
-    [SqsAsyncClientProvider](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/client/SqsAsyncClientProvider.java)
+    [SqsAsyncClientProvider](../../../api/src/main/java/com/jashmore/sqs/client/SqsAsyncClientProvider.java)
     which will provide all of the `SqsAsyncClient`s for the queues above.
 
     ```java

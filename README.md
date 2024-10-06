@@ -32,7 +32,7 @@ The following provides some examples using the library with different languages 
     ```
 
 1.  In one of your beans, attach a
-    [@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+    [@QueueListener](./annotations/src/main/java/com/jashmore/sqs/annotations/core/basic/QueueListener.java)
     annotation to a method indicating that it should process messages from a queue.
 
     ```java
@@ -572,7 +572,7 @@ lambdaProcessor {
 The [Spring Cloud AWS Messaging](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-messaging) `@SqsListener` works by requesting
 a set of messages from the SQS and when they are done it will request some more. There is one disadvantage with this approach in that if 9/10 of the messages
 finish in 10 milliseconds but one takes 10 seconds no other messages will be picked up until that last message is complete. The
-[@QueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java)
+[@QueueListener](./annotations/src/main/java/com/jashmore/sqs/annotations/core/basic/QueueListener.java)
 provides the same basic functionality, but it also provides a timeout where it will eventually request for more messages when there are threads that are
 ready for another message.
 
@@ -619,7 +619,7 @@ not prefetch anymore._
 
 #### Spring Boot
 
-The [@PrefetchingQueueListener](./spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+The [@PrefetchingQueueListener](./annotations/src/main/java/com/jashmore/sqs/annotations/core/prefetch/PrefetchingQueueListener.java)
 annotation can be used to prefetch messages in a background thread while processing the existing messages. The usage is something like this:
 
 ```java

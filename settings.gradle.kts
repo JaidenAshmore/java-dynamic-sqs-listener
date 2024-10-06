@@ -22,8 +22,10 @@ include(
     ":java-dynamic-sqs-listener-api",
     ":java-dynamic-sqs-listener-core",
 
+    // Annotations
+    ":java-dynamic-sqs-listener-annotations",
+
     // Spring
-    ":java-dynamic-sqs-listener-spring-api",
     ":java-dynamic-sqs-listener-spring-core",
     ":java-dynamic-sqs-listener-spring-starter",
 
@@ -75,8 +77,10 @@ include(
 project(":java-dynamic-sqs-listener-api").projectDir = file("api")
 project(":java-dynamic-sqs-listener-core").projectDir = file("core")
 
+// Annotations
+project(":java-dynamic-sqs-listener-annotations").projectDir = file("annotations")
+
 // Spring
-project(":java-dynamic-sqs-listener-spring-api").projectDir = file("spring/spring-api")
 project(":java-dynamic-sqs-listener-spring-core").projectDir = file("spring/spring-core")
 project(":java-dynamic-sqs-listener-spring-starter").projectDir = file("spring/spring-starter")
 

@@ -1,7 +1,7 @@
 package com.jashmore.sqs.examples;
 
+import com.jashmore.sqs.annotations.core.fifo.FifoQueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.spring.container.fifo.FifoQueueListener;
 import com.jashmore.sqs.util.ExpectedTestException;
 import java.util.Map;
 import java.util.Random;
