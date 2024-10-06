@@ -15,7 +15,7 @@ import com.jashmore.sqs.QueueProperties;
 import com.jashmore.sqs.decorator.MessageProcessingContext;
 import com.jashmore.sqs.extensions.xray.client.XrayWrappedSqsAsyncClient;
 import com.jashmore.sqs.extensions.xray.spring.SqsListenerXrayConfiguration;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import java.util.HashMap;
 import org.junit.jupiter.api.AfterEach;

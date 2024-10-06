@@ -21,7 +21,7 @@ public class MyConfiguration {
 
 It may not be desirable to have a [MessageProcessingDecorator](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecorator.java) attached
 to every listener and instead you want to apply it to only a subset of listeners. This can be achieved implementing a
-[MessageProcessingDecoratorFactory](../../../spring/spring-api/src/main/java/com/jashmore/sqs/spring/decorator/MessageProcessingDecoratorFactory.java) which
+[MessageProcessingDecoratorFactory](../../../api/src/main/java/com/jashmore/sqs/decorator/MessageProcessingDecoratorFactory.java) which
 will have the opportunity to wrap a message listener, e.g. by looking for an annotation.
 
 An example decorator which will wrap any message listener that has the `MyAnnotation` annotation.

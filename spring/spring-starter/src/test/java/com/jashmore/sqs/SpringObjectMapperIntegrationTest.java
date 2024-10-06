@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import java.util.HashMap;
 import java.util.Map;

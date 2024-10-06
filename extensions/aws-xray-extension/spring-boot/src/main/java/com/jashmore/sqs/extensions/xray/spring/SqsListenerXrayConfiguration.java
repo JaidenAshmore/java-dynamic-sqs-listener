@@ -2,6 +2,7 @@ package com.jashmore.sqs.extensions.xray.spring;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
+import com.jashmore.sqs.client.DefaultSqsAsyncClientProvider;
 import com.jashmore.sqs.extensions.xray.client.ClientSegmentMutator;
 import com.jashmore.sqs.extensions.xray.client.ClientSegmentNamingStrategy;
 import com.jashmore.sqs.extensions.xray.client.StaticClientSegmentNamingStrategy;
@@ -9,8 +10,7 @@ import com.jashmore.sqs.extensions.xray.client.UnsampledClientSegmentMutator;
 import com.jashmore.sqs.extensions.xray.client.XrayWrappedSqsAsyncClient;
 import com.jashmore.sqs.extensions.xray.decorator.BasicXrayMessageProcessingDecorator;
 import com.jashmore.sqs.extensions.xray.decorator.StaticDecoratorSegmentNamingStrategy;
-import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

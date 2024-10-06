@@ -1,8 +1,8 @@
 package com.jashmore.sqs.examples;
 
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
-import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.client.DefaultSqsAsyncClientProvider;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;

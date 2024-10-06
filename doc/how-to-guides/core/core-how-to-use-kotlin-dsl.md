@@ -70,7 +70,7 @@ val container = coreMessageListener("identifier", sqsAsyncClient, queueUrl) {
 ## Using the batchingMessageListener
 
 This is equivalent to
-the [@QueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java) annotation
+the [@QueueListener](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/basic/QueueListener.java) annotation
 used in a Spring Boot application which will set up a container that will request for messages in batches.
 
 ```kotlin
@@ -90,7 +90,7 @@ val container = batchingMessageListener("identifier", sqsAsyncClient, "url") {
 ## Using the prefetchingMessageListener
 
 This is equivalent to
-the [@PrefetchingQueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java) annotation
+the [@PrefetchingQueueListener](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/prefetch/PrefetchingQueueListener.java) annotation
 used in a Spring Boot application which will set up a container that will prefetch messages for processing.
 
 ```kotlin

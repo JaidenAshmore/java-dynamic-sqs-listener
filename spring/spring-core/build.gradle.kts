@@ -6,8 +6,8 @@ val springBootVersion: String by project
 dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
 
-    api(project(":java-dynamic-sqs-listener-spring-api"))
     api(project(":java-dynamic-sqs-listener-core"))
+    api(project(":java-dynamic-sqs-listener-annotations"))
     implementation(project(":common-utils"))
     implementation(project(":annotation-utils"))
     compileOnly(project(":documentation-annotations"))

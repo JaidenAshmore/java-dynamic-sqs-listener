@@ -1,6 +1,14 @@
 package com.jashmore.sqs.spring.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jashmore.sqs.annotations.core.basic.BasicAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.basic.QueueListenerParser;
+import com.jashmore.sqs.annotations.core.fifo.FifoAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.fifo.FifoQueueListenerParser;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListenerParser;
+import com.jashmore.sqs.annotations.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -12,27 +20,22 @@ import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
 import com.jashmore.sqs.container.MessageListenerContainer;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
-import com.jashmore.sqs.spring.client.DefaultSqsAsyncClientProvider;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
-import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinatorProperties;
-import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
-import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.StaticDefaultMessageListenerContainerCoordinatorProperties;
-import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.basic.QueueListenerParser;
-import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.fifo.FifoQueueListenerParser;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerParser;
-import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
-import com.jashmore.sqs.spring.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
+import com.jashmore.sqs.client.DefaultSqsAsyncClientProvider;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.spring.container.SpringMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.SpringMessageListenerContainerCoordinatorProperties;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.spring.container.StaticSpringMessageListenerContainerCoordinatorProperties;
+import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
-import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
-import com.jashmore.sqs.spring.queue.DefaultQueueResolver;
-import com.jashmore.sqs.spring.queue.QueueResolver;
+import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
+import com.jashmore.sqs.client.DefaultPlaceholderQueueResolver;
+import com.jashmore.sqs.client.QueueResolver;
 import java.util.Collections;
 import java.util.List;
+
+import com.jashmore.sqs.spring.placeholder.SpringPlaceholderResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -85,7 +88,7 @@ public class QueueListenerConfiguration {
     }
 
     /**
-     * Contains all of the configuration that needs to supplied if there is no {@link ArgumentResolverService} class defined.
+     * Contains all the configuration that needs to supplied if there is no {@link ArgumentResolverService} class defined.
      *
      * <p>Note that if a custom {@link ArgumentResolverService} is defined by the user, none of the {@link ArgumentResolver}s will be included in the context
      * of the application. This allows the ability of the consumer to limit the amount of code needed to resolve arguments to only the certain criteria that
@@ -165,20 +168,26 @@ public class QueueListenerConfiguration {
         }
     }
 
+    @Bean
+    @ConditionalOnMissingBean(PlaceholderResolver.class)
+    public PlaceholderResolver placeholderResolver(final Environment environment) {
+        return new SpringPlaceholderResolver(environment);
+    }
+
     /**
-     * The default provided {@link QueueResolver} that can be used if it not overridden by a user defined bean.
+     * The default provided {@link QueueResolver} that can be used if it is not overridden by a user defined bean.
      *
-     * @param environment the environment for this spring application
+     * @param placeholderResolver the environment for this spring application
      * @return the default service used for queue resolution
      */
     @Bean
     @ConditionalOnMissingBean(QueueResolver.class)
-    public QueueResolver queueResolver(final Environment environment) {
-        return new DefaultQueueResolver(environment);
+    public QueueResolver queueResolver(final PlaceholderResolver placeholderResolver) {
+        return new DefaultPlaceholderQueueResolver(placeholderResolver);
     }
 
     /**
-     * Configuration used in regards to searching the application code for methods that need to be wrapped in {@link MessageListenerContainer}s.
+     * Configuration used with regard to searching the application code for methods that need to be wrapped in {@link MessageListenerContainer}s.
      *
      * <p>If the user has defined their own {@link MessageListenerContainerCoordinator} this default configuration will not be used. This allows the
      * consumer to configure the wrapping of their bean methods to how they feel is optimal. It can be also done if there is a bug in the existing default
@@ -189,14 +198,14 @@ public class QueueListenerConfiguration {
     public static class QueueWrappingConfiguration {
 
         /**
-         * The configuration properties for the {@link DefaultMessageListenerContainerCoordinator}.
+         * The configuration properties for the {@link SpringMessageListenerContainerCoordinator}.
          *
          * @return the default configuration properties for the coordinator
          */
         @Bean
-        @ConditionalOnMissingBean(DefaultMessageListenerContainerCoordinatorProperties.class)
-        public DefaultMessageListenerContainerCoordinatorProperties defaultMessageListenerContainerCoordinatorProperties() {
-            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(true).build();
+        @ConditionalOnMissingBean(SpringMessageListenerContainerCoordinatorProperties.class)
+        public SpringMessageListenerContainerCoordinatorProperties defaultMessageListenerContainerCoordinatorProperties() {
+            return StaticSpringMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(true).build();
         }
 
         /**
@@ -211,10 +220,10 @@ public class QueueListenerConfiguration {
          */
         @Bean
         public MessageListenerContainerCoordinator messageListenerContainerCoordinator(
-            final DefaultMessageListenerContainerCoordinatorProperties properties,
+            final SpringMessageListenerContainerCoordinatorProperties properties,
             final List<MessageListenerContainerFactory> messageListenerContainerFactories
         ) {
-            return new DefaultMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
+            return new SpringMessageListenerContainerCoordinator(properties, messageListenerContainerFactories);
         }
 
         /**
@@ -235,25 +244,25 @@ public class QueueListenerConfiguration {
 
             @Bean
             public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory(
-                final Environment environment
+                final PlaceholderResolver placeholderResolver
             ) {
-                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(environment);
+                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(placeholderResolver);
             }
         }
 
         /**
-         * Contains all of the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
+         * Contains all the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
          *
          * <p>The consumer can provide any other {@link MessageListenerContainerFactory} beans in their context and these will be included in the automatic
-         * wrapping of the methods by the {@link #messageListenerContainerCoordinator(DefaultMessageListenerContainerCoordinatorProperties, List)} bean.
+         * wrapping of the methods by the {@link #messageListenerContainerCoordinator(SpringMessageListenerContainerCoordinatorProperties, List)} bean.
          */
         @Configuration
         public static class MessageListenerContainerFactoryConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(QueueListenerParser.class)
-            public QueueListenerParser queueListenerParser(final Environment environment) {
-                return new QueueListenerParser(environment);
+            public QueueListenerParser queueListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new QueueListenerParser(placeholderResolver);
             }
 
             @Bean
@@ -264,7 +273,7 @@ public class QueueListenerConfiguration {
                 final QueueListenerParser queueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new BasicMessageListenerContainerFactory(
+                return new BasicAnnotationMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
@@ -275,8 +284,8 @@ public class QueueListenerConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(PrefetchingQueueListenerParser.class)
-            public PrefetchingQueueListenerParser prefetchingQueueListenerParser(final Environment environment) {
-                return new PrefetchingQueueListenerParser(environment);
+            public PrefetchingQueueListenerParser prefetchingQueueListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new PrefetchingQueueListenerParser(placeholderResolver);
             }
 
             @Bean
@@ -287,7 +296,7 @@ public class QueueListenerConfiguration {
                 final PrefetchingQueueListenerParser prefetchingQueueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new PrefetchingMessageListenerContainerFactory(
+                return new PrefetchingAnnotationMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,
@@ -298,8 +307,8 @@ public class QueueListenerConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(FifoQueueListenerParser.class)
-            public FifoQueueListenerParser fifoMessageListenerParser(final Environment environment) {
-                return new FifoQueueListenerParser(environment);
+            public FifoQueueListenerParser fifoMessageListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new FifoQueueListenerParser(placeholderResolver);
             }
 
             @Bean
@@ -310,7 +319,7 @@ public class QueueListenerConfiguration {
                 final FifoQueueListenerParser fifoQueueListenerParser,
                 final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new FifoMessageListenerContainerFactory(
+                return new FifoAnnotationMessageListenerContainerFactory(
                     argumentResolverService,
                     sqsAsyncClientProvider,
                     queueResolver,

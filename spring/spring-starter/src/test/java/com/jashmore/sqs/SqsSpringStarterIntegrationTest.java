@@ -2,10 +2,10 @@ package com.jashmore.sqs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;

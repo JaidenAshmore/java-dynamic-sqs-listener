@@ -1,6 +1,6 @@
 package com.jashmore.sqs.examples;
 
-import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

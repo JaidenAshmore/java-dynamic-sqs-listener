@@ -1,5 +1,6 @@
 package com.jashmore.sqs.util.string;
 
+import com.jashmore.documentation.annotations.Nullable;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -58,5 +59,15 @@ public class StringUtils {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Return whether the text is null or empty.
+     *
+     * @param text to check
+     * @return whether it has content
+     */
+    public boolean hasText(@Nullable final String text) {
+        return text != null && !text.isEmpty();
     }
 }

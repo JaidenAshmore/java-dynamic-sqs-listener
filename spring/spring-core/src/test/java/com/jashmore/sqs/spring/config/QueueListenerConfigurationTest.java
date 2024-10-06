@@ -9,6 +9,13 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jashmore.sqs.QueueProperties;
+import com.jashmore.sqs.annotations.core.basic.BasicAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.fifo.FifoAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.fifo.FifoQueueListener;
+import com.jashmore.sqs.annotations.core.fifo.FifoQueueListenerParser;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListener;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListenerParser;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -22,29 +29,24 @@ import com.jashmore.sqs.container.fifo.FifoMessageListenerContainerProperties;
 import com.jashmore.sqs.container.prefetching.PrefetchingMessageListenerContainerProperties;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
 import com.jashmore.sqs.processor.MessageProcessor;
-import com.jashmore.sqs.spring.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinator;
-import com.jashmore.sqs.spring.container.DefaultMessageListenerContainerCoordinatorProperties;
-import com.jashmore.sqs.spring.container.MessageListenerContainerCoordinator;
-import com.jashmore.sqs.spring.container.MessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.basic.BasicMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
-import com.jashmore.sqs.spring.container.basic.QueueListenerParser;
-import com.jashmore.sqs.spring.container.fifo.FifoMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.fifo.FifoQueueListener;
-import com.jashmore.sqs.spring.container.fifo.FifoQueueListenerParser;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingMessageListenerContainerFactory;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListener;
-import com.jashmore.sqs.spring.container.prefetch.PrefetchingQueueListenerParser;
-import com.jashmore.sqs.spring.decorator.MessageProcessingDecoratorFactory;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.spring.container.SpringMessageListenerContainerCoordinator;
+import com.jashmore.sqs.spring.container.SpringMessageListenerContainerCoordinatorProperties;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
+import com.jashmore.sqs.annotations.core.basic.QueueListenerParser;
+import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.spring.jackson.SqsListenerObjectMapperSupplier;
-import com.jashmore.sqs.spring.processor.DecoratingMessageProcessorFactory;
+import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
+import com.jashmore.sqs.spring.placeholder.SpringPlaceholderResolver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -343,7 +345,7 @@ class QueueListenerConfigurationTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(MessageListenerContainerCoordinator.class);
                     assertThat(context.getBean(MessageListenerContainerCoordinator.class))
-                        .isInstanceOf(DefaultMessageListenerContainerCoordinator.class);
+                        .isInstanceOf(SpringMessageListenerContainerCoordinator.class);
                 });
         }
 
@@ -352,8 +354,8 @@ class QueueListenerConfigurationTest {
             contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
                 .run(context -> {
-                    final DefaultMessageListenerContainerCoordinatorProperties properties = context.getBean(
-                        DefaultMessageListenerContainerCoordinatorProperties.class
+                    final SpringMessageListenerContainerCoordinatorProperties properties = context.getBean(
+                        SpringMessageListenerContainerCoordinatorProperties.class
                     );
                     assertThat(properties.isAutoStartContainersEnabled()).isTrue();
                 });
@@ -361,19 +363,19 @@ class QueueListenerConfigurationTest {
 
         @Test
         void customDefaultCoordinatorPropertiesWillOverrideDefault() {
-            final DefaultMessageListenerContainerCoordinatorProperties customProperties = mock(
-                DefaultMessageListenerContainerCoordinatorProperties.class
+            final SpringMessageListenerContainerCoordinatorProperties customProperties = mock(
+                SpringMessageListenerContainerCoordinatorProperties.class
             );
             when(customProperties.isAutoStartContainersEnabled()).thenReturn(false);
             contextRunner
                 .withUserConfiguration(UserConfigurationWithSqsClient.class)
-                .withBean(DefaultMessageListenerContainerCoordinatorProperties.class, () -> customProperties)
+                .withBean(SpringMessageListenerContainerCoordinatorProperties.class, () -> customProperties)
                 .run(context -> {
-                    final DefaultMessageListenerContainerCoordinatorProperties properties = context.getBean(
-                        DefaultMessageListenerContainerCoordinatorProperties.class
+                    final SpringMessageListenerContainerCoordinatorProperties properties = context.getBean(
+                        SpringMessageListenerContainerCoordinatorProperties.class
                     );
                     assertThat(properties).isSameAs(customProperties);
-                    assertThat(context.getBean(DefaultMessageListenerContainerCoordinator.class).isAutoStartup()).isFalse();
+                    assertThat(context.getBean(SpringMessageListenerContainerCoordinator.class).isAutoStartup()).isFalse();
                 });
         }
 
@@ -391,9 +393,9 @@ class QueueListenerConfigurationTest {
 
                     assertThat(MessageListenerContainerFactoryClasses)
                         .containsExactlyInAnyOrder(
-                            BasicMessageListenerContainerFactory.class,
-                            PrefetchingMessageListenerContainerFactory.class,
-                            FifoMessageListenerContainerFactory.class
+                            BasicAnnotationMessageListenerContainerFactory.class,
+                            PrefetchingAnnotationMessageListenerContainerFactory.class,
+                            FifoAnnotationMessageListenerContainerFactory.class
                         );
                 });
         }
@@ -406,11 +408,11 @@ class QueueListenerConfigurationTest {
                     final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context
                         .getBeansOfType(MessageListenerContainerFactory.class)
                         .values();
-                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(
+                    final SpringMessageListenerContainerCoordinator service = (SpringMessageListenerContainerCoordinator) context.getBean(
                         MessageListenerContainerCoordinator.class
                     );
                     final Field argumentResolversField =
-                        DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        SpringMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                     argumentResolversField.setAccessible(true);
                     assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
                         .containsExactlyElementsOf(messageListenerContainerFactories);
@@ -425,11 +427,11 @@ class QueueListenerConfigurationTest {
                     final Collection<MessageListenerContainerFactory> messageListenerContainerFactories = context
                         .getBeansOfType(MessageListenerContainerFactory.class)
                         .values();
-                    final DefaultMessageListenerContainerCoordinator service = (DefaultMessageListenerContainerCoordinator) context.getBean(
+                    final SpringMessageListenerContainerCoordinator service = (SpringMessageListenerContainerCoordinator) context.getBean(
                         MessageListenerContainerCoordinator.class
                     );
                     final Field argumentResolversField =
-                        DefaultMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
+                        SpringMessageListenerContainerCoordinator.class.getDeclaredField("messageListenerContainerFactories");
                     argumentResolversField.setAccessible(true);
                     assertThat(((List<MessageListenerContainerFactory>) argumentResolversField.get(service)))
                         .containsExactlyElementsOf(messageListenerContainerFactories);
@@ -626,7 +628,7 @@ class QueueListenerConfigurationTest {
     public static class CustomPrefetchingQueueListenerParser extends PrefetchingQueueListenerParser {
 
         public CustomPrefetchingQueueListenerParser(Environment environment) {
-            super(environment);
+            super(new SpringPlaceholderResolver(environment));
         }
 
         @Override
@@ -638,7 +640,7 @@ class QueueListenerConfigurationTest {
     public static class CustomFifoQueueListenerParser extends FifoQueueListenerParser {
 
         public CustomFifoQueueListenerParser(Environment environment) {
-            super(environment);
+            super(new SpringPlaceholderResolver(environment));
         }
 
         @Override
@@ -650,7 +652,7 @@ class QueueListenerConfigurationTest {
     public static class CustomQueueListenerParser extends QueueListenerParser {
 
         public CustomQueueListenerParser(Environment environment) {
-            super(environment);
+            super(new SpringPlaceholderResolver(environment));
         }
 
         @Override

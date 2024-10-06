@@ -2,9 +2,9 @@
 
 Java annotations and Spring configuration properties can't provide dynamic properties, and therefore to provide dynamic runtime configuration in Spring apps,
 the annotation parser can be overridden. Some annotation parsers
-are [QueueListenerParser](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/basic/QueueListener.java),
-[PrefetchingQueueListenerParser](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListenerParser.java),
-and [FifoQueueListenerParser](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/fifo/FifoQueueListenerParser.java).
+are [QueueListenerParser](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/basic/QueueListenerParser.java),
+[PrefetchingQueueListenerParser](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/prefetch/PrefetchingQueueListenerParser.java),
+and [FifoQueueListenerParser](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/fifo/FifoQueueListenerParser.java).
 
 ## Steps
 
@@ -39,5 +39,5 @@ and [FifoQueueListenerParser](../../../spring/spring-core/src/main/java/com/jash
 
     ```
 
-1.  Now all message listeners with the [PrefetchingQueueListener](../../../spring/spring-core/src/main/java/com/jashmore/sqs/spring/container/prefetch/PrefetchingQueueListener.java)
+1.  Now all message listeners with the [PrefetchingQueueListener](../../../annotations/src/main/java/com/jashmore/sqs/annotations/core/prefetch/PrefetchingQueueListener.java)
     annotation will use a random concurrency rate.

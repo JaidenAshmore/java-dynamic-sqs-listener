@@ -2,7 +2,7 @@ package com.jashmore.sqs.examples.sleuth;
 
 import brave.ScopedSpan;
 import brave.Tracing;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;

@@ -40,4 +40,22 @@ class StringUtilsTest {
             assertThat(StringUtils.toLowerHyphenCase("myMethodName")).isEqualTo("my-method-name");
         }
     }
+
+    @Nested
+    class HasText {
+        @Test
+        void willReturnFalseWhenNull() {
+            assertThat(StringUtils.hasText(null)).isFalse();
+        }
+
+        @Test
+        void willReturnFalseWhenEmptyString() {
+            assertThat(StringUtils.hasText("")).isFalse();
+        }
+
+        @Test
+        void willReturnTrueWhenStringHasContent() {
+            assertThat(StringUtils.hasText("Hello World")).isTrue();
+        }
+    }
 }

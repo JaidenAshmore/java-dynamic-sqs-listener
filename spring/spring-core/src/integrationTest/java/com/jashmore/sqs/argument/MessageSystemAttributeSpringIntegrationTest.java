@@ -8,7 +8,7 @@ import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.spring.config.QueueListenerConfiguration;
-import com.jashmore.sqs.spring.container.basic.QueueListener;
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
 import java.time.OffsetDateTime;
 import java.util.Collections;
