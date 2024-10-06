@@ -24,8 +24,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * {@link MessageListenerContainerFactory} that can be used to build against an annotated method
- * @param <A>
+ * {@link MessageListenerContainerFactory} that can be used to build against an annotated method.
+ *
+ * @param <A> annotation that is applied on the method
  */
 public class AnnotationMessageListenerContainerFactory<A extends Annotation> implements MessageListenerContainerFactory {
     private final Class<A> annotationClass;

@@ -3,6 +3,9 @@ package com.jashmore.sqs.spring.placeholder;
 import com.jashmore.sqs.placeholder.PlaceholderResolver;
 import org.springframework.core.env.Environment;
 
+/**
+ * Implementation that replaces placeholders via the Spring Environment, e.g. application.properties files.
+ */
 public class SpringPlaceholderResolver implements PlaceholderResolver {
 
     private final Environment environment;

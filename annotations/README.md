@@ -1,7 +1,6 @@
 # Java Dynamic SQS Listener Annotations
 
 Wrapper around the core library that allows for setting up using annotations to simplify the usage.
-ore message listener.
 
 ## More Information
 
