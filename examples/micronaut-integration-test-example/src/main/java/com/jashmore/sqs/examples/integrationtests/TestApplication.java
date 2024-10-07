@@ -1,7 +1,7 @@
 package com.jashmore.sqs.examples.integrationtests;
 
+import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
-import com.jashmore.sqs.micronaut.container.basic.QueueListener;
 import io.micronaut.runtime.Micronaut;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;

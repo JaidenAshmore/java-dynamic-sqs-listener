@@ -5,7 +5,11 @@ import com.jashmore.documentation.annotations.Nonnull;
 import com.jashmore.documentation.annotations.ThreadSafe;
 import com.jashmore.documentation.annotations.VisibleForTesting;
 import com.jashmore.sqs.container.MessageListenerContainer;
+import com.jashmore.sqs.container.MessageListenerContainerCoordinator;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
+import com.jashmore.sqs.util.annotation.AnnotationUtils;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.event.StartupEvent;
@@ -30,11 +34,11 @@ import java.util.function.Supplier;
 @Slf4j
 @ThreadSafe
 @Context
-public class DefaultMessageListenerContainerCoordinator implements MessageListenerContainerCoordinator {
+public class MicronautMessageListenerContainerCoordinator implements MessageListenerContainerCoordinator {
 
-    private final DefaultMessageListenerContainerCoordinatorProperties properties;
+    private final MicronautMessageListenerContainerCoordinatorProperties properties;
     /**
-     * These {@link MessageListenerContainerFactory}s should be injected by the spring application and therefore to add more wrappers into the
+     * These {@link MessageListenerContainerFactory}s should be injected by the application and therefore to add more wrappers into the
      * system a corresponding bean with this interface must be included in the application.
      */
     private final List<MessageListenerContainerFactory> messageListenerContainerFactories;
@@ -56,8 +60,8 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public DefaultMessageListenerContainerCoordinator(
-        final DefaultMessageListenerContainerCoordinatorProperties properties,
+    public MicronautMessageListenerContainerCoordinator(
+        final MicronautMessageListenerContainerCoordinatorProperties properties,
         final List<MessageListenerContainerFactory> messageListenerContainerFactories,
         final ApplicationContext applicationContext
     ) {
@@ -199,24 +203,32 @@ public class DefaultMessageListenerContainerCoordinator implements MessageListen
         final Map<String, MessageListenerContainer> messageContainers = new HashMap<>();
 
         for (final BeanDefinition<?> beanDef : applicationContext.getAllBeanDefinitions()) {
-            for (final Method method : beanDef.getBeanType().getMethods()) {
-                for (final MessageListenerContainerFactory factory : messageListenerContainerFactories) {
-                    if (factory.canHandleMethod(method)) {
-                        final Object bean = applicationContext.getBean(beanDef);
-                        final MessageListenerContainer messageListenerContainer = factory.buildContainer(bean, method);
-                        if (messageContainers.containsKey(messageListenerContainer.getIdentifier())) {
-                            throw new IllegalStateException(
-                                "Created two MessageListenerContainers with the same identifier: " +
-                                messageListenerContainer.getIdentifier()
-                            );
-                        }
-                        log.debug("Created MessageListenerContainer with id: {}", messageListenerContainer.getIdentifier());
-                        messageContainers.put(messageListenerContainer.getIdentifier(), messageListenerContainer);
+            if (containsBean(applicationContext, beanDef)) {
+                final Object bean = applicationContext.getBean(beanDef);
+                for (final Method method : bean.getClass().getMethods()) {
+                    for (final MessageListenerContainerFactory factory : messageListenerContainerFactories) {
+                        factory.buildContainer(bean, method).ifPresent(container -> {
+                            if (messageContainers.containsKey(container.getIdentifier())) {
+                                throw new IllegalStateException(
+                                        "Created two MessageListenerContainers with the same identifier: " +
+                                                container.getIdentifier()
+                                );
+                            }
+                            log.debug("Created MessageListenerContainer with id: {}", container.getIdentifier());
+                            messageContainers.put(container.getIdentifier(), container);
+                        });
                     }
                 }
             }
         }
 
         return Collections.unmodifiableMap(messageContainers);
+    }
+
+    private static <T> boolean containsBean(
+            ApplicationContext applicationContext,
+            BeanDefinition<T> beanDefinition
+    ) {
+        return applicationContext.containsBean(beanDefinition.getBeanType(), beanDefinition.getDeclaredQualifier());
     }
 }

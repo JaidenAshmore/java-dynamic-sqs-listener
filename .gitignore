@@ -49,3 +49,5 @@ hs_err_pid*
 !.yarn/versions
 
 !gradle-wrapper.jar
+
+.micronaut/

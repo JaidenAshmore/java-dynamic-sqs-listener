@@ -7,7 +7,7 @@ dependencies {
     annotationProcessor(platform("io.micronaut.platform:micronaut-platform:${micronautVersion}"))
 
     api(project(":java-dynamic-sqs-listener-core"))
-    api(project(":java-dynamic-sqs-listener-micronaut-api"))
+    api(project(":java-dynamic-sqs-listener-annotations"))
     annotationProcessor("io.micronaut:micronaut-inject-java")
     implementation(project(":common-utils"))
     implementation(project(":annotation-utils"))

@@ -1,5 +1,6 @@
 package com.jashmore.sqs.micronaut.queue;
 
+import com.jashmore.sqs.client.QueueResolutionException;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import org.junit.jupiter.api.BeforeEach;

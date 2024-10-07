@@ -1,7 +1,8 @@
 package com.jashmore.sqs.micronaut.queue;
 
+import com.jashmore.sqs.client.QueueResolutionException;
+import com.jashmore.sqs.client.QueueResolver;
 import io.micronaut.context.env.Environment;
-import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
@@ -11,7 +12,6 @@ import java.util.concurrent.ExecutionException;
  * Default implementation that uses the {@link Environment} to resolve the placeholders in a string and from that either
  * return the URL if it is a URL or uses the value to try and get the URL from the SQS server.
  */
-@Singleton
 @AllArgsConstructor
 public class DefaultQueueResolver implements QueueResolver {
 

@@ -1,6 +1,13 @@
 package com.jashmore.sqs.micronaut.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jashmore.sqs.annotations.core.basic.BasicAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.basic.QueueListenerParser;
+import com.jashmore.sqs.annotations.core.fifo.FifoAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.fifo.FifoQueueListenerParser;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingAnnotationMessageListenerContainerFactory;
+import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListenerParser;
+import com.jashmore.sqs.annotations.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
 import com.jashmore.sqs.argument.ArgumentResolver;
 import com.jashmore.sqs.argument.ArgumentResolverService;
 import com.jashmore.sqs.argument.DelegatingArgumentResolverService;
@@ -10,24 +17,17 @@ import com.jashmore.sqs.argument.message.MessageArgumentResolver;
 import com.jashmore.sqs.argument.messageid.MessageIdArgumentResolver;
 import com.jashmore.sqs.argument.payload.PayloadArgumentResolver;
 import com.jashmore.sqs.argument.payload.mapper.JacksonPayloadMapper;
+import com.jashmore.sqs.client.DefaultPlaceholderQueueResolver;
+import com.jashmore.sqs.client.DefaultSqsAsyncClientProvider;
+import com.jashmore.sqs.client.QueueResolver;
+import com.jashmore.sqs.client.SqsAsyncClientProvider;
+import com.jashmore.sqs.container.MessageListenerContainerFactory;
 import com.jashmore.sqs.decorator.MessageProcessingDecorator;
-import com.jashmore.sqs.micronaut.client.DefaultSqsAsyncClientProvider;
-import com.jashmore.sqs.micronaut.client.SqsAsyncClientProvider;
-import com.jashmore.sqs.micronaut.container.DefaultMessageListenerContainerCoordinatorProperties;
-import com.jashmore.sqs.micronaut.container.MessageListenerContainerFactory;
-import com.jashmore.sqs.micronaut.container.StaticDefaultMessageListenerContainerCoordinatorProperties;
-import com.jashmore.sqs.micronaut.container.basic.BasicMessageListenerContainerFactory;
-import com.jashmore.sqs.micronaut.container.basic.QueueListenerParser;
-import com.jashmore.sqs.micronaut.container.fifo.FifoMessageListenerContainerFactory;
-import com.jashmore.sqs.micronaut.container.fifo.FifoQueueListenerParser;
-import com.jashmore.sqs.micronaut.container.prefetch.PrefetchingMessageListenerContainerFactory;
-import com.jashmore.sqs.micronaut.container.prefetch.PrefetchingQueueListenerParser;
-import com.jashmore.sqs.micronaut.decorator.MessageProcessingDecoratorFactory;
-import com.jashmore.sqs.micronaut.decorator.visibilityextender.AutoVisibilityExtenderMessageProcessingDecoratorFactory;
+import com.jashmore.sqs.decorator.MessageProcessingDecoratorFactory;
 import com.jashmore.sqs.micronaut.jackson.SqsListenerObjectMapperSupplier;
-import com.jashmore.sqs.micronaut.processor.DecoratingMessageProcessorFactory;
-import com.jashmore.sqs.micronaut.queue.DefaultQueueResolver;
-import com.jashmore.sqs.micronaut.queue.QueueResolver;
+import com.jashmore.sqs.micronaut.placeholder.MicronautPlaceholderResolver;
+import com.jashmore.sqs.placeholder.PlaceholderResolver;
+import com.jashmore.sqs.processor.DecoratingMessageProcessorFactory;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Secondary;
@@ -74,7 +74,8 @@ public class QueueListenerConfiguration {
      * <p>When a user provides their own bean of this class they provide all of the {@link SqsAsyncClient}s that will be used, such as defining their
      * own default {@link SqsAsyncClient} and all other identifier clients, see {@link SqsAsyncClientProvider#getClient(String)}.
      *
-     * <p>The user may define their own {@link SqsAsyncClient} which will be used instead of the one provided by {@link #sqsAsyncClient()} if they only
+     * <p>The user may define their own {@link SqsAsyncClient} which will be used instead of the one provided by
+     * {@link #sqsAsyncClient(AwsRegionProvider)} if they only
      * want to use the default client and don't want to be able to pick one of multiple clients.
      *
      * @param defaultClient the default client
@@ -144,17 +145,23 @@ public class QueueListenerConfiguration {
     }
 
     @Singleton
-    public QueueResolver queueResolver(final Environment environment) {
-        return new DefaultQueueResolver(environment);
+    public PlaceholderResolver placeholderResolver(final Environment environment) {
+        return new MicronautPlaceholderResolver(environment);
+    }
+
+    /**
+     * The default provided {@link QueueResolver} that can be used if it is not overridden by a user defined bean.
+     *
+     * @param placeholderResolver the environment for this spring application
+     * @return the default service used for queue resolution
+     */
+    @Singleton
+    public QueueResolver queueResolver(final PlaceholderResolver placeholderResolver) {
+        return new DefaultPlaceholderQueueResolver(placeholderResolver);
     }
 
     @Factory
     public static class QueueWrappingConfiguration {
-
-        @Singleton
-        public DefaultMessageListenerContainerCoordinatorProperties defaultMessageListenerContainerCoordinatorProperties() {
-            return StaticDefaultMessageListenerContainerCoordinatorProperties.builder().isAutoStartContainersEnabled(true).build();
-        }
 
         @Factory
         public static class MessageProcessingDecoratorFactories {
@@ -169,24 +176,25 @@ public class QueueListenerConfiguration {
 
             @Singleton
             public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory(
-                    final Environment environment
+                    final PlaceholderResolver placeholderResolver
             ) {
-                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(environment);
+                return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(placeholderResolver);
             }
         }
 
         /**
          * Contains all of the core {@link MessageListenerContainerFactory} implementations that should be enabled by default.
          *
-         * <p>The consumer can provide any other {@link MessageListenerContainerFactory} beans in their context and these will be included in the automatic
-         * wrapping of the methods by the {@link #messageListenerContainerCoordinator(DefaultMessageListenerContainerCoordinatorProperties, List)} bean.
+         * <p>The consumer can provide any other {@link MessageListenerContainerFactory} beans in their context and
+         * these will be included in the automatic wrapping of the methods by the
+         * {@link com.jashmore.sqs.container.MessageListenerContainerCoordinator} bean.
          */
         @Factory
         public static class MessageListenerContainerFactoryConfiguration {
 
             @Singleton
-            public QueueListenerParser queueListenerParser(final Environment environment) {
-                return new QueueListenerParser(environment);
+            public QueueListenerParser queueListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new QueueListenerParser(placeholderResolver);
             }
 
             @Singleton
@@ -197,7 +205,7 @@ public class QueueListenerConfiguration {
                     final QueueListenerParser queueListenerParser,
                     final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new BasicMessageListenerContainerFactory(
+                return new BasicAnnotationMessageListenerContainerFactory(
                         argumentResolverService,
                         sqsAsyncClientProvider,
                         queueResolver,
@@ -207,8 +215,8 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
-            public PrefetchingQueueListenerParser prefetchingQueueListenerParser(final Environment environment) {
-                return new PrefetchingQueueListenerParser(environment);
+            public PrefetchingQueueListenerParser prefetchingQueueListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new PrefetchingQueueListenerParser(placeholderResolver);
             }
 
             @Singleton
@@ -219,7 +227,7 @@ public class QueueListenerConfiguration {
                     final PrefetchingQueueListenerParser prefetchingQueueListenerParser,
                     final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new PrefetchingMessageListenerContainerFactory(
+                return new PrefetchingAnnotationMessageListenerContainerFactory(
                         argumentResolverService,
                         sqsAsyncClientProvider,
                         queueResolver,
@@ -229,8 +237,8 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
-            public FifoQueueListenerParser fifoMessageListenerParser(final Environment environment) {
-                return new FifoQueueListenerParser(environment);
+            public FifoQueueListenerParser fifoMessageListenerParser(final PlaceholderResolver placeholderResolver) {
+                return new FifoQueueListenerParser(placeholderResolver);
             }
 
             @Singleton
@@ -241,7 +249,7 @@ public class QueueListenerConfiguration {
                     final FifoQueueListenerParser fifoQueueListenerParser,
                     final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
-                return new FifoMessageListenerContainerFactory(
+                return new FifoAnnotationMessageListenerContainerFactory(
                         argumentResolverService,
                         sqsAsyncClientProvider,
                         queueResolver,
