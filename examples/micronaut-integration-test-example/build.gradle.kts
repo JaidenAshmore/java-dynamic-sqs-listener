@@ -11,6 +11,7 @@ dependencies {
     implementation("io.micronaut:micronaut-http-server-netty")
     runtimeOnly("ch.qos.logback:logback-classic")
     implementation(project(":java-dynamic-sqs-listener-micronaut-core"))
+    annotationProcessor(project(":java-dynamic-sqs-listener-micronaut-inject-java"))
 
     testImplementation(project(":elasticmq-sqs-client"))
     testImplementation(project(":expected-test-exception"))

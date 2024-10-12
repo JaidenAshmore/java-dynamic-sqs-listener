@@ -27,6 +27,7 @@ include(
 
     // Micronaut
     ":java-dynamic-sqs-listener-micronaut-core",
+    ":java-dynamic-sqs-listener-micronaut-inject-java",
 
     // Spring
     ":java-dynamic-sqs-listener-spring-core",
@@ -86,6 +87,7 @@ project(":java-dynamic-sqs-listener-annotations").projectDir = file("annotations
 
 // Micronaut
 project(":java-dynamic-sqs-listener-micronaut-core").projectDir = file("micronaut/micronaut-core")
+project(":java-dynamic-sqs-listener-micronaut-inject-java").projectDir = file("micronaut/micronaut-inject-java")
 
 // Spring
 project(":java-dynamic-sqs-listener-spring-core").projectDir = file("spring/spring-core")

@@ -22,4 +22,8 @@ dependencies {
     testImplementation("io.micronaut.test:micronaut-test-junit5")
     testImplementation(project(":elasticmq-sqs-client"))
     testImplementation(project(":expected-test-exception"))
+
+    integrationTestAnnotationProcessor(project(":java-dynamic-sqs-listener-micronaut-inject-java"))
+    integrationTestAnnotationProcessor("io.micronaut:micronaut-inject-java")
+    integrationTestCompileOnly("io.micronaut:micronaut-aop:$micronautVersion")
 }

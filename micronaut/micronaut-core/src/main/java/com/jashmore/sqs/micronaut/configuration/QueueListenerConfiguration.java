@@ -33,6 +33,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Secondary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import software.amazon.awssdk.regions.providers.AwsRegionProvider;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
@@ -198,6 +199,7 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
+            @Named("queueListener")
             public MessageListenerContainerFactory basicMessageListenerContainerFactory(
                     final ArgumentResolverService argumentResolverService,
                     final SqsAsyncClientProvider sqsAsyncClientProvider,
@@ -220,6 +222,7 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
+            @Named("prefetchingQueueListener")
             public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(
                     final ArgumentResolverService argumentResolverService,
                     final SqsAsyncClientProvider sqsAsyncClientProvider,
@@ -242,6 +245,7 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
+            @Named("fifoQueueListener")
             public MessageListenerContainerFactory fifoMessageListenerContainerFactory(
                     final ArgumentResolverService argumentResolverService,
                     final SqsAsyncClientProvider sqsAsyncClientProvider,
