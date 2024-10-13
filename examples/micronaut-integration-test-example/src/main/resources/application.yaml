@@ -1,0 +1,2 @@
+java-dynamic-sqs-listener-micronaut:
+  auto-start-containers-enabled: true # default

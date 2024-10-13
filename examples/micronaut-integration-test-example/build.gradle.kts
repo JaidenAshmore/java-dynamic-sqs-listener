@@ -10,6 +10,7 @@ val micronautVersion: String by project
 dependencies {
     implementation("io.micronaut:micronaut-http-server-netty")
     runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.yaml:snakeyaml")
     implementation(project(":java-dynamic-sqs-listener-micronaut-core"))
     annotationProcessor(project(":java-dynamic-sqs-listener-micronaut-inject-java"))
 

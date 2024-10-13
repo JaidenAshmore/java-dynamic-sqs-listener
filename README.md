@@ -274,7 +274,7 @@ See the [Ktor Core Example](examples/ktor-example) for a full example running a 
     }
     ```
     
-    Micronaut will use this to transform usages of core listener annotations at compile time, which enables
+    Micronaut will use this at compile time to transform usages of core listener annotations to enable
     method processors to register annotated methods as message listeners.
 
 1.  In one of your beans, attach a
@@ -337,14 +337,15 @@ for compatibility.
     -   [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
     -   [Jackson Databind](https://github.com/FasterXML/jackson-databind)
     -   [SLF4J API](https://github.com/qos-ch/slf4j)
+
+The following require all the core dependencies above.
 -   [Spring Framework](./spring)
-    -   All the core dependencies above
     -   [Spring Boot](https://github.com/spring-projects/spring-boot)
 -   [Ktor Framework](./ktor)
-
-    -   All the core dependencies above
     -   [Kotlin](https://github.com/JetBrains/kotlin)
     -   [Ktor](https://github.com/ktorio/ktor)
+-   [Micronaut Framework](./micronaut)
+    -   [Micronaut](https://github.com/micronaut-projects/micronaut-core)
 
 See the [gradle.properties](gradle.properties) for the specific versions of these dependencies.
 
@@ -436,11 +437,13 @@ public class MyMessageListener {
         }
     }
 }
-
 ```
 
-### Spring - Adding a custom argument resolver
+### Micronaut
+The `micronaut-core` library is applied pretty much the same way as `spring-starter`,
+so for Micronaut it will be useful to look through the Spring guides and examples.
 
+### Spring - Adding a custom argument resolver
 There are some core [ArgumentResolvers](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
 application but custom ones can be defined if they don't cover your use case. As an example, the following is how we can populate the message listener
 argument with the payload in uppercase.
@@ -501,7 +504,6 @@ argument with the payload in uppercase.
             return new UppercasePayloadArgumentResolver();
         }
     }
-
     ```
 
 1.  Use the new annotation in your message listener
@@ -652,7 +654,7 @@ finish in 10 milliseconds but one takes 10 seconds no other messages will be pic
 provides the same basic functionality, but it also provides a timeout where it will eventually request for more messages when there are threads that are
 ready for another message.
 
-#### Core/Spring Boot
+#### Core/Spring Boot/Micronaut
 
 ```java
 public class MyMessageListener {

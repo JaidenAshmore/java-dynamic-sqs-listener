@@ -15,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.annotation.Annotation;
 
 /**
- * Implementations will process a listener-annotated method by registering an appropriate
- * {@link com.jashmore.sqs.container.MessageListenerContainer}. See below for concrete classes.
+ * Implementations (nested here) will process a listener-annotated method by registering an appropriate
+ * {@link com.jashmore.sqs.container.MessageListenerContainer}.
  *
  * <p>This relies upon annotation processing provided by the
  * {@code java-dynamic-sqs-listener-micronaut-inject-java} package, which transforms the values of annotations
