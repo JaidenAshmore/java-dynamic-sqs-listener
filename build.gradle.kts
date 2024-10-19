@@ -118,7 +118,10 @@ subprojects {
                     // these classes are better handled by integration tests
                     "com.jashmore.sqs.container.fifo*" ,
                     "com.jashmore.sqs.container.batching*",
-                    "com.jashmore.sqs.container.prefetching*"
+                    "com.jashmore.sqs.container.prefetching*",
+                    "com.jashmore.sqs.micronaut.configuration*",
+                    "com.jashmore.sqs.micronaut.container*",
+                    "com.jashmore.sqs.micronaut.placeholder*"
                 )
                 element = "PACKAGE"
                 limit {
