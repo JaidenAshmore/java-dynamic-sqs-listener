@@ -1,5 +1,7 @@
 package com.jashmore.sqs.argument;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.argument.attribute.MessageAttribute;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
@@ -10,18 +12,15 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unused")
 @Slf4j

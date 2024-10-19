@@ -1,5 +1,9 @@
 package com.jashmore.sqs.examples.integrationtests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import com.jashmore.sqs.util.ExpectedTestException;
 import com.jashmore.sqs.util.LocalSqsAsyncClient;
@@ -10,10 +14,6 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -21,10 +21,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

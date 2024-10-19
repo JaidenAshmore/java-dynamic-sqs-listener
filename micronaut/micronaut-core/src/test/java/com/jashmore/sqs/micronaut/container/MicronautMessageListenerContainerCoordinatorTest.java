@@ -1,17 +1,16 @@
 package com.jashmore.sqs.micronaut.container;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 import com.jashmore.sqs.container.MessageListenerContainer;
+import java.util.Collections;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Collections;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -26,8 +25,10 @@ class MicronautMessageListenerContainerCoordinatorTest {
     @Test
     void whenRegistryIsEmptyGetContainersIsEmpty() {
         // arrange
-        final MicronautMessageListenerContainerCoordinator coordinator =
-            new MicronautMessageListenerContainerCoordinator(properties, containerRegistry);
+        final MicronautMessageListenerContainerCoordinator coordinator = new MicronautMessageListenerContainerCoordinator(
+            properties,
+            containerRegistry
+        );
         when(containerRegistry.getContainerMap()).thenReturn(Collections.emptyMap());
 
         // assert
@@ -36,12 +37,17 @@ class MicronautMessageListenerContainerCoordinatorTest {
 
     @Test
     void whenRegistryHasContainersTheyAreStarted() {
-        final MicronautMessageListenerContainerCoordinator coordinator =
-                new MicronautMessageListenerContainerCoordinator(properties, containerRegistry);
+        final MicronautMessageListenerContainerCoordinator coordinator = new MicronautMessageListenerContainerCoordinator(
+            properties,
+            containerRegistry
+        );
         Map<String, MessageListenerContainer> containerMap = Map.of(
-                "a", mock(MessageListenerContainer.class),
-                "b", mock(MessageListenerContainer.class),
-                "c", mock(MessageListenerContainer.class)
+            "a",
+            mock(MessageListenerContainer.class),
+            "b",
+            mock(MessageListenerContainer.class),
+            "c",
+            mock(MessageListenerContainer.class)
         );
         when(containerRegistry.getContainerMap()).thenReturn(containerMap);
 
@@ -55,8 +61,10 @@ class MicronautMessageListenerContainerCoordinatorTest {
 
     @Test
     void isRunningIsCorrect() {
-        final MicronautMessageListenerContainerCoordinator coordinator =
-                new MicronautMessageListenerContainerCoordinator(properties, containerRegistry);
+        final MicronautMessageListenerContainerCoordinator coordinator = new MicronautMessageListenerContainerCoordinator(
+            properties,
+            containerRegistry
+        );
         Map<String, MessageListenerContainer> containerMap = Map.of("a", mock(MessageListenerContainer.class));
         when(containerRegistry.getContainerMap()).thenReturn(containerMap);
 

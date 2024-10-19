@@ -1,5 +1,7 @@
 package com.jashmore.sqs.decorator.visibilityextender;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.annotations.decorator.visibilityextender.AutoVisibilityExtender;
 import com.jashmore.sqs.argument.payload.Payload;
@@ -11,15 +13,12 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 @Slf4j
 @MicronautTest(environments = "AutoVisibilityExtenderMessageProcessingDecoratorFactoryIntegrationTest")

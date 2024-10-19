@@ -1,5 +1,7 @@
 package com.jashmore.sqs.proxy;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
@@ -14,18 +16,15 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 @MicronautTest(environments = "ProxyBeanQueueListenerResolutionIntegrationTest")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

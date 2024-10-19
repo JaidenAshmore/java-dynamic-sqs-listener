@@ -1,5 +1,9 @@
 package com.jashmore.sqs.argument;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.argument.attribute.MessageAttributeDataTypes;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
@@ -10,22 +14,17 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-
-import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 @SuppressWarnings("unused")
 @Slf4j

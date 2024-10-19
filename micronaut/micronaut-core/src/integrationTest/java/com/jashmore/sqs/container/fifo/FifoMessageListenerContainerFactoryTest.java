@@ -1,5 +1,7 @@
 package com.jashmore.sqs.container.fifo;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.fifo.FifoQueueListener;
 import com.jashmore.sqs.argument.attribute.MessageSystemAttribute;
 import com.jashmore.sqs.argument.payload.Payload;
@@ -12,12 +14,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
-import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +22,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
 @Slf4j
 @MicronautTest(environments = "FifoMessageListenerContainerFactoryTest")

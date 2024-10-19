@@ -1,5 +1,7 @@
 package com.jashmore.sqs.queue;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.client.QueueResolver;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
 import io.micronaut.context.annotation.Factory;
@@ -10,8 +12,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest(environments = "EnvironmentQueueResolverIntegrationTest")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

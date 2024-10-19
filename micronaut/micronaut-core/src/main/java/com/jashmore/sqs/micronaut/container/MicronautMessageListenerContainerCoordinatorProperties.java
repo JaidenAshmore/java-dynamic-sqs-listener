@@ -6,7 +6,6 @@ import io.micronaut.core.bind.annotation.Bindable;
 
 @ConfigurationProperties(MicronautMessageListenerContainerCoordinatorProperties.PREFIX)
 public interface MicronautMessageListenerContainerCoordinatorProperties {
-
     String PREFIX = "java-dynamic-sqs-listener-micronaut";
 
     /**

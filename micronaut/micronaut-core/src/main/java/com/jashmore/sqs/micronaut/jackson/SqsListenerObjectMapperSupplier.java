@@ -1,7 +1,6 @@
 package com.jashmore.sqs.micronaut.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.function.Supplier;
 
 /**

@@ -9,9 +9,7 @@ import lombok.AllArgsConstructor;
 public class TestApplication {
 
     public static void main(String[] args) {
-        Micronaut.build(args)
-                .mainClass(TestApplication.class)
-                .start();
+        Micronaut.build(args).mainClass(TestApplication.class).start();
     }
 
     @Singleton

@@ -10,9 +10,8 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.lang.annotation.Annotation;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementations (nested here) will process a listener-annotated method by registering an appropriate
@@ -26,17 +25,16 @@ import java.lang.annotation.Annotation;
  * @param <T> an annotation from {@link com.jashmore.sqs.annotations}
  */
 @Slf4j
-public abstract class MicronautListenerMethodProcessor<T extends Annotation>
-        implements ExecutableMethodProcessor<T> {
+public abstract class MicronautListenerMethodProcessor<T extends Annotation> implements ExecutableMethodProcessor<T> {
 
     private final MessageListenerContainerFactory factory;
     private final ApplicationContext applicationContext;
     private final MicronautMessageListenerContainerRegistry containerRegistry;
 
     protected MicronautListenerMethodProcessor(
-            MessageListenerContainerFactory messageListenerContainerFactory,
-            ApplicationContext applicationContext,
-            MicronautMessageListenerContainerRegistry containerRegistry
+        MessageListenerContainerFactory messageListenerContainerFactory,
+        ApplicationContext applicationContext,
+        MicronautMessageListenerContainerRegistry containerRegistry
     ) {
         this.factory = messageListenerContainerFactory;
         this.applicationContext = applicationContext;
@@ -46,8 +44,7 @@ public abstract class MicronautListenerMethodProcessor<T extends Annotation>
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> executableMethod) {
         Object bean = applicationContext.getBean(beanDefinition);
-        factory.buildContainer(bean, executableMethod.getTargetMethod())
-                .ifPresent(containerRegistry::put);
+        factory.buildContainer(bean, executableMethod.getTargetMethod()).ifPresent(containerRegistry::put);
     }
 
     /*
@@ -55,26 +52,24 @@ public abstract class MicronautListenerMethodProcessor<T extends Annotation>
      */
 
     @Singleton
-    public static class MicronautQueueListenerMethodProcessor
-            extends MicronautListenerMethodProcessor<QueueListener> {
+    public static class MicronautQueueListenerMethodProcessor extends MicronautListenerMethodProcessor<QueueListener> {
 
         public MicronautQueueListenerMethodProcessor(
-                @Named("queueListener") MessageListenerContainerFactory messageListenerContainerFactory,
-                ApplicationContext applicationContext,
-                MicronautMessageListenerContainerRegistry containerRegistry
+            @Named("queueListener") MessageListenerContainerFactory messageListenerContainerFactory,
+            ApplicationContext applicationContext,
+            MicronautMessageListenerContainerRegistry containerRegistry
         ) {
             super(messageListenerContainerFactory, applicationContext, containerRegistry);
         }
     }
 
     @Singleton
-    public static class MicronautFifoQueueListenerMethodProcessor
-            extends MicronautListenerMethodProcessor<FifoQueueListener> {
+    public static class MicronautFifoQueueListenerMethodProcessor extends MicronautListenerMethodProcessor<FifoQueueListener> {
 
         public MicronautFifoQueueListenerMethodProcessor(
-                @Named("fifoQueueListener") MessageListenerContainerFactory messageListenerContainerFactory,
-                ApplicationContext applicationContext,
-                MicronautMessageListenerContainerRegistry containerRegistry
+            @Named("fifoQueueListener") MessageListenerContainerFactory messageListenerContainerFactory,
+            ApplicationContext applicationContext,
+            MicronautMessageListenerContainerRegistry containerRegistry
         ) {
             super(messageListenerContainerFactory, applicationContext, containerRegistry);
         }
@@ -82,12 +77,12 @@ public abstract class MicronautListenerMethodProcessor<T extends Annotation>
 
     @Singleton
     public static class MicronautPrefetchingQueueListenerMethodProcessor
-            extends MicronautListenerMethodProcessor<PrefetchingQueueListener> {
+        extends MicronautListenerMethodProcessor<PrefetchingQueueListener> {
 
         public MicronautPrefetchingQueueListenerMethodProcessor(
-                @Named("prefetchingQueueListener") MessageListenerContainerFactory messageListenerContainerFactory,
-                ApplicationContext applicationContext,
-                MicronautMessageListenerContainerRegistry containerRegistry
+            @Named("prefetchingQueueListener") MessageListenerContainerFactory messageListenerContainerFactory,
+            ApplicationContext applicationContext,
+            MicronautMessageListenerContainerRegistry containerRegistry
         ) {
             super(messageListenerContainerFactory, applicationContext, containerRegistry);
         }

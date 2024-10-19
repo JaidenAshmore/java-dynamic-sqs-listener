@@ -35,12 +35,11 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import java.util.Collections;
+import java.util.List;
 import software.amazon.awssdk.regions.providers.AwsRegionProvider;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
-
-import java.util.Collections;
-import java.util.List;
 
 @Factory
 public class QueueListenerConfiguration {
@@ -58,9 +57,7 @@ public class QueueListenerConfiguration {
     @Singleton
     @Secondary
     @Bean(preDestroy = "close")
-    public SqsAsyncClient sqsAsyncClient(
-            @Nullable AwsRegionProvider awsRegionProvider
-    ) {
+    public SqsAsyncClient sqsAsyncClient(@Nullable AwsRegionProvider awsRegionProvider) {
         SqsAsyncClientBuilder builder = SqsAsyncClient.builder();
         if (awsRegionProvider != null) {
             builder.region(awsRegionProvider.getRegion());
@@ -90,6 +87,7 @@ public class QueueListenerConfiguration {
 
     @Factory
     public static class ArgumentResolutionConfiguration {
+
         /**
          * The {@link ArgumentResolverService} used if none are defined by the consumer of this framework.
          *
@@ -115,9 +113,7 @@ public class QueueListenerConfiguration {
             }
 
             @Singleton
-            public PayloadArgumentResolver payloadArgumentResolver(
-                    final SqsListenerObjectMapperSupplier objectMapperSupplier
-            ) {
+            public PayloadArgumentResolver payloadArgumentResolver(final SqsListenerObjectMapperSupplier objectMapperSupplier) {
                 return new PayloadArgumentResolver(new JacksonPayloadMapper(objectMapperSupplier.get()));
             }
 
@@ -133,7 +129,7 @@ public class QueueListenerConfiguration {
 
             @Singleton
             public MessageAttributeArgumentResolver messageAttributeArgumentResolver(
-                    final SqsListenerObjectMapperSupplier objectMapperSupplier
+                final SqsListenerObjectMapperSupplier objectMapperSupplier
             ) {
                 return new MessageAttributeArgumentResolver(objectMapperSupplier.get());
             }
@@ -169,15 +165,15 @@ public class QueueListenerConfiguration {
 
             @Singleton
             public DecoratingMessageProcessorFactory decoratingMessageProcessorFactory(
-                    final List<MessageProcessingDecorator> globalDecorators,
-                    final List<MessageProcessingDecoratorFactory<? extends MessageProcessingDecorator>> messageProcessingDecoratorFactories
+                final List<MessageProcessingDecorator> globalDecorators,
+                final List<MessageProcessingDecoratorFactory<? extends MessageProcessingDecorator>> messageProcessingDecoratorFactories
             ) {
                 return new DecoratingMessageProcessorFactory(globalDecorators, messageProcessingDecoratorFactories);
             }
 
             @Singleton
             public AutoVisibilityExtenderMessageProcessingDecoratorFactory autoVisibilityExtendMessageProcessingDecoratorFactory(
-                    final PlaceholderResolver placeholderResolver
+                final PlaceholderResolver placeholderResolver
             ) {
                 return new AutoVisibilityExtenderMessageProcessingDecoratorFactory(placeholderResolver);
             }
@@ -201,18 +197,18 @@ public class QueueListenerConfiguration {
             @Singleton
             @Named("queueListener")
             public MessageListenerContainerFactory basicMessageListenerContainerFactory(
-                    final ArgumentResolverService argumentResolverService,
-                    final SqsAsyncClientProvider sqsAsyncClientProvider,
-                    final QueueResolver queueResolver,
-                    final QueueListenerParser queueListenerParser,
-                    final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final QueueListenerParser queueListenerParser,
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new BasicAnnotationMessageListenerContainerFactory(
-                        argumentResolverService,
-                        sqsAsyncClientProvider,
-                        queueResolver,
-                        queueListenerParser,
-                        decoratingMessageProcessorFactory
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    queueListenerParser,
+                    decoratingMessageProcessorFactory
                 );
             }
 
@@ -224,18 +220,18 @@ public class QueueListenerConfiguration {
             @Singleton
             @Named("prefetchingQueueListener")
             public MessageListenerContainerFactory prefetchingMessageListenerContainerFactory(
-                    final ArgumentResolverService argumentResolverService,
-                    final SqsAsyncClientProvider sqsAsyncClientProvider,
-                    final QueueResolver queueResolver,
-                    final PrefetchingQueueListenerParser prefetchingQueueListenerParser,
-                    final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final PrefetchingQueueListenerParser prefetchingQueueListenerParser,
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new PrefetchingAnnotationMessageListenerContainerFactory(
-                        argumentResolverService,
-                        sqsAsyncClientProvider,
-                        queueResolver,
-                        prefetchingQueueListenerParser,
-                        decoratingMessageProcessorFactory
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    prefetchingQueueListenerParser,
+                    decoratingMessageProcessorFactory
                 );
             }
 
@@ -247,18 +243,18 @@ public class QueueListenerConfiguration {
             @Singleton
             @Named("fifoQueueListener")
             public MessageListenerContainerFactory fifoMessageListenerContainerFactory(
-                    final ArgumentResolverService argumentResolverService,
-                    final SqsAsyncClientProvider sqsAsyncClientProvider,
-                    final QueueResolver queueResolver,
-                    final FifoQueueListenerParser fifoQueueListenerParser,
-                    final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
+                final ArgumentResolverService argumentResolverService,
+                final SqsAsyncClientProvider sqsAsyncClientProvider,
+                final QueueResolver queueResolver,
+                final FifoQueueListenerParser fifoQueueListenerParser,
+                final DecoratingMessageProcessorFactory decoratingMessageProcessorFactory
             ) {
                 return new FifoAnnotationMessageListenerContainerFactory(
-                        argumentResolverService,
-                        sqsAsyncClientProvider,
-                        queueResolver,
-                        fifoQueueListenerParser,
-                        decoratingMessageProcessorFactory
+                    argumentResolverService,
+                    sqsAsyncClientProvider,
+                    queueResolver,
+                    fifoQueueListenerParser,
+                    decoratingMessageProcessorFactory
                 );
             }
         }

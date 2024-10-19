@@ -1,5 +1,7 @@
 package com.jashmore.sqs.container.basic;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.basic.QueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
@@ -11,14 +13,11 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @MicronautTest(environments = "QueueListenerVisibilityIntegrationTest")

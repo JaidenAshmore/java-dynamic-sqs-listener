@@ -1,5 +1,7 @@
 package com.jashmore.sqs.container.prefetch;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jashmore.sqs.annotations.core.prefetch.PrefetchingQueueListener;
 import com.jashmore.sqs.argument.payload.Payload;
 import com.jashmore.sqs.elasticmq.ElasticMqSqsAsyncClient;
@@ -9,17 +11,14 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 @Slf4j
 @MicronautTest(environments = "PrefetchingQueueListenerEnvironmentIntegrationTest")
@@ -48,10 +47,7 @@ class PrefetchingQueueListenerEnvironmentIntegrationTest {
         public static class MessageListener {
 
             @SuppressWarnings("unused")
-            @PrefetchingQueueListener(
-                    value = QUEUE_NAME,
-                    messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS
-            )
+            @PrefetchingQueueListener(value = QUEUE_NAME, messageVisibilityTimeoutInSeconds = MESSAGE_VISIBILITY_IN_SECONDS)
             public void listenToMessage(@Payload final String payload) {
                 log.info("Obtained message: {}", payload);
                 COUNT_DOWN_LATCH.countDown();

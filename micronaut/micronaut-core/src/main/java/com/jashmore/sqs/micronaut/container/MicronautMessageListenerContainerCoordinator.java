@@ -7,14 +7,13 @@ import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
@@ -98,9 +97,9 @@ public class MicronautMessageListenerContainerCoordinator implements MessageList
      */
     private void runForAllContainers(final Consumer<MessageListenerContainer> containerConsumer) {
         final CompletableFuture<?>[] allTaskCompletableFutures = getContainers()
-                .stream()
-                .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
-                .toArray(CompletableFuture[]::new);
+            .stream()
+            .map(container -> CompletableFuture.runAsync(() -> containerConsumer.accept(container)))
+            .toArray(CompletableFuture[]::new);
 
         try {
             CompletableFuture.allOf(allTaskCompletableFutures).get();
@@ -120,8 +119,8 @@ public class MicronautMessageListenerContainerCoordinator implements MessageList
      */
     private void runForContainer(final String containerIdentifier, final Consumer<MessageListenerContainer> containerConsumer) {
         final MessageListenerContainer container = Optional
-                .ofNullable(containerRegistry.getContainerMap().get(containerIdentifier))
-                .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
+            .ofNullable(containerRegistry.getContainerMap().get(containerIdentifier))
+            .orElseThrow(() -> new IllegalArgumentException("No container with the provided identifier"));
 
         containerConsumer.accept(container);
     }

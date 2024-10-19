@@ -273,7 +273,7 @@ See the [Ktor Core Example](examples/ktor-example) for a full example running a 
         annotationProcessor("com.jashmore:java-dynamic-sqs-listener-micronaut-inject-java:${sqs.listener.version}")
     }
     ```
-    
+
     Micronaut will use this at compile time to transform usages of core listener annotations to enable
     method processors to register annotated methods as message listeners.
 
@@ -297,7 +297,6 @@ See the [Ktor Core Example](examples/ktor-example) for a full example running a 
 
     This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
     will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
-
 
 ## Core Infrastructure
 
@@ -339,6 +338,7 @@ for compatibility.
     -   [SLF4J API](https://github.com/qos-ch/slf4j)
 
 The following require all the core dependencies above.
+
 -   [Spring Framework](./spring)
     -   [Spring Boot](https://github.com/spring-projects/spring-boot)
 -   [Ktor Framework](./ktor)
@@ -437,13 +437,16 @@ public class MyMessageListener {
         }
     }
 }
+
 ```
 
 ### Micronaut
+
 The `micronaut-core` library is applied pretty much the same way as `spring-starter`,
 so for Micronaut it will be useful to look through the Spring guides and examples.
 
 ### Spring - Adding a custom argument resolver
+
 There are some core [ArgumentResolvers](./api/src/main/java/com/jashmore/sqs/argument/ArgumentResolver.java) provided in the
 application but custom ones can be defined if they don't cover your use case. As an example, the following is how we can populate the message listener
 argument with the payload in uppercase.
@@ -504,6 +507,7 @@ argument with the payload in uppercase.
             return new UppercasePayloadArgumentResolver();
         }
     }
+
     ```
 
 1.  Use the new annotation in your message listener
