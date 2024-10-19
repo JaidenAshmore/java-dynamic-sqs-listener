@@ -1,0 +1,3 @@
+com.jashmore.sqs.micronaut.service.QueueListenerAnnotationTransformer
+com.jashmore.sqs.micronaut.service.FifoQueueListenerAnnotationTransformer
+com.jashmore.sqs.micronaut.service.PrefetchingQueueListenerAnnotationTransformer

@@ -223,6 +223,81 @@ See the [Core Kotlin Example](examples/core-kotlin-example) for a full example r
 
 See the [Ktor Core Example](examples/ktor-example) for a full example running a Ktor framework that listens to a local ElasticMQ SQS Server.
 
+### Micronaut Quick Guide
+
+1.  Include the Micronaut core dependency with Maven `<dependencies>`:
+
+    ```xml
+    <dependency>
+        <groupId>com.jashmore</groupId>
+        <artifactId>java-dynamic-sqs-listener-micronaut-core</artifactId>
+        <version>${sqs.listener.version}</version>
+    </dependency>
+    ```
+
+    Or with Gradle:
+
+    ```kotlin
+    dependencies {
+        implementation("com.jashmore:java-dynamic-sqs-listener-micronaut-core:${sqs.listener.version}")
+    }
+    ```
+
+1.  Also, include the Micronaut annotation processor with Maven:
+
+    ```xml
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>com.jashmore</groupId>
+                            <artifactId>java-dynamic-sqs-listener-micronaut-inject-java</artifactId>
+                            <version>${sqs.listener.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+    ```
+
+    Or with Gradle:
+
+    ```kotlin
+    dependencies {
+        annotationProcessor("com.jashmore:java-dynamic-sqs-listener-micronaut-inject-java:${sqs.listener.version}")
+    }
+    ```
+
+    Micronaut will use this at compile time to transform usages of core listener annotations to enable
+    method processors to register annotated methods as message listeners.
+
+1.  In one of your beans, attach a
+    [@QueueListener](./annotations/src/main/java/com/jashmore/sqs/annotations/core/basic/QueueListener.java) or other supported annotation
+    to a method indicating that it should process messages from a queue.
+
+    ```java
+    @Singleton
+    public class MyMessageListener {
+
+        // The queue here can point to your SQS server, e.g. a
+        // local SQS server or one on AWS
+        @QueueListener("${insert.queue.url.here}")
+        public void processMessage(@Payload final String payload) {
+            // process the message payload here
+        }
+    }
+
+    ```
+
+    This will use any configured `SqsAsyncClient` in the application context for connecting to the queue, otherwise a default
+    will be provided that will look for AWS credentials/region from multiple areas, like the environment variables.
+
 ## Core Infrastructure
 
 This library has been divided into isolated components each with distinct responsibilities. The following is a diagram describing a simple flow of a
@@ -261,14 +336,16 @@ for compatibility.
     -   [AWS SQS SDK](https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/welcome.html)
     -   [Jackson Databind](https://github.com/FasterXML/jackson-databind)
     -   [SLF4J API](https://github.com/qos-ch/slf4j)
+
+The following require all the core dependencies above.
+
 -   [Spring Framework](./spring)
-    -   All the core dependencies above
     -   [Spring Boot](https://github.com/spring-projects/spring-boot)
 -   [Ktor Framework](./ktor)
-
-    -   All the core dependencies above
     -   [Kotlin](https://github.com/JetBrains/kotlin)
     -   [Ktor](https://github.com/ktorio/ktor)
+-   [Micronaut Framework](./micronaut)
+    -   [Micronaut](https://github.com/micronaut-projects/micronaut-core)
 
 See the [gradle.properties](gradle.properties) for the specific versions of these dependencies.
 
@@ -362,6 +439,11 @@ public class MyMessageListener {
 }
 
 ```
+
+### Micronaut
+
+The `micronaut-core` library is applied pretty much the same way as `spring-starter`,
+so for Micronaut it will be useful to look through the Spring guides and examples.
 
 ### Spring - Adding a custom argument resolver
 
@@ -576,7 +658,7 @@ finish in 10 milliseconds but one takes 10 seconds no other messages will be pic
 provides the same basic functionality, but it also provides a timeout where it will eventually request for more messages when there are threads that are
 ready for another message.
 
-#### Core/Spring Boot
+#### Core/Spring Boot/Micronaut
 
 ```java
 public class MyMessageListener {

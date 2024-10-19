@@ -24,5 +24,6 @@ lombok.config
 .husky
 
 org.springframework.boot.autoconfigure.AutoConfiguration.imports
+io.micronaut.inject.annotation.AnnotationTransformer
 
 doc/resources/**/*.xml

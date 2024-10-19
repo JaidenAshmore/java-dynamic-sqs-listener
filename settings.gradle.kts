@@ -25,6 +25,10 @@ include(
     // Annotations
     ":java-dynamic-sqs-listener-annotations",
 
+    // Micronaut
+    ":java-dynamic-sqs-listener-micronaut-core",
+    ":java-dynamic-sqs-listener-micronaut-inject-java",
+
     // Spring
     ":java-dynamic-sqs-listener-spring-core",
     ":java-dynamic-sqs-listener-spring-starter",
@@ -63,6 +67,7 @@ include(
     ":example:core-kotlin-example",
     ":example:fifo-example",
     ":example:ktor-example",
+    ":example:micronaut-integration-test-example",
     ":example:spring-cloud-schema-registry:consumer",
     ":example:spring-cloud-schema-registry:producer",
     ":example:spring-cloud-schema-registry:producer-two",
@@ -79,6 +84,10 @@ project(":java-dynamic-sqs-listener-core").projectDir = file("core")
 
 // Annotations
 project(":java-dynamic-sqs-listener-annotations").projectDir = file("annotations")
+
+// Micronaut
+project(":java-dynamic-sqs-listener-micronaut-core").projectDir = file("micronaut/micronaut-core")
+project(":java-dynamic-sqs-listener-micronaut-inject-java").projectDir = file("micronaut/micronaut-inject-java")
 
 // Spring
 project(":java-dynamic-sqs-listener-spring-core").projectDir = file("spring/spring-core")
@@ -113,6 +122,7 @@ project(":example:core-example").projectDir = file("examples/core-example")
 project(":example:core-kotlin-example").projectDir = file("examples/core-kotlin-example")
 project(":example:fifo-example").projectDir = file("examples/fifo-example")
 project(":example:ktor-example").projectDir = file("examples/ktor-example")
+project(":example:micronaut-integration-test-example").projectDir = file("examples/micronaut-integration-test-example")
 project(":example:spring-aws-example").projectDir = file("examples/spring-aws-example")
 project(":example:spring-cloud-schema-registry:consumer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-consumer")
 project(":example:spring-cloud-schema-registry:producer").projectDir = file("examples/spring-cloud-schema-registry-example/spring-cloud-schema-registry-producer")
